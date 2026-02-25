@@ -1,0 +1,293 @@
+"use client";
+
+import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Check, Star, Quote } from "lucide-react";
+import { Logo } from "@/components/ui/logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { getURL } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+
+function LoginForm() {
+  const router = useRouter();
+  const { t, dir } = useTranslation();
+  
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+
+    const supabase = createClient();
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("Login error:", error);
+      let errorMessage = error.message;
+      if (error.message === "Invalid login credentials") {
+        errorMessage = t("login.toasts.invalid_credentials");
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = t("login.toasts.email_not_confirmed");
+      }
+      toast.error(t("login.toasts.error_title"), {
+        description: errorMessage,
+      });
+      setLoading(false);
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role, status")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profile?.status === "pending") {
+      toast.warning(t("login.toasts.pending_title"), {
+        description: t("login.toasts.pending_desc"),
+      });
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    if (profile?.status === "suspended") {
+      toast.error(t("login.toasts.suspended_title"), {
+        description: t("login.toasts.suspended_desc"),
+      });
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    const userRole = profile?.role || data.user.user_metadata?.role || "seller";
+    
+    const redirectMap: Record<string, string> = {
+      admin: "/admin",
+      seller: "/seller/dashboard",
+      supplier: "/supplier/dashboard",
+      creator: "/creator/dashboard",
+    };
+
+    toast.success(t("login.toasts.success_title"));
+    router.push(redirectMap[userRole] || "/seller/dashboard");
+  }
+
+  async function handleGoogleLogin() {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${getURL()}/auth/callback?next=/demande-en-attente`,
+      },
+    });
+  }
+
+  return (
+    <div className="w-full max-w-sm mx-auto space-y-8" dir={dir}>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">{t("login.title")}</h1>
+        <p className="text-gray-500">{t("login.subtitle")}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("login.email")}</Label>
+          <div className="relative">
+            <Mail className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400`} />
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11 border-gray-200 focus:border-indigo-600 focus:ring-indigo-600`}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">{t("login.password")}</Label>
+            <Link 
+              href="/forgot-password" 
+              className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              {t("login.forgot_password")}
+            </Link>
+          </div>
+          <div className="relative">
+            <Lock className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400`} />
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`${dir === 'rtl' ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-11 border-gray-200 focus:border-indigo-600 focus:ring-indigo-600`}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className={`absolute ${dir === 'rtl' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600`}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <Button 
+          type="submit" 
+          className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm"
+          disabled={loading}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+            <div className="flex items-center gap-2">
+              {t("login.submit")}
+              <ArrowRight className={`h-4 w-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
+            </div>
+          )}
+        </Button>
+      </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-2 text-gray-500">{t("login.or")}</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleGoogleLogin}
+        className="w-full h-11 border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-lg"
+      >
+        <svg className={`h-4 w-4 ${dir === 'rtl' ? 'ml-2' : 'mr-2'}`} viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        {t("login.google")}
+      </Button>
+
+      <p className="text-center text-sm text-gray-500">
+        {t("login.no_account")}{" "}
+        <Link 
+          href="/inscription" 
+          className="font-semibold text-indigo-600 hover:text-indigo-500"
+        >
+          {t("login.signup")}
+        </Link>
+      </p>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
+  const { t, dir } = useTranslation();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return (
+    <div className="flex min-h-screen flex-col lg:flex-row bg-white" dir={dir}>
+      {/* Left Side - Form */}
+      <div className="flex flex-1 flex-col justify-center px-6 py-12 lg:px-20 xl:px-24">
+        <div className="mx-auto w-full max-w-sm lg:w-96">
+          <div className="mb-10 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <Logo className="h-8 w-auto" />
+            </Link>
+            <LanguageSwitcher />
+          </div>
+          
+          <Suspense fallback={<div className="h-96 animate-pulse bg-gray-50 rounded-xl" />}>
+            <LoginForm />
+          </Suspense>
+
+          <div className="mt-12 text-xs text-gray-400 text-center lg:text-start">
+            {t("login.footer")}
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Testimonial/Visual */}
+      <div className="relative hidden lg:block lg:flex-1 bg-gray-50">
+        <div className="absolute inset-0 bg-indigo-600">
+          <img
+            src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80"
+            alt="Business collaboration"
+            className="h-full w-full object-cover mix-blend-multiply opacity-20"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/80 via-indigo-900/40 to-transparent" />
+        </div>
+        
+        <div className="relative h-full flex flex-col justify-end p-16 text-white">
+          <div className="max-w-xl space-y-8">
+            <div className="flex gap-1 text-emerald-400">
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-current" />
+              ))}
+            </div>
+            
+            <div className="space-y-4">
+              <Quote className="h-12 w-12 text-indigo-300 opacity-50" />
+              <h2 className="text-4xl font-bold leading-tight">
+                {t("login.quote")}
+              </h2>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center font-bold text-xl border border-white/20">
+                {t("login.quote_author").charAt(0)}
+              </div>
+              <div>
+                <p className="font-bold text-lg">{t("login.quote_author")}</p>
+                <p className="text-indigo-200">{t("login.author_role")}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-16 grid grid-cols-3 gap-8 border-t border-white/10 pt-8">
+            <div>
+              <p className="text-3xl font-bold">500+</p>
+              <p className="text-sm text-indigo-200">Sellers in Tunisia</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold">24/48h</p>
+              <p className="text-sm text-indigo-200">Delivery Speed</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold">Zéro</p>
+              <p className="text-sm text-indigo-200">Inventory Risk</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,445 @@
+/* Updated: 1769361964719 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* 
+  DROPY DESIGN SYSTEM
+  ==================
+  Brand Indigo: #6366F1 (primary actions, logo)
+  Success Green: #10B981
+  Warning Amber: #F59E0B  
+  Error Red: #EF4444
+  Dark Gray: #1F2937 (text)
+  Light Gray: #F9FAFB (backgrounds)
+
+  USER-SPECIFIC ACCENT COLORS:
+  Seller: #0EA5E9 (Sky Blue)
+  Supplier: #F97316 (Orange)
+  Creator: #8B5CF6 (Violet)
+  Admin: #1F2937 (Dark)
+*/
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Poppins', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', var(--font-geist-mono), monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-mint: var(--mint);
+  --color-mint-foreground: var(--mint-foreground);
+  --color-orange: var(--orange);
+  --color-orange-foreground: var(--orange-foreground);
+  --color-rose: var(--rose);
+  --color-rose-foreground: var(--rose-foreground);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Border Radius */
+  --radius: 0.75rem;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+
+  /* Core Colors - Dropy Design System */
+  --background: #F9FAFB;
+  --foreground: #1F2937;
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  --popover: #FFFFFF;
+  --popover-foreground: #1F2937;
+  
+  /* Primary - Brand Indigo */
+  --primary: #6366F1;
+  --primary-foreground: #FFFFFF;
+  
+  /* Secondary */
+  --secondary: #F3F4F6;
+  --secondary-foreground: #1F2937;
+  
+  /* Muted */
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  
+  /* Accent */
+  --accent: #EEF2FF;
+  --accent-foreground: #6366F1;
+  
+  /* Semantic Colors */
+  --destructive: #EF4444;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --info: #3B82F6;
+  
+  /* Border & Input */
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --ring: #6366F1;
+  
+  /* Extended Palette */
+  --mint: #10B981;
+  --mint-foreground: #FFFFFF;
+  --orange: #F59E0B;
+  --orange-foreground: #FFFFFF;
+  --rose: #EC4899;
+  --rose-foreground: #FFFFFF;
+  --sky: #0EA5E9;
+  --sky-foreground: #FFFFFF;
+  --violet: #8B5CF6;
+  --violet-foreground: #FFFFFF;
+  
+  /* Charts */
+  --chart-1: #6366F1;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #EC4899;
+  --chart-5: #8B5CF6;
+  
+  /* Sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1F2937;
+  --sidebar-primary: #6366F1;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EEF2FF;
+  --sidebar-accent-foreground: #6366F1;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #6366F1;
+}
+
+.dark {
+  --background: oklch(0.12 0.02 280);
+  --foreground: oklch(0.96 0.01 280);
+  --card: oklch(0.16 0.025 280);
+  --card-foreground: oklch(0.96 0.01 280);
+  --popover: oklch(0.16 0.025 280);
+  --popover-foreground: oklch(0.96 0.01 280);
+  --primary: oklch(0.65 0.25 280);
+  --primary-foreground: oklch(0.12 0.02 280);
+  --secondary: oklch(0.22 0.03 280);
+  --secondary-foreground: oklch(0.96 0.01 280);
+  --muted: oklch(0.22 0.03 280);
+  --muted-foreground: oklch(0.65 0.02 280);
+  --accent: oklch(0.7 0.22 160);
+  --accent-foreground: oklch(0.12 0.02 280);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(0.25 0.025 280);
+  --input: oklch(0.25 0.025 280);
+  --ring: oklch(0.65 0.25 280);
+  --chart-1: oklch(0.65 0.25 280);
+  --chart-2: oklch(0.7 0.22 160);
+  --chart-3: oklch(0.75 0.2 60);
+  --chart-4: oklch(0.65 0.2 320);
+  --chart-5: oklch(0.55 0.15 200);
+  --sidebar: oklch(0.14 0.02 280);
+  --sidebar-foreground: oklch(0.96 0.01 280);
+  --sidebar-primary: oklch(0.65 0.25 280);
+  --sidebar-primary-foreground: oklch(0.12 0.02 280);
+  --sidebar-accent: oklch(0.22 0.03 280);
+  --sidebar-accent-foreground: oklch(0.96 0.01 280);
+  --sidebar-border: oklch(0.25 0.025 280);
+  --sidebar-ring: oklch(0.65 0.25 280);
+}
+
+/* Role Specific Themes - Dropy Design System */
+[data-role="seller"] {
+  --background: #f8f9fa;
+  --foreground: #111827;
+  --primary: #2563eb;
+  --primary-foreground: #FFFFFF;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --border: #e5e7eb;
+  --ring: #2563eb;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --accent: #eff6ff;
+  --accent-foreground: #2563eb;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #111827;
+  --mint: #10b981;
+  --sidebar: #1e3a5f;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #2563eb;
+  --sidebar-accent: rgba(255, 255, 255, 0.1);
+  --sidebar-accent-foreground: #ffffff;
+}
+
+[data-role="supplier"] {
+  --background: #FFFBEB;
+  --foreground: #1F2937;
+  --primary: #F97316;
+  --primary-foreground: #FFFFFF;
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  --border: #FED7AA;
+  --ring: #F97316;
+  --muted: #FFF7ED;
+  --muted-foreground: #6B7280;
+  --accent: #FFF7ED;
+  --accent-foreground: #C2410C;
+  --secondary: #FFF7ED;
+  --secondary-foreground: #1F2937;
+  --mint: #10B981;
+  --sidebar: #FFFFFF;
+  --sidebar-primary: #F97316;
+  --sidebar-accent: #FFF7ED;
+}
+
+[data-role="creator"] {
+  --background: #FAF5FF;
+  --foreground: #1F2937;
+  --primary: #8B5CF6;
+  --primary-foreground: #FFFFFF;
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  --border: #E9D5FF;
+  --ring: #8B5CF6;
+  --muted: #F5F3FF;
+  --muted-foreground: #6B7280;
+  --accent: #F5F3FF;
+  --accent-foreground: #7C3AED;
+  --secondary: #F5F3FF;
+  --secondary-foreground: #1F2937;
+  --mint: #10B981;
+  --sidebar: #FFFFFF;
+  --sidebar-primary: #8B5CF6;
+  --sidebar-accent: #F5F3FF;
+}
+
+[data-role="admin"] {
+  --background: #F9FAFB;
+  --foreground: #1F2937;
+  --primary: #1F2937;
+  --primary-foreground: #FFFFFF;
+  --card: #FFFFFF;
+  --card-foreground: #1F2937;
+  --border: #E5E7EB;
+  --ring: #1F2937;
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --accent: #F3F4F6;
+  --accent-foreground: #111827;
+  --secondary: #F3F4F6;
+  --secondary-foreground: #1F2937;
+  --sidebar: #FFFFFF;
+  --sidebar-primary: #1F2937;
+  --sidebar-accent: #F3F4F6;
+}
+
+/* Ensure buttons are always visible and have distinct style in role themes */
+[data-role] .border {
+  border-color: var(--border);
+}
+
+/* Use data-slot="button" and variant classes if needed, but easier to target common combinations */
+[data-role] [data-slot="button"].border-input,
+[data-role] [data-slot="button"].border {
+  border-width: 1.5px;
+  border-color: var(--primary);
+  opacity: 0.9;
+}
+
+[data-role] [data-slot="button"].hover\:bg-accent:not(.bg-primary):not(.bg-destructive) {
+  background-color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+[data-role] [data-slot="button"].hover\:bg-accent:not(.bg-primary):not(.bg-destructive):hover {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(79, 70, 229, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(79, 70, 229, 0.6); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes drop-fall {
+  0% { transform: translateY(-100%) scale(0); opacity: 0; }
+  50% { transform: translateY(0) scale(1.2); opacity: 1; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+.animate-drop {
+  animation: drop-fall 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.glass {
+  backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-card {
+  backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #4F46E5 0%, #10B981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-rose {
+  background: linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-amber {
+  background: linear-gradient(135deg, #F59E0B 0%, #EF4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-gradient {
+  background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79, 70, 229, 0.12), transparent);
+}
+
+.card-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%) rotate(45deg);
+  transition: transform 0.6s;
+}
+
+.card-shine:hover::before {
+  transform: translateX(100%) rotate(45deg);
+}
+
+.stat-card {
+  @apply relative overflow-hidden rounded-2xl bg-card border border-border p-6 transition-all duration-300;
+}
+
+.stat-card:hover {
+  @apply shadow-xl -translate-y-1;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, var(--primary) 0%, transparent 60%);
+  opacity: 0.05;
+  border-radius: 0 0 0 100%;
+}

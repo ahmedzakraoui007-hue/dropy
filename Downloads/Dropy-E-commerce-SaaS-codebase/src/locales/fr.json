@@ -1,0 +1,601 @@
+{
+  "nav": {
+    "vendeurs": "Vendeurs",
+    "creators": "Créateurs UGC",
+    "suppliers": "Fournisseurs",
+    "pricing": "Tarifs",
+    "blog": "Blog",
+    "login": "Connexion",
+    "signup": "Démarrer"
+  },
+  "hero": {
+    "badge": "N°1 de l'E-commerce en Tunisie",
+    "title1": "Gagnez de l'argent",
+    "title2": "sans aucun stock.",
+    "description": "Vendez des produits locaux facilement. Nous gérons la livraison et vous encaissez les profits. Zéro risque, 100% gain.",
+    "cta_primary": "Commencer maintenant",
+    "cta_secondary": "Voir comment ça marche",
+    "waitlist": "Déjà 500+ entrepreneurs tunisiens"
+  },
+  "landing": {
+    "trust": {
+      "made_in_tunisia": "PRODUITS TUNISIENS"
+    },
+    "pillars": {
+      "title": "Une solution simple pour tous.",
+      "subtitle": "Que vous soyez vendeur, fournisseur ou créateur, Dropy est fait pour vous.",
+      "vendeurs": {
+        "title": "Je veux vendre",
+        "desc": "Vendez des produits de qualité sans stock. On s'occupe de la livraison, vous recevez vos profits."
+      },
+      "fournisseurs": {
+        "title": "Je suis fournisseur",
+        "desc": "Écoulez vos produits rapidement grâce à notre réseau de centaines de vendeurs."
+      },
+      "createurs": {
+        "title": "Je suis créateur",
+        "desc": "Recevez des produits gratuits et gagnez de l'argent avec vos vidéos."
+      },
+      "cta": "En savoir plus"
+    },
+    "how_it_works": {
+      "title": "C'est très facile.",
+      "subtitle": "3 étapes simples pour lancer votre activité.",
+      "step1": {
+        "title": "Inscrivez-vous",
+        "desc": "C'est rapide et gratuit."
+      },
+      "step2": {
+        "title": "Choisissez vos produits",
+        "desc": "Sélectionnez parmi des milliers d'articles locaux."
+      },
+      "step3": {
+        "title": "Vendez et gagnez",
+        "desc": "On livre vos clients, vous encaissez l'argent."
+      }
+    },
+    "final_cta": {
+      "title": "Prêt à gagner de l'argent ?",
+      "subtitle": "Rejoignez Dropy aujourd'hui et commencez à vendre dès demain.",
+      "cta": "Démarrer maintenant"
+    }
+  },
+  "footer": {
+    "tagline": "L'e-commerce simplifié pour tous les Tunisiens.",
+    "newsletter": "Restez informé",
+    "newsletter_placeholder": "Votre email",
+    "newsletter_success": "Bienvenue parmi nous !",
+    "newsletter_desc": "Recevez nos meilleures offres.",
+    "sections": {
+      "platform": "Plateforme",
+      "resources": "Ressources",
+      "company": "Société",
+      "legal": "Légal"
+    },
+    "links": {
+      "vendeurs": "Vendeurs",
+      "creators": "Créateurs UGC",
+      "suppliers": "Fournisseurs",
+      "pricing": "Tarifs",
+      "blog": "Blog",
+      "faq": "FAQ",
+      "help": "Aide",
+      "about": "À propos",
+      "contact": "Contact",
+      "careers": "Carrières",
+      "terms": "Conditions",
+      "privacy": "Confidentialité",
+      "legal": "Mentions légales"
+    },
+    "blog_soon": "Bientôt disponible !",
+    "copyright": "© 2026 Dropy. Fait avec ❤️ en",
+    "tunisia": "Tunisie",
+    "status": "En ligne"
+  },
+  "pages": {
+    "about": {
+      "title": "À Propos de Dropy",
+      "vision": "Simplifier l'E-commerce en Tunisie",
+      "vision_desc": "Chaque Tunisien doit pouvoir lancer son business en ligne simplement, sans stock et sans risque.",
+      "mission_title": "Notre Mission",
+      "mission_desc": "Offrir une solution clé en main pour tous les entrepreneurs tunisiens.",
+      "values_title": "Nos Valeurs",
+      "values_desc": "Transparence, innovation et soutien au local.",
+      "history_title": "Pensé pour vous",
+      "step1_title": "Qualité Locale",
+      "step1_desc": "Produits tunisiens sélectionnés avec soin.",
+      "step2_title": "Outils Faciles",
+      "step2_desc": "Une interface simple même pour les débutants.",
+      "step3_title": "Livraison Rapide",
+      "step3_desc": "Livraison partout en Tunisie en un temps record."
+    },
+    "contact": {
+      "title": "Besoin d'aide ?",
+      "subtitle": "Notre équipe vous répond rapidement.",
+      "whatsapp_title": "WhatsApp",
+      "whatsapp_desc": "Disponible 7j/7 pour vous aider.",
+      "email_title": "Email",
+      "email_desc": "Pour vos demandes plus détaillées.",
+      "office_title": "Bureaux",
+      "office_desc": "Tunis, Tunisie",
+      "form_title": "Envoyez-nous un message",
+      "form_firstname": "Prénom",
+      "form_lastname": "Nom",
+      "form_email": "Email",
+      "form_subject": "Sujet",
+      "form_message": "Message",
+      "form_submit": "Envoyer",
+      "subjects": {
+        "vendeur": "Devenir Vendeur",
+        "creator": "Devenir Créateur",
+        "supplier": "Devenir Fournisseur",
+        "support": "Aide technique",
+        "other": "Autre"
+      }
+    },
+    "faq": {
+      "title": "Questions Fréquentes",
+      "subtitle": "Tout ce qu'il faut savoir pour commencer.",
+      "q1": "Comment fonctionne Dropy ?",
+      "a1": "Choisissez des produits, vendez-les, et nous gérons la livraison partout en Tunisie.",
+      "q2": "Est-ce gratuit ?",
+      "a2": "L'inscription est gratuite. Vous ne payez que lorsque vous vendez.",
+      "q3": "Comment je reçois mon argent ?",
+      "a3": "Vos profits sont reversés par virement ou D17 une fois le colis livré.",
+      "more_questions": "Encore des questions ?",
+      "contact_us": "Nous contacter"
+    },
+    "help": {
+      "title": "Centre d'Aide",
+      "subtitle": "Comment pouvons-nous vous aider aujourd'hui ?",
+      "search_placeholder": "Rechercher une aide...",
+      "guides_title": "Guides",
+      "guides_desc": "Tout pour bien démarrer.",
+      "videos_title": "Vidéos",
+      "videos_desc": "Apprendre en images.",
+      "support_title": "Support Direct",
+      "support_desc": "Parlez avec un conseiller."
+    },
+    "legal_pages": {
+      "last_update": "Dernière mise à jour : 23 Janvier 2026",
+      "terms": {
+        "title": "Conditions Générales d'Utilisation",
+        "s1_title": "1. Objet du Service",
+        "s1_desc": "Dropy fournit une plateforme technologique permettant la mise en relation entre des vendeurs indépendants, des fournisseurs de produits et des créateurs de contenu UGC en Tunisie. Dropy agit en tant qu'intermédiaire technique et facilite la logistique ainsi que les transactions financières entre les parties.",
+        "s2_title": "2. Obligations des Utilisateurs",
+        "s2_desc": "Chaque utilisateur s'engage à fournir des informations exactes lors de son inscription. Les vendeurs sont responsables de la promotion de leurs boutiques, les fournisseurs de la qualité et de la disponibilité des stocks, et les créateurs de l'authenticité du contenu produit. Tout usage abusif de la plateforme pourra entraîner une suspension immédiate du compte.",
+        "s3_title": "3. Paiements et Commissions",
+        "s3_desc": "Dropy prélève une commission sur chaque vente effectuée via la plateforme. Les profits des vendeurs sont calculés après déduction du coût du produit, des frais de livraison et de la commission Dropy. Les versements sont effectués de manière hebdomadaire une fois que les colis sont confirmés comme livrés et payés par le client final."
+      },
+      "privacy": {
+        "title": "Politique de Confidentialité",
+        "s1_title": "1. Collecte des Données",
+        "s1_desc": "Nous collectons les informations nécessaires à la gestion de votre compte et à la facturation : nom complet, adresse email, numéro de téléphone, et coordonnées bancaires pour les versements. Nous utilisons également des cookies pour améliorer votre expérience de navigation et analyser l'audience de la plateforme.",
+        "s2_title": "2. Utilisation et Protection",
+        "s2_desc": "Vos données personnelles sont strictement confidentielles. Elles sont utilisées uniquement pour le bon fonctionnement des services Dropy (traitement des commandes, support client, marketing direct). Nous mettons en œuvre des mesures de sécurité avancées pour protéger vos informations contre tout accès non autorisé."
+      },
+      "mentions": {
+        "title": "Mentions Légales",
+        "company": "Dropy - Plateforme E-commerce Innovante",
+        "address": "Siège social : Avenue Habib Bourguiba, Tunis, Tunisie",
+        "contact": "Email : ahmed@dropy.store | WhatsApp : +216 54 302 654"
+      }
+    },
+    "tarifs": {
+      "hero": {
+        "badge": "Simplicité & Transparence",
+        "title_main": "Gagner plus,",
+        "title_accent": "dépenser moins.",
+        "desc": "Aucun frais d'inscription caché. Choisissez le plan qui correspond à l'ambition de votre projet."
+      },
+      "plans": [
+        {
+          "name": "Starter",
+          "description": "Parfait pour lancer votre première marque sans risque.",
+          "price": "0",
+          "period": "TND / mois",
+          "features": [
+            "Builder de boutique intuitif",
+            "Accès au catalogue textile",
+            "Logistique & Livraison 48h",
+            "Paiement à la livraison",
+            "Support standard"
+          ],
+          "cta": "Lancer gratuitement",
+          "badge": ""
+        },
+        {
+          "name": "Pro",
+          "description": "Pour les entrepreneurs qui passent à l'échelle supérieure.",
+          "price": "49",
+          "period": "TND / mois",
+          "features": [
+            "Tout le contenu Starter",
+            "Nom de domaine personnalisé",
+            "Marketplace UGC incluse",
+            "Commissions réduites",
+            "Support WhatsApp Prioritaire",
+            "Outils marketing avancés"
+          ],
+          "cta": "Passer au plan Pro",
+          "badge": "Le choix des pros"
+        },
+        {
+          "name": "Enterprise",
+          "description": "Solutions sur mesure pour les grandes marques.",
+          "price": "Custom",
+          "period": "Sur devis",
+          "features": [
+            "Tout le contenu Pro",
+            "Account Manager dédié",
+            "Accès API & Webhooks",
+            "Marquage textile sur mesure",
+            "Logistique VIP",
+            "Formations d'équipe"
+          ],
+          "cta": "Contacter l'équipe",
+          "badge": ""
+        }
+      ],
+      "trust": {
+        "title": "Toujours à vos côtés, sans compromis.",
+        "security_title": "Sécurité & Qualité",
+        "security_desc": "Nous auditons chaque fournisseur et garantissons la qualité premium de chaque pièce textile.",
+        "speed_title": "Rapidité d'exécution",
+        "speed_desc": "De l'approbation de votre compte à votre première vente, tout est pensé pour aller vite.",
+        "help_title": "Besoin d'aide ?",
+        "help_desc": "Notre équipe d'experts est disponible 7j/7 pour vous accompagner dans le choix de votre plan.",
+        "help_cta": "Parler à un conseiller",
+        "secure_transactions": "Transactions 100% Sécurisées"
+      }
+    },
+        "login": {
+          "title": "Bon retour !",
+          "subtitle": "J'ai lancé ma boutique en 5 minutes !",
+          "email": "Adresse email",
+          "password": "Mot de passe",
+          "forgot_password": "Mot de passe oublié ?",
+          "remember_me": "Se souvenir de moi",
+          "submit": "Se connecter",
+          "or": "ou",
+          "google": "Continuer avec Google",
+          "no_account": "Pas encore de compte ?",
+          "signup": "Inscrivez-vous ici",
+          "quote": "J'ai lancé ma boutique en 5 minutes !",
+          "quote_author": "Ahmed M.",
+          "author_role": "Vendeur Dropy",
+          "footer": "© 2026 Dropy • Tunisie",
+          "toasts": {
+            "error_title": "Erreur de connexion",
+            "invalid_credentials": "Email ou mot de passe incorrect",
+            "email_not_confirmed": "Veuillez confirmer votre email avant de vous connecter",
+            "pending_title": "Compte en attente",
+            "pending_desc": "Votre compte est en attente de validation par un administrateur.",
+            "suspended_title": "Compte suspendu",
+            "suspended_desc": "Votre compte a été suspendu. Contactez le support.",
+            "success_title": "Connexion réussie !"
+          }
+        },
+    "register": {
+      "title": "Bienvenue !",
+      "subtitle": "Créez votre compte gratuitement.",
+      "full_name": "Nom complet",
+      "email": "Adresse email",
+      "password": "Mot de passe",
+      "password_hint": "8 caractères minimum.",
+      "role_label": "Votre profil :",
+      "terms_accept": "J'accepte les",
+      "terms_link": "Conditions",
+      "privacy_and": "et la",
+      "privacy_link": "Confidentialité",
+      "submit": "Créer mon compte",
+      "or": "ou",
+      "google": "S'inscrire avec Google",
+      "has_account": "Déjà un compte ?",
+      "login": "Connectez-vous",
+      "quote_title": "Prêt à",
+      "quote_span": "réussir",
+      "quote_end": "en Tunisie ?",
+      "description": "Rejoignez des centaines de Tunisiens qui gagnent leur vie en ligne.",
+      "roles": {
+        "seller": "Vendeur",
+        "seller_desc": "Vendre sans stock",
+        "supplier": "Fournisseur",
+        "supplier_desc": "Vendre en gros",
+        "creator": "Créateur",
+        "creator_desc": "Gagner de l'argent"
+      },
+      "errors": {
+        "invalid_email": "Veuillez saisir une adresse e-mail valide."
+      },
+      "toasts": {
+        "accept_terms": "Veuillez accepter les CGU",
+        "password_short": "Le mot de passe doit contenir au moins 8 caractères",
+        "error_title": "Erreur lors de l'inscription",
+        "success_title": "Inscription réussie !",
+        "success_desc": "Un email de confirmation a été envoyé à {email}. Veuillez vérifier votre boîte de réception.",
+        "created_title": "Compte créé avec succès !",
+        "created_desc": "Vous pouvez maintenant vous connecter."
+      }
+    },
+    "forgot_password": {
+      "title": "Réinitialiser le mot de passe",
+      "subtitle": "Entrez votre email et nous vous enverrons un lien de réinitialisation.",
+      "email": "Adresse email",
+      "submit": "Envoyer le lien",
+      "success_title": "Email envoyé !",
+      "success_desc": "Si un compte existe pour {email}, vous recevrez un email sous peu.",
+      "try_another": "Essayer un autre email",
+      "back_to_login": "Retour à la connexion",
+      "error": "Erreur",
+      "error_generic": "Une erreur est survenue",
+      "toast_success": "Email envoyé",
+        "toast_success_desc": "Vérifiez votre boîte de réception pour réinitialiser votre mot de passe."
+      },
+      "role_signup": {
+        "select_placeholder": "Choisir...",
+        "full_name": "Nom complet",
+        "phone": "Téléphone",
+        "email": "Email professionnel",
+        "password": "Mot de passe",
+        "info_title": "Informations {role}",
+        "creator": "Créateur",
+        "seller": "Vendeur",
+        "supplier": "Fournisseur",
+        "instagram": "Instagram / TikTok",
+        "specialty": "Spécialité",
+        "portfolio": "Lien Portfolio / Travaux",
+        "store_name": "Nom souhaité de la boutique",
+        "sector": "Secteur d'activité",
+        "company_name": "Nom de l'entreprise",
+        "tax_id": "Registre de Commerce (RC)",
+        "product_type": "Catégories textile",
+        "submit_finish": "Finaliser mon profil",
+        "submit_create": "Créer mon compte",
+        "back_to_dashboard": "Retour au tableau de bord",
+        "login_link": "Connectez-vous ici",
+        "has_account": "Vous avez déjà un compte ?",
+        "supplier_notice": "Dropy accepte uniquement les fournisseurs de produits textiles (vêtements, chaussures, accessoires mode).",
+        "sectors": {
+          "fashion": "Mode & Accessoires",
+          "beauty": "Beauté & Cosmétique",
+          "home": "Maison & Déco",
+          "tech": "High-Tech",
+          "other": "Autre"
+        },
+        "specialties": {
+          "video": "Vidéo UGC",
+          "photo": "Photographie Produit",
+          "lifestyle": "Lifestyle / Influence",
+          "unboxing": "Unboxing & Review"
+        },
+          "categories": {
+            "tshirts": "T-shirts & Polos",
+            "shirts": "Chemises & Blouses",
+            "pants": "Pantalons & Jeans",
+            "dresses": "Robes & Jupes",
+            "jackets": "Vestes & Manteaux",
+            "underwear": "Sous-vêtements",
+            "shoes": "Chaussures",
+            "accessories": "Accessoires Mode",
+            "sportswear": "Sportswear",
+            "multi": "Multi-catégories textile"
+          }
+        },
+        "pending_page": {
+          "title": "Candidature en cours d'examen",
+          "email_confirmed": "Email confirmé avec succès",
+          "status_title": "Votre accès est en attente de validation",
+          "status_desc": "L'équipe Dropy examine actuellement votre profil pour garantir la qualité de notre réseau. Ce processus prend généralement entre 24 et 48 heures.",
+          "notification_hint": "Vous recevrez une notification par email dès que votre compte sera activé.",
+          "waiting_action": "En attendant la validation :",
+          "blog_title": "Découvrir notre blog",
+          "blog_desc": "Conseils et astuces pour réussir votre business en Tunisie.",
+          "social_follow": "Suivez-nous sur les réseaux sociaux",
+          "back_home": "Retour à l'accueil",
+          "contact_support": "Contacter le support"
+        },
+        "vendeurs": {
+      "hero": {
+        "badge": "Zéro Stock, Zéro Risque",
+        "title_main": "Vendez en ligne",
+        "title_accent": "et Gagnez Gros",
+        "desc": "Lancez votre boutique sans dépenser un millime en stock. Nous fournissons les produits et gérons la livraison.",
+        "cta_primary": "Devenir Vendeur",
+        "cta_secondary": "Comment ça marche ?",
+        "income_label": "PROFIT MOYEN",
+        "income_value": "+1500 TND / mois"
+      },
+      "benefits": {
+        "title": "Pourquoi choisir Dropy ?",
+        "subtitle": "Tout ce dont vous avez besoin pour réussir.",
+        "risk": {
+          "title": "Zéro Risque",
+          "desc": "Vous ne payez le produit qu'après l'avoir vendu."
+        },
+        "quality": {
+          "title": "Produits Top",
+          "desc": "Des milliers d'articles locaux qui se vendent bien."
+        },
+        "logistic": {
+          "title": "Livraison Express",
+          "desc": "On livre vos clients partout en Tunisie en 24/48h."
+        },
+        "support": {
+          "title": "Accompagnement",
+          "desc": "Une équipe pour vous aider à chaque étape."
+        }
+      },
+      "features": {
+        "title": "Des outils simples et puissants",
+        "list": [
+          "Boutique en ligne en 1 clic",
+          "Catalogue de produits illimité",
+          "Suivi des commandes en temps réel",
+          "Paiements automatiques de vos profits"
+        ],
+        "cta": "Démarrer maintenant"
+      },
+      "final": {
+        "title": "C'est votre tour de réussir",
+        "subtitle": "Rejoignez la plus grande communauté de dropshippers en Tunisie.",
+        "cta": "Créer mon compte"
+      }
+    },
+    "fournisseurs": {
+      "hero": {
+        "badge": "Solution Grossiste",
+        "title_main": "Vendez vos produits",
+        "title_accent": "à grande échelle",
+        "desc": "Connectez vos stocks à des centaines de vendeurs tunisiens prêts à promouvoir vos produits.",
+        "cta_primary": "Devenir Fournisseur",
+        "cta_secondary": "En savoir plus",
+        "stats": {
+          "sales": "Croissance ventes",
+          "sellers": "Vendeurs actifs",
+          "speed": "Traitement rapide",
+          "coverage": "Couverture"
+        }
+      },
+      "benefits": {
+        "list": [
+          {
+            "title": "Plus de Ventes",
+            "desc": "Votre stock s'écoule plus vite grâce à nos vendeurs."
+          },
+          {
+            "title": "Paiement Sécurisé",
+            "desc": "Garantie de paiement pour chaque commande livrée."
+          },
+          {
+            "title": "Zéro Marketing",
+            "desc": "Les vendeurs gèrent la publicité pour vous."
+          }
+        ]
+      },
+      "network": {
+        "title": "Un réseau présent partout",
+        "desc": "Nous livrons vos produits dans les 24 gouvernorats tunisiens.",
+        "badges": [
+          "Tunis",
+          "Sousse",
+          "Sfax",
+          "Gabès",
+          "Bizerte",
+          "Tout le pays"
+        ]
+      },
+      "final": {
+        "badge": "Partenariat",
+        "title": "Prêt à booster votre stock ?",
+        "cta": "Rejoindre maintenant"
+      }
+    },
+    "createurs": {
+      "hero": {
+        "badge": "Programme Créateur",
+        "title_main": "Créez du contenu",
+        "title_accent": "Gagnez de l'argent",
+        "desc": "Recevez des produits gratuits et soyez payé pour vos vidéos authentiques.",
+        "cta_primary": "Devenir Créateur",
+        "cta_secondary": "Voir les missions",
+        "stats": {
+          "revenue": "Revenu moyen",
+          "products": "Produits offerts"
+        }
+      },
+      "steps": {
+        "title": "Comment ça marche ?",
+        "list": [
+          {
+            "title": "Postulez",
+            "desc": "Inscrivez-vous et montrez votre talent."
+          },
+          {
+            "title": "Créez",
+            "desc": "Recevez les produits et faites vos vidéos."
+          },
+          {
+            "title": "Gagnez",
+            "desc": "Soyez payé pour chaque vidéo validée."
+          }
+        ]
+      },
+      "final": {
+        "title": "Libérez votre créativité",
+        "desc": "Rejoignez la première communauté UGC en Tunisie.",
+        "cta": "Démarrer l'aventure"
+      }
+    },
+    "dashboard": {
+      "welcome": "Bonjour",
+      "performance_today": "Voici les performances de votre boutique aujourd'hui",
+      "stats": {
+        "revenue": "Revenus",
+        "orders": "Commandes",
+        "products": "Produits",
+        "customers": "Clients",
+        "this_month": "Ce mois",
+        "total": "Total",
+        "online": "En ligne",
+        "unique": "Uniques"
+      },
+      "actions": {
+        "import_products": "Importer des produits",
+        "edit_store": "Éditer ma boutique",
+        "view_analytics": "Voir les analytics",
+        "dropshipping_catalog": "Catalogue Dropshipping",
+        "order_ugc": "Commander UGC",
+        "calculate_margins": "Calculer mes marges",
+        "find_creator": "Trouver un créateur"
+      },
+      "charts": {
+        "sales_performance": "Performance des ventes",
+        "revenue_orders_7d": "Revenus et commandes sur 7 jours",
+        "this_week": "cette semaine",
+        "delivery_rate": "Taux de livraison",
+        "by_governorate": "Par gouvernorat tunisien",
+        "global": "Global",
+        "revenue": "Revenus",
+        "profit": "Profit"
+      },
+      "recent_orders": {
+        "title": "Commandes récentes",
+        "subtitle": "Les 5 dernières commandes",
+        "view_all": "Voir tout",
+        "empty": "Aucune commande pour le moment",
+        "empty_desc": "Vos commandes apparaîtront ici"
+      },
+      "tools": {
+        "smart_calculator": "Smart Calculator",
+        "calculator_desc": "Optimisez vos prix et maximisez vos profits avec l'IA",
+        "ugc_creators": "Créateurs UGC",
+        "ugc_desc": "Boostez vos ventes avec des vidéos authentiques",
+        "quick_actions": "Actions rapides"
+      },
+      "nav": {
+        "dashboard": "Dashboard",
+        "my_store": "Ma Boutique",
+        "my_products": "Mes Produits",
+        "dropy_catalog": "Catalogue Dropy",
+        "orders": "Commandes",
+        "shipping": "Livraisons",
+        "calculator": "Calculator",
+        "customers": "Clients",
+        "analytics": "Analytics",
+        "ugc_creators": "Créateurs UGC",
+        "training": "Formation",
+        "subscription": "Abonnement",
+        "settings": "Paramètres",
+        "help": "Aide",
+        "logout": "Déconnexion",
+        "search": "Rechercher...",
+        "need_help": "Besoin d'aide ?",
+        "help_desc": "Notre équipe est là pour vous accompagner",
+        "help_center": "Centre d'aide",
+        "collapse": "Réduire",
+        "expand": "Afficher le menu"
+      }
+    }
+  }
+}

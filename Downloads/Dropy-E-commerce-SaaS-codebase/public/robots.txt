@@ -1,0 +1,18 @@
+# Robots.txt for dropy.store
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://dropy.store/sitemap.xml
+
+# Bloquer les pages admin et API
+Disallow: /admin/
+Disallow: /api/
+Disallow: /inscription
+Disallow: /connexion
+Disallow: /dashboard/
+
+# Bloquer les pages de confirmation
+Disallow: /confirmation-inscription
+Disallow: /demande-en-attente

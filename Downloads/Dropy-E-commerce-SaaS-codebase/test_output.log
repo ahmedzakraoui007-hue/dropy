@@ -1,0 +1,58 @@
+
+Running 2 tests using 2 workers
+
+  ✘  1 [mobile] › tests/e2e/storefront/checkout.spec.ts:62:9 › Parcours 2: Achat Client Complet › 2.7 - Accès checkout (6ms)
+[2m[WebServer] [22mEach child in a list should have a unique "key" prop.
+[2m[WebServer] [22m
+[2m[WebServer] [22mCheck the render method of `IconGrid`. See https://react.dev/link/warning-keys for more information.
+2.7 Found 5 products
+[2m[WebServer] [22m [31m[1m⨯[22m[39m The requested resource isn't a valid image for /placeholder-category.jpg received text/html; charset=utf-8
+2.7 Timeout waiting for Add Cart Btn
+  ✘  2 [chromium] › tests/e2e/storefront/checkout.spec.ts:62:9 › Parcours 2: Achat Client Complet › 2.7 - Accès checkout (31.2s)
+
+
+  1) [chromium] › tests/e2e/storefront/checkout.spec.ts:62:9 › Parcours 2: Achat Client Complet › 2.7 - Accès checkout 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.isVisible: Target page, context or browser has been closed
+
+      78 |                 console.log('2.7 Timeout waiting for Add Cart Btn');
+      79 |             }
+    > 80 |             if (await btn.isVisible()) {
+         |                           ^
+      81 |                 await btn.click();
+      82 |                 await waitForToast(page);
+      83 |             }
+        at /home/ahmed/Downloads/Dropy-E-commerce-SaaS-codebase/tests/e2e/storefront/checkout.spec.ts:80:27
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/storefront-checkout-Parcou-c92de-omplet-2-7---Accès-checkout-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/storefront-checkout-Parcou-c92de-omplet-2-7---Accès-checkout-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/storefront-checkout-Parcou-c92de-omplet-2-7---Accès-checkout-chromium/error-context.md
+
+  2) [mobile] › tests/e2e/storefront/checkout.spec.ts:62:9 › Parcours 2: Achat Client Complet › 2.7 - Accès checkout 
+
+    Error: browserType.launch: Executable doesn't exist at /home/ahmed/.cache/ms-playwright/webkit-2248/pw_run.sh
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  2 failed
+    [chromium] › tests/e2e/storefront/checkout.spec.ts:62:9 › Parcours 2: Achat Client Complet › 2.7 - Accès checkout 
+    [mobile] › tests/e2e/storefront/checkout.spec.ts:62:9 › Parcours 2: Achat Client Complet › 2.7 - Accès checkout 
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m

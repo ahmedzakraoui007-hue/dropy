@@ -1,0 +1,136 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "D DROPY" [ref=e7] [cursor=pointer]:
+            - /url: /
+            - generic [ref=e8]:
+              - generic [ref=e10]: D
+              - generic [ref=e11]: DROPY
+          - generic [ref=e12]:
+            - link "Vendeurs" [ref=e13] [cursor=pointer]:
+              - /url: /vendeurs
+              - text: Vendeurs
+            - link "Créateurs UGC" [ref=e14] [cursor=pointer]:
+              - /url: /createurs
+              - text: Créateurs UGC
+            - link "Fournisseurs" [ref=e15] [cursor=pointer]:
+              - /url: /fournisseurs
+              - text: Fournisseurs
+            - link "Tarifs" [ref=e16] [cursor=pointer]:
+              - /url: /tarifs
+              - text: Tarifs
+            - link "Blog" [ref=e17] [cursor=pointer]:
+              - /url: https://dropyblog.vercel.app
+              - text: Blog
+        - generic [ref=e19]:
+          - button "Français" [ref=e20]:
+            - img
+            - generic [ref=e21]: Français
+          - link "Connexion" [ref=e22] [cursor=pointer]:
+            - /url: /login
+            - button "Connexion" [ref=e23]
+          - link "Démarrer" [ref=e24] [cursor=pointer]:
+            - /url: /inscription
+            - button "Démarrer" [ref=e25]:
+              - text: Démarrer
+              - img
+    - main [ref=e26]:
+      - generic [ref=e28]:
+        - heading "404" [level=1] [ref=e29]
+        - heading "This page could not be found." [level=2] [ref=e31]
+    - contentinfo [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - link "D DROPY" [ref=e36] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e37]:
+                - generic [ref=e39]: D
+                - generic [ref=e40]: DROPY
+            - paragraph [ref=e41]: L'e-commerce simplifié pour tous les Tunisiens.
+            - generic [ref=e42]:
+              - heading "Restez informé" [level=4] [ref=e43]
+              - generic [ref=e44]:
+                - textbox "Votre email" [ref=e45]
+                - button [ref=e46]:
+                  - img [ref=e47]
+          - generic [ref=e50]:
+            - heading "Plateforme" [level=4] [ref=e51]
+            - list [ref=e52]:
+              - listitem [ref=e53]:
+                - link "Vendeurs" [ref=e54] [cursor=pointer]:
+                  - /url: /vendeurs
+              - listitem [ref=e55]:
+                - link "Créateurs UGC" [ref=e56] [cursor=pointer]:
+                  - /url: /createurs
+              - listitem [ref=e57]:
+                - link "Fournisseurs" [ref=e58] [cursor=pointer]:
+                  - /url: /fournisseurs
+              - listitem [ref=e59]:
+                - link "Tarifs" [ref=e60] [cursor=pointer]:
+                  - /url: /tarifs
+          - generic [ref=e61]:
+            - heading "Ressources" [level=4] [ref=e62]
+            - list [ref=e63]:
+              - listitem [ref=e64]:
+                - link "Blog" [ref=e65] [cursor=pointer]:
+                  - /url: https://dropyblog.vercel.app
+              - listitem [ref=e66]:
+                - link "FAQ" [ref=e67] [cursor=pointer]:
+                  - /url: /faq
+              - listitem [ref=e68]:
+                - link "Aide" [ref=e69] [cursor=pointer]:
+                  - /url: /aide
+          - generic [ref=e70]:
+            - heading "Société" [level=4] [ref=e71]
+            - list [ref=e72]:
+              - listitem [ref=e73]:
+                - link "À propos" [ref=e74] [cursor=pointer]:
+                  - /url: /a-propos
+              - listitem [ref=e75]:
+                - link "Contact" [ref=e76] [cursor=pointer]:
+                  - /url: /contact
+              - listitem [ref=e77]:
+                - link "Carrières" [ref=e78] [cursor=pointer]:
+                  - /url: /carrieres
+          - generic [ref=e79]:
+            - heading "Légal" [level=4] [ref=e80]
+            - list [ref=e81]:
+              - listitem [ref=e82]:
+                - link "Conditions" [ref=e83] [cursor=pointer]:
+                  - /url: /conditions-utilisation
+              - listitem [ref=e84]:
+                - link "Confidentialité" [ref=e85] [cursor=pointer]:
+                  - /url: /politique-confidentialite
+              - listitem [ref=e86]:
+                - link "Mentions légales" [ref=e87] [cursor=pointer]:
+                  - /url: /mentions-legales
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - link [ref=e90] [cursor=pointer]:
+              - /url: https://facebook.com
+              - img [ref=e91]
+            - link [ref=e93] [cursor=pointer]:
+              - /url: https://instagram.com
+              - img [ref=e94]
+            - link [ref=e97] [cursor=pointer]:
+              - /url: https://wa.me/21600000000
+              - img [ref=e98]
+            - link [ref=e100] [cursor=pointer]:
+              - /url: https://linkedin.com
+              - img [ref=e101]
+          - paragraph [ref=e105]: © 2026 Dropy. Fait avec ❤️ en Tunisie
+          - generic [ref=e108]: En ligne
+  - region "Notifications alt+T"
+  - generic [ref=e111] [cursor=pointer]:
+    - img [ref=e112]
+    - generic [ref=e114]: 1 error
+    - button "Hide Errors" [ref=e115]:
+      - img [ref=e116]
+  - alert [ref=e119]
+```
