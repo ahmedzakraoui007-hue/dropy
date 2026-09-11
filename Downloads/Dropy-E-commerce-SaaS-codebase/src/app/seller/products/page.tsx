@@ -134,7 +134,7 @@ export default function SellerProductsPage() {
           <div className="flex items-center gap-2">
             <div className="bg-gray-100 p-1 rounded-lg flex items-center gap-1">
               <Button 
-                variant={view === "grid" ? "white" : "ghost"} 
+                variant={view === "grid" ? "secondary" : "ghost"} 
                 size="icon" 
                 className={`w-8 h-8 rounded-md ${view === "grid" ? "shadow-sm" : "text-gray-500"}`}
                 onClick={() => setView("grid")}
@@ -142,7 +142,7 @@ export default function SellerProductsPage() {
                 <LayoutGrid className="w-4 h-4" />
               </Button>
               <Button 
-                variant={view === "list" ? "white" : "ghost"} 
+                variant={view === "list" ? "secondary" : "ghost"} 
                 size="icon" 
                 className={`w-8 h-8 rounded-md ${view === "list" ? "shadow-sm" : "text-gray-500"}`}
                 onClick={() => setView("list")}

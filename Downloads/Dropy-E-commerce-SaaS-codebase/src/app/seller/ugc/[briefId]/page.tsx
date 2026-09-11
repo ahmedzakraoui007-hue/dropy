@@ -37,7 +37,7 @@ export default function BriefDetailsPage({ params }: { params: Promise<{ briefId
 
   const handleAccept = async (appId: string) => {
     try {
-      await acceptApplication(appId, briefId);
+      await acceptApplication(appId, briefId, brief?.budget || 0);
       toast.success('Candidature acceptée ! Le brief est maintenant en cours.');
     } catch (err: any) {
       toast.error('Erreur: ' + err.message);

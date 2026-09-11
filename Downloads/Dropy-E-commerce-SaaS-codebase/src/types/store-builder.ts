@@ -44,6 +44,8 @@ export interface ColorConfig {
   background: string;
   text: string;
   muted: string;
+  textMuted?: string;
+  border?: string;
 }
 
 export interface TypographyConfig {
@@ -300,18 +302,7 @@ export interface RichTextSectionData {
   alignment: 'left' | 'center' | 'right';
 }
 
-export type SectionData =
-  | HeroSectionData
-  | FeaturedProductsSectionData
-  | CategoriesSectionData
-  | BenefitsSectionData
-  | TestimonialsSectionData
-  | NewsletterSectionData
-  | BannerSectionData
-  | CountdownSectionData
-  | ImageWithTextSectionData
-  | VideoSectionData
-  | RichTextSectionData;
+export type SectionData = Record<string, any>;
 
 // ===== NAVIGATION =====
 export interface MenuItem {
@@ -328,6 +319,40 @@ export interface StoreMenu {
   seller_id: string;
   location: 'header' | 'footer' | 'mobile';
   items: MenuItem[];
+}
+
+export interface StoreBuilderChecklist {
+  design: {
+    completed: boolean;
+    details: {
+      hasLogo: boolean;
+      hasColors: boolean;
+      hasHero: boolean;
+    };
+  };
+  pages: {
+    completed: boolean;
+    count: number;
+    hasHomepage: boolean;
+  };
+  navigation: {
+    completed: boolean;
+    headerCount: number;
+    footerCount: number;
+  };
+  domain: {
+    completed: boolean;
+    domain: string | null;
+    isVerified: boolean;
+  };
+  overall: number;
+}
+
+export type NavigationItem = MenuItem;
+
+export interface StoreSettings extends Partial<StoreConfig> {
+  primary_color?: string;
+  font_heading?: string;
 }
 
 // ===== MÉDIA =====

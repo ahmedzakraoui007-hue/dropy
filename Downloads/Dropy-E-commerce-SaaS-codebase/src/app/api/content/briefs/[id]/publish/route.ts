@@ -4,10 +4,10 @@ import { calculateMatchScore } from "@/lib/matching";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient();
-  const { id } = params;
+  const { id } = await params;
 
   try {
     // 1. Get brief details

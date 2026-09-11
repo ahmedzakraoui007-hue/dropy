@@ -18,9 +18,9 @@ export default function LandingFooter() {
       { name: t("footer.links.pricing"), href: "/tarifs" },
     ],
     resources: [
-      { name: t("footer.links.blog"), href: "https://dropyblog.vercel.app" },
-      { name: t("footer.links.faq"), href: "/faq" },
-      { name: t("footer.links.help"), href: "/aide" },
+      { name: t("footer.links.blog"), href: "https://dropyblog.vercel.app", comingSoon: false },
+      { name: t("footer.links.faq"), href: "/faq", comingSoon: false },
+      { name: t("footer.links.help"), href: "/aide", comingSoon: false },
     ],
     company: [
       { name: t("footer.links.about"), href: "/a-propos" },

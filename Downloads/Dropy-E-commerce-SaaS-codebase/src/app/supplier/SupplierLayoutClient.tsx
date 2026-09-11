@@ -36,6 +36,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
+interface Profile {
+  avatar_url?: string | null;
+  full_name?: string | null;
+}
+
+interface SupplierProfile {
+  id: string;
+  status?: string | null;
+}
+
 export default function SupplierLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();

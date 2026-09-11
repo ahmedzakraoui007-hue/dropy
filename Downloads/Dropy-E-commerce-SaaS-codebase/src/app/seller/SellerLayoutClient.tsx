@@ -44,6 +44,12 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
+interface Profile {
+  avatar_url?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+}
+
 export default function SellerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();

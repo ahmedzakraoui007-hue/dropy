@@ -7,7 +7,7 @@ import SectionRenderer from '@/components/store/SectionRenderer'
 export default async function StoreHomepage({
   params
 }: {
-  params: { storeSlug: string }
+  params: Promise<{ storeSlug: string }>
 }) {
   const { storeSlug } = await params
   const supabase = await createClient()

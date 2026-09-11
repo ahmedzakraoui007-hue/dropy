@@ -9,6 +9,7 @@ type Translations = typeof fr;
 
 interface LanguageContextType {
   locale: Locale;
+  language: Locale;
   setLocale: (locale: Locale) => void;
   t: (key: string) => string;
   dir: 'ltr' | 'rtl';
@@ -108,7 +109,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t, dir }}>
+    <LanguageContext.Provider value={{ locale, language: locale, setLocale, t, dir }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -120,6 +121,7 @@ export const useTranslation = () => {
     // Return a fallback instead of throwing to prevent 500 errors during SSR/initialization
     return {
       locale: 'fr' as Locale,
+      language: 'fr' as Locale,
       setLocale: () => {},
       t: (key: string) => key,
       dir: 'ltr' as 'ltr' | 'rtl'

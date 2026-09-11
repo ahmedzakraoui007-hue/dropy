@@ -7,6 +7,7 @@ type AuthFixtures = {
     creatorPage: Page;
     authenticatedAsRole: (role: 'seller' | 'supplier' | 'creator' | 'admin') => Promise<Page>;
 };
+type AuthRole = 'seller' | 'supplier' | 'creator' | 'admin';
 
 export const test = base.extend<AuthFixtures>({
     sellerPage: async ({ browser }, use) => {
@@ -26,7 +27,7 @@ export const test = base.extend<AuthFixtures>({
     },
 
     authenticatedAsRole: async ({ browser }, use) => {
-        const authenticate = async (role: 'seller' | 'supplier' | 'creator' | 'admin') => {
+        const authenticate = async (role: AuthRole) => {
             const context = await browser.newContext();
             const page = await context.newPage();
             await loginAs(page, role);
@@ -36,7 +37,7 @@ export const test = base.extend<AuthFixtures>({
     },
 });
 
-async function loginAs(page: Page, role: keyof typeof TEST_USERS) {
+async function loginAs(page: Page, role: AuthRole) {
     const user = TEST_USERS[role];
     // Assuming the user already exists. If not, tests might fail if seeds aren't run.
     // We might want to handle registration if login fails, but let's stick to the prompt.

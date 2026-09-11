@@ -184,7 +184,7 @@ export default function RoleSignup({ role, title, subtitle, accentColor }: RoleS
 
   return (
     <div className="min-h-screen bg-background" dir={dir}>
-      <LandingHeader accentColor={accentColor} />
+      <LandingHeader />
       
       <div className="flex flex-col items-center justify-center p-4 pt-24 pb-12">
         <motion.div

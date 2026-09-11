@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'signup',
       email: email,
+      password,
       options: {
         redirectTo: `${new URL(req.url).origin}/auth/callback?next=/demande-en-attente`,
       }

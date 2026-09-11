@@ -1,11 +1,12 @@
 // src/hooks/useBriefActions.ts
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { createClient } from '@/lib/supabase/client';
 import { CreateBriefInput, UGCBrief } from '@/types/ugc';
 
 export function useBriefActions(sellerId: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
 
   const createBrief = async (data: CreateBriefInput) => {
     try {

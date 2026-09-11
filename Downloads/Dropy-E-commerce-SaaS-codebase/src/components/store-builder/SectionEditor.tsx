@@ -56,7 +56,7 @@ export function SectionEditor({
     zIndex: isDragging ? 50 : 'auto',
   };
 
-  const sectionIcons: Record<SectionType, any> = {
+  const sectionIcons: Partial<Record<SectionType, any>> = {
     hero: ImageIcon,
     featured_products: ShoppingBag,
     categories: Layout,
@@ -101,7 +101,7 @@ export function SectionEditor({
     mega_menu: Layout,
   };
 
-  const sectionLabels: Record<SectionType, string> = {
+  const sectionLabels: Partial<Record<SectionType, string>> = {
     hero: 'Bannière Hero',
     featured_products: 'Produits Vedettes',
     categories: 'Catégories',
@@ -240,8 +240,8 @@ export function SectionEditor({
         <div className="p-8 border-t border-gray-50 bg-[#F8F9FC]">
           <SectionDataEditor
             type={section.type}
-            data={section.content}
-            onChange={onUpdate}
+            data={section.content as SectionData}
+            onChange={onUpdate as (data: Partial<SectionData>) => void}
           />
 
           {/* Global Section Controls */}
@@ -276,7 +276,7 @@ export function SectionEditor({
 function SectionDataEditor({ type, data, onChange }: {
   type: SectionType;
   data: SectionData;
-  onChange: (data: Partial<SectionData>) => void;
+  onChange: (data: Record<string, any>) => void;
 }) {
   switch (type) {
     case 'hero':

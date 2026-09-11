@@ -82,7 +82,7 @@ export function BriefForm({ onSubmit, isLoading, initialData }: BriefFormProps) 
         uploadedUrls.push(publicUrl);
       }
 
-      updateField('product_images', [...formData.product_images, ...uploadedUrls]);
+      updateField('product_images', [...(formData.product_images || []), ...uploadedUrls]);
       toast.success('Images ajoutées avec succès');
     } catch (err: any) {
       toast.error('Erreur lors de l\'upload: ' + err.message);
@@ -92,7 +92,7 @@ export function BriefForm({ onSubmit, isLoading, initialData }: BriefFormProps) 
   };
 
   const removeImage = (index: number) => {
-    updateField('product_images', formData.product_images.filter((_, i) => i !== index));
+    updateField('product_images', (formData.product_images || []).filter((_, i) => i !== index));
   };
 
   const nextStep = () => {
@@ -119,9 +119,9 @@ export function BriefForm({ onSubmit, isLoading, initialData }: BriefFormProps) 
             <div className="space-y-4">
               <Label>Images du produit</Label>
               
-              {formData.product_images.length > 0 && (
+              {(formData.product_images || []).length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 mb-4">
-                  {formData.product_images.map((url, i) => (
+                  {(formData.product_images || []).map((url, i) => (
                     <div key={i} className="aspect-square relative rounded-lg overflow-hidden border group">
                       <img src={url} alt="" className="w-full h-full object-cover" />
                       <button

@@ -7,7 +7,7 @@ import SectionRenderer from '@/components/store/SectionRenderer'
 export default async function StoreDynamicPage({ 
   params 
 }: { 
-  params: { 'vendor-slug': string, slug: string[] } 
+  params: Promise<{ 'vendor-slug': string, slug: string[] }>
 }) {
   const { 'vendor-slug': vendorSlug, slug } = await params
   const supabase = await createClient()

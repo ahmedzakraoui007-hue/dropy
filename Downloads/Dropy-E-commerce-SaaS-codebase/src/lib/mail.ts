@@ -1,6 +1,18 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let resendClient: Resend | null = null
+
+function getResend() {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY manquante')
+  }
+
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY)
+  }
+
+  return resendClient
+}
 
 /**
  * Generic function to send email via Resend
@@ -14,7 +26,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
       return null
     }
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'onboarding@resend.dev',
       to,
       subject,
@@ -43,7 +55,7 @@ export async function sendWaitingEmail(email: string, firstName: string) {
       throw new Error('RESEND_API_KEY manquante')
     }
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'onboarding@resend.dev', // ← Utiliser cet email de test
       to: email,
       subject: 'Votre demande est en cours de révision - Dropy',
@@ -82,7 +94,7 @@ export async function sendConfirmationEmail(email: string, confirmationLink: str
   try {
     console.log('📧 [Mail] Envoi email confirmation à:', email)
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'onboarding@resend.dev',
       to: email,
       subject: 'Confirmez votre adresse email - Dropy',

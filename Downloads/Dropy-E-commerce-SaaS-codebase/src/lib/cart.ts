@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 const CART_COOKIE_NAME = 'dropy_cart_id';
 
 export async function getCart(storeId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const cookieStore = await cookies();
     const cartId = cookieStore.get(CART_COOKIE_NAME)?.value;
 
@@ -40,7 +40,7 @@ export async function getCart(storeId: string) {
 }
 
 export async function addToCart(storeId: string, productId: string, quantity: number, options: any = {}) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const cookieStore = await cookies();
     let cartId = cookieStore.get(CART_COOKIE_NAME)?.value;
 
@@ -58,7 +58,8 @@ export async function addToCart(storeId: string, productId: string, quantity: nu
 
         if (cartError) throw new Error('Failed to create cart');
 
-        cartId = newCart.id;
+        cartId = newCart?.id;
+        if (!cartId) throw new Error('Failed to create cart');
         cookieStore.set(CART_COOKIE_NAME, cartId, { path: '/' });
     }
 
@@ -93,7 +94,7 @@ export async function addToCart(storeId: string, productId: string, quantity: nu
 }
 
 export async function removeFromCart(itemId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const cookieStore = await cookies();
     const cartId = cookieStore.get(CART_COOKIE_NAME)?.value;
 
@@ -109,7 +110,7 @@ export async function removeFromCart(itemId: string) {
 }
 
 export async function updateCartItemQuantity(itemId: string, quantity: number) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const cookieStore = await cookies();
     const cartId = cookieStore.get(CART_COOKIE_NAME)?.value;
 
@@ -130,7 +131,7 @@ export async function updateCartItemQuantity(itemId: string, quantity: number) {
 }
 
 export async function clearCart(storeId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const cookieStore = await cookies();
     const cartId = cookieStore.get(CART_COOKIE_NAME)?.value;
 

@@ -16,6 +16,10 @@ export const TEST_USERS = {
         password: 'TestPassword123!',
         displayName: 'Test Creator',
     },
+    admin: {
+        email: 'test-admin@dropy.tn',
+        password: 'TestPassword123!',
+    },
     customer: {
         name: 'Ahmed Ben Ali',
         phone: '98765432',

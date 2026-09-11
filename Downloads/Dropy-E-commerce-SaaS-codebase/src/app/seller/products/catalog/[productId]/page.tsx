@@ -314,7 +314,7 @@ export default function ProductDetailPage() {
             <div key={typeSlug} className="space-y-3">
               <Label className="text-sm font-bold text-gray-700 uppercase tracking-wider">{group.name}</Label>
               <div className="flex flex-wrap gap-2">
-                {Array.from(group.options.entries()).map(([label, value]: [any, any]) => (
+                {Array.from(group.options.entries() as Iterable<[string, any]>).map(([label, value]) => (
                   <button
                     key={label}
                     onClick={() => handleOptionSelect(typeSlug, label)}

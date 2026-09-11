@@ -41,7 +41,7 @@ export default function TarifsPage() {
     },
   ];
 
-  const plans = t("pages.tarifs.plans").map((plan: any, idx: number) => ({
+  const plans = (t("pages.tarifs.plans") as unknown as any[]).map((plan: any, idx: number) => ({
     ...plan,
     ...plansStyles[idx]
   }));

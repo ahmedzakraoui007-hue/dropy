@@ -66,7 +66,9 @@ export async function POST(request: Request) {
       expand: ['latest_invoice.payment_intent'],
     });
 
-    const invoice = subscription.latest_invoice as Stripe.Invoice;
+    const invoice = subscription.latest_invoice as Stripe.Invoice & {
+      payment_intent?: string | Stripe.PaymentIntent | null;
+    };
     const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
 
     return NextResponse.json({

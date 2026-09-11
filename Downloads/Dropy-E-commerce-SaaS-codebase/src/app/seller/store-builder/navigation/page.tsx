@@ -177,7 +177,7 @@ export default function NavigationPage() {
                     key={item.id} 
                     item={item} 
                     pages={pages}
-                    onUpdate={(f, v) => updateItem('header', item.id, f, v)}
+                    onUpdate={(f: string, v: any) => updateItem('header', item.id, f, v)}
                     onRemove={() => removeItem('header', item.id)}
                   />
                 ))}
@@ -211,7 +211,7 @@ export default function NavigationPage() {
                     key={item.id} 
                     item={item} 
                     pages={pages}
-                    onUpdate={(f, v) => updateItem('footer', item.id, f, v)}
+                    onUpdate={(f: string, v: any) => updateItem('footer', item.id, f, v)}
                     onRemove={() => removeItem('footer', item.id)}
                   />
                 ))}

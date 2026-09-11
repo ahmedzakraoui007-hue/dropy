@@ -176,9 +176,10 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
               let otherPartyAvatar = "";
               
               if (userRole === "creator") {
-                otherPartyId = briefData.store?.seller_id || "";
-                otherPartyName = briefData.store?.name || "Vendeur";
-                otherPartyAvatar = briefData.store?.logo_url || "";
+                const store = Array.isArray(briefData.store) ? briefData.store[0] : briefData.store;
+                otherPartyId = store?.seller_id || "";
+                otherPartyName = store?.name || "Vendeur";
+                otherPartyAvatar = store?.logo_url || "";
               } else {
                 otherPartyId = briefData.selected_creator_id || "";
                 otherPartyName = (briefData.creator as any)?.full_name || "Créateur";

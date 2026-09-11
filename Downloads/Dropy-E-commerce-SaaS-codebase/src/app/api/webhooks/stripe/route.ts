@@ -4,6 +4,10 @@ import Stripe from 'stripe';
 import { stripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/server';
 
+type SubscriptionWithPeriod = Stripe.Subscription & {
+  current_period_end?: number;
+};
+
 export async function POST(request: Request) {
   const body = await request.text();
   const headersList = await headers();
@@ -41,7 +45,7 @@ export async function POST(request: Request) {
             if (supabaseUserId) {
               const subscription = await stripe.subscriptions.retrieve(
                 session.subscription as string
-              ) as Stripe.Subscription;
+              ) as SubscriptionWithPeriod;
               
               const { error } = await supabase
                 .from('profiles')
@@ -49,7 +53,9 @@ export async function POST(request: Request) {
                   stripe_subscription_id: subscription.id,
                   subscription_status: subscription.status,
                   subscription_plan: plan || 'pro',
-                  subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                  subscription_period_end: subscription.current_period_end
+                    ? new Date(subscription.current_period_end * 1000).toISOString()
+                    : null,
                 })
                 .eq('id', supabaseUserId);
 
@@ -139,18 +145,18 @@ export async function POST(request: Request) {
 
       case 'customer.subscription.created':
       case 'customer.subscription.updated': {
-        const subscription = event.data.object;
+        const subscription = event.data.object as SubscriptionWithPeriod;
         const supabaseUserId = subscription.metadata?.supabase_user_id;
         const plan = subscription.metadata?.plan;
 
-        if (supabaseUserId && 'current_period_end' in subscription) {
+        if (supabaseUserId && subscription.current_period_end) {
           await supabase
             .from('profiles')
             .update({
               stripe_subscription_id: subscription.id,
               subscription_status: subscription.status,
               subscription_plan: plan || 'pro',
-              subscription_period_end: new Date((subscription.current_period_end as number) * 1000).toISOString(),
+              subscription_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
             })
             .eq('id', supabaseUserId);
         }
@@ -182,12 +188,13 @@ export async function POST(request: Request) {
           const subscriptionData = await stripe.subscriptions.retrieve(subscriptionId);
           const supabaseUserId = subscriptionData.metadata?.supabase_user_id;
 
-          if (supabaseUserId && 'current_period_end' in subscriptionData) {
+          const subscriptionWithPeriod = subscriptionData as SubscriptionWithPeriod;
+          if (supabaseUserId && subscriptionWithPeriod.current_period_end) {
             await supabase
               .from('profiles')
               .update({
                 subscription_status: 'active',
-                subscription_period_end: new Date((subscriptionData.current_period_end as number) * 1000).toISOString(),
+                subscription_period_end: new Date(subscriptionWithPeriod.current_period_end * 1000).toISOString(),
               })
               .eq('id', supabaseUserId);
           }

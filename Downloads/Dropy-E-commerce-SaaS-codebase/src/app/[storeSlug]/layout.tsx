@@ -11,7 +11,7 @@ export default async function StoreLayout({
   params
 }: {
   children: React.ReactNode
-  params: { storeSlug: string }
+  params: Promise<{ storeSlug: string }>
 }) {
   const { storeSlug } = await params
   const supabase = await createClient()

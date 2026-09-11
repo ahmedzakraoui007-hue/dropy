@@ -135,7 +135,8 @@ interface Section {
 
 interface Page {
   id: string;
-  title: string;
+  name?: string;
+  title?: string;
   slug: string;
   type: string;
   sections: Section[];
@@ -1304,7 +1305,7 @@ export default function BuilderPage() {
           <div className="flex items-center gap-2 bg-muted p-1 rounded-full ml-4">
             <Button 
               variant={isBeginnerMode ? "secondary" : "ghost"} 
-              size="xs" 
+              size="sm" 
               className="rounded-full text-[10px] h-6"
               onClick={() => setIsBeginnerMode(true)}
             >
@@ -1312,7 +1313,7 @@ export default function BuilderPage() {
             </Button>
             <Button 
               variant={!isBeginnerMode ? "secondary" : "ghost"} 
-              size="xs" 
+              size="sm" 
               className="rounded-full text-[10px] h-6"
               onClick={() => setIsBeginnerMode(false)}
             >
@@ -1408,7 +1409,7 @@ export default function BuilderPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button size="sm" onClick={handleSave} disabled={saving} className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700">
+              <Button size="sm" onClick={() => handleSave()} disabled={saving} className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
                 Enregistrer
               </Button>
@@ -1829,7 +1830,7 @@ export default function BuilderPage() {
                       <div className="pt-4 border-t border-border">
                         <Button 
                           className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold shadow-lg shadow-purple-200"
-                          onClick={handleSave}
+                          onClick={() => handleSave()}
                           disabled={saving}
                         >
                           {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
