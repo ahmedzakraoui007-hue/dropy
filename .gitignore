@@ -47,3 +47,6 @@ next-env.d.ts
 
 # temp SQL scripts
 supabase/migrations/check_schema.sql
+
+# old wrapper folder after moving the app to the repository root
+/Downloads/
