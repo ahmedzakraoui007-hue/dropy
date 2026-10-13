@@ -71,7 +71,8 @@ export async function middleware(request: NextRequest) {
 
     // Protected Routes Logic
     const protectedRoutes = ['/admin', '/seller', '/supplier', '/creator', '/dashboard', '/settings'];
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+    const isPublicRolePage = /^\/(seller|supplier|creator)\/signup\/?$/.test(pathname);
+    const isProtectedRoute = !isPublicRolePage && protectedRoutes.some(route => pathname.startsWith(route));
     const isAuthPage = ['/login', '/inscription', '/register'].includes(pathname);
 
     // Redirect unauthenticated
@@ -84,16 +85,24 @@ export async function middleware(request: NextRequest) {
 
     // Redirect authenticated from login to dashboard
     if (isAuthPage && user) {
-      // ... (Existing logic for redirecting to dashboard)
-      // Simplified for now, or keep existing logic if robust
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, status')
         .eq('id', user.id)
         .maybeSingle();
 
-      const role = profile?.role || 'seller';
-      return NextResponse.redirect(new URL(`/${role}/dashboard`, request.url));
+      if (profile?.status === 'pending' || profile?.status === 'suspended') {
+        return supabaseResponse;
+      }
+
+      const redirectMap: Record<string, string> = {
+        admin: '/admin',
+        seller: '/seller/dashboard',
+        supplier: '/supplier/dashboard',
+        creator: '/creator/dashboard',
+      };
+      const target = redirectMap[profile?.role || 'seller'] || '/seller/dashboard';
+      return NextResponse.redirect(new URL(target, request.url));
     }
 
     // 3. Storefront Routing (Bug #6 Fix)

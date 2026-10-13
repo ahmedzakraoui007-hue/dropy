@@ -89,6 +89,12 @@ export default function RoleSignup({ role, title, subtitle, accentColor }: RoleS
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!isExistingUser && password.length < 8) {
+      toast.error(t("register.toasts.password_short"));
+      return;
+    }
+
     setLoading(true);
 
     const supabase = createClient();
@@ -143,9 +149,9 @@ export default function RoleSignup({ role, title, subtitle, accentColor }: RoleS
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
+          email: email.trim().toLowerCase(),
           password,
-          fullName,
+          fullName: fullName.trim(),
           phone,
           role,
           additionalData: {
@@ -163,7 +169,13 @@ export default function RoleSignup({ role, title, subtitle, accentColor }: RoleS
       const result = await response.json();
 
       if (!response.ok) {
-        toast.error(result.error || t("forgot_password.error_generic"));
+        const codeMessages: Record<string, string> = {
+          email_exists: t("register.toasts.email_exists"),
+          invalid_email: t("register.errors.invalid_email"),
+          weak_password: t("register.toasts.password_short"),
+          email_send_failed: t("register.toasts.email_send_failed"),
+        };
+        toast.error((result.code && codeMessages[result.code]) || result.error || t("forgot_password.error_generic"));
         setLoading(false);
         return;
       }
@@ -175,7 +187,7 @@ export default function RoleSignup({ role, title, subtitle, accentColor }: RoleS
         description: isExistingUser ? t("role_signup.submit_finish") : t("register.toasts.success_desc").replace("{email}", email),
       });
       
-      router.push("/login");
+      router.push(isExistingUser ? "/login" : "/login?message=check-email");
     }
     setLoading(false);
   }

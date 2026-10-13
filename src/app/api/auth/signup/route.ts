@@ -1,94 +1,181 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendConfirmationEmail } from "@/lib/mail";
+
+const ALLOWED_ROLES = ["seller", "supplier", "creator"] as const;
+type Role = (typeof ALLOWED_ROLES)[number];
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function fail(code: string, error: string, status = 400) {
+  return NextResponse.json({ code, error }, { status });
+}
+
+function siteOrigin(req: Request) {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+  return new URL(req.url).origin;
+}
 
 export async function POST(req: Request) {
   try {
-    const { email, password, fullName, phone, role, additionalData, lang = "fr" } = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body) return fail("invalid_request", "Invalid request body");
+
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
+    const fullName = String(body.fullName || "").trim();
+    const phone = body.phone ? String(body.phone).trim() : null;
+    const role = body.role as Role;
+    const additionalData = body.additionalData || {};
+
+    if (!EMAIL_REGEX.test(email)) return fail("invalid_email", "Invalid email address");
+    if (password.length < 8) return fail("weak_password", "Password must be at least 8 characters");
+    if (!fullName) return fail("missing_name", "Full name is required");
+    if (!ALLOWED_ROLES.includes(role)) return fail("invalid_role", "Invalid role");
 
     const supabase = createAdminClient();
+    const metadata = { full_name: fullName, phone, role };
 
-    // 1. Create user with admin client to ensure metadata is set correctly
-    // We use admin client because we need to bypass some client-side restrictions if any
-    const { data: { user }, error: signUpError } = await supabase.auth.admin.createUser({
+    let userId: string;
+    let hashedToken: string;
+    let verificationType: string;
+    let isNewUser = true;
+
+    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+      type: "signup",
       email,
       password,
-      email_confirm: false, // User must confirm their email
-      user_metadata: {
-        full_name: fullName,
-        phone,
-        role,
-      },
-    });
-
-    if (signUpError) {
-      return NextResponse.json({ error: signUpError.message }, { status: 400 });
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User creation failed" }, { status: 500 });
-    }
-
-    // 2. Send confirmation email via Resend
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'signup',
-      email: email,
-      password,
-      options: {
-        redirectTo: `${new URL(req.url).origin}/auth/callback?next=/demande-en-attente`,
-      }
+      options: { data: metadata },
     });
 
     if (linkError) {
-      console.error("Error generating confirmation link:", linkError);
-    } else if (linkData?.properties?.action_link) {
-      const { sendConfirmationEmail } = await import("@/lib/mail");
-      await sendConfirmationEmail(email, linkData.properties.action_link);
+      const alreadyExists =
+        linkError.code === "email_exists" ||
+        linkError.code === "user_already_exists" ||
+        /already (been )?registered/i.test(linkError.message);
+
+      if (!alreadyExists) {
+        console.error("Signup generateLink error:", linkError);
+        return fail("signup_failed", linkError.message, 500);
+      }
+
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (!existingProfile) return fail("email_exists", "An account already exists with this email");
+
+      const { data: existing } = await supabase.auth.admin.getUserById(existingProfile.id);
+      if (!existing?.user || existing.user.email_confirmed_at) {
+        return fail("email_exists", "An account already exists with this email");
+      }
+
+      const { error: updateError } = await supabase.auth.admin.updateUserById(existing.user.id, {
+        password,
+        user_metadata: metadata,
+      });
+      if (updateError) return fail("signup_failed", updateError.message, 500);
+
+      const { data: resendLink, error: resendError } = await supabase.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+      });
+      if (resendError || !resendLink?.properties) {
+        return fail("signup_failed", resendError?.message || "Could not generate confirmation link", 500);
+      }
+
+      userId = existing.user.id;
+      hashedToken = resendLink.properties.hashed_token;
+      verificationType = resendLink.properties.verification_type;
+      isNewUser = false;
+    } else {
+      if (!linkData?.user || !linkData.properties) {
+        return fail("signup_failed", "User creation failed", 500);
+      }
+      userId = linkData.user.id;
+      hashedToken = linkData.properties.hashed_token;
+      verificationType = linkData.properties.verification_type;
     }
 
-    // 4. Create profile and role-specific data
+    const confirmUrl = `${siteOrigin(req)}/auth/confirm?token_hash=${encodeURIComponent(hashedToken)}&type=${encodeURIComponent(verificationType)}`;
+
+    try {
+      await sendConfirmationEmail(email, confirmUrl);
+    } catch (mailError) {
+      console.error("Signup confirmation email failed:", mailError);
+      if (isNewUser) await supabase.auth.admin.deleteUser(userId);
+      return fail("email_send_failed", "Could not send the confirmation email", 502);
+    }
+
     const { error: profileError } = await supabase.from("profiles").upsert({
-      id: user.id,
+      id: userId,
       email,
       full_name: fullName,
       phone,
       role,
       status: "pending",
     });
-
     if (profileError) console.error("Profile error:", profileError);
 
-    if (role === "creator") {
-      await supabase.from("creator_profiles").upsert({
-        user_id: user.id,
-        portfolio_url: additionalData?.portfolio || "",
-        instagram_username: additionalData?.instagram || "",
-        instagram_handle: (additionalData?.instagram || "").replace("@", ""),
-        specialty: additionalData?.specialty || "",
-        specialties: additionalData?.specialty ? [additionalData.specialty] : [],
-        status: "pending"
-      });
-    } else if (role === "supplier") {
-      await supabase.from("supplier_profiles").upsert({
-        user_id: user.id,
-        company_name: additionalData?.companyName || "",
-        tax_id: additionalData?.taxId || "",
-        product_type: additionalData?.productType || "",
-        status: "pending"
-      });
+    if (role === "creator" || role === "supplier") {
+      const table = role === "creator" ? "creator_profiles" : "supplier_profiles";
+      const row =
+        role === "creator"
+          ? {
+              user_id: userId,
+              portfolio_url: additionalData.portfolio || "",
+              instagram_username: additionalData.instagram || "",
+              instagram_handle: (additionalData.instagram || "").replace("@", ""),
+              specialty: additionalData.specialty || "",
+              specialties: additionalData.specialty ? [additionalData.specialty] : [],
+              status: "pending",
+            }
+          : {
+              user_id: userId,
+              company_name: additionalData.companyName || "",
+              tax_id: additionalData.taxId || "",
+              product_type: additionalData.productType || "",
+              status: "pending",
+            };
+
+      const { data: existingRow } = await supabase
+        .from(table)
+        .select("user_id")
+        .eq("user_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      const { error } = existingRow
+        ? await supabase.from(table).update(row).eq("user_id", userId)
+        : await supabase.from(table).insert(row);
+      if (error) console.error(`${table} error:`, error);
     } else if (role === "seller") {
-      const storeName = additionalData?.storeName || "Ma Boutique";
-      const slug = storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-      await supabase.from("stores").insert({
-        seller_id: user.id,
-        name: storeName,
-        slug: `${slug}-${Math.floor(Math.random() * 1000)}`,
-        is_active: true
-      });
+      const { data: existingStore } = await supabase
+        .from("stores")
+        .select("id")
+        .eq("seller_id", userId)
+        .limit(1)
+        .maybeSingle();
+
+      if (!existingStore) {
+        const storeName = additionalData.storeName || "Ma Boutique";
+        const slug = storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const { error } = await supabase.from("stores").insert({
+          seller_id: userId,
+          name: storeName,
+          slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
+          is_active: true,
+        });
+        if (error) console.error("Store creation error:", error);
+      }
     }
 
-    return NextResponse.json({ success: true, user: { id: user.id } });
+    return NextResponse.json({ success: true, user: { id: userId } });
   } catch (error: any) {
     console.error("Signup API error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return fail("signup_failed", error?.message || "Unexpected error", 500);
   }
 }

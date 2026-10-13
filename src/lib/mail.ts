@@ -2,6 +2,8 @@ import { Resend } from 'resend'
 
 let resendClient: Resend | null = null
 
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'Dropy <onboarding@resend.dev>'
+
 function getResend() {
   if (!process.env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY manquante')
@@ -27,7 +29,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
     }
 
     const { data, error } = await getResend().emails.send({
-      from: 'onboarding@resend.dev',
+      from: FROM_EMAIL,
       to,
       subject,
       html,
@@ -56,7 +58,7 @@ export async function sendWaitingEmail(email: string, firstName: string) {
     }
 
     const { data, error } = await getResend().emails.send({
-      from: 'onboarding@resend.dev', // ← Utiliser cet email de test
+      from: FROM_EMAIL,
       to: email,
       subject: 'Votre demande est en cours de révision - Dropy',
       html: `
@@ -95,7 +97,7 @@ export async function sendConfirmationEmail(email: string, confirmationLink: str
     console.log('📧 [Mail] Envoi email confirmation à:', email)
 
     const { data, error } = await getResend().emails.send({
-      from: 'onboarding@resend.dev',
+      from: FROM_EMAIL,
       to: email,
       subject: 'Confirmez votre adresse email - Dropy',
       html: `
