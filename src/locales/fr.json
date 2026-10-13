@@ -249,40 +249,50 @@
         "secure_transactions": "Transactions 100% Sécurisées"
       }
     },
-        "login": {
-          "title": "Bon retour !",
-          "subtitle": "J'ai lancé ma boutique en 5 minutes !",
-          "email": "Adresse email",
-          "password": "Mot de passe",
-          "forgot_password": "Mot de passe oublié ?",
-          "remember_me": "Se souvenir de moi",
-          "submit": "Se connecter",
-          "or": "ou",
-          "no_account": "Pas encore de compte ?",
-          "signup": "Inscrivez-vous ici",
-          "quote": "J'ai lancé ma boutique en 5 minutes !",
-          "quote_author": "Ahmed M.",
-          "author_role": "Vendeur Dropy",
-          "footer": "© 2026 Dropy • Tunisie",
-          "toasts": {
-            "error_title": "Erreur de connexion",
-            "invalid_credentials": "Email ou mot de passe incorrect",
-            "email_not_confirmed": "Veuillez confirmer votre email avant de vous connecter",
-            "pending_title": "Compte en attente",
-            "pending_desc": "Votre compte est en attente de validation par un administrateur.",
-            "suspended_title": "Compte suspendu",
-            "suspended_desc": "Votre compte a été suspendu. Contactez le support.",
-            "success_title": "Connexion réussie !",
-            "check_email_title": "Vérifiez votre boîte mail",
-            "check_email_desc": "Cliquez sur le lien de confirmation envoyé à votre adresse email (pensez à vérifier les spams).",
-            "confirmed_title": "Email confirmé !",
-            "confirmed_desc": "Vous pouvez maintenant vous connecter.",
-            "link_invalid": "Ce lien est invalide ou a expiré. Veuillez réessayer."
-          }
-        },
+    "login": {
+      "title": "Bon retour !",
+      "subtitle": "Connectez-vous pour accéder à votre espace Dropy.",
+      "email": "Adresse email",
+      "password": "Mot de passe",
+      "forgot_password": "Mot de passe oublié ?",
+      "remember_me": "Se souvenir de moi",
+      "submit": "Se connecter",
+      "or": "ou",
+      "no_account": "Pas encore de compte ?",
+      "signup": "Inscrivez-vous ici",
+      "quote": "J'ai lancé ma boutique en 5 minutes !",
+      "quote_author": "Ahmed M.",
+      "author_role": "Vendeur Dropy",
+      "footer": "© 2026 Dropy • Tunisie",
+      "toasts": {
+        "error_title": "Erreur de connexion",
+        "invalid_credentials": "Email ou mot de passe incorrect",
+        "email_not_confirmed": "Veuillez confirmer votre email avant de vous connecter",
+        "pending_title": "Compte en attente",
+        "pending_desc": "Votre compte est en attente de validation par un administrateur.",
+        "suspended_title": "Compte suspendu",
+        "suspended_desc": "Votre compte a été suspendu. Contactez le support.",
+        "success_title": "Connexion réussie !",
+        "check_email_title": "Vérifiez votre boîte mail",
+        "check_email_desc": "Cliquez sur le lien de confirmation envoyé à votre adresse email (pensez à vérifier les spams).",
+        "confirmed_title": "Email confirmé !",
+        "confirmed_desc": "Vous pouvez maintenant vous connecter.",
+        "link_invalid": "Ce lien est invalide ou a expiré. Veuillez réessayer."
+      },
+      "email_placeholder": "nom@exemple.com",
+      "submitting": "Connexion en cours…",
+      "resend_confirmation": "Renvoyer l'email de confirmation",
+      "resend_sent": "Si ce compte n'est pas encore confirmé, un nouvel email vient d'être envoyé.",
+      "errors": {
+        "email_required": "Veuillez saisir votre adresse email.",
+        "email_invalid": "Cette adresse email n'est pas valide.",
+        "password_required": "Veuillez saisir votre mot de passe.",
+        "network": "Connexion impossible. Vérifiez votre connexion internet et réessayez."
+      }
+    },
     "register": {
       "title": "Bienvenue !",
-      "subtitle": "Créez votre compte gratuitement.",
+      "subtitle": "Créez votre compte gratuitement en moins d'une minute.",
       "full_name": "Nom complet",
       "email": "Adresse email",
       "password": "Mot de passe",
@@ -309,7 +319,10 @@
         "creator_desc": "Gagner de l'argent"
       },
       "errors": {
-        "invalid_email": "Veuillez saisir une adresse e-mail valide."
+        "invalid_email": "Veuillez saisir une adresse e-mail valide.",
+        "name_required": "Veuillez saisir votre nom complet.",
+        "email_required": "Veuillez saisir votre adresse email.",
+        "terms_required": "Vous devez accepter les conditions pour continuer."
       },
       "toasts": {
         "accept_terms": "Veuillez accepter les CGU",
@@ -321,6 +334,21 @@
         "success_desc": "Un email de confirmation a été envoyé à {email}. Veuillez vérifier votre boîte de réception.",
         "created_title": "Compte créé avec succès !",
         "created_desc": "Vous pouvez maintenant vous connecter."
+      },
+      "full_name_placeholder": "Ex : Ahmed Ben Ali",
+      "password_placeholder": "8 caractères minimum",
+      "submitting": "Création du compte…",
+      "success": {
+        "title": "Vérifiez votre boîte mail",
+        "desc": "Nous avons envoyé un lien de confirmation à {email}.",
+        "step1": "Cliquez sur le lien dans l'email pour confirmer votre adresse.",
+        "step2": "Notre équipe examine votre demande (24 à 48h).",
+        "step3": "Vous recevez un email dès que votre compte est activé.",
+        "spam_hint": "Rien reçu ? Vérifiez vos spams ou renvoyez l'email.",
+        "resend": "Renvoyer l'email",
+        "resent": "Email renvoyé !",
+        "go_login": "Aller à la connexion",
+        "change_email": "Utiliser une autre adresse"
       }
     },
     "forgot_password": {
@@ -335,72 +363,102 @@
       "error": "Erreur",
       "error_generic": "Une erreur est survenue",
       "toast_success": "Email envoyé",
-        "toast_success_desc": "Vérifiez votre boîte de réception pour réinitialiser votre mot de passe."
+      "toast_success_desc": "Vérifiez votre boîte de réception pour réinitialiser votre mot de passe.",
+      "expired_title": "Lien expiré",
+      "expired_desc": "Ce lien de réinitialisation n'est plus valide. Demandez-en un nouveau ci-dessous.",
+      "submitting": "Envoi en cours…"
+    },
+    "role_signup": {
+      "select_placeholder": "Choisir...",
+      "full_name": "Nom complet",
+      "phone": "Téléphone",
+      "email": "Email professionnel",
+      "password": "Mot de passe",
+      "info_title": "Informations {role}",
+      "creator": "Créateur",
+      "seller": "Vendeur",
+      "supplier": "Fournisseur",
+      "instagram": "Instagram / TikTok",
+      "specialty": "Spécialité",
+      "portfolio": "Lien Portfolio / Travaux",
+      "store_name": "Nom souhaité de la boutique",
+      "sector": "Secteur d'activité",
+      "company_name": "Nom de l'entreprise",
+      "tax_id": "Registre de Commerce (RC)",
+      "product_type": "Catégories textile",
+      "submit_finish": "Finaliser mon profil",
+      "submit_create": "Créer mon compte",
+      "back_to_dashboard": "Retour au tableau de bord",
+      "login_link": "Connectez-vous ici",
+      "has_account": "Vous avez déjà un compte ?",
+      "supplier_notice": "Dropy accepte uniquement les fournisseurs de produits textiles (vêtements, chaussures, accessoires mode).",
+      "sectors": {
+        "fashion": "Mode & Accessoires",
+        "beauty": "Beauté & Cosmétique",
+        "home": "Maison & Déco",
+        "tech": "High-Tech",
+        "other": "Autre"
       },
-      "role_signup": {
-        "select_placeholder": "Choisir...",
-        "full_name": "Nom complet",
-        "phone": "Téléphone",
-        "email": "Email professionnel",
-        "password": "Mot de passe",
-        "info_title": "Informations {role}",
-        "creator": "Créateur",
-        "seller": "Vendeur",
-        "supplier": "Fournisseur",
-        "instagram": "Instagram / TikTok",
-        "specialty": "Spécialité",
-        "portfolio": "Lien Portfolio / Travaux",
-        "store_name": "Nom souhaité de la boutique",
-        "sector": "Secteur d'activité",
-        "company_name": "Nom de l'entreprise",
-        "tax_id": "Registre de Commerce (RC)",
-        "product_type": "Catégories textile",
-        "submit_finish": "Finaliser mon profil",
-        "submit_create": "Créer mon compte",
-        "back_to_dashboard": "Retour au tableau de bord",
-        "login_link": "Connectez-vous ici",
-        "has_account": "Vous avez déjà un compte ?",
-        "supplier_notice": "Dropy accepte uniquement les fournisseurs de produits textiles (vêtements, chaussures, accessoires mode).",
-        "sectors": {
-          "fashion": "Mode & Accessoires",
-          "beauty": "Beauté & Cosmétique",
-          "home": "Maison & Déco",
-          "tech": "High-Tech",
-          "other": "Autre"
-        },
-        "specialties": {
-          "video": "Vidéo UGC",
-          "photo": "Photographie Produit",
-          "lifestyle": "Lifestyle / Influence",
-          "unboxing": "Unboxing & Review"
-        },
-          "categories": {
-            "tshirts": "T-shirts & Polos",
-            "shirts": "Chemises & Blouses",
-            "pants": "Pantalons & Jeans",
-            "dresses": "Robes & Jupes",
-            "jackets": "Vestes & Manteaux",
-            "underwear": "Sous-vêtements",
-            "shoes": "Chaussures",
-            "accessories": "Accessoires Mode",
-            "sportswear": "Sportswear",
-            "multi": "Multi-catégories textile"
-          }
-        },
-        "pending_page": {
-          "title": "Candidature en cours d'examen",
-          "email_confirmed": "Email confirmé avec succès",
-          "status_title": "Votre accès est en attente de validation",
-          "status_desc": "L'équipe Dropy examine actuellement votre profil pour garantir la qualité de notre réseau. Ce processus prend généralement entre 24 et 48 heures.",
-          "notification_hint": "Vous recevrez une notification par email dès que votre compte sera activé.",
-          "waiting_action": "En attendant la validation :",
-          "blog_title": "Découvrir notre blog",
-          "blog_desc": "Conseils et astuces pour réussir votre business en Tunisie.",
-          "social_follow": "Suivez-nous sur les réseaux sociaux",
-          "back_home": "Retour à l'accueil",
-          "contact_support": "Contacter le support"
-        },
-        "vendeurs": {
+      "specialties": {
+        "video": "Vidéo UGC",
+        "photo": "Photographie Produit",
+        "lifestyle": "Lifestyle / Influence",
+        "unboxing": "Unboxing & Review"
+      },
+      "categories": {
+        "tshirts": "T-shirts & Polos",
+        "shirts": "Chemises & Blouses",
+        "pants": "Pantalons & Jeans",
+        "dresses": "Robes & Jupes",
+        "jackets": "Vestes & Manteaux",
+        "underwear": "Sous-vêtements",
+        "shoes": "Chaussures",
+        "accessories": "Accessoires Mode",
+        "sportswear": "Sportswear",
+        "multi": "Multi-catégories textile"
+      },
+      "titles": {
+        "seller": "Lancez votre business",
+        "supplier": "Devenez fournisseur Dropy",
+        "creator": "Rejoignez les meilleurs créateurs"
+      },
+      "subtitles": {
+        "seller": "Créez votre boutique et commencez à vendre en quelques minutes.",
+        "supplier": "Accédez à un vaste réseau de revendeurs et augmentez votre volume de ventes.",
+        "creator": "Monétisez votre créativité en collaborant avec des marques tunisiennes."
+      },
+      "placeholders": {
+        "phone": "+216 XX XXX XXX",
+        "instagram": "@votrecompte",
+        "portfolio": "https://…",
+        "store_name": "Ex : Ma Boutique TN",
+        "company_name": "Nom officiel",
+        "tax_id": "N° RC"
+      },
+      "errors": {
+        "required": "Ce champ est obligatoire.",
+        "phone_invalid": "Numéro de téléphone invalide.",
+        "url_invalid": "Lien invalide (ex : https://…)."
+      },
+      "account_section": "Votre compte",
+      "submitting": "Envoi en cours…",
+      "other_roles": "Vous n'êtes pas {role} ?",
+      "choose_profile": "Choisir un autre profil"
+    },
+    "pending_page": {
+      "title": "Candidature en cours d'examen",
+      "email_confirmed": "Email confirmé avec succès",
+      "status_title": "Votre accès est en attente de validation",
+      "status_desc": "L'équipe Dropy examine actuellement votre profil pour garantir la qualité de notre réseau. Ce processus prend généralement entre 24 et 48 heures.",
+      "notification_hint": "Vous recevrez une notification par email dès que votre compte sera activé.",
+      "waiting_action": "En attendant la validation :",
+      "blog_title": "Découvrir notre blog",
+      "blog_desc": "Conseils et astuces pour réussir votre business en Tunisie.",
+      "social_follow": "Suivez-nous sur les réseaux sociaux",
+      "back_home": "Retour à l'accueil",
+      "contact_support": "Contacter le support"
+    },
+    "vendeurs": {
       "hero": {
         "badge": "Zéro Stock, Zéro Risque",
         "title_main": "Vendez en ligne",
@@ -601,6 +659,45 @@
         "collapse": "Réduire",
         "expand": "Afficher le menu"
       }
+    },
+    "auth": {
+      "shell": {
+        "headline": "Le e-commerce tunisien, simplifié.",
+        "sub": "Boutique en ligne, fournisseurs locaux et créateurs de contenu réunis sur une seule plateforme.",
+        "point1": "Lancez votre boutique sans stock",
+        "point2": "Livraison partout en Tunisie en 24/48h",
+        "point3": "Paiement à la livraison et suivi des commandes",
+        "stat_sellers": "Vendeurs en Tunisie",
+        "stat_delivery": "Délai de livraison",
+        "stat_stock": "Stock à avancer",
+        "back_home": "Retour au site"
+      },
+      "show_password": "Afficher le mot de passe",
+      "hide_password": "Masquer le mot de passe",
+      "strength": {
+        "too_short": "Trop court — 8 caractères minimum",
+        "weak": "Faible",
+        "fair": "Moyen",
+        "good": "Bon",
+        "strong": "Excellent"
+      }
+    },
+    "reset_password": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un mot de passe sécurisé pour votre compte.",
+      "new_password": "Nouveau mot de passe",
+      "confirm_password": "Confirmer le mot de passe",
+      "submit": "Enregistrer le mot de passe",
+      "submitting": "Enregistrement…",
+      "mismatch": "Les mots de passe ne correspondent pas.",
+      "too_short": "Le mot de passe doit contenir au moins 8 caractères.",
+      "success_title": "Mot de passe mis à jour !",
+      "success_desc": "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.",
+      "login_now": "Se connecter",
+      "no_session_title": "Lien invalide ou expiré",
+      "no_session_desc": "Ouvrez le lien reçu par email, ou demandez un nouveau lien de réinitialisation.",
+      "request_new": "Demander un nouveau lien",
+      "error": "Impossible de mettre à jour le mot de passe."
     }
   }
 }

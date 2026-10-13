@@ -3,485 +3,573 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowRight, 
-  Loader2, 
-  User, 
-  Phone, 
-  Globe, 
-  Instagram, 
+import {
+  Mail,
+  Lock,
+  ArrowRight,
+  User,
+  Phone,
+  Globe,
+  Instagram,
   Store,
   Building2,
   FileText,
   Camera,
-  CheckCircle2
+  Package,
+  Check,
+  AlertCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import LandingHeader from "@/components/landing/LandingHeader";
 import { useTranslation } from "@/context/LanguageContext";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthField, PasswordField, PasswordStrength, AuthAlert, SubmitButton } from "@/components/auth/AuthFields";
+import { SignupSuccess } from "@/components/auth/SignupSuccess";
+import { cn } from "@/lib/utils";
+
+type Role = "creator" | "seller" | "supplier";
 
 interface RoleSignupProps {
-  role: "creator" | "seller" | "supplier";
-  title: string;
-  subtitle: string;
-  accentColor: string;
+  role: Role;
 }
 
-export default function RoleSignup({ role, title, subtitle, accentColor }: RoleSignupProps) {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const ROLE_META: Record<Role, { icon: typeof Store; gradient: string }> = {
+  seller: { icon: Store, gradient: "from-[#2E3192] to-[#4f56d6]" },
+  supplier: { icon: Package, gradient: "from-[#00A99D] to-[#0d8f86]" },
+  creator: { icon: Camera, gradient: "from-violet-500 to-purple-600" },
+};
+
+const OPTIONS: Record<string, { value: string; key: string }[]> = {
+  specialty: ["video", "photo", "lifestyle", "unboxing"].map((v) => ({ value: v, key: `role_signup.specialties.${v}` })),
+  sector: ["fashion", "beauty", "home", "tech", "other"].map((v) => ({ value: v, key: `role_signup.sectors.${v}` })),
+  productType: [
+    ["tshirts-polos", "tshirts"],
+    ["chemises-blouses", "shirts"],
+    ["pantalons-jeans", "pants"],
+    ["robes-jupes", "dresses"],
+    ["vestes-manteaux", "jackets"],
+    ["sous-vetements", "underwear"],
+    ["chaussures", "shoes"],
+    ["accessoires-mode", "accessories"],
+    ["sportswear", "sportswear"],
+    ["multi-categories", "multi"],
+  ].map(([value, key]) => ({ value, key: `role_signup.categories.${key}` })),
+};
+
+function SelectField({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  error,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; key: string }[];
+  error?: string;
+}) {
   const { t, dir } = useTranslation();
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-sm font-semibold text-slate-700">
+        {label}
+      </Label>
+      <Select value={value} onValueChange={onChange} dir={dir}>
+        <SelectTrigger
+          id={id}
+          aria-invalid={Boolean(error)}
+          className={cn(
+            "h-12 data-[size=default]:h-12 w-full rounded-xl border-slate-200 bg-slate-50/60 text-[15px] focus:ring-[#2E3192]/15",
+            error && "border-red-400 bg-red-50/40"
+          )}
+        >
+          <SelectValue placeholder={t("role_signup.select_placeholder")} />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl">
+          {options.map((o) => (
+            <SelectItem key={o.value} value={o.value}>
+              {t(o.key)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {error && (
+        <p className="flex items-center gap-1.5 text-xs font-medium text-red-600">
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function RoleSignup({ role }: RoleSignupProps) {
+  const { t, dir, language } = useTranslation();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const meta = ROLE_META[role];
+  const Icon = meta.icon;
 
-  const Icon = role === "creator" ? Camera : role === "seller" ? Store : Building2;
-  
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
   const [isExistingUser, setIsExistingUser] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [emailExists, setEmailExists] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
 
-  // Role specific fields
-  const [portfolio, setPortfolio] = useState("");
-  const [instagram, setInstagram] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [storeName, setStoreName] = useState("");
-  const [sector, setSector] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [taxId, setTaxId] = useState("");
-  const [productType, setProductType] = useState("");
+  const [values, setValues] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    password: "",
+    portfolio: "",
+    instagram: "",
+    specialty: "",
+    storeName: "",
+    sector: "",
+    companyName: "",
+    taxId: "",
+    productType: "",
+  });
+
+  function set(field: keyof typeof values, value: string) {
+    setValues((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
+  }
 
   useEffect(() => {
     async function checkSession() {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setIsExistingUser(true);
-        setEmail(user.email || "");
-        setFullName(user.user_metadata?.full_name || "");
-        setPhone(user.user_metadata?.phone || "");
-        
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-          
-        if (profile) {
-          setFullName(profile.full_name || "");
-          setPhone(profile.phone || "");
-        }
-      }
+      const { data } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+      const user = data.user;
+      if (!user) return;
+
+      setIsExistingUser(true);
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      setValues((prev) => ({
+        ...prev,
+        email: user.email || "",
+        fullName: profile?.full_name || user.user_metadata?.full_name || "",
+        phone: profile?.phone || user.user_metadata?.phone || "",
+      }));
     }
     checkSession();
   }, []);
 
+  function validate() {
+    const next: Record<string, string> = {};
+    const required = (field: keyof typeof values) => {
+      if (!values[field].trim()) next[field] = "role_signup.errors.required";
+    };
+
+    required("fullName");
+    required("phone");
+    if (!next.phone && values.phone.replace(/\D/g, "").length < 8) next.phone = "role_signup.errors.phone_invalid";
+
+    if (!isExistingUser) {
+      if (!values.email.trim()) next.email = "register.errors.email_required";
+      else if (!EMAIL_REGEX.test(values.email.trim())) next.email = "register.errors.invalid_email";
+      if (values.password.length < 8) next.password = "register.toasts.password_short";
+    }
+
+    if (role === "creator") {
+      required("instagram");
+      required("specialty");
+      required("portfolio");
+      if (!next.portfolio && !/^https?:\/\/\S+\.\S+/.test(values.portfolio.trim())) {
+        next.portfolio = "role_signup.errors.url_invalid";
+      }
+    } else if (role === "seller") {
+      required("storeName");
+      required("sector");
+    } else if (role === "supplier") {
+      required("companyName");
+      required("taxId");
+      required("productType");
+    }
+    return next;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const fieldErrors = validate();
+    setErrors(fieldErrors);
+    setFormError(null);
+    setEmailExists(false);
 
-    if (!isExistingUser && password.length < 8) {
-      toast.error(t("register.toasts.password_short"));
+    const order = [
+      "fullName", "phone", "email", "password", "instagram", "specialty", "portfolio",
+      "storeName", "sector", "companyName", "taxId", "productType",
+    ];
+    const firstInvalid = order.find((f) => fieldErrors[f]);
+    if (firstInvalid) {
+      document.getElementById(firstInvalid)?.focus();
       return;
     }
 
     setLoading(true);
-
-    const supabase = createClient();
-    let userId: string | undefined;
+    const v = {
+      ...values,
+      fullName: values.fullName.trim(),
+      phone: values.phone.trim(),
+      email: values.email.trim().toLowerCase(),
+      instagram: values.instagram.trim(),
+      portfolio: values.portfolio.trim(),
+      storeName: values.storeName.trim(),
+      companyName: values.companyName.trim(),
+      taxId: values.taxId.trim(),
+    };
 
     if (isExistingUser) {
-      const { data: { user } } = await supabase.auth.getUser();
-      userId = user?.id;
-
-      if (userId) {
-        const { error: profileError } = await supabase.from("profiles").upsert({
-          id: userId,
-          email,
-          full_name: fullName,
-          phone,
-          role,
-          status: "pending",
-        });
-
-        if (profileError) console.error("Profile creation error:", profileError);
-
-        if (role === "creator") {
-          await supabase.from("creator_profiles").upsert({
-            user_id: userId,
-            portfolio_url: portfolio,
-            instagram_username: instagram,
-            instagram_handle: instagram.replace("@", ""),
-            specialty,
-            specialties: [specialty],
-            status: "pending"
-          });
-        } else if (role === "supplier") {
-          await supabase.from("supplier_profiles").upsert({
-            user_id: userId,
-            company_name: companyName,
-            tax_id: taxId,
-            product_type: productType,
-            status: "pending"
-          });
-        } else if (role === "seller") {
-          const slug = storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-          await supabase.from("stores").insert({
-            seller_id: userId,
-            name: storeName,
-            slug: `${slug}-${Math.floor(Math.random() * 1000)}`,
-            is_active: true
-          });
-        }
-      }
-    } else {
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          password,
-          fullName: fullName.trim(),
-          phone,
-          role,
-          additionalData: {
-            portfolio,
-            instagram,
-            specialty,
-            storeName,
-            companyName,
-            taxId,
-            productType,
-          },
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        const codeMessages: Record<string, string> = {
-          email_exists: t("register.toasts.email_exists"),
-          invalid_email: t("register.errors.invalid_email"),
-          weak_password: t("register.toasts.password_short"),
-          email_send_failed: t("register.toasts.email_send_failed"),
-        };
-        toast.error((result.code && codeMessages[result.code]) || result.error || t("forgot_password.error_generic"));
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      const userId = data.user?.id;
+      if (!userId) {
+        setFormError("forgot_password.error_generic");
         setLoading(false);
         return;
       }
-      userId = result.user?.id;
+
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: userId,
+        email: v.email,
+        full_name: v.fullName,
+        phone: v.phone,
+        role,
+        status: "pending",
+      });
+      if (profileError) console.error("Profile creation error:", profileError);
+
+      if (role === "creator") {
+        await supabase.from("creator_profiles").upsert({
+          user_id: userId,
+          portfolio_url: v.portfolio,
+          instagram_username: v.instagram,
+          instagram_handle: v.instagram.replace("@", ""),
+          specialty: v.specialty,
+          specialties: [v.specialty],
+          status: "pending",
+        });
+      } else if (role === "supplier") {
+        await supabase.from("supplier_profiles").upsert({
+          user_id: userId,
+          company_name: v.companyName,
+          tax_id: v.taxId,
+          product_type: v.productType,
+          status: "pending",
+        });
+      } else if (role === "seller") {
+        const slug = v.storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        await supabase.from("stores").insert({
+          seller_id: userId,
+          name: v.storeName,
+          slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
+          is_active: true,
+        });
+      }
+
+      await supabase.auth.signOut();
+      router.replace("/demande-en-attente");
+      return;
     }
 
-    if (userId) {
-      toast.success(t("register.toasts.success_title"), {
-        description: isExistingUser ? t("role_signup.submit_finish") : t("register.toasts.success_desc").replace("{email}", email),
+    let response: Response;
+    let result: { error?: string; code?: string } = {};
+    try {
+      response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: v.email,
+          password: v.password,
+          fullName: v.fullName,
+          phone: v.phone,
+          role,
+          lang: language,
+          additionalData: {
+            portfolio: v.portfolio,
+            instagram: v.instagram,
+            specialty: v.specialty,
+            storeName: v.storeName,
+            sector: v.sector,
+            companyName: v.companyName,
+            taxId: v.taxId,
+            productType: v.productType,
+          },
+        }),
       });
-      
-      router.push(isExistingUser ? "/login" : "/login?message=check-email");
+      result = await response.json().catch(() => ({}));
+    } catch {
+      setFormError("forgot_password.error_generic");
+      setLoading(false);
+      return;
     }
+
     setLoading(false);
+
+    if (!response.ok) {
+      if (result.code === "email_exists") {
+        setEmailExists(true);
+        setErrors({ email: "register.toasts.email_exists" });
+        document.getElementById("email")?.focus();
+        return;
+      }
+      if (result.code === "invalid_email") {
+        setErrors({ email: "register.errors.invalid_email" });
+        return;
+      }
+      if (result.code === "weak_password") {
+        setErrors({ password: "register.toasts.password_short" });
+        return;
+      }
+      setFormError(result.code === "email_send_failed" ? "register.toasts.email_send_failed" : "forgot_password.error_generic");
+      return;
+    }
+
+    setSubmittedEmail(v.email);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  const err = (field: string) => (errors[field] ? t(errors[field]!) : undefined);
   const roleName = t(`role_signup.${role}`);
 
+  if (submittedEmail) {
+    return (
+      <AuthShell wide>
+        <SignupSuccess
+          email={submittedEmail}
+          onChangeEmail={() => {
+            setSubmittedEmail(null);
+            set("password", "");
+          }}
+        />
+      </AuthShell>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background" dir={dir}>
-      <LandingHeader />
-      
-      <div className="flex flex-col items-center justify-center p-4 pt-24 pb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-xl"
-        >
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 mb-6">
-              <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${accentColor} flex items-center justify-center shadow-lg`}>
-                <Icon className="w-7 h-7 text-white" />
-              </div>
-              <span className="text-3xl font-bold gradient-text uppercase tracking-tight">DROPY</span>
-            </div>
-            <h1 className="text-3xl font-bold mb-2">{title}</h1>
-            <p className="text-muted-foreground">{subtitle}</p>
+    <AuthShell wide>
+      <div className="space-y-7">
+        <div className="space-y-4">
+          <span className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.gradient} shadow-lg`}>
+            <Icon className="h-6 w-6 text-white" />
+          </span>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900">{t(`role_signup.titles.${role}`)}</h1>
+            <p className="text-slate-500">{t(`role_signup.subtitles.${role}`)}</p>
           </div>
+        </div>
 
-          <Card className="border-border/50 shadow-xl overflow-hidden glass">
-            <div className={`h-2 bg-gradient-to-r ${accentColor}`} />
-            <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">{t("role_signup.full_name")}</Label>
-                    <div className="relative">
-                      <User className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                      <Input 
-                        id="fullName" 
-                        value={fullName} 
-                        onChange={(e) => setFullName(e.target.value)} 
-                        className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                        placeholder="Ex: Ahmed Ben Ali" 
-                        required 
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t("role_signup.phone")}</Label>
-                    <div className="relative">
-                      <Phone className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                      <Input 
-                        id="phone" 
-                        value={phone} 
-                        onChange={(e) => setPhone(e.target.value)} 
-                        className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                        placeholder="+216 XX XXX XXX" 
-                        required 
-                      />
-                    </div>
-                  </div>
+        {formError && <AuthAlert variant="error" title={t("register.toasts.error_title")}>{t(formError)}</AuthAlert>}
+
+        <form onSubmit={handleSubmit} noValidate className="space-y-7">
+          <section className="space-y-5">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">{t("role_signup.account_section")}</h2>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <AuthField
+                id="fullName"
+                label={t("role_signup.full_name")}
+                icon={User}
+                placeholder={t("register.full_name_placeholder")}
+                autoComplete="name"
+                value={values.fullName}
+                onChange={(e) => set("fullName", e.target.value)}
+                error={err("fullName")}
+              />
+              <AuthField
+                id="phone"
+                type="tel"
+                label={t("role_signup.phone")}
+                icon={Phone}
+                placeholder={t("role_signup.placeholders.phone")}
+                autoComplete="tel"
+                inputMode="tel"
+                dir="ltr"
+                value={values.phone}
+                onChange={(e) => set("phone", e.target.value)}
+                error={err("phone")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <AuthField
+                id="email"
+                type="email"
+                label={t("role_signup.email")}
+                icon={Mail}
+                placeholder={t("login.email_placeholder")}
+                autoComplete="email"
+                inputMode="email"
+                value={values.email}
+                onChange={(e) => {
+                  set("email", e.target.value);
+                  setEmailExists(false);
+                }}
+                disabled={isExistingUser}
+                error={err("email")}
+              />
+              {emailExists && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm font-semibold">
+                  <Link href="/login" className="text-[#2E3192] hover:text-[#00A99D]">
+                    {t("register.login")}
+                  </Link>
+                  <Link href="/forgot-password" className="text-slate-500 hover:text-slate-800">
+                    {t("login.forgot_password")}
+                  </Link>
                 </div>
+              )}
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t("role_signup.email")}</Label>
-                  <div className="relative">
-                    <Mail className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onInvalid={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.setCustomValidity(t("register.errors.invalid_email"));
-                      }}
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.setCustomValidity("");
-                      }}
-                      className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`}
-                      placeholder="vous@exemple.com"
-                      required
-                      disabled={isExistingUser}
-                    />
-                  </div>
-                </div>
+            {!isExistingUser && (
+              <PasswordField
+                id="password"
+                label={t("role_signup.password")}
+                icon={Lock}
+                placeholder={t("register.password_placeholder")}
+                autoComplete="new-password"
+                value={values.password}
+                onChange={(e) => set("password", e.target.value)}
+                error={err("password")}
+                footer={!errors.password && <PasswordStrength password={values.password} />}
+              />
+            )}
+          </section>
 
-                {!isExistingUser && (
-                  <div className="space-y-2">
-                    <Label htmlFor="password">{t("role_signup.password")}</Label>
-                    <div className="relative">
-                      <Lock className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                      <Input 
-                        id="password" 
-                        type={showPassword ? "text" : "password"} 
-                        value={password} 
-                        onChange={(e) => setPassword(e.target.value)} 
-                        className={`${dir === 'rtl' ? 'pr-10 pl-10' : 'pl-10 pr-10'} h-11`} 
-                        placeholder="••••••••" 
-                        required 
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => setShowPassword(!showPassword)} 
-                        className={`absolute ${dir === 'rtl' ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground`}
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                )}
+          <section className="space-y-5 border-t border-slate-100 pt-7">
+            <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <Check className="h-3.5 w-3.5 text-[#00A99D]" strokeWidth={3} />
+              {t("role_signup.info_title").replace("{role}", roleName)}
+            </h2>
 
-                <div className="pt-4 border-t border-border/50">
-                  <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    {t("role_signup.info_title").replace("{role}", roleName)}
-                  </h3>
-                  
-                  {role === "creator" && (
-                    <div className="space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="instagram">{t("role_signup.instagram")}</Label>
-                          <div className="relative">
-                            <Instagram className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                            <Input 
-                              id="instagram" 
-                              value={instagram} 
-                              onChange={(e) => setInstagram(e.target.value)} 
-                              className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                              placeholder="@votrecompte" 
-                              required 
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="specialty">{t("role_signup.specialty")}</Label>
-                          <Select onValueChange={setSpecialty} required>
-                            <SelectTrigger className="h-11">
-                              <SelectValue placeholder={t("role_signup.select_placeholder")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="video">{t("role_signup.specialties.video")}</SelectItem>
-                              <SelectItem value="photo">{t("role_signup.specialties.photo")}</SelectItem>
-                              <SelectItem value="lifestyle">{t("role_signup.specialties.lifestyle")}</SelectItem>
-                              <SelectItem value="unboxing">{t("role_signup.specialties.unboxing")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="portfolio">{t("role_signup.portfolio")}</Label>
-                        <div className="relative">
-                          <Globe className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                          <Input 
-                            id="portfolio" 
-                            value={portfolio} 
-                            onChange={(e) => setPortfolio(e.target.value)} 
-                            className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                            placeholder="https://..." 
-                            required 
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {role === "seller" && (
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="storeName">{t("role_signup.store_name")}</Label>
-                        <div className="relative">
-                          <Store className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                          <Input 
-                            id="storeName" 
-                            value={storeName} 
-                            onChange={(e) => setStoreName(e.target.value)} 
-                            className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                            placeholder="Ex: Ma Boutique TN" 
-                            required 
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="sector">{t("role_signup.sector")}</Label>
-                        <Select onValueChange={setSector} required>
-                          <SelectTrigger className="h-11">
-                            <SelectValue placeholder={t("role_signup.select_placeholder")} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fashion">{t("role_signup.sectors.fashion")}</SelectItem>
-                            <SelectItem value="beauty">{t("role_signup.sectors.beauty")}</SelectItem>
-                            <SelectItem value="home">{t("role_signup.sectors.home")}</SelectItem>
-                            <SelectItem value="tech">{t("role_signup.sectors.tech")}</SelectItem>
-                            <SelectItem value="other">{t("role_signup.sectors.other")}</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-
-                  {role === "supplier" && (
-                    <div className="space-y-4">
-                      <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
-                        {t("role_signup.supplier_notice")}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName">{t("role_signup.company_name")}</Label>
-                        <div className="relative">
-                          <Building2 className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                          <Input 
-                            id="companyName" 
-                            value={companyName} 
-                            onChange={(e) => setCompanyName(e.target.value)} 
-                            className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                            placeholder="Nom officiel" 
-                            required 
-                          />
-                        </div>
-                      </div>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="taxId">{t("role_signup.tax_id")}</Label>
-                          <div className="relative">
-                            <FileText className={`absolute ${dir === 'rtl' ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground`} />
-                            <Input 
-                              id="taxId" 
-                              value={taxId} 
-                              onChange={(e) => setTaxId(e.target.value)} 
-                              className={`${dir === 'rtl' ? 'pr-10' : 'pl-10'} h-11`} 
-                              placeholder="N° RC" 
-                              required 
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="productType">{t("role_signup.product_type")}</Label>
-                          <Select onValueChange={setProductType} required>
-                            <SelectTrigger className="h-11">
-                              <SelectValue placeholder={t("role_signup.select_placeholder")} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="tshirts-polos">{t("role_signup.categories.tshirts")}</SelectItem>
-                              <SelectItem value="chemises-blouses">{t("role_signup.categories.shirts")}</SelectItem>
-                              <SelectItem value="pantalons-jeans">{t("role_signup.categories.pants")}</SelectItem>
-                              <SelectItem value="robes-jupes">{t("role_signup.categories.dresses")}</SelectItem>
-                              <SelectItem value="vestes-manteaux">{t("role_signup.categories.jackets")}</SelectItem>
-                              <SelectItem value="sous-vetements">{t("role_signup.categories.underwear")}</SelectItem>
-                              <SelectItem value="chaussures">{t("role_signup.categories.shoes")}</SelectItem>
-                              <SelectItem value="accessoires-mode">{t("role_signup.categories.accessories")}</SelectItem>
-                              <SelectItem value="sportswear">{t("role_signup.categories.sportswear")}</SelectItem>
-                              <SelectItem value="multi-categories">{t("role_signup.categories.multi")}</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className={`w-full h-12 bg-gradient-to-r ${accentColor} hover:opacity-90 transition-opacity text-white font-bold text-lg shadow-lg`} 
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      {isExistingUser ? t("role_signup.submit_finish") : t("role_signup.submit_create")}
-                      <ArrowRight className={`ms-2 w-5 h-5 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <p className="mt-8 text-center text-muted-foreground">
-            {isExistingUser ? (
-              <Link href="/login" className="text-foreground font-semibold hover:underline">
-                {t("role_signup.back_to_dashboard")}
-              </Link>
-            ) : (
+            {role === "creator" && (
               <>
-                {t("role_signup.has_account")}{" "}
-                <Link href="/login" className="text-foreground font-semibold hover:underline">
-                  {t("role_signup.login_link")}
-                </Link>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <AuthField
+                    id="instagram"
+                    label={t("role_signup.instagram")}
+                    icon={Instagram}
+                    placeholder={t("role_signup.placeholders.instagram")}
+                    dir="ltr"
+                    value={values.instagram}
+                    onChange={(e) => set("instagram", e.target.value)}
+                    error={err("instagram")}
+                  />
+                  <SelectField
+                    id="specialty"
+                    label={t("role_signup.specialty")}
+                    value={values.specialty}
+                    onChange={(v) => set("specialty", v)}
+                    options={OPTIONS.specialty}
+                    error={err("specialty")}
+                  />
+                </div>
+                <AuthField
+                  id="portfolio"
+                  type="url"
+                  label={t("role_signup.portfolio")}
+                  icon={Globe}
+                  placeholder={t("role_signup.placeholders.portfolio")}
+                  inputMode="url"
+                  dir="ltr"
+                  value={values.portfolio}
+                  onChange={(e) => set("portfolio", e.target.value)}
+                  error={err("portfolio")}
+                />
               </>
             )}
+
+            {role === "seller" && (
+              <div className="grid gap-5 sm:grid-cols-2">
+                <AuthField
+                  id="storeName"
+                  label={t("role_signup.store_name")}
+                  icon={Store}
+                  placeholder={t("role_signup.placeholders.store_name")}
+                  value={values.storeName}
+                  onChange={(e) => set("storeName", e.target.value)}
+                  error={err("storeName")}
+                />
+                <SelectField
+                  id="sector"
+                  label={t("role_signup.sector")}
+                  value={values.sector}
+                  onChange={(v) => set("sector", v)}
+                  options={OPTIONS.sector}
+                  error={err("sector")}
+                />
+              </div>
+            )}
+
+            {role === "supplier" && (
+              <>
+                <AuthAlert variant="info" title={t("role_signup.supplier_notice")} />
+                <AuthField
+                  id="companyName"
+                  label={t("role_signup.company_name")}
+                  icon={Building2}
+                  placeholder={t("role_signup.placeholders.company_name")}
+                  autoComplete="organization"
+                  value={values.companyName}
+                  onChange={(e) => set("companyName", e.target.value)}
+                  error={err("companyName")}
+                />
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <AuthField
+                    id="taxId"
+                    label={t("role_signup.tax_id")}
+                    icon={FileText}
+                    placeholder={t("role_signup.placeholders.tax_id")}
+                    value={values.taxId}
+                    onChange={(e) => set("taxId", e.target.value)}
+                    error={err("taxId")}
+                  />
+                  <SelectField
+                    id="productType"
+                    label={t("role_signup.product_type")}
+                    value={values.productType}
+                    onChange={(v) => set("productType", v)}
+                    options={OPTIONS.productType}
+                    error={err("productType")}
+                  />
+                </div>
+              </>
+            )}
+          </section>
+
+          <SubmitButton loading={loading} loadingLabel={t("role_signup.submitting")}>
+            {isExistingUser ? t("role_signup.submit_finish") : t("role_signup.submit_create")}
+            <ArrowRight className={`h-4 w-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
+          </SubmitButton>
+        </form>
+
+        <div className="space-y-2 text-center text-sm text-slate-500">
+          {!isExistingUser && (
+            <p>
+              {t("role_signup.has_account")}{" "}
+              <Link href="/login" className="font-semibold text-[#2E3192] hover:text-[#00A99D] transition-colors">
+                {t("role_signup.login_link")}
+              </Link>
+            </p>
+          )}
+          <p>
+            {t("role_signup.other_roles").replace("{role}", roleName.toLowerCase())}{" "}
+            <Link href="/inscription" className="font-semibold text-[#2E3192] hover:text-[#00A99D] transition-colors">
+              {t("role_signup.choose_profile")}
+            </Link>
           </p>
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </AuthShell>
   );
 }

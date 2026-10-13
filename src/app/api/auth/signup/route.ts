@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendConfirmationEmail } from "@/lib/mail";
+import { confirmLink } from "@/lib/auth-links";
 
 const ALLOWED_ROLES = ["seller", "supplier", "creator"] as const;
 type Role = (typeof ALLOWED_ROLES)[number];
@@ -9,12 +10,6 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function fail(code: string, error: string, status = 400) {
   return NextResponse.json({ code, error }, { status });
-}
-
-function siteOrigin(req: Request) {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL;
-  if (configured) return configured.replace(/\/$/, "");
-  return new URL(req.url).origin;
 }
 
 export async function POST(req: Request) {
@@ -100,7 +95,7 @@ export async function POST(req: Request) {
       verificationType = linkData.properties.verification_type;
     }
 
-    const confirmUrl = `${siteOrigin(req)}/auth/confirm?token_hash=${encodeURIComponent(hashedToken)}&type=${encodeURIComponent(verificationType)}`;
+    const confirmUrl = confirmLink(req, hashedToken, verificationType);
 
     try {
       await sendConfirmationEmail(email, confirmUrl);

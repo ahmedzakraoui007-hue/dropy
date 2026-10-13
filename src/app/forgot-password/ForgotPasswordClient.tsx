@@ -2,157 +2,143 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Mail, ArrowLeft, Loader2, Send, CheckCircle } from "lucide-react";
-import { Logo } from "@/components/ui/logo";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { Mail, ArrowLeft, Send, MailCheck } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { AuthField, AuthAlert, SubmitButton } from "@/components/auth/AuthFields";
 
-export default function ForgotPasswordPage() {
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function ForgotPasswordForm() {
   const { t, dir } = useTranslation();
+  const [expired, setExpired] = useState(false);
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    setExpired(new URLSearchParams(window.location.search).get("error") === "expired");
   }, []);
-
-  if (!mounted) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError("login.errors.email_required");
+      return;
+    }
+    if (!EMAIL_REGEX.test(trimmed)) {
+      setError("login.errors.email_invalid");
+      return;
+    }
+
     setLoading(true);
+    setFormError(null);
 
-    const response = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      toast.error(t("forgot_password.error"), {
-        description: result.error || t("forgot_password.error_generic"),
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed.toLowerCase() }),
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setFormError(result.error || t("forgot_password.error_generic"));
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setFormError(t("forgot_password.error_generic"));
       setLoading(false);
       return;
     }
 
-    setSubmitted(true);
-    toast.success(t("forgot_password.toast_success"), {
-      description: t("forgot_password.toast_success_desc"),
-    });
     setLoading(false);
+    setSubmitted(true);
+  }
+
+  const backLink = (
+    <Link
+      href="/login"
+      className="inline-flex items-center justify-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+    >
+      <ArrowLeft className={`h-4 w-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
+      {t("forgot_password.back_to_login")}
+    </Link>
+  );
+
+  if (submitted) {
+    return (
+      <div className="space-y-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2E3192] to-[#00A99D] shadow-lg shadow-[#2E3192]/20">
+          <MailCheck className="h-8 w-8 text-white" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">{t("forgot_password.success_title")}</h1>
+          <p className="text-slate-500">{t("forgot_password.success_desc").replace("{email}", email.trim())}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSubmitted(false)}
+          className="h-12 w-full rounded-xl border border-slate-200 text-[15px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+        >
+          {t("forgot_password.try_another")}
+        </button>
+        {backLink}
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-gray-50" dir={dir}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="flex justify-between items-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Logo className="h-12 w-auto" />
-          </Link>
-          <LanguageSwitcher />
-        </div>
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-black tracking-tight text-slate-900">{t("forgot_password.title")}</h1>
+        <p className="text-slate-500">{t("forgot_password.subtitle")}</p>
+      </div>
 
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold mb-2 text-gray-900">
-            {t("forgot_password.title")}
-          </h2>
-          <p className="text-gray-500">
-            {t("forgot_password.subtitle")}
-          </p>
-        </div>
+      {expired && !formError && (
+        <AuthAlert variant="warning" title={t("forgot_password.expired_title")}>
+          {t("forgot_password.expired_desc")}
+        </AuthAlert>
+      )}
+      {formError && <AuthAlert variant="error" title={t("forgot_password.error")}>{formError}</AuthAlert>}
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-xl shadow-gray-200/50">
-          {!submitted ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-700 font-medium">
-                  {t("forgot_password.email")}
-                </Label>
-                <div className="relative">
-                  <Mail className={`absolute ${dir === 'rtl' ? 'right-3.5' : 'left-3.5'} top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400`} />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      onInvalid={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.setCustomValidity(t("register.errors.invalid_email"));
-                      }}
-                      onInput={(e) => {
-                        const target = e.target as HTMLInputElement;
-                        target.setCustomValidity("");
-                      }}
-                      className={`${dir === 'rtl' ? 'pr-11 pl-4' : 'pl-11 pr-4'} h-12 border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-600 focus:ring-indigo-500/20 rounded-xl transition-all`}
-                      required
-                    />
-                </div>
-              </div>
+      <form onSubmit={handleSubmit} noValidate className="space-y-5">
+        <AuthField
+          id="email"
+          type="email"
+          label={t("forgot_password.email")}
+          icon={Mail}
+          placeholder={t("login.email_placeholder")}
+          autoComplete="email"
+          inputMode="email"
+          autoFocus
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError(null);
+          }}
+          error={error ? t(error) : undefined}
+        />
 
-              <Button
-                type="submit"
-                className="w-full h-12 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                      {t("forgot_password.submit")}
-                      <Send className={`${dir === 'rtl' ? 'ms-2 scale-x-[-1]' : 'ms-2'} w-4 h-4`} />
-                  </>
-                )}
-              </Button>
-            </form>
-          ) : (
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">
-                  {t("forgot_password.success_title")}
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  {t("forgot_password.success_desc").replace("{email}", email)}
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                onClick={() => setSubmitted(false)} 
-                className="w-full h-12 font-semibold border-gray-200 rounded-xl"
-              >
-                {t("forgot_password.try_another")}
-              </Button>
-            </div>
-          )}
-        </div>
+        <SubmitButton loading={loading} loadingLabel={t("forgot_password.submitting")}>
+          {t("forgot_password.submit")}
+          <Send className={`h-4 w-4 ${dir === "rtl" ? "-scale-x-100" : ""}`} />
+        </SubmitButton>
+      </form>
 
-        <div className="mt-8 text-center">
-          <Link href="/login" className="text-gray-500 hover:text-gray-700 flex items-center justify-center gap-2 font-medium transition-colors">
-            <ArrowLeft className={`w-4 h-4 ${dir === 'rtl' ? 'rotate-180' : ''}`} />
-            {t("forgot_password.back_to_login")}
-          </Link>
-        </div>
-      </motion.div>
+      <div className="text-center">{backLink}</div>
     </div>
-
   );
 }
 
+export default function ForgotPasswordPage() {
+  return (
+    <AuthShell>
+      <ForgotPasswordForm />
+    </AuthShell>
+  );
+}

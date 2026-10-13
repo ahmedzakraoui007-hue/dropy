@@ -1,155 +1,143 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Sparkles, Lock, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Lock, ShieldCheck, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { useTranslation } from "@/context/LanguageContext";
+import { AuthShell } from "@/components/auth/AuthShell";
+import { PasswordField, PasswordStrength, AuthAlert, SubmitButton } from "@/components/auth/AuthFields";
+
+type FieldErrors = { password?: string; confirm?: string };
 
 export default function ResetPasswordClient() {
-  const router = useRouter();
+  const { t, dir } = useTranslation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    createClient()
+      .auth.getUser()
+      .then(({ data }) => setHasSession(Boolean(data.user)));
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      toast.error("Les mots de passe ne correspondent pas");
-      return;
-    }
-
-    if (password.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+    const next: FieldErrors = {};
+    if (password.length < 8) next.password = "reset_password.too_short";
+    else if (password !== confirmPassword) next.confirm = "reset_password.mismatch";
+    setErrors(next);
+    if (next.password || next.confirm) {
+      document.getElementById(next.password ? "password" : "confirm-password")?.focus();
       return;
     }
 
     setLoading(true);
+    setFormError(null);
     const supabase = createClient();
-
-    const { error } = await supabase.auth.updateUser({
-      password: password,
-    });
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      toast.error("Erreur", {
-        description: error.message,
-      });
+      setFormError(error.message);
       setLoading(false);
       return;
     }
 
+    await supabase.auth.signOut();
+    setLoading(false);
     setSuccess(true);
-    toast.success("Succès", {
-      description: "Votre mot de passe a été mis à jour avec succès.",
-    });
-    
-    setTimeout(() => {
-      router.push("/login");
-    }, 3000);
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-[#F9FAFB]">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <Link href="/" className="flex items-center gap-2.5 justify-center mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Sparkles className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-gray-900">Dropy</span>
-          </Link>
-          <h2 className="text-3xl font-bold mb-2 text-gray-900">Nouveau mot de passe</h2>
-          <p className="text-gray-500">
-            Choisissez un mot de passe fort pour sécuriser votre compte.
-          </p>
+  let content: React.ReactNode;
+
+  if (hasSession === null) {
+    content = <div className="h-80 animate-pulse rounded-2xl bg-slate-50" />;
+  } else if (success) {
+    content = (
+      <div className="space-y-8 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-[#00A99D] shadow-lg shadow-emerald-500/20">
+          <ShieldCheck className="h-8 w-8 text-white" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">{t("reset_password.success_title")}</h1>
+          <p className="text-slate-500">{t("reset_password.success_desc")}</p>
+        </div>
+        <Link
+          href="/login"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2E3192] to-[#3a43b5] text-[15px] font-semibold text-white shadow-lg shadow-[#2E3192]/20 transition-all hover:brightness-110"
+        >
+          {t("reset_password.login_now")}
+          <ArrowRight className={`h-4 w-4 ${dir === "rtl" ? "rotate-180" : ""}`} />
+        </Link>
+      </div>
+    );
+  } else if (!hasSession) {
+    content = (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-black tracking-tight text-slate-900">{t("reset_password.title")}</h1>
+        <AuthAlert variant="warning" title={t("reset_password.no_session_title")}>
+          {t("reset_password.no_session_desc")}
+        </AuthAlert>
+        <Link
+          href="/forgot-password"
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#2E3192] to-[#3a43b5] text-[15px] font-semibold text-white shadow-lg shadow-[#2E3192]/20 transition-all hover:brightness-110"
+        >
+          {t("reset_password.request_new")}
+        </Link>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">{t("reset_password.title")}</h1>
+          <p className="text-slate-500">{t("reset_password.subtitle")}</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 p-8 shadow-xl shadow-gray-200/50">
-          {!success ? (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="password">Nouveau mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-11 pr-11 h-12 border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 rounded-xl transition-all"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
+        {formError && <AuthAlert variant="error" title={t("reset_password.error")}>{formError}</AuthAlert>}
 
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    id="confirm-password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-11 h-12 border-gray-200 bg-gray-50 focus:bg-white focus:border-indigo-500 rounded-xl transition-all"
-                    required
-                  />
-                </div>
-              </div>
+        <form onSubmit={handleSubmit} noValidate className="space-y-5">
+          <PasswordField
+            id="password"
+            label={t("reset_password.new_password")}
+            icon={Lock}
+            placeholder={t("register.password_placeholder")}
+            autoComplete="new-password"
+            autoFocus
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setErrors((prev) => ({ ...prev, password: undefined }));
+            }}
+            error={errors.password && t(errors.password)}
+            footer={!errors.password && <PasswordStrength password={password} />}
+          />
 
-              <Button
-                type="submit"
-                className="w-full h-12 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-500/25 transition-all"
-                disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  "Réinitialiser le mot de passe"
-                )}
-              </Button>
-            </form>
-          ) : (
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
-                <CheckCircle className="w-8 h-8 text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Mot de passe mis à jour !</h3>
-                <p className="text-gray-600 text-sm">
-                  Votre mot de passe a été modifié avec succès. Vous allez être redirigé vers la page de connexion.
-                </p>
-              </div>
-              <Button asChild className="w-full h-12 font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl">
-                <Link href="/login">Se connecter maintenant</Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </div>
-  );
+          <PasswordField
+            id="confirm-password"
+            label={t("reset_password.confirm_password")}
+            icon={Lock}
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setErrors((prev) => ({ ...prev, confirm: undefined }));
+            }}
+            error={errors.confirm && t(errors.confirm)}
+          />
+
+          <SubmitButton loading={loading} loadingLabel={t("reset_password.submitting")}>
+            {t("reset_password.submit")}
+          </SubmitButton>
+        </form>
+      </div>
+    );
+  }
+
+  return <AuthShell>{content}</AuthShell>;
 }

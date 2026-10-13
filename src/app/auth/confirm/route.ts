@@ -3,7 +3,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { sendWaitingEmail } from "@/lib/auth-emails";
 
-const ALLOWED_TYPES: EmailOtpType[] = ["signup", "magiclink", "email", "invite"];
+const ALLOWED_TYPES: EmailOtpType[] = ["signup", "magiclink", "email", "invite", "recovery"];
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -19,7 +19,13 @@ export async function GET(request: Request) {
 
   if (error || !data.user) {
     console.error("Email confirmation error:", error);
-    return NextResponse.redirect(`${origin}/login?error=invalid_link`);
+    return NextResponse.redirect(
+      `${origin}${type === "recovery" ? "/forgot-password?error=expired" : "/login?error=invalid_link"}`
+    );
+  }
+
+  if (type === "recovery") {
+    return NextResponse.redirect(`${origin}/auth/reset-password`);
   }
 
   const { data: profile } = await supabase

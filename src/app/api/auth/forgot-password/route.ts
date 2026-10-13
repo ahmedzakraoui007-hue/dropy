@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/mail";
+import { confirmLink } from "@/lib/auth-links";
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const body = await req.json().catch(() => null);
+    const email = String(body?.email || "").trim().toLowerCase();
+    if (!email) {
+      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    }
 
     const supabase = createAdminClient();
 
@@ -12,21 +17,18 @@ export async function POST(req: Request) {
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "recovery",
       email,
-      options: {
-        redirectTo: `${new URL(req.url).origin}/auth/reset-password`,
-      },
     });
 
     if (linkError) {
       // Don't reveal if user exists or not for security, but handle actual errors
-      if (linkError.message.includes("User not found")) {
+      if (linkError.code === "user_not_found" || /not found/i.test(linkError.message)) {
         return NextResponse.json({ success: true });
       }
       return NextResponse.json({ error: linkError.message }, { status: 500 });
     }
 
     // 2. Send email via Nodemailer
-    const resetUrl = linkData.properties.action_link;
+    const resetUrl = confirmLink(req, linkData.properties.hashed_token, "recovery");
     const html = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e5e7eb; border-radius: 12px;">
         <h2 style="color: #4f46e5;">Réinitialisation de votre mot de passe</h2>
