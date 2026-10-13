@@ -1,18 +1,26 @@
-
 require('dotenv').config({ path: '.env.local' });
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 async function test() {
-    const resend = new Resend(process.env.RESEND_API_KEY);
+    const port = Number(process.env.SMTP_PORT || 465);
+    const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port,
+        secure: process.env.SMTP_SECURE ? process.env.SMTP_SECURE === 'true' : port === 465,
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
     try {
-        const { data, error } = await resend.emails.send({
-            from: 'onboarding@resend.dev',
-            to: 'delivered@resend.dev', // Safe test address for Resend
+        await transporter.verify();
+        const info = await transporter.sendMail({
+            from: process.env.SMTP_FROM || `Dropy <${process.env.SMTP_USER}>`,
+            to: process.argv[2] || process.env.SMTP_USER,
             subject: 'Test Email Dropy',
             html: '<p>Test</p>'
         });
-        console.log('Data:', data);
-        console.log('Error:', error);
+        console.log('Sent:', info.messageId);
     } catch (e) {
         console.log('Exception:', e);
     }
