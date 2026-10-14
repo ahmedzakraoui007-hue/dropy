@@ -33,6 +33,15 @@ export async function POST(
       return NextResponse.json({ error: "Brief not found" }, { status: 404 });
     }
 
+    const { data: store } = await supabase
+      .from("stores")
+      .select("seller_id")
+      .eq("id", brief.store_id)
+      .maybeSingle();
+    if (store?.seller_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (brief.status !== "published") {
       return NextResponse.json(
         { error: "Brief is not in published status" },

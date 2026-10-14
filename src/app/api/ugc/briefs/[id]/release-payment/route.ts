@@ -1,4 +1,3 @@
-// src/app/api/ugc/briefs/[id]/release-payment/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
@@ -21,6 +20,7 @@ export async function POST(
       .from("ugc_payments")
       .select("*")
       .eq("brief_id", briefId)
+      .eq("seller_id", user.id)
       .eq("status", "held")
       .single();
 

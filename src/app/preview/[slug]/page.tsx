@@ -1358,7 +1358,7 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
 const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { sectionId: string, config: any, store: any, cart: any[], slug: string, onClearCart: () => void }) => {
 
     const [formData, setFormData] = useState({ name: "", phone: "", address: "", email: "" });
-    const [paymentMethod, setPaymentMethod] = useState("cod");
+    const paymentMethod = "cod";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [promoCode, setPromoCode] = useState("");
     const [isValidatingPromo, setIsValidatingPromo] = useState(false);
@@ -1416,7 +1416,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             storeId: store.id,
-            cart: cart.map(item => ({ ...item, price: parsePrice(item.price) })),
+            cart: cart.map(item => ({ productId: item.id, variantId: item.variantId || null, quantity: item.quantity || 1 })),
             customer: formData,
             appliedPromo,
             paymentMethod,
@@ -1472,23 +1472,9 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
 
                 <div className="space-y-4">
                   <label className="text-xs font-bold uppercase tracking-wider opacity-60 block">Mode de paiement</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <button 
-                      type="button"
-                      onClick={() => setPaymentMethod("cod")}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${paymentMethod === 'cod' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}
-                    >
-                      <span className="text-2xl">🚚</span>
-                      <span className="font-bold text-sm">Paiement à la livraison</span>
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setPaymentMethod("card")}
-                      className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${paymentMethod === 'card' ? 'border-primary bg-primary/5' : 'border-border hover:bg-muted'}`}
-                    >
-                      <span className="text-2xl">💳</span>
-                      <span className="font-bold text-sm">Carte Bancaire</span>
-                    </button>
+                  <div className="p-4 rounded-xl border-2 border-primary bg-primary/5 flex items-center gap-3">
+                    <span className="text-2xl">🚚</span>
+                    <span className="font-bold text-sm">Paiement à la livraison</span>
                   </div>
                 </div>
 
@@ -1560,9 +1546,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
               <div className="p-6 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-xl">🚚</div>
                 <p className="text-xs font-medium">
-                  {paymentMethod === 'cod' 
-                    ? "Paiement à la livraison. Vérifiez votre colis avant de payer."
-                    : "Paiement sécurisé par carte bancaire."}
+                  Paiement à la livraison. Vérifiez votre colis avant de payer.
                 </p>
               </div>
             </div>

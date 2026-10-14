@@ -77,7 +77,9 @@ export function useStoreConfig(sellerId: string) {
 
   const uploadAsset = async (file: File, type: 'logo' | 'logo_dark' | 'favicon') => {
     const supabase = createClient();
-    const fileName = `${sellerId}/${type}-${Date.now()}.${file.name.split('.').pop()}`;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const fileName = `${user.id}/${type}-${Date.now()}.${file.name.split('.').pop()}`;
     
     const { data, error } = await supabase.storage
       .from('store-assets')

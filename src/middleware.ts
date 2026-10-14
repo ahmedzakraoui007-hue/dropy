@@ -69,40 +69,54 @@ export async function middleware(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Protected Routes Logic
-    const protectedRoutes = ['/admin', '/seller', '/supplier', '/creator', '/dashboard', '/settings'];
-    const isPublicRolePage = /^\/(seller|supplier|creator)\/signup\/?$/.test(pathname);
-    const isProtectedRoute = !isPublicRolePage && protectedRoutes.some(route => pathname.startsWith(route));
+    const ROLE_AREAS = ['admin', 'seller', 'supplier', 'creator'];
+    const ROLE_HOME: Record<string, string> = {
+      admin: '/admin',
+      seller: '/seller/dashboard',
+      supplier: '/supplier/dashboard',
+      creator: '/creator/dashboard',
+    };
+    const BLOCKED_STATUSES = ['pending', 'suspended', 'rejected'];
+
+    const isPublicRolePage = /^\/(seller|supplier|creator)(\/signup)?\/?$/.test(pathname);
+    const roleArea = ROLE_AREAS.includes(firstSegment) && !isPublicRolePage ? firstSegment : null;
+    const isLoginOnlyRoute = ['dashboard', 'settings'].includes(firstSegment);
     const isAuthPage = ['/login', '/inscription', '/register'].includes(pathname);
 
-    // Redirect unauthenticated
-    if (isProtectedRoute && !user) {
+    if ((roleArea || isLoginOnlyRoute) && !user) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = '/login';
+      redirectUrl.search = '';
       redirectUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(redirectUrl);
     }
 
-    // Redirect authenticated from login to dashboard
-    if (isAuthPage && user) {
+    if (user && (roleArea || isAuthPage)) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('role, status')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profile?.status === 'pending' || profile?.status === 'suspended') {
-        return supabaseResponse;
+      const isActive = Boolean(profile && !BLOCKED_STATUSES.includes(profile.status ?? ''));
+
+      if (isAuthPage) {
+        if (!isActive || !profile) return supabaseResponse;
+        return NextResponse.redirect(new URL(ROLE_HOME[profile.role] || '/', request.url));
       }
 
-      const redirectMap: Record<string, string> = {
-        admin: '/admin',
-        seller: '/seller/dashboard',
-        supplier: '/supplier/dashboard',
-        creator: '/creator/dashboard',
-      };
-      const target = redirectMap[profile?.role || 'seller'] || '/seller/dashboard';
-      return NextResponse.redirect(new URL(target, request.url));
+      if (!profile) {
+        return NextResponse.redirect(new URL('/login?error=no_profile', request.url));
+      }
+      if (profile.status === 'pending') {
+        return NextResponse.redirect(new URL('/demande-en-attente', request.url));
+      }
+      if (!isActive) {
+        return NextResponse.redirect(new URL('/login?error=account_disabled', request.url));
+      }
+      if (profile.role !== roleArea && profile.role !== 'admin') {
+        return NextResponse.redirect(new URL(ROLE_HOME[profile.role] || '/', request.url));
+      }
     }
 
     // 3. Storefront Routing (Bug #6 Fix)

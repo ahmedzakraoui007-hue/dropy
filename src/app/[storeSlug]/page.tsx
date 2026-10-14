@@ -1,5 +1,3 @@
-// src/app/shop/[vendor-slug]/page.tsx
-
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SectionRenderer from '@/components/store/SectionRenderer'

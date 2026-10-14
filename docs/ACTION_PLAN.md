@@ -43,6 +43,21 @@ The main causes:
 | 0.8 | Reviews are published instantly and "verified purchase" can be faked by guessing an email | `api/reviews/*` | Status `pending` + moderation, verify via order number | S |
 | 0.9 | RLS policies unknown | Supabase | Audit every table once the schema is in the repo (Phase 1) | M |
 
+### Phase 0 status (2026-10-14)
+
+Done in code: 0.1–0.8, plus issues found while fixing them:
+- Checkout: server recomputes prices, discounts and stock; card payment disabled until a Tunisian gateway exists (Stripe cannot charge TND); storefront checkout was sending cart-row IDs and reading the wrong URL parameter (every order failed).
+- Escrow release (`content/briefs/[id]/release-funds`, `ugc/briefs/[id]/release-payment`) and `accept-creator` now require the brief owner — any logged-in user could release a creator's payment.
+- `notifications/send`: only admins send free-form notifications; creators can only notify the seller of their own delivered brief.
+- Delivery webhook verifies an HMAC signature (`DELIVERY_WEBHOOK_SECRET`); disabled until set.
+- Disputes compared `stores.user_id` (does not exist) instead of `seller_id`.
+- Role/status enforced server-side in middleware; `/seller`, `/supplier`, `/creator` marketing pages are public again.
+
+Still open:
+- **Apply** `supabase/migrations/20261014090000_storage_owner_only.sql` to the live database.
+- 0.9 RLS audit — needs the schema (Phase 1.1). Check in particular whether anonymous users can read `store_orders` (customer data).
+- **Credentials in the public repository**: `admin@dropy.store`, `admin.test@dropy.store`, `test-admin-orchids@gmail.com`, `test-admin@dropy.tn` and the other test accounts had passwords committed. Delete them or change their passwords in Supabase.
+
 ## Phase 1 — Make the database the source of truth
 
 | # | Task | Size |

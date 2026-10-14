@@ -139,12 +139,8 @@ export default function MissionDetailsPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              userId: brief.store.seller_id,
               type: "deliverable_submitted",
-              title: "🎥 Livrable soumis !",
-              message: `Le créateur a soumis son travail pour la mission: ${brief.title}. Vous avez 48h pour l'examiner.`,
-              link: `/seller/content/briefs/${id}`,
-              sendEmail: true
+              briefId: id
             }),
           });
         }

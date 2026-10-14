@@ -1,5 +1,3 @@
-// src/app/shop/[vendor-slug]/[...slug]/page.tsx
-
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SectionRenderer from '@/components/store/SectionRenderer'
@@ -7,9 +5,9 @@ import SectionRenderer from '@/components/store/SectionRenderer'
 export default async function StoreDynamicPage({ 
   params 
 }: { 
-  params: Promise<{ 'vendor-slug': string, slug: string[] }>
+  params: Promise<{ storeSlug: string, slug: string[] }>
 }) {
-  const { 'vendor-slug': vendorSlug, slug } = await params
+  const { storeSlug: vendorSlug, slug } = await params
   const supabase = await createClient()
   const pageSlug = slug.join('/')
   

@@ -1,10 +1,24 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+
+function validSignature(rawBody: string, signature: string | null) {
+  const secret = process.env.DELIVERY_WEBHOOK_SECRET;
+  if (!secret || !signature) return false;
+  const expected = createHmac('sha256', secret).update(rawBody).digest('hex');
+  const given = signature.replace(/^sha256=/, '');
+  if (given.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+}
 
 export async function POST(request: Request) {
   try {
-    const payload = await request.json();
+    const rawBody = await request.text();
     const signature = request.headers.get('x-webhook-signature');
+    if (!validSignature(rawBody, signature)) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+    const payload = JSON.parse(rawBody);
     
     const supabase = await createClient();
     

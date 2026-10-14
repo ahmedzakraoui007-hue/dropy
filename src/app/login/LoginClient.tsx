@@ -35,6 +35,13 @@ function LoginForm() {
       setNotice({ variant: "info", title: "login.toasts.check_email_title", desc: "login.toasts.check_email_desc" });
     } else if (message === "email-confirmed") {
       setNotice({ variant: "success", title: "login.toasts.confirmed_title", desc: "login.toasts.confirmed_desc" });
+    } else if (error === "account_disabled" || error === "no_profile") {
+      createClient().auth.signOut();
+      setNotice(
+        error === "account_disabled"
+          ? { variant: "error", title: "login.toasts.suspended_title", desc: "login.toasts.suspended_desc" }
+          : { variant: "error", title: "login.toasts.error_title", desc: "login.errors.no_profile" }
+      );
     } else if (error) {
       setNotice({ variant: "error", title: "login.toasts.error_title", desc: "login.toasts.link_invalid" });
     }

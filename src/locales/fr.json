@@ -287,7 +287,8 @@
         "email_required": "Veuillez saisir votre adresse email.",
         "email_invalid": "Cette adresse email n'est pas valide.",
         "password_required": "Veuillez saisir votre mot de passe.",
-        "network": "Connexion impossible. Vérifiez votre connexion internet et réessayez."
+        "network": "Connexion impossible. Vérifiez votre connexion internet et réessayez.",
+        "no_profile": "Votre compte est incomplet. Contactez le support Dropy pour le finaliser."
       }
     },
     "register": {

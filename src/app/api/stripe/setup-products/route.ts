@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
+import { requireUser } from '@/lib/api-auth';
 
 const PLAN_CONFIG = {
   pro: {
@@ -64,6 +65,9 @@ async function findOrCreateProduct(plan: 'pro' | 'enterprise') {
 }
 
 export async function POST() {
+  const auth = await requireUser(['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const [pro, enterprise] = await Promise.all([
       findOrCreateProduct('pro'),
@@ -84,6 +88,9 @@ export async function POST() {
 }
 
 export async function GET() {
+  const auth = await requireUser(['admin']);
+  if (!auth.ok) return auth.response;
+
   try {
     const [pro, enterprise] = await Promise.all([
       findOrCreateProduct('pro'),

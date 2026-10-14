@@ -15,9 +15,9 @@ import Image from "next/image";
 export default function CheckoutPage({
     params
 }: {
-    params: Promise<{ 'vendor-slug': string }>
+    params: Promise<{ storeSlug: string }>
 }) {
-    const { 'vendor-slug': vendorSlug } = use(params);
+    const { storeSlug: vendorSlug } = use(params);
     const { items, total, clearCart, isLoading } = useCart();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -56,65 +56,6 @@ export default function CheckoutPage({
         );
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-
-        try {
-            if (!formData.firstName || !formData.address || !formData.phone) {
-                throw new Error("Veuillez remplir tous les champs obligatoires");
-            }
-
-            // Fetch Store ID via API or Supabase based on slug
-            // We can also let the API resolve the slug
-
-            const response = await fetch("/api/store/orders", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    slug: vendorSlug,
-                    storeId: items[0]?.productId ? null : null, // API handles resolution via slug if storeId missing? 
-                    // Wait, the API route:
-                    // const { storeId ... } = body;
-                    // if (!storeId ... ) return error.
-                    // So I MUST provide storeId.
-                    // I need to fetch it first.
-
-                    customer: {
-                        name: `${formData.firstName} ${formData.lastName}`,
-                        email: formData.email,
-                        phone: formData.phone,
-                        address: `${formData.address}, ${formData.city} ${formData.zipCode}`
-                    },
-                    cart: items.map(item => ({
-                        id: item.id, // This is variant ID or product ID
-                        // Wait, API expects: store_product_id.
-                        // If item.id is store_product_id, we are good.
-                        // Check FeaturedProducts: 
-                        // setProducts(data.map(item => ({ ...item })))
-                        // data is from store_products table.
-                        // So item.id is store_product_id.
-                        // CORRECT.
-                        title: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        image: item.image
-                    }))
-                })
-            });
-
-            // API expects storeId. I don't have it easily here without fetching.
-            // I should update the API to accept slug OR storeId.
-            // But I can't easily change the API right now if I want to be safe.
-            // Wait, I can fetch the store by slug here first.
-        } catch (error: any) {
-            // Placeholder
-        } finally {
-            // Placeholder
-        }
-    };
-
-    // Improved Submit with Fetch Store
     const handleFinalSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -125,24 +66,28 @@ export default function CheckoutPage({
 
             if (!store) throw new Error("Boutique introuvable");
 
+            if (!formData.firstName || !formData.address || !formData.phone) {
+                throw new Error("Veuillez remplir tous les champs obligatoires");
+            }
+
             const response = await fetch("/api/store/orders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     storeId: store.id,
-                    slug: vendorSlug,
+                    paymentMethod: "cod",
                     customer: {
-                        name: `${formData.firstName} ${formData.lastName}`,
+                        name: `${formData.firstName} ${formData.lastName}`.trim(),
                         email: formData.email,
                         phone: formData.phone,
-                        address: `${formData.address}, ${formData.city} ${formData.zipCode}`
+                        address: formData.zipCode ? `${formData.address} ${formData.zipCode}` : formData.address,
+                        city: formData.city
                     },
                     cart: items.map(item => ({
-                        id: item.id,
-                        title: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        image: item.image
+                        productId: item.productId,
+                        variantId: item.variantId || null,
+                        variantInfo: item.variantName || null,
+                        quantity: item.quantity
                     }))
                 })
             });

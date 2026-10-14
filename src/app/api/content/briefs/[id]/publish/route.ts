@@ -10,14 +10,29 @@ export async function POST(
   const { id } = await params;
 
   try {
-    // 1. Get brief details
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data: brief, error: briefError } = await supabase
       .from("content_briefs")
       .select("*")
       .eq("id", id)
       .single();
 
-    if (briefError || !brief) throw new Error("Brief not found");
+    if (briefError || !brief) {
+      return NextResponse.json({ error: "Brief not found" }, { status: 404 });
+    }
+
+    const { data: store } = await supabase
+      .from("stores")
+      .select("seller_id")
+      .eq("id", brief.store_id)
+      .maybeSingle();
+    if (store?.seller_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     // 2. Get all approved creators
     const { data: creators, error: creatorsError } = await supabase

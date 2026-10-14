@@ -36,6 +36,20 @@ export async function POST(
       return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
     }
 
+    const { data: store } = await supabase
+      .from("stores")
+      .select("seller_id")
+      .eq("id", payment.store_id)
+      .maybeSingle();
+    const { data: requester } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (store?.seller_id !== user.id && requester?.role !== "admin") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (payment.status !== "escrowed") {
       return NextResponse.json(
         { error: `Cannot release funds. Current status: ${payment.status}` },

@@ -29,8 +29,25 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { brief_id, creator_id, store_id, rating, quality_rating, communication_rating, deadline_rating, comment } = body;
 
-  if (!creator_id || !rating) {
+  if (!creator_id || !rating || !store_id) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const ratingValue = Number(rating);
+  if (!Number.isInteger(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
+  }
+  if (comment && String(comment).length > 2000) {
+    return NextResponse.json({ error: "Review too long" }, { status: 400 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { data: store } = await supabase.from("stores").select("seller_id").eq("id", store_id).maybeSingle();
+  if (store?.seller_id !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { data: review, error } = await supabase
@@ -39,7 +56,7 @@ export async function POST(request: Request) {
       brief_id,
       creator_id,
       store_id,
-      rating,
+      rating: ratingValue,
       quality_rating,
       communication_rating,
       deadline_rating,

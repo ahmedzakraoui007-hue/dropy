@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { requireUser } from "@/lib/api-auth";
 
 export async function GET(request: Request) {
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query");
   const page = searchParams.get("page") || "1";

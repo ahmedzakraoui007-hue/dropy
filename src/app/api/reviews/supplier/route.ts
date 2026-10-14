@@ -27,18 +27,31 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const supabase = await createClient();
   const body = await request.json();
-  const { supplier_id, seller_id, rating, comment } = body;
+  const { supplier_id, rating, comment } = body;
 
-  if (!supplier_id || !seller_id || !rating) {
+  if (!supplier_id || !rating) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const ratingValue = Number(rating);
+  if (!Number.isInteger(ratingValue) || ratingValue < 1 || ratingValue > 5) {
+    return NextResponse.json({ error: "Invalid rating" }, { status: 400 });
+  }
+  if (comment && String(comment).length > 2000) {
+    return NextResponse.json({ error: "Review too long" }, { status: 400 });
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data: review, error } = await supabase
     .from("supplier_reviews")
     .insert({
       supplier_id,
-      seller_id,
-      rating,
+      seller_id: user.id,
+      rating: ratingValue,
       comment,
       status: "published"
     })
