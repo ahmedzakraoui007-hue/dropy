@@ -127,7 +127,7 @@ export default function SellerShippingPage() {
     const { data: store } = await supabase
       .from("stores")
       .select("id, name, logo_url")
-      .eq("seller_id", user.id)
+      .eq("vendor_id", user.id)
       .single();
 
     if (!store) {

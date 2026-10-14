@@ -73,7 +73,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
                 title,
                 store_id,
                 selected_creator_id,
-                store:stores(name, logo_url, seller_id)
+                store:stores(name, logo_url, vendor_id)
               )
             `)
             .eq("creator_id", user.id)
@@ -85,7 +85,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
           const { data: stores } = await supabase
             .from("stores")
             .select("id")
-            .eq("seller_id", user.id);
+            .eq("vendor_id", user.id);
             
           const storeIds = stores?.map(s => s.id) || [];
           
@@ -97,7 +97,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
                 id,
                 title,
                 selected_creator_id,
-                store:stores(name, logo_url, seller_id),
+                store:stores(name, logo_url, vendor_id),
                 creator:profiles!content_briefs_selected_creator_id_fkey(id, full_name, avatar_url)
               `)
               .in("store_id", storeIds)
@@ -118,7 +118,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
         let otherPartyAvatar = "";
         
         if (userRole === "creator") {
-          otherPartyId = brief.store?.seller_id || "";
+          otherPartyId = brief.store?.vendor_id || "";
           otherPartyName = brief.store?.name || "Vendeur";
           otherPartyAvatar = brief.store?.logo_url || "";
         } else {
@@ -164,7 +164,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
                 id,
                 title,
                 selected_creator_id,
-                store:stores(name, logo_url, seller_id),
+                store:stores(name, logo_url, vendor_id),
                 creator:profiles!content_briefs_selected_creator_id_fkey(id, full_name, avatar_url)
               `)
               .eq("id", briefIdParam)
@@ -177,7 +177,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
               
               if (userRole === "creator") {
                 const store = Array.isArray(briefData.store) ? briefData.store[0] : briefData.store;
-                otherPartyId = store?.seller_id || "";
+                otherPartyId = store?.vendor_id || "";
                 otherPartyName = store?.name || "Vendeur";
                 otherPartyAvatar = store?.logo_url || "";
               } else {

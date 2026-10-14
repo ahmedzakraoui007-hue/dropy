@@ -151,7 +151,7 @@ export async function POST(req: Request) {
       const { data: existingStore } = await supabase
         .from("stores")
         .select("id")
-        .eq("seller_id", userId)
+        .eq("vendor_id", userId)
         .limit(1)
         .maybeSingle();
 
@@ -159,7 +159,7 @@ export async function POST(req: Request) {
         const storeName = additionalData.storeName || "Ma Boutique";
         const slug = storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
         const { error } = await supabase.from("stores").insert({
-          seller_id: userId,
+          vendor_id: userId,
           name: storeName,
           slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
           is_active: true,

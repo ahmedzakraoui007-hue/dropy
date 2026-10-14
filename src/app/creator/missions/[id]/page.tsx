@@ -51,7 +51,7 @@ export default function MissionDetailsPage() {
           .from("content_briefs")
           .select(`
             *,
-            store:stores(name, logo_url, seller_id)
+            store:stores(name, logo_url, vendor_id)
           `)
           .eq("id", id)
           .single();
@@ -134,7 +134,7 @@ export default function MissionDetailsPage() {
         if (briefUpdateError) throw briefUpdateError;
 
         // Send notification to seller
-        if (brief.store?.seller_id) {
+        if (brief.store?.vendor_id) {
           await fetch("/api/notifications/send", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

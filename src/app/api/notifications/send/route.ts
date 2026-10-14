@@ -47,15 +47,15 @@ export async function POST(request: Request) {
 
       const { data: store } = await supabase
         .from("stores")
-        .select("seller_id")
+        .select("vendor_id")
         .eq("id", brief.store_id)
         .maybeSingle();
-      if (!store?.seller_id) {
+      if (!store?.vendor_id) {
         return NextResponse.json({ error: "Store not found" }, { status: 404 });
       }
 
       await sendNotification({
-        userId: store.seller_id,
+        userId: store.vendor_id,
         type: "deliverable_submitted",
         title: "🎥 Livrable soumis !",
         message: `Le créateur a soumis son travail pour la mission : ${brief.title}. Vous avez 48h pour l'examiner.`,

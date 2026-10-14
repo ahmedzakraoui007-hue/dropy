@@ -35,10 +35,10 @@ export async function POST(
 
     const { data: store } = await supabase
       .from("stores")
-      .select("seller_id")
+      .select("vendor_id")
       .eq("id", brief.store_id)
       .maybeSingle();
-    if (store?.seller_id !== user.id) {
+    if (store?.vendor_id !== user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

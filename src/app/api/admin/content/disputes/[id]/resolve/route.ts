@@ -154,13 +154,13 @@ export async function POST(
     }).eq("id", dispute.brief_id);
 
     // Notifications
-    const { data: store } = await supabase.from("stores").select("user_id").eq("id", payment.store_id).single();
+    const { data: store } = await supabase.from("stores").select("vendor_id").eq("id", payment.store_id).single();
     const { sendNotification } = await import("@/lib/notifications");
     
     // Notify Seller
-    if (store?.user_id) {
+    if (store?.vendor_id) {
       await sendNotification({
-        userId: store.user_id,
+        userId: store.vendor_id,
         title: "⚖️ Litige Résolu",
         message: `Le litige pour la mission ${dispute.brief_id} a été résolu. Résolution : ${resolution_type}. Montant remboursé : €${finalRefundAmount.toFixed(2)}`,
         type: "dispute_resolved",

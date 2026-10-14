@@ -72,11 +72,11 @@ export async function POST(request: Request) {
     // Get store owner
     const { data: store } = await supabase
       .from("stores")
-      .select("seller_id")
+      .select("vendor_id")
       .eq("id", brief.store_id)
       .single();
 
-    const isSeller = store?.seller_id === user.id;
+    const isSeller = store?.vendor_id === user.id;
     const isCreator = brief.selected_creator_id === user.id;
 
     if (!isSeller && !isCreator) {
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
     await supabase.from("content_payments").update({ is_disputed: true }).eq("id", payment.id);
 
     // Notifications
-    const otherPartyId = isSeller ? brief.selected_creator_id : store?.seller_id;
+    const otherPartyId = isSeller ? brief.selected_creator_id : store?.vendor_id;
     const { sendNotification } = await import("@/lib/notifications");
     
     if (otherPartyId) {

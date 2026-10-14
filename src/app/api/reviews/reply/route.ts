@@ -46,8 +46,8 @@ export async function POST(request: Request) {
           .maybeSingle();
         storeId = product?.store_id;
       }
-      const { data: store } = await supabase.from("stores").select("seller_id").eq("id", storeId).maybeSingle();
-      ownerId = store?.seller_id ?? null;
+      const { data: store } = await supabase.from("stores").select("vendor_id").eq("id", storeId).maybeSingle();
+      ownerId = store?.vendor_id ?? null;
     } else {
       const ref = type === "creator" ? review.creator_id : review.supplier_id;
       if (ref === user.id) {

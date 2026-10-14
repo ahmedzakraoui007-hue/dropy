@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const { data: store } = await supabase
     .from("stores")
     .select("id")
-    .eq("seller_id", user.id)
+    .eq("vendor_id", user.id)
     .single();
 
   if (!store) {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const { data: store } = await supabase
     .from("stores")
     .select("id")
-    .eq("seller_id", user.id)
+    .eq("vendor_id", user.id)
     .single();
 
   if (!store) {

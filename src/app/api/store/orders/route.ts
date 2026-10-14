@@ -165,6 +165,26 @@ export async function POST(request: Request) {
     const totalAmount = round2(subtotal - discountAmount);
     const number = orderNumber("DRP");
 
+    const dropshipSourceIds = [
+      ...new Set(priced.filter((p) => p.product.is_dropship && p.product.product_id).map((p) => p.product.product_id)),
+    ];
+    const sourceMap = new Map<string, any>();
+    if (dropshipSourceIds.length) {
+      const { data: sources, error: sourcesError } = await supabase
+        .from("products")
+        .select("id, supplier_id, base_price, sku")
+        .in("id", dropshipSourceIds);
+      if (sourcesError) throw sourcesError;
+      for (const source of sources || []) sourceMap.set(source.id, source);
+    }
+
+    const lineItems = priced.map((p) => {
+      const source = p.product.is_dropship ? sourceMap.get(p.product.product_id) : null;
+      return { ...p, source, supplierId: (source?.supplier_id as string | undefined) ?? null };
+    });
+    const hasDropship = lineItems.some((l) => l.supplierId);
+    const hasOwn = lineItems.some((l) => !l.supplierId);
+
     const { data: order, error: orderError } = await supabase
       .from("store_orders")
       .insert({
@@ -174,6 +194,7 @@ export async function POST(request: Request) {
         customer_email: customerEmail,
         customer_phone: customerPhone,
         customer_address: customerCity ? `${customerAddress}, ${customerCity}` : customerAddress,
+        customer_governorate: customer.governorate ? String(customer.governorate) : null,
         subtotal,
         discount_amount: discountAmount,
         promo_code: promoCode,
@@ -181,23 +202,25 @@ export async function POST(request: Request) {
         payment_method: "cod",
         status: "new",
         payment_status: "pending",
+        has_own_products: hasOwn,
+        has_dropshipping_products: hasDropship,
       })
       .select()
       .single();
     if (orderError) throw orderError;
 
     const { error: itemsError } = await supabase.from("store_order_items").insert(
-      priced.map(({ line, product, unitPrice, total }) => ({
+      lineItems.map((l) => ({
         store_order_id: order.id,
-        store_product_id: product.id,
-        product_name: product.name,
-        quantity: line.quantity,
-        unit_price: unitPrice,
-        total_price: total,
-        product_image: product.images?.[0] ?? null,
-        fulfillment_type: product.fulfillment_type || "own",
-        supplier_id: product.supplier_id ?? null,
-        cost_price: product.cost_price || 0,
+        store_product_id: l.product.id,
+        product_name: l.product.name,
+        quantity: l.line.quantity,
+        unit_price: l.unitPrice,
+        total_price: l.total,
+        product_image: l.product.images?.[0] ?? null,
+        variant_info: l.line.variantInfo ? { label: l.line.variantInfo } : null,
+        fulfillment_type: l.supplierId ? "dropshipping" : "own",
+        supplier_id: l.supplierId,
       }))
     );
     if (itemsError) {
@@ -205,57 +228,73 @@ export async function POST(request: Request) {
       throw itemsError;
     }
 
-    const supplierLines = new Map<string, typeof priced>();
-    for (const p of priced) {
-      await supabase.rpc("decrement_store_stock", { p_id: p.product.id, p_qty: p.line.quantity });
-      if (p.product.fulfillment_type === "dropshipping" && p.product.supplier_id) {
-        await supabase.rpc("decrement_supplier_stock", { p_store_product_id: p.product.id, p_qty: p.line.quantity });
-        const list = supplierLines.get(p.product.supplier_id) || [];
-        list.push(p);
-        supplierLines.set(p.product.supplier_id, list);
+    const bySupplier = new Map<string, typeof lineItems>();
+    for (const l of lineItems) {
+      await supabase.rpc("decrement_store_stock", { p_id: l.product.id, p_qty: l.line.quantity });
+      if (l.supplierId) {
+        await supabase.rpc("decrement_supplier_stock", { p_store_product_id: l.product.id, p_qty: l.line.quantity });
+        const list = bySupplier.get(l.supplierId) || [];
+        list.push(l);
+        bySupplier.set(l.supplierId, list);
       }
     }
 
-    for (const [supplierId, items] of supplierLines) {
+    let firstSupplierOrderId: string | null = null;
+    for (const [supplierId, items] of bySupplier) {
       const { data: supplierOrder, error: supplierOrderError } = await supabase
         .from("supplier_orders")
         .insert({
-          supplier_id: supplierId,
-          store_order_id: order.id,
           supplier_order_number: orderNumber("SUP"),
+          supplier_id: supplierId,
           status: "pending",
-          total_amount: round2(items.reduce((sum, i) => sum + (i.product.cost_price || 0) * i.line.quantity, 0)),
-          delivery_address: customerAddress,
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_city: customerCity,
+          delivery_address: {
+            name: customerName,
+            phone: customerPhone,
+            address: customerAddress,
+            city: customerCity,
+            store_order_number: number,
+          },
         })
-        .select()
+        .select("id")
         .single();
 
-      if (supplierOrderError) {
+      if (supplierOrderError || !supplierOrder) {
         console.error("Supplier order error:", supplierOrderError);
         continue;
       }
+      firstSupplierOrderId ??= supplierOrder.id;
 
       await supabase.from("supplier_order_items").insert(
         items.map((i) => ({
           supplier_order_id: supplierOrder.id,
+          product_id: i.source.id,
           product_name: i.product.name,
-          quantity: i.line.quantity,
+          product_sku: i.source.sku ?? null,
           product_image: i.product.images?.[0] ?? null,
-          variant_info: i.line.variantInfo,
+          variant_info: i.line.variantInfo ? { label: i.line.variantInfo } : null,
+          quantity: i.line.quantity,
+          unit_price: i.source.base_price ?? null,
         }))
       );
+
+      await supabase
+        .from("store_order_items")
+        .update({ supplier_order_id: supplierOrder.id })
+        .eq("store_order_id", order.id)
+        .eq("supplier_id", supplierId);
+    }
+
+    if (firstSupplierOrderId) {
+      await supabase.from("store_orders").update({ supplier_order_id: firstSupplierOrderId }).eq("id", order.id);
     }
 
     if (promoId) {
       await supabase.rpc("increment_promo_usage", { p_id: promoId });
     }
 
-    if (store.seller_id) {
+    if (store.vendor_id) {
       await supabase.from("notifications").insert({
-        user_id: store.seller_id,
+        user_id: store.vendor_id,
         type: "new_order",
         title: "🛍️ Nouvelle commande !",
         message: `Vous avez reçu une nouvelle commande (${number}) de ${totalAmount.toFixed(2)} TND.`,

@@ -38,7 +38,7 @@ export async function POST(
 
     const { data: store } = await supabase
       .from("stores")
-      .select("seller_id")
+      .select("vendor_id")
       .eq("id", payment.store_id)
       .maybeSingle();
     const { data: requester } = await supabase
@@ -46,7 +46,7 @@ export async function POST(
       .select("role")
       .eq("id", user.id)
       .maybeSingle();
-    if (store?.seller_id !== user.id && requester?.role !== "admin") {
+    if (store?.vendor_id !== user.id && requester?.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

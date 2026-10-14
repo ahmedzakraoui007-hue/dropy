@@ -271,7 +271,7 @@ export default function RoleSignup({ role }: RoleSignupProps) {
       } else if (role === "seller") {
         const slug = v.storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
         await supabase.from("stores").insert({
-          seller_id: userId,
+          vendor_id: userId,
           name: v.storeName,
           slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
           is_active: true,

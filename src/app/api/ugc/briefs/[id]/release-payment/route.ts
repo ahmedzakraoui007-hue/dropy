@@ -16,11 +16,20 @@ export async function POST(
     }
 
     // 1. Get payment info
+    const { data: sellerProfile } = await supabase
+      .from("seller_profiles")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!sellerProfile) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const { data: payment, error: paymentError } = await supabase
       .from("ugc_payments")
       .select("*")
       .eq("brief_id", briefId)
-      .eq("seller_id", user.id)
+      .eq("seller_id", sellerProfile.id)
       .eq("status", "held")
       .single();
 

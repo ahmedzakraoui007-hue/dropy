@@ -45,8 +45,8 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { data: store } = await supabase.from("stores").select("seller_id").eq("id", store_id).maybeSingle();
-  if (store?.seller_id !== user.id) {
+  const { data: store } = await supabase.from("stores").select("vendor_id").eq("id", store_id).maybeSingle();
+  if (store?.vendor_id !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

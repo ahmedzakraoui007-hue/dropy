@@ -36,7 +36,7 @@ export default function CustomersPage() {
       const { data: store } = await supabase
         .from("stores")
         .select("id")
-        .eq("seller_id", user.id)
+        .eq("vendor_id", user.id)
         .single();
 
       if (!store) {

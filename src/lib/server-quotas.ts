@@ -22,7 +22,7 @@ export async function checkQuota(
     const { count } = await supabase
       .from('stores')
       .select('*', { count: 'exact', head: true })
-      .eq('seller_id', userId);
+      .eq('vendor_id', userId);
     currentCount = count || 0;
   } else if (type === 'maxProducts') {
     const { count } = await supabase

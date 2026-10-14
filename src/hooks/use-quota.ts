@@ -30,8 +30,8 @@ export function useQuota() {
       setPlan(userPlan);
 
         const [storesRes, productsRes, briefsRes] = await Promise.all([
-          supabase.from('stores').select('*', { count: 'exact', head: true }).eq('seller_id', user.id),
-          supabase.from('store_products').select('*', { count: 'exact', head: true }).eq('store_id', (await supabase.from('stores').select('id').eq('seller_id', user.id).single()).data?.id),
+          supabase.from('stores').select('*', { count: 'exact', head: true }).eq('vendor_id', user.id),
+          supabase.from('store_products').select('*', { count: 'exact', head: true }).eq('store_id', (await supabase.from('stores').select('id').eq('vendor_id', user.id).single()).data?.id),
           supabase.from('content_briefs').select('*', { count: 'exact', head: true })
           .eq('seller_id', user.id)
           .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
