@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: reviews, error } = await supabase
     .from("store_reviews")
-    .select("*")
+    .select("id, store_id, customer_name, rating, comment, is_verified_purchase, status, seller_reply, created_at")
     .eq("store_id", storeId)
     .eq("status", "published")
     .order("created_at", { ascending: false });
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       is_verified_purchase,
       status: "pending"
     })
-    .select()
+    .select("id, status")
     .single();
 
   if (error) {

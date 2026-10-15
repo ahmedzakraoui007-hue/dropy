@@ -1,23 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-const RESERVED_ROUTES = [
-  'seller',
-  'supplier',
-  'creator',
-  'admin',
-  'login',
-  'register',
-  'auth',
-  'api',
-  '_next',
-  'favicon.ico',
-  'onboarding',
-  'demande-en-attente',
-  'inscription',
-  'track'
-];
-
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
@@ -116,35 +99,6 @@ export async function middleware(request: NextRequest) {
       }
       if (profile.role !== roleArea && profile.role !== 'admin') {
         return NextResponse.redirect(new URL(ROLE_HOME[profile.role] || '/', request.url));
-      }
-    }
-
-    // 3. Storefront Routing (Bug #6 Fix)
-    // If route is NOT reserved and NOT a file, check if it's a store
-    if (!RESERVED_ROUTES.includes(firstSegment) && !pathname.includes('.')) {
-      if (firstSegment) {
-        // It might be a store slug
-        // To avoid DB hits on every static request not caught by reserved, we could cache or just query.
-        // Supabase query is fast.
-
-        // Check if store exists with this slug
-        const { data: store } = await supabase
-          .from('store_configs')
-          .select('id, seller_id')
-          .eq('store_slug', firstSegment)
-          .single();
-
-        if (store) {
-          // It IS a store.
-          // The URL is /store-slug/page
-          // Next.js App Router with [storeSlug] at root will handle this AUTOMATICALLY!
-          // WE DO NOT NEED TO REWRITE if the folder is src/app/[storeSlug].
-          // The router matches /[storeSlug] because it's a dynamic segment at root.
-
-          // However, we might want to inject headers (store-id) for performance in server components if needed?
-          // But strictly speaking, if structure is src/app/[storeSlug], we just let it pass.
-          return supabaseResponse;
-        }
       }
     }
 

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/mail";
 
 export type NotificationType = 
@@ -32,7 +32,7 @@ export async function sendNotification({
   payload = {},
   sendEmail: shouldSendEmail = true,
 }: SendNotificationParams) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // 1. Get user preferences and email
   const { data: profile, error: profileError } = await supabase

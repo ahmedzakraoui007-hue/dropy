@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       is_verified_purchase,
       status: "pending"
     })
-    .select()
+    .select("id, status")
     .single();
 
   if (error) {

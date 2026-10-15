@@ -1221,9 +1221,9 @@ const Merci = ({ orderId, store }: { orderId: string, store: any }) => {
 
   useEffect(() => {
     const loadOrder = async () => {
-      const supabase = createClient();
-      const { data } = await supabase.from("store_orders").select("*").eq("id", orderId).single();
-      setOrder(data);
+      const response = await fetch(`/api/store/orders/track?id=${encodeURIComponent(orderId)}`);
+      const result = response.ok ? await response.json() : null;
+      setOrder(result?.order ?? null);
       setLoading(false);
     };
     loadOrder();
@@ -1274,8 +1274,8 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
     if (!num) return;
     setLoading(true);
     setError("");
-    const supabase = createClient();
-    const { data, error } = await supabase.from("store_orders").select("*").eq("order_number", num).single();
+    const response = await fetch(`/api/store/orders/track?number=${encodeURIComponent(num)}`);
+    const data = response.ok ? (await response.json()).order : null;
     if (data) setOrder(data);
     else setError("Commande introuvable");
     setLoading(false);
@@ -1560,7 +1560,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
 
 
 const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
-  const commonProps = { sectionId: section.id, config: section.config };
+  const commonProps = { sectionId: section.id, config: section.config ?? section.content ?? {} };
   if (section.is_visible === false) return null;
   const handleAction = (type: string, id: string) => window.parent.postMessage({ type: 'SECTION_ACTION', actionType: type, sectionId: id }, '*');
   const renderSection = () => {
@@ -1594,12 +1594,24 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
         case "checkout": return <Checkout {...commonProps} store={store} cart={cart} slug={slug} onClearCart={onClearCart} />;
 
 
-      default: return <div className="p-10 text-center border-2 border-dashed">Section {section.type}</div>;
+      default: return typeof window !== "undefined" && window.parent !== window ? <div className="p-10 text-center border-2 border-dashed">Section {section.type}</div> : null;
     }
   };
   return <SectionWrapper sectionId={section.id} onAction={handleAction}>{renderSection()}</SectionWrapper>;
 };
 
+
+const BUILT_IN_PAGES: Record<string, any[]> = {
+  checkout: [{ id: "builtin-checkout", type: "checkout", config: {} }],
+  "product-detail": [{ id: "builtin-product-detail", type: "product_detail", config: {} }],
+  shop: [{ id: "builtin-shop", type: "products", config: { title: "Nos produits", limit: 24, columns: 4 } }],
+};
+
+const sectionsForPage = (pageSlug: string, pageList: any[]) => {
+  const page = pageList.find((p) => p.slug === pageSlug);
+  if (page) return page.sections || [];
+  return BUILT_IN_PAGES[pageSlug] ?? null;
+};
 
 export default function StorePreview({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -1612,6 +1624,21 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
     const [isCartOpen, setIsCartOpen] = useState(false);
     const hasReceivedInitialUpdate = useRef(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
+    useEffect(() => {
+      if (window.parent !== window) return;
+      const parts = window.location.pathname.split("/").filter(Boolean).map(decodeURIComponent);
+      const index = parts.indexOf(slug);
+      const rest = index >= 0 ? parts.slice(index + 1).join("/") : "";
+      if (rest) setCurrentPage(rest);
+    }, [slug]);
+
+    useEffect(() => {
+      if (window.parent !== window || currentPage === "product-detail") return;
+      const base = window.location.pathname.startsWith("/preview/") ? `/preview/${slug}` : `/${slug}`;
+      const target = currentPage && currentPage !== "home" ? `${base}/${currentPage}` : base;
+      if (window.location.pathname !== target) window.history.replaceState(null, "", target);
+    }, [currentPage, slug]);
 
       useEffect(() => {
         const savedCart = localStorage.getItem(`cart_${slug}`);
@@ -1642,11 +1669,13 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
             // Only load pages from DB if not in builder or if we haven't received an update yet
             if (!isBuilder || (!hasReceivedInitialUpdate.current && pages.length === 0)) {
-              const { data: pagesData } = await supabase.from("store_pages").select("*").eq("store_id", storeData.id).order("position", { ascending: true });
+              let pagesQuery = supabase.from("store_pages").select("*").eq("store_id", storeData.id);
+              if (!isBuilder) pagesQuery = pagesQuery.eq("is_published", true);
+              const { data: pagesData } = await pagesQuery.order("sort_order", { ascending: true });
               if (pagesData) {
                 setPages(pagesData);
-                const pageData = pagesData.find(p => p.slug === currentPage) || pagesData[0];
-                if (pageData && !hasReceivedInitialUpdate.current) setSections(pageData.sections || []);
+                const initial = sectionsForPage(currentPage, pagesData) ?? pagesData[0]?.sections ?? [];
+                if (!hasReceivedInitialUpdate.current) setSections(initial);
               }
             }
           }
@@ -1657,9 +1686,9 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
     useEffect(() => {
       // Handle page change without reloading everything from DB
-      if (pages.length > 0) {
-        const pageData = pages.find(p => p.slug === currentPage);
-        if (pageData) setSections(pageData.sections || []);
+      if (pages.length > 0 || BUILT_IN_PAGES[currentPage]) {
+        const next = sectionsForPage(currentPage, pages);
+        if (next) setSections(next);
       }
     }, [currentPage, pages]);
 

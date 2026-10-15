@@ -58,6 +58,16 @@ Still open:
 - 0.9 RLS audit — needs the schema (Phase 1.1). Check in particular whether anonymous users can read `store_orders` (customer data).
 - **Credentials in the public repository**: `admin@dropy.store`, `admin.test@dropy.store`, `test-admin-orchids@gmail.com`, `test-admin@dropy.tn` and the other test accounts had passwords committed. Delete them or change their passwords in Supabase.
 
+### Live database findings (2026-10-15)
+
+Checked against the live project with the API (no SQL access):
+- **Anonymous visitors could read all profiles (emails, phones, bank details), all customer orders and notifications.** Fix ready: `supabase/migrations/20261015090000_block_anonymous_private_data.sql` — must be run in the Supabase SQL editor. The app no longer needs anonymous access to these tables.
+- `stores` owner column is `vendor_id` (code used `seller_id`, which does not exist) — fixed everywhere.
+- `store_configs.store_slug` does not exist — public shops now resolve by `stores.slug`.
+- Live systems: `store_orders` (not `orders`, 0 rows) and `content_*` (not `ugc_*`, 0 rows). `carts`, `cart_items`, `media` tables do not exist.
+- Two section formats exist in `store_pages.sections` (`config` from the current builder, `content` from an older one).
+- Still unknown: policies for logged-in users (need `pg_policies` output).
+
 ## Phase 1 — Make the database the source of truth
 
 | # | Task | Size |

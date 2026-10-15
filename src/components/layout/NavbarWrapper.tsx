@@ -7,11 +7,24 @@ import LandingFooter from "@/components/landing/LandingFooter";
 export default function NavbarWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-    // Routes where we DON'T want the landing navbar/footer
-    const protectedRoutes = ["/admin", "/seller", "/supplier", "/creator", "/login", "/inscription", "/forgot-password", "/auth/reset-password", "/preview", "/demande-en-attente"];
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  const MARKETING_SECTIONS = [
+    "a-propos",
+    "aide",
+    "carrieres",
+    "conditions-utilisation",
+    "contact",
+    "createurs",
+    "fournisseurs",
+    "mentions-legales",
+    "politique-confidentialite",
+    "tarifs",
+    "vendeurs",
+    "help",
+  ];
+  const firstSegment = pathname.split("/")[1] || "";
+  const isMarketingPage = firstSegment === "" || MARKETING_SECTIONS.includes(firstSegment);
 
-  if (isProtectedRoute) {
+  if (!isMarketingPage) {
     return <>{children}</>;
   }
 

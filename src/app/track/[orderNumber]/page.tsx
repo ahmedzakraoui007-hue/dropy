@@ -20,7 +20,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -44,9 +43,9 @@ interface OrderTracking {
   created_at: string;
   shipped_at?: string;
   delivered_at?: string;
-  customer_name: string;
+  customer_name?: string;
   customer_phone?: string;
-  customer_address: string;
+  customer_address?: string;
   customer_governorate?: string;
   total_amount: number;
   payment_method: string;
@@ -82,55 +81,48 @@ export default function TrackOrderPage() {
   const [order, setOrder] = useState<OrderTracking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [verifyPhone, setVerifyPhone] = useState("");
+  const [verifying, setVerifying] = useState(false);
+  const [verifyError, setVerifyError] = useState(false);
 
   useEffect(() => {
     loadOrderTracking();
   }, [orderNumber]);
 
+  async function fetchOrder(phone?: string) {
+    const params = new URLSearchParams({ number: orderNumber });
+    if (phone) params.set("phone", phone);
+    const response = await fetch(`/api/store/orders/track?${params}`);
+    if (!response.ok) return null;
+    return (await response.json()) as { order: OrderTracking; verified: boolean };
+  }
+
   async function loadOrderTracking() {
     try {
-      const supabase = createClient();
-      
-      const { data: orderData, error: orderError } = await supabase
-        .from("store_orders")
-        .select(`
-          *,
-          items:store_order_items(*),
-          store:stores(name, logo_url)
-        `)
-        .or(`order_number.eq.${orderNumber},tracking_number.eq.${orderNumber}`)
-        .single();
-
-      if (orderError || !orderData) {
+      const result = await fetchOrder();
+      if (!result) {
         setError("Commande non trouvée");
-        setLoading(false);
         return;
       }
-
-      setOrder({
-        id: orderData.id,
-        order_number: orderData.order_number,
-        status: orderData.status,
-        tracking_number: orderData.tracking_number,
-        shipping_company: orderData.shipping_company,
-        estimated_delivery: orderData.estimated_delivery,
-        created_at: orderData.created_at,
-        shipped_at: orderData.shipped_at,
-        delivered_at: orderData.delivered_at,
-        customer_name: orderData.customer_name,
-        customer_phone: orderData.customer_phone,
-        customer_address: orderData.customer_address,
-        customer_governorate: orderData.customer_governorate,
-        total_amount: orderData.total_amount,
-        payment_method: orderData.payment_method,
-        items: orderData.items || [],
-        store: orderData.store,
-      });
-    } catch (err) {
+      setOrder({ ...result.order, items: result.order.items || [] });
+    } catch {
       setError("Erreur lors du chargement");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function verifyWithPhone(e: React.FormEvent) {
+    e.preventDefault();
+    setVerifying(true);
+    setVerifyError(false);
+    const result = await fetchOrder(verifyPhone).catch(() => null);
+    if (result?.verified) {
+      setOrder({ ...result.order, items: result.order.items || [] });
+    } else {
+      setVerifyError(true);
+    }
+    setVerifying(false);
   }
 
   const getCurrentStepIndex = () => {
@@ -370,26 +362,48 @@ export default function TrackOrderPage() {
               <MapPin className="w-5 h-5 text-primary" />
               Adresse de livraison
             </h3>
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-primary" />
+            {order.customer_name ? (
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">{order.customer_name}</p>
+                    {order.customer_phone && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Phone className="w-3 h-3" />
+                        {order.customer_phone}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold">{order.customer_name}</p>
-                  {order.customer_phone && (
-                    <p className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {order.customer_phone}
-                    </p>
-                  )}
-                </div>
+                <p className="text-muted-foreground pl-13">
+                  {order.customer_address}
+                  {order.customer_governorate && `, ${order.customer_governorate}`}
+                </p>
               </div>
-              <p className="text-muted-foreground pl-13">
-                {order.customer_address}
-                {order.customer_governorate && `, ${order.customer_governorate}`}
-              </p>
-            </div>
+            ) : (
+              <form onSubmit={verifyWithPhone} className="p-4 bg-gray-50 rounded-xl space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Pour afficher l&apos;adresse de livraison, saisissez le numéro de téléphone utilisé lors de la commande.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    value={verifyPhone}
+                    onChange={(e) => setVerifyPhone(e.target.value)}
+                    placeholder="+216 XX XXX XXX"
+                    className="flex-1 h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm"
+                  />
+                  <Button type="submit" disabled={verifying || verifyPhone.replace(/\D/g, "").length < 8}>
+                    Vérifier
+                  </Button>
+                </div>
+                {verifyError && <p className="text-xs text-red-600">Numéro incorrect.</p>}
+              </form>
+            )}
           </CardContent>
         </Card>
 

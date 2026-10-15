@@ -26,6 +26,7 @@ import { SetupChecklist } from "@/components/store-builder/SetupChecklist";
 export default function StoreBuilderDashboard() {
   const [loading, setLoading] = useState(true);
   const [sellerProfile, setSellerProfile] = useState<any>(null);
+  const [storeSlug, setStoreSlug] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -48,6 +49,15 @@ export default function StoreBuilderDashboard() {
           profile = newProfile;
         }
         setSellerProfile(profile);
+
+        const { data: store } = await supabase
+          .from("stores")
+          .select("slug")
+          .eq("vendor_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        setStoreSlug(store?.slug ?? profile?.store_slug ?? null);
       }
       setLoading(false);
     }
@@ -69,7 +79,7 @@ export default function StoreBuilderDashboard() {
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" asChild className="rounded-xl border-gray-200">
-            <Link href={`/shop/${sellerProfile?.store_slug || ''}`} target="_blank">
+            <Link href={storeSlug ? `/${storeSlug}` : "/seller/store/create"} target="_blank">
               <Eye className="w-4 h-4 mr-2" />
               Aperçu
             </Link>
