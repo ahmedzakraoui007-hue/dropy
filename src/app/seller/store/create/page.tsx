@@ -188,13 +188,14 @@ export default function CreateStorePage() {
     for (const page of essentialPages) {
       await supabase.from("store_pages").insert({
         store_id: store.id,
-        name: page.name,
+        title: page.name,
         slug: page.slug,
-        type: page.type,
+        page_type: page.type,
         sections: page.sections,
-        show_in_menu: page.show_in_menu,
+        show_in_navigation: page.show_in_menu,
+        is_homepage: page.slug === "home",
         is_published: true,
-        position: essentialPages.indexOf(page)
+        sort_order: essentialPages.indexOf(page)
       });
     }
 

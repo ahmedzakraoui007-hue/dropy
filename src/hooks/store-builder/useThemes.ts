@@ -122,11 +122,12 @@ export function useThemes() {
               store_id: store.id,
               slug: 'home',
               title: 'Accueil',
-              page_type: 'home',
+              page_type: 'content',
               sections: sectionsPayload,
               is_published: true,
-              is_visible_in_menu: true,
-              menu_order: 1
+              is_homepage: true,
+              show_in_navigation: true,
+              sort_order: 0
             });
 
           if (pageError) {

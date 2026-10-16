@@ -1,81 +1,41 @@
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
-export function useOrderActions(sellerId: string) {
+export function useOrderActions(_sellerId: string) {
   const supabase = createClient();
 
-  const confirmOrder = async (orderId: string, note?: string) => {
-    const { error } = await supabase.rpc('transition_order', {
-      p_order_id: orderId,
-      p_new_status: 'confirmed',
-      p_actor_id: sellerId,
-      p_actor_type: 'seller',
-      p_note: note || 'Client contacté et confirmé'
-    });
-
+  const update = async (orderId: string, values: Record<string, unknown>, success: string, failure: string) => {
+    const { error } = await supabase.from('store_orders').update(values).eq('id', orderId);
     if (error) {
-      toast.error('Erreur lors de la confirmation');
+      console.error(failure, error);
+      toast.error(failure);
       return false;
     }
-    toast.success('Commande confirmée !');
+    toast.success(success);
     return true;
   };
+
+  const confirmOrder = (orderId: string, note?: string) =>
+    update(
+      orderId,
+      note ? { status: 'confirmed', seller_notes: note } : { status: 'confirmed' },
+      'Commande confirmée !',
+      'Erreur lors de la confirmation'
+    );
 
   const cancelOrder = async (orderId: string, reason: string) => {
     if (!reason.trim()) {
       toast.error('Veuillez indiquer une raison');
       return false;
     }
-
-    const { error } = await supabase.rpc('transition_order', {
-      p_order_id: orderId,
-      p_new_status: 'cancelled',
-      p_actor_id: sellerId,
-      p_actor_type: 'seller',
-      p_note: reason
-    });
-
-    if (error) {
-      toast.error('Erreur lors de l\'annulation');
-      return false;
-    }
-    toast.success('Commande annulée');
-    return true;
+    return update(orderId, { status: 'cancelled', notes: reason.trim() }, 'Commande annulée', "Erreur lors de l'annulation");
   };
 
-  const sendToSupplier = async (orderId: string) => {
-    const { error } = await supabase.rpc('transition_order', {
-      p_order_id: orderId,
-      p_new_status: 'processing',
-      p_actor_id: sellerId,
-      p_actor_type: 'seller',
-      p_note: 'Transmise au fournisseur'
-    });
+  const sendToSupplier = (orderId: string) =>
+    update(orderId, { status: 'preparing' }, 'Commande transmise au fournisseur', 'Erreur lors de la transmission');
 
-    if (error) {
-      toast.error('Erreur lors de la transmission');
-      return false;
-    }
-    toast.success('Commande transmise au fournisseur');
-    return true;
-  };
-
-  const returnOrder = async (orderId: string, reason: string) => {
-    const { error } = await supabase.rpc('transition_order', {
-      p_order_id: orderId,
-      p_new_status: 'returned',
-      p_actor_id: sellerId,
-      p_actor_type: 'seller',
-      p_note: reason
-    });
-
-    if (error) {
-      toast.error('Erreur lors du marquage en retour');
-      return false;
-    }
-    toast.success('Commande marquée comme retournée');
-    return true;
-  };
+  const returnOrder = (orderId: string, reason: string) =>
+    update(orderId, { notes: `Retour : ${reason}` }, 'Retour enregistré', "Erreur lors de l'enregistrement du retour");
 
   return { confirmOrder, cancelOrder, sendToSupplier, returnOrder };
 }

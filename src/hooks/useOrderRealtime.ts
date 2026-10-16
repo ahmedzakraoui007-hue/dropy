@@ -12,7 +12,6 @@ export function useOrderRealtime(
 
   useEffect(() => {
     const supabase = createClient();
-    // Précharger le son de notification
     audioRef.current = new Audio('/sounds/new-order.mp3');
     audioRef.current.volume = 0.5;
 
@@ -23,8 +22,7 @@ export function useOrderRealtime(
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'store_orders',
-          filter: `seller_id=eq.${sellerId}`
+          table: 'store_orders'
         },
         (payload) => {
           const newOrder = payload.new as Order;
@@ -34,7 +32,7 @@ export function useOrderRealtime(
           toast.success(
             `🛒 Nouvelle commande #${newOrder.order_number}`,
             {
-              description: `${newOrder.customer_name} - ${newOrder.total} TND`,
+              description: `${newOrder.customer_name} - ${(newOrder as any).total_amount ?? newOrder.total} TND`,
               duration: 10000,
               action: {
                 label: 'Appeler',
@@ -51,8 +49,7 @@ export function useOrderRealtime(
         {
           event: 'UPDATE',
           schema: 'public',
-          table: 'store_orders',
-          filter: `seller_id=eq.${sellerId}`
+          table: 'store_orders'
         },
         (payload) => {
           const updated = payload.new as Order;
@@ -78,13 +75,12 @@ export function useOrderRealtime(
 
 export function getStatusLabel(status: OrderStatus): string {
   const labels: Record<OrderStatus, string> = {
-    pending: 'En attente',
+    new: 'Nouvelle',
     confirmed: 'Confirmée',
-    processing: 'En préparation',
+    preparing: 'En préparation',
     shipped: 'Expédiée',
     delivered: 'Livrée',
-    cancelled: 'Annulée',
-    returned: 'Retournée'
+    cancelled: 'Annulée'
   };
-  return labels[status];
+  return labels[status] ?? status;
 }

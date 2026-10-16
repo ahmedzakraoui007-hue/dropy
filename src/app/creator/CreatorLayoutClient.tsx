@@ -31,7 +31,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 
 const navigation = [
-  { name: "Dashboard", href: "/creator/dashboard", icon: LayoutDashboard },
+  { name: "Tableau de bord", href: "/creator/dashboard", icon: LayoutDashboard },
   { name: "Briefs disponibles", href: "/creator/opportunities", icon: Briefcase },
   { name: "Mes missions", href: "/creator/missions", icon: FileText },
   { name: "Portfolio", href: "/creator/portfolio", icon: FolderOpen },

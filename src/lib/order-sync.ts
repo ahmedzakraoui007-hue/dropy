@@ -3,12 +3,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const STORE_STATUS_FROM_SUPPLIER: Record<string, string> = {
   accepted: "confirmed",
   preparing: "preparing",
-  ready_for_pickup: "ready_to_ship",
+  ready_for_pickup: "preparing",
   shipped: "shipped",
   delivered: "delivered",
 };
 
-const STATUS_RANK = ["new", "confirmed", "preparing", "ready_to_ship", "shipped", "delivered"];
+const STATUS_RANK = ["new", "confirmed", "preparing", "shipped", "delivered"];
 
 export async function linkedStoreOrders(supplierOrderId: string) {
   const supabase = createAdminClient();

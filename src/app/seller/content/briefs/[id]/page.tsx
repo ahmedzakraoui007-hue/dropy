@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchProfileCards } from "@/lib/profile-cards";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
@@ -67,17 +68,35 @@ export default function BriefDetailsPage() {
 
       const { data: appsData } = await supabase
         .from("content_applications")
-        .select(`
-          *,
-          creator:profiles(*)
-        `)
+        .select("*")
         .eq("brief_id", id);
+
+      const creatorIds = (appsData || []).map((a: any) => a.creator_id);
+      const cards = await fetchProfileCards(supabase, creatorIds);
+      const { data: creatorProfiles } = creatorIds.length
+        ? await supabase.from("creator_profiles").select("user_id, rating, specialties, specialty").in("user_id", creatorIds)
+        : { data: [] as any[] };
+      const profileByUser = new Map((creatorProfiles || []).map((c: any) => [c.user_id, c]));
+      const appsWithCreators = (appsData || []).map((a: any) => {
+        const card = cards.get(a.creator_id);
+        const cp: any = profileByUser.get(a.creator_id) || {};
+        return {
+          ...a,
+          creator: {
+            id: a.creator_id,
+            full_name: card?.full_name || "Créateur",
+            avatar_url: card?.avatar_url || null,
+            rating: cp.rating ?? null,
+            specialties: cp.specialties?.length ? cp.specialties : cp.specialty ? [cp.specialty] : [],
+          },
+        };
+      });
 
       const { data: delivData } = await supabase
         .from("content_deliveries")
         .select("*")
         .eq("brief_id", id)
-        .order("created_at", { ascending: false });
+        .order("delivered_at", { ascending: false });
 
       // Fetch existing reviews for this brief
       const { data: reviewsData } = await supabase
@@ -86,7 +105,7 @@ export default function BriefDetailsPage() {
         .eq("brief_id", id);
 
       setBrief(briefData);
-      setApplications(appsData || []);
+      setApplications(appsWithCreators);
       setDeliveries(delivData || []);
       setExistingReviews(reviewsData || []);
       setIsLoading(false);

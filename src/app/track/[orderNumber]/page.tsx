@@ -60,7 +60,6 @@ const statusSteps = [
   { key: 'new', label: 'Commande reçue', icon: ShoppingBag },
   { key: 'confirmed', label: 'Confirmée', icon: CheckCircle2 },
   { key: 'preparing', label: 'En préparation', icon: Package },
-  { key: 'ready_to_ship', label: 'Prêt à expédier', icon: Package },
   { key: 'shipped', label: 'En transit', icon: Truck },
   { key: 'delivered', label: 'Livré', icon: CheckCircle2 },
 ];

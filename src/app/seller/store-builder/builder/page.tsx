@@ -568,10 +568,17 @@ export default function BuilderPage() {
         .from("store_pages")
         .select("*")
         .eq("store_id", storeData.id)
-        .order("position", { ascending: true });
+        .order("sort_order", { ascending: true });
 
       if (pagesData && pagesData.length > 0) {
-        setPages(pagesData);
+        setPages(
+          pagesData.map((p: any) => ({
+            ...p,
+            name: p.title || p.slug,
+            type: p.page_type || "content",
+            show_in_menu: p.show_in_navigation ?? true,
+          }))
+        );
         const homePage = pagesData.find(p => p.slug === "home") || pagesData[0];
         setCurrentPageSlug(homePage.slug);
         setSections(homePage.sections || []);
@@ -701,23 +708,25 @@ export default function BuilderPage() {
 
       const existingMap = new Map(existingPages?.map(p => [p.slug, p.id]) || []);
 
-      const pagesToUpsert = pages.map((page, index) => ({
-        ...(existingMap.has(page.slug) ? { id: existingMap.get(page.slug) } : {}),
+      const rows = pages.map((page, index) => ({
         store_id: store.id,
-          slug: page.slug,
-          title: page.title,
-          type: page.type,
+        slug: page.slug,
+        title: page.title || page.name || page.slug,
+        page_type: page.type || "content",
         sections: page.sections,
-        is_published: page.is_published,
-        show_in_menu: page.show_in_menu ?? true,
-        position: index
+        is_published: page.is_published ?? true,
+        is_homepage: page.slug === "home",
+        show_in_navigation: page.show_in_menu ?? true,
+        sort_order: index,
       }));
 
-      const { error: pagesError } = await supabase
-        .from("store_pages")
-        .upsert(pagesToUpsert, { onConflict: 'store_id,slug' });
-      
-      if (pagesError) throw pagesError;
+      for (const row of rows) {
+        const existingId = existingMap.get(row.slug);
+        const { error: pageError } = existingId
+          ? await supabase.from("store_pages").update(row).eq("id", existingId)
+          : await supabase.from("store_pages").insert(row);
+        if (pageError) throw pageError;
+      }
       
       const { error: storeError } = await supabase
         .from("stores")

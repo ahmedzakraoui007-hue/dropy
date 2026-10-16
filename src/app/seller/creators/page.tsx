@@ -61,6 +61,11 @@ export default function CreatorMarketplace() {
         const cards = await fetchProfileCards(supabase, data.map((c: any) => c.user_id));
         const mappedCreators = data.map((c: any) => ({
           ...c,
+          specialty: Array.isArray(c.specialties) && c.specialties.length
+            ? c.specialties
+            : c.specialty
+              ? [c.specialty]
+              : [],
           full_name: cards.get(c.user_id)?.full_name ?? "Créateur",
           avatar_url: cards.get(c.user_id)?.avatar_url ?? null,
         }));

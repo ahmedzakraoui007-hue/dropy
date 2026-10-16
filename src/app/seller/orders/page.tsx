@@ -25,13 +25,12 @@ const GOVERNORATES = [
 
 const ORDER_TABS: { id: OrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'Toutes' },
-  { id: 'pending', label: 'En attente' },
+  { id: 'new', label: 'Nouvelles' },
   { id: 'confirmed', label: 'Confirmées' },
-  { id: 'processing', label: 'En préparation' },
+  { id: 'preparing', label: 'En préparation' },
   { id: 'shipped', label: 'Expédiées' },
   { id: 'delivered', label: 'Livrées' },
   { id: 'cancelled', label: 'Annulées' },
-  { id: 'returned', label: 'Retournées' },
 ];
 import { createClient } from '@/lib/supabase/client';
 

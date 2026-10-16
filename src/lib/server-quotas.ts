@@ -25,19 +25,23 @@ export async function checkQuota(
       .eq('vendor_id', userId);
     currentCount = count || 0;
   } else if (type === 'maxProducts') {
+    const { data: stores } = await supabase.from('stores').select('id').eq('vendor_id', userId);
+    const ids = (stores || []).map((s: { id: string }) => s.id);
     const { count } = await supabase
-      .from('products')
+      .from('store_products')
       .select('*', { count: 'exact', head: true })
-      .eq('seller_id', userId);
+      .in('store_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']);
     currentCount = count || 0;
   } else if (type === 'maxBriefsPerMonth') {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     
+    const { data: stores } = await supabase.from('stores').select('id').eq('vendor_id', userId);
+    const ids = (stores || []).map((s: { id: string }) => s.id);
     const { count } = await supabase
       .from('content_briefs')
       .select('*', { count: 'exact', head: true })
-      .eq('seller_id', userId)
+      .in('store_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
       .gte('created_at', firstDayOfMonth);
     currentCount = count || 0;
   }

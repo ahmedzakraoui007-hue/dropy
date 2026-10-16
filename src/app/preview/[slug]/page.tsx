@@ -1695,7 +1695,6 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
     useEffect(() => {
-      if (window.parent !== window) return;
       const parts = window.location.pathname.split("/").filter(Boolean).map(decodeURIComponent);
       const index = parts.indexOf(slug);
       const rest = index >= 0 ? parts.slice(index + 1).join("/") : "";

@@ -2,13 +2,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Order, OrderStatus, OrderFilters } from '@/types/orders';
 
+async function sellerStoreIds(sellerId: string) {
+  const { data } = await createClient().from('stores').select('id').eq('vendor_id', sellerId);
+  const ids = (data || []).map((s) => s.id);
+  return ids.length ? ids : ['00000000-0000-0000-0000-000000000000'];
+}
+
 export function useOrders(sellerId: string, filters: OrderFilters) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [counts, setCounts] = useState<Record<OrderStatus | 'all', number>>({
-    all: 0, pending: 0, confirmed: 0, processing: 0,
-    shipped: 0, delivered: 0, cancelled: 0, returned: 0
+    all: 0, new: 0, confirmed: 0, preparing: 0,
+    shipped: 0, delivered: 0, cancelled: 0
   });
 
   const fetchOrders = useCallback(async () => {
@@ -16,13 +22,14 @@ export function useOrders(sellerId: string, filters: OrderFilters) {
     const supabase = createClient();
     setLoading(true);
     try {
+      const storeIds = await sellerStoreIds(sellerId);
       let query = supabase
         .from('store_orders')
         .select(`
           *,
           items:store_order_items(*)
         `)
-        .eq('seller_id', sellerId)
+        .in('store_id', storeIds)
         .order('created_at', { ascending: false });
 
       if (filters.status !== 'all') {
@@ -58,21 +65,21 @@ export function useOrders(sellerId: string, filters: OrderFilters) {
   const fetchCounts = useCallback(async () => {
     if (!sellerId) return;
     const supabase = createClient();
+    const storeIds = await sellerStoreIds(sellerId);
     const { data } = await supabase
       .from('store_orders')
       .select('status')
-      .eq('seller_id', sellerId);
+      .in('store_id', storeIds);
 
     if (data) {
       const newCounts: Record<OrderStatus | 'all', number> = {
         all: data.length,
-        pending: 0,
+        new: 0,
         confirmed: 0,
-        processing: 0,
+        preparing: 0,
         shipped: 0,
         delivered: 0,
-        cancelled: 0,
-        returned: 0
+        cancelled: 0
       };
       data.forEach(o => {
         if (newCounts[o.status as OrderStatus] !== undefined) {

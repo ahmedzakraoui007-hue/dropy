@@ -166,7 +166,7 @@ export default function SupplierAnalyticsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black">Analytics</h1>
+          <h1 className="text-3xl font-black">Statistiques</h1>
           <p className="text-muted-foreground">Suivez les performances de vos produits.</p>
         </div>
         <Select value={period} onValueChange={setPeriod}>

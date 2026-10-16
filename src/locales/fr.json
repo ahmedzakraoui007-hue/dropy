@@ -639,7 +639,7 @@
         "quick_actions": "Actions rapides"
       },
       "nav": {
-        "dashboard": "Dashboard",
+        "dashboard": "Tableau de bord",
         "my_store": "Ma Boutique",
         "my_products": "Mes Produits",
         "dropy_catalog": "Catalogue Dropy",
@@ -647,7 +647,7 @@
         "shipping": "Livraisons",
         "calculator": "Calculator",
         "customers": "Clients",
-        "analytics": "Analytics",
+        "analytics": "Statistiques",
         "ugc_creators": "Créateurs UGC",
         "training": "Formation",
         "subscription": "Abonnement",

@@ -33,13 +33,12 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'new': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'processing': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'preparing': return 'bg-purple-100 text-purple-800 border-purple-200';
       case 'shipped': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
       case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
       case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'returned': return 'bg-orange-100 text-orange-800 border-orange-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -86,7 +85,7 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
           <Eye className="w-3 h-3 mr-1" /> Détails
         </Button>
         
-        {order.status === 'pending' && (
+        {order.status === 'new' && (
           <>
             <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => window.open(`tel:${order.customer_phone}`)}>
               <Phone className="w-3 h-3 mr-1" /> Appeler

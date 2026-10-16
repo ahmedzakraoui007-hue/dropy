@@ -246,7 +246,7 @@ export default function OrderDetailPage() {
       await supabase
         .from("store_orders")
         .update({
-          status: "ready_to_ship",
+          status: "preparing",
           own_products_status: "pickup_scheduled",
           delivery_type: "dropy",
           pickup_scheduled_at: new Date(pickupData.date).toISOString(),
@@ -569,7 +569,7 @@ export default function OrderDetailPage() {
                   Cette partie est sous votre responsabilité. Vous devez préparer et expédier ces produits.
                 </CardDescription>
               </div>
-              {["pending", "confirmed"].includes(order.status) && (
+              {["new", "confirmed"].includes(order.status) && (
                 <Badge className="bg-red-500 text-white animate-pulse">ACTION REQUISE</Badge>
               )}
             </div>

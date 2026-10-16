@@ -53,7 +53,7 @@ export default function AdminReviewsPage() {
     } else if (type === "product") {
       query = supabase.from("product_reviews").select(`
         *,
-        store_product:store_products(title, store:stores(name))
+        store_product:store_products(title:name, store:stores(name))
       `);
     } else if (type === "store") {
       query = supabase.from("store_reviews").select(`
@@ -146,16 +146,16 @@ export default function AdminReviewsPage() {
                               </Avatar>
                               <div>
                                 <p className="text-sm font-bold">
-                                  {activeTab === 'creator' && `Review for ${review.creator?.full_name}`}
-                                  {activeTab === 'product' && `Review for ${review.store_product?.title}`}
-                                  {activeTab === 'store' && `Review for ${review.store?.name}`}
-                                  {activeTab === 'supplier' && `Review for ${review.supplier?.full_name}`}
+                                  {activeTab === 'creator' && `Avis sur ${review.creator?.full_name}`}
+                                  {activeTab === 'product' && `Avis sur ${review.store_product?.title}`}
+                                  {activeTab === 'store' && `Avis sur ${review.store?.name}`}
+                                  {activeTab === 'supplier' && `Avis sur ${review.supplier?.full_name}`}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {activeTab === 'creator' && `By ${review.store?.name} on ${review.brief?.title}`}
-                                  {activeTab === 'product' && `By ${review.customer_name} on ${review.store_product?.store?.name}`}
-                                  {activeTab === 'store' && `By ${review.customer_name}`}
-                                  {activeTab === 'supplier' && `By ${review.seller?.full_name}`}
+                                  {activeTab === 'creator' && `Par ${review.store?.name} pour ${review.brief?.title}`}
+                                  {activeTab === 'product' && `Par ${review.customer_name} chez ${review.store_product?.store?.name}`}
+                                  {activeTab === 'store' && `Par ${review.customer_name}`}
+                                  {activeTab === 'supplier' && `Par ${review.seller?.full_name}`}
                                 </p>
                               </div>
                             </div>

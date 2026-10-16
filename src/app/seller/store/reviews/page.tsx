@@ -46,8 +46,10 @@ export default function SellerReviewsPage() {
       const { data: storeData } = await supabase
         .from("stores")
         .select("id")
-        .eq("owner_id", user.id)
-        .single();
+        .eq("vendor_id", user.id)
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
 
       if (storeData) {
         setStore(storeData);
@@ -69,7 +71,7 @@ export default function SellerReviewsPage() {
             store_products!inner(
               id,
               store_id,
-              title
+              title:name
             )
           `)
           .eq("store_products.store_id", storeData.id)

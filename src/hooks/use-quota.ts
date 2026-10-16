@@ -29,13 +29,16 @@ export function useQuota() {
       const userPlan = getPlanFromStatus(profile?.subscription_plan);
       setPlan(userPlan);
 
-        const [storesRes, productsRes, briefsRes] = await Promise.all([
-          supabase.from('stores').select('*', { count: 'exact', head: true }).eq('vendor_id', user.id),
-          supabase.from('store_products').select('*', { count: 'exact', head: true }).eq('store_id', (await supabase.from('stores').select('id').eq('vendor_id', user.id).single()).data?.id),
+        const { data: stores } = await supabase.from('stores').select('id').eq('vendor_id', user.id);
+        const storeIds = (stores || []).map((s) => s.id);
+        const ids = storeIds.length ? storeIds : ['00000000-0000-0000-0000-000000000000'];
+        const [productsRes, briefsRes] = await Promise.all([
+          supabase.from('store_products').select('*', { count: 'exact', head: true }).in('store_id', ids),
           supabase.from('content_briefs').select('*', { count: 'exact', head: true })
-          .eq('seller_id', user.id)
-          .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
-      ]);
+            .in('store_id', ids)
+            .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+        ]);
+        const storesRes = { count: storeIds.length };
 
       setUsage({
         stores: storesRes.count || 0,

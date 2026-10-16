@@ -141,12 +141,12 @@ export default function SellerShippingPage() {
       .from("store_orders")
       .select(`
         *,
-        items:store_order_items(id, product_name, quantity, unit_price, product_image, product_sku)
+        items:store_order_items(id, product_name, quantity, unit_price, product_image)
       `)
       .eq("store_id", store.id)
-      .in("status", statusFilter === "all" 
-        ? ["new", "confirmed", "preparing", "ready_to_ship", "shipped"]
-        : [statusFilter])
+      .in("status", statusFilter === "all"
+        ? ["new", "confirmed", "preparing", "shipped"]
+        : [statusFilter === "ready_to_ship" ? "preparing" : statusFilter])
       .order("created_at", { ascending: false });
 
     const { data } = await query;
@@ -179,7 +179,7 @@ export default function SellerShippingPage() {
     const supabase = createClient();
     await supabase
       .from("store_orders")
-      .update({ status: "ready_to_ship" })
+      .update({ status: "preparing", own_products_status: "prepared" })
       .eq("id", orderId);
     toast.success("Commande marquée prête à expédier");
     loadOrders();
@@ -254,7 +254,7 @@ export default function SellerShippingPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: "À préparer", value: orders.filter(o => o.status === "confirmed").length, color: "bg-yellow-500" },
-          { label: "Prêt à expédier", value: orders.filter(o => o.status === "ready_to_ship").length, color: "bg-purple-500" },
+          { label: "Prêt à expédier", value: orders.filter(o => o.status === "preparing").length, color: "bg-purple-500" },
           { label: "En transit", value: orders.filter(o => o.status === "shipped").length, color: "bg-blue-500" },
           { label: "Livrées", value: orders.filter(o => o.status === "delivered").length, color: "bg-green-500" },
         ].map((stat) => (
@@ -426,7 +426,7 @@ export default function SellerShippingPage() {
                             Marquer prêt
                           </Button>
                         )}
-                        {order.status === "ready_to_ship" && (
+                        {order.status === "preparing" && (
                           <Button 
                             size="sm" 
                             className="bg-primary"

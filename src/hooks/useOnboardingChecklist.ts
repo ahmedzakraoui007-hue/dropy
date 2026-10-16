@@ -20,19 +20,15 @@ export function useOnboardingChecklist(sellerId: string) {
       const supabase = createClient();
       
       try {
-        const [profile, storeData, products, pages] = await Promise.all([
+        const [profile, storeData] = await Promise.all([
           supabase.from('profiles').select('full_name, avatar_url, bank_rib').eq('id', sellerId).single(),
-          supabase.from('stores').select('id, pickup_address, custom_domain').eq('vendor_id', sellerId).single(),
-          supabase.from('store_products').select('id', { count: 'exact', head: true }).eq('vendor_id', sellerId), // Use vendor_id if store_id not available in all rows
-          supabase.from('store_pages').select('id', { count: 'exact', head: true }).eq('vendor_id', sellerId),
+          supabase.from('stores').select('id, pickup_address, custom_domain').eq('vendor_id', sellerId).order('created_at').limit(1).maybeSingle(),
         ]);
 
         const storeId = storeData.data?.id;
-        
-        // If we have a storeId, re-check products and pages with store_id for accuracy
-        let finalProductsCount = products.count ?? 0;
-        let finalPagesCount = pages.count ?? 0;
-        
+        let finalProductsCount = 0;
+        let finalPagesCount = 0;
+
         if (storeId) {
           const [storeProducts, storePages] = await Promise.all([
             supabase.from('store_products').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
