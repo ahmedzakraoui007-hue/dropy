@@ -251,7 +251,6 @@ export async function POST(request: Request) {
 
     const bySupplier = new Map<string, typeof lineItems>();
     for (const l of lineItems) {
-      await supabase.rpc("decrement_store_stock", { p_id: l.product.id, p_qty: l.line.quantity });
       if (l.variant) {
         const tableVariant = variantMap.get(l.variant.id);
         if (tableVariant && tableVariant.stock != null) {
@@ -268,7 +267,6 @@ export async function POST(request: Request) {
         }
       }
       if (l.supplierId) {
-        await supabase.rpc("decrement_supplier_stock", { p_store_product_id: l.product.id, p_qty: l.line.quantity });
         const list = bySupplier.get(l.supplierId) || [];
         list.push(l);
         bySupplier.set(l.supplierId, list);

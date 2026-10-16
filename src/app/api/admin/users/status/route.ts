@@ -3,9 +3,9 @@ import { requireUser } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendActivationEmail, sendRejectionEmail } from "@/lib/auth-emails";
 
-const PROFILE_STATUSES = ["pending", "active", "approved", "suspended", "rejected"];
+const PROFILE_STATUSES = ["pending", "approved", "suspended", "rejected"];
 const ROLES = ["admin", "seller", "supplier", "creator"];
-const ROLE_PROFILE_STATUSES = ["pending", "approved", "active", "suspended", "rejected"];
+const ROLE_PROFILE_STATUSES = ["pending", "approved", "suspended", "rejected"];
 
 export async function POST(request: Request) {
   try {
@@ -14,10 +14,11 @@ export async function POST(request: Request) {
 
     const body = await request.json().catch(() => null);
     const userId = body?.userId as string | undefined;
-    const status = body?.status as string | undefined;
+    const normalize = (value: unknown) => (value === "active" ? "approved" : (value as string | undefined));
+    const status = normalize(body?.status);
     const role = body?.role as string | undefined;
-    const creatorStatus = body?.creatorStatus as string | undefined;
-    const supplierStatus = body?.supplierStatus as string | undefined;
+    const creatorStatus = normalize(body?.creatorStatus);
+    const supplierStatus = normalize(body?.supplierStatus);
 
     if (!userId || (!status && !role && !creatorStatus && !supplierStatus)) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -66,7 +67,7 @@ export async function POST(request: Request) {
     const wasActive = targetUser.status === "active" || targetUser.status === "approved";
     if (status && targetUser.email && status !== targetUser.status) {
       const firstName = targetUser.full_name?.split(" ")[0] || "Ami";
-      if ((status === "active" || status === "approved") && !wasActive) {
+      if (status === "approved" && !wasActive) {
         await sendActivationEmail(targetUser.email, firstName);
       } else if (status === "rejected") {
         await sendRejectionEmail(targetUser.email, firstName);

@@ -50,3 +50,6 @@ supabase/migrations/check_schema.sql
 
 # old wrapper folder after moving the app to the repository root
 /Downloads/
+
+# local test credentials
+test-accounts.local.txt
