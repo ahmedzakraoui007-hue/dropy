@@ -21,11 +21,17 @@ export function useThemes() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
+        const { data: sellerProfile } = await supabase
+          .from('seller_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
         const { data: config } = await supabase
           .from('store_configs')
           .select('theme_id')
-          .eq('seller_id', user.id)
-          .single();
+          .in('seller_id', [user.id, sellerProfile?.id].filter(Boolean) as string[])
+          .limit(1)
+          .maybeSingle();
 
         if (config?.theme_id) {
           setCurrentThemeId(config.theme_id);
@@ -79,11 +85,22 @@ export function useThemes() {
 
       console.log('📝 Config data to save:', configData);
 
-      const { error: configError } = await supabase
+      const { data: sellerProfile } = await supabase
+        .from('seller_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      const ownerIds = [user.id, sellerProfile?.id].filter(Boolean) as string[];
+      const { data: existingConfig } = await supabase
         .from('store_configs')
-        .upsert(configData, {
-          onConflict: 'seller_id',
-        });
+        .select('id')
+        .in('seller_id', ownerIds)
+        .limit(1)
+        .maybeSingle();
+
+      const { error: configError } = existingConfig
+        ? await supabase.from('store_configs').update({ ...configData, seller_id: undefined }).eq('id', existingConfig.id)
+        : await supabase.from('store_configs').insert({ ...configData, seller_id: sellerProfile?.id ?? user.id });
 
       if (configError) {
         console.error('[applyTheme] Config Error:', configError);

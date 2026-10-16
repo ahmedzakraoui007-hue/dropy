@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { fetchProfileCards } from "@/lib/profile-cards";
 import { 
   Flame, 
   TrendingUp, 
@@ -32,23 +33,44 @@ export default function TrendingPage() {
         .from("products")
         .select(`
           *,
-          profiles:supplier_id (full_name, avatar_url, city),
           categories:category_id (name)
         `)
-        .limit(10);
+        .limit(30);
 
       if (error) {
         toast.error("Erreur lors du chargement des tendances");
       } else {
-        // Mocking winning metrics
-        const trending = data.map(p => ({
-          ...p,
-          growth: Math.floor(Math.random() * 200) + 50,
-          return_rate: (Math.random() * 3).toFixed(1),
-          active_dropshippers: Math.floor(Math.random() * 50) + 10,
-          potential_margin: 65 + Math.floor(Math.random() * 20),
-          trend_reason: Math.random() > 0.5 ? "Forte demande TikTok" : "Saisonnalité favorable"
-        })).sort((a, b) => b.growth - a.growth);
+        const products = data || [];
+        const ids = products.map((p) => p.id);
+        const supplierIds = products.map((p) => p.supplier_id);
+        const [cards, listings, reviews] = await Promise.all([
+          fetchProfileCards(supabase, supplierIds),
+          ids.length
+            ? supabase.from("store_products").select("product_id").in("product_id", ids)
+            : Promise.resolve({ data: [] as any[] }),
+          supplierIds.length
+            ? supabase.from("supplier_reviews").select("supplier_id, rating").in("supplier_id", supplierIds)
+            : Promise.resolve({ data: [] as any[] }),
+        ]);
+        const listingCount = new Map<string, number>();
+        for (const l of listings.data || []) listingCount.set(l.product_id, (listingCount.get(l.product_id) || 0) + 1);
+        const ratings = new Map<string, number[]>();
+        for (const r of reviews.data || []) ratings.set(r.supplier_id, [...(ratings.get(r.supplier_id) || []), Number(r.rating)]);
+
+        const trending = products.map((p) => {
+          const base = Number(p.base_price || 0);
+          const advised = Number(p.compare_price || 0);
+          const supplierRatings = ratings.get(p.supplier_id) || [];
+          return {
+            ...p,
+            profiles: { full_name: cards.get(p.supplier_id)?.full_name || "Fournisseur" },
+            active_dropshippers: listingCount.get(p.id) || 0,
+            potential_margin: advised > base && base > 0 ? Math.round(((advised - base) / advised) * 100) : null,
+            supplier_rating: supplierRatings.length
+              ? (supplierRatings.reduce((a, b) => a + b, 0) / supplierRatings.length).toFixed(1)
+              : null,
+          };
+        }).sort((a, b) => b.active_dropshippers - a.active_dropshippers);
         
         setWinningProducts(trending);
       }
@@ -124,26 +146,19 @@ export default function TrendingPage() {
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
-                            <p className="text-2xl font-black text-orange-500">+{product.growth}%</p>
-                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Croissance 7j</p>
+                            <p className="text-2xl font-black text-orange-500">{product.active_dropshippers}</p>
+                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tighter">Boutiques le vendent</p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-6">
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <BadgePercent className="w-3 h-3" /> Marge Potentielle
                           </p>
-                          <p className="font-bold text-emerald-600">~{product.potential_margin}%</p>
-                          <Progress value={product.potential_margin} className="h-1 bg-emerald-100" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground flex items-center gap-1">
-                            <AlertTriangle className="w-3 h-3" /> Taux de retour
-                          </p>
-                          <p className="font-bold text-blue-600">{product.return_rate}%</p>
-                          <Progress value={product.return_rate * 10} className="h-1 bg-blue-100" />
+                          <p className="font-bold text-emerald-600">{product.potential_margin != null ? `~${product.potential_margin}%` : "—"}</p>
+                          <Progress value={product.potential_margin ?? 0} className="h-1 bg-emerald-100" />
                         </div>
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -156,7 +171,7 @@ export default function TrendingPage() {
                             <Star className="w-3 h-3" /> Note Fournisseur
                           </p>
                           <div className="flex items-center gap-1">
-                            <span className="font-bold">4.9</span>
+                            <span className="font-bold">{product.supplier_rating ?? "—"}</span>
                             <div className="flex text-yellow-500">
                               <Star className="w-3 h-3 fill-current" />
                             </div>
@@ -167,8 +182,10 @@ export default function TrendingPage() {
                       <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-xl border border-orange-100 dark:border-orange-900/30 flex items-start gap-3">
                         <Info className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">Pourquoi ce produit ?</p>
-                          <p className="text-xs text-orange-700 dark:text-orange-400 opacity-80">{product.trend_reason}. Recommandé pour campagnes Facebook Ads.</p>
+                          <p className="text-sm font-semibold text-orange-800 dark:text-orange-300">Prix fournisseur : {Number(product.base_price || 0).toFixed(2)} TND</p>
+                          <p className="text-xs text-orange-700 dark:text-orange-400 opacity-80">
+                            {product.compare_price ? `Prix de revente conseillé : ${Number(product.compare_price).toFixed(2)} TND` : "Fixez votre propre prix de revente."}
+                          </p>
                         </div>
                       </div>
                     </div>

@@ -17,16 +17,40 @@ export function useStoreConfig(sellerId: string) {
       if (!sellerId) return;
       const supabase = createClient();
       
-      const { data: configData } = await supabase
+      let { data: configData } = await supabase
         .from('store_configs')
-        .select('*, theme:themes(*)')
+        .select('*')
         .eq('seller_id', sellerId)
-        .single();
+        .limit(1)
+        .maybeSingle();
 
-      if (configData) {
-        setConfig(configData);
-        setTheme(configData.theme);
+      if (!configData) {
+        const { data: created } = await supabase
+          .from('store_configs')
+          .insert({ seller_id: sellerId })
+          .select('*')
+          .single();
+        configData = created;
       }
+
+      const themeRef = configData?.theme_id as string | null | undefined;
+      const isUuid = Boolean(themeRef && /^[0-9a-f-]{36}$/i.test(themeRef));
+      let themeData = null;
+      if (themeRef) {
+        const { data } = await supabase
+          .from('themes')
+          .select('*')
+          .eq(isUuid ? 'id' : 'slug', themeRef)
+          .maybeSingle();
+        themeData = data;
+      }
+      if (!themeData) {
+        const { data } = await supabase.from('themes').select('*').order('sort_order').limit(1).maybeSingle();
+        themeData = data;
+      }
+
+      if (configData) setConfig(configData);
+      if (themeData) setTheme(themeData);
       setLoading(false);
     }
     fetch();
