@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -50,7 +51,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { data: review, error } = await supabase
+  const admin = createAdminClient();
+  const { data: review, error } = await admin
     .from("creator_reviews")
     .insert({
       brief_id,

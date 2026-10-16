@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchProfileCards } from "@/lib/profile-cards";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
@@ -51,19 +52,17 @@ export default function CreatorMarketplace() {
     async function loadCreators() {
       const supabase = createClient();
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("creator_profiles")
-        .select(`
-          *,
-          profile:profiles(full_name, avatar_url)
-        `)
-        .eq("status", "active");
+        .select("*")
+        .in("status", ["active", "approved"]);
 
       if (data) {
+        const cards = await fetchProfileCards(supabase, data.map((c: any) => c.user_id));
         const mappedCreators = data.map((c: any) => ({
           ...c,
-          full_name: c.profile.full_name,
-          avatar_url: c.profile.avatar_url,
+          full_name: cards.get(c.user_id)?.full_name ?? "Créateur",
+          avatar_url: cards.get(c.user_id)?.avatar_url ?? null,
         }));
         setCreators(mappedCreators);
       }

@@ -56,20 +56,14 @@ export default function AdminCreatorsPage() {
 
   const handleUpdateStatus = async (creatorId: string, userId: string, status: string) => {
     try {
-      const { error: creatorError } = await supabase
-        .from("creator_profiles")
-        .update({ status })
-        .eq("id", creatorId);
-
-      if (creatorError) throw creatorError;
-
       const profileStatus = status === "approved" ? "approved" : status === "suspended" ? "suspended" : "pending";
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .update({ status: profileStatus })
-        .eq("id", userId);
-
-      if (profileError) throw profileError;
+      const response = await fetch("/api/admin/users/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, status: profileStatus, creatorStatus: status }),
+    });
+    const error = response.ok ? null : new Error((await response.json().catch(() => ({}))).error || "Erreur");
+      if (error) throw error;
 
       setCreators(prev => prev.map(c => 
         c.id === creatorId ? { ...c, status } : c

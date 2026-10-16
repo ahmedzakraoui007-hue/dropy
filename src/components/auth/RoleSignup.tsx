@@ -231,54 +231,34 @@ export default function RoleSignup({ role }: RoleSignupProps) {
     };
 
     if (isExistingUser) {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      const userId = data.user?.id;
-      if (!userId) {
-        setFormError("forgot_password.error_generic");
+      const response = await fetch("/api/auth/complete-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role,
+          fullName: v.fullName,
+          phone: v.phone,
+          additionalData: {
+            portfolio: v.portfolio,
+            instagram: v.instagram,
+            specialty: v.specialty,
+            storeName: v.storeName,
+            sector: v.sector,
+            companyName: v.companyName,
+            taxId: v.taxId,
+            productType: v.productType,
+          },
+        }),
+      }).catch(() => null);
+      const result = response ? await response.json().catch(() => ({})) : {};
+
+      if (!response?.ok) {
+        setFormError(result.code === "role_mismatch" ? "role_signup.errors.role_mismatch" : "forgot_password.error_generic");
         setLoading(false);
         return;
       }
 
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: userId,
-        email: v.email,
-        full_name: v.fullName,
-        phone: v.phone,
-        role,
-        status: "pending",
-      });
-      if (profileError) console.error("Profile creation error:", profileError);
-
-      if (role === "creator") {
-        await supabase.from("creator_profiles").upsert({
-          user_id: userId,
-          portfolio_url: v.portfolio,
-          instagram_username: v.instagram,
-          instagram_handle: v.instagram.replace("@", ""),
-          specialty: v.specialty,
-          specialties: [v.specialty],
-          status: "pending",
-        });
-      } else if (role === "supplier") {
-        await supabase.from("supplier_profiles").upsert({
-          user_id: userId,
-          company_name: v.companyName,
-          tax_id: v.taxId,
-          product_type: v.productType,
-          status: "pending",
-        });
-      } else if (role === "seller") {
-        const slug = v.storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-        await supabase.from("stores").insert({
-          vendor_id: userId,
-          name: v.storeName,
-          slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
-          is_active: true,
-        });
-      }
-
-      await supabase.auth.signOut();
+      await createClient().auth.signOut();
       router.replace("/demande-en-attente");
       return;
     }

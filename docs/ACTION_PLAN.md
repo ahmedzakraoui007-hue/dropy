@@ -68,6 +68,18 @@ Checked against the live project with the API (no SQL access):
 - Two section formats exist in `store_pages.sections` (`config` from the current builder, `content` from an older one).
 - Still unknown: policies for logged-in users (need `pg_policies` output).
 
+### RLS audit (2026-10-16) — **run `20261016120000_rls_lockdown.sql` first**
+
+From the live `pg_policies` output:
+- `profiles` had a policy "Service role can do everything" granted to **every role**: anyone could read or edit any profile, including setting their own `role` to `admin`.
+- `creator_profiles` / `supplier_profiles`: anyone could read all rows and insert rows for any user.
+- Several tables had policies but RLS disabled (e.g. `store_products`), about 35 had none (`supplier_orders`, `store_pages`, `store_configs`, `payments`, `delivery_shipments`…).
+- Reviews could be inserted directly as "published"; all promo codes of all stores were listable.
+
+The lockdown migration enables RLS on every table, adds owner/participant/public-read/admin policies matching the code, and limits which profile columns users can edit (no role, status, verification, ratings or earnings). Admin status/role changes and profile completion now go through server routes.
+
+Order to run in the SQL editor: `20261016120000_rls_lockdown.sql`, `20261015090000_block_anonymous_private_data.sql`, `20261014090000_storage_owner_only.sql`.
+
 ## Phase 1 — Make the database the source of truth
 
 | # | Task | Size |

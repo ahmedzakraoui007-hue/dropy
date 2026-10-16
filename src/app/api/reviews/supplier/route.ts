@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -46,7 +47,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: review, error } = await supabase
+  const admin = createAdminClient();
+  const { data: review, error } = await admin
     .from("supplier_reviews")
     .insert({
       supplier_id,

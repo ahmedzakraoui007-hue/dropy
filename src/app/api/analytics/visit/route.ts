@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Store ID is required" }, { status: 400 });
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     
     // We don't necessarily need the user to be authenticated for a store visit
     // but we can track visitor_id via a cookie if we wanted. For now, we'll just log it.

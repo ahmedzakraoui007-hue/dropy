@@ -439,7 +439,8 @@
       "errors": {
         "required": "Ce champ est obligatoire.",
         "phone_invalid": "Numéro de téléphone invalide.",
-        "url_invalid": "Lien invalide (ex : https://…)."
+        "url_invalid": "Lien invalide (ex : https://…).",
+        "role_mismatch": "Ce compte est déjà inscrit avec un autre profil. Utilisez une autre adresse email pour ce rôle."
       },
       "account_section": "Votre compte",
       "submitting": "Envoi en cours…",

@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     if (orders && orders.length > 0) is_verified_purchase = true;
   }
 
-  const { data: review, error } = await supabase
+  const { data: review, error } = await admin
     .from("store_reviews")
     .insert({
       store_id,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const REVIEW_TYPES = {
   product: { table: "product_reviews", column: "admin_reply" },
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const { data: updatedReview, error } = await supabase
+  const { data: updatedReview, error } = await createAdminClient()
     .from(table)
     .update({ [column]: reply.trim() })
     .eq("id", reviewId)

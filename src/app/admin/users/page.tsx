@@ -90,11 +90,12 @@ export default function UserManagement() {
 
 
   const updateUserRole = async (userId: string, newRole: string) => {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("profiles")
-      .update({ role: newRole })
-      .eq("id", userId);
+    const response = await fetch("/api/admin/users/status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, role: newRole }),
+    });
+    const error = response.ok ? null : new Error((await response.json().catch(() => ({}))).error || "Erreur");
     
     if (error) {
       toast.error("Erreur lors de la mise à jour du rôle");

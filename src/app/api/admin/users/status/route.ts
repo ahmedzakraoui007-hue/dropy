@@ -1,66 +1,81 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/api-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendActivationEmail, sendRejectionEmail } from "@/lib/auth-emails";
+
+const PROFILE_STATUSES = ["pending", "active", "approved", "suspended", "rejected"];
+const ROLES = ["admin", "seller", "supplier", "creator"];
+const ROLE_PROFILE_STATUSES = ["pending", "approved", "active", "suspended", "rejected"];
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const { data: { user: adminUser } } = await supabase.auth.getUser();
+    const auth = await requireUser(["admin"]);
+    if (!auth.ok) return auth.response;
 
-    if (!adminUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const body = await request.json().catch(() => null);
+    const userId = body?.userId as string | undefined;
+    const status = body?.status as string | undefined;
+    const role = body?.role as string | undefined;
+    const creatorStatus = body?.creatorStatus as string | undefined;
+    const supplierStatus = body?.supplierStatus as string | undefined;
 
-    // Check if requester is admin
-    const { data: adminProfile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", adminUser.id)
-      .single();
-
-    if (adminProfile?.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const { userId, status } = await request.json();
-
-    if (!userId || !status) {
+    if (!userId || (!status && !role && !creatorStatus && !supplierStatus)) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+    if ((status && !PROFILE_STATUSES.includes(status)) || (role && !ROLES.includes(role))) {
+      return NextResponse.json({ error: "Invalid value" }, { status: 400 });
+    }
+    if (
+      (creatorStatus && !ROLE_PROFILE_STATUSES.includes(creatorStatus)) ||
+      (supplierStatus && !ROLE_PROFILE_STATUSES.includes(supplierStatus))
+    ) {
+      return NextResponse.json({ error: "Invalid value" }, { status: 400 });
+    }
+    if (userId === auth.user.id && (role && role !== "admin" || status === "suspended" || status === "rejected")) {
+      return NextResponse.json({ error: "You cannot demote or suspend your own account" }, { status: 400 });
+    }
 
-    // Get target user info for email
+    const supabase = createAdminClient();
+
     const { data: targetUser } = await supabase
       .from("profiles")
-      .select("email, full_name")
+      .select("email, full_name, status")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Update status
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ status })
-      .eq("id", userId);
+    const profileUpdate: Record<string, string> = { updated_at: new Date().toISOString() };
+    if (status) profileUpdate.status = status;
+    if (role) profileUpdate.role = role;
 
-    if (updateError) {
-      throw updateError;
+    const { error: updateError } = await supabase.from("profiles").update(profileUpdate).eq("id", userId);
+    if (updateError) throw updateError;
+
+    if (creatorStatus) {
+      const { error } = await supabase.from("creator_profiles").update({ status: creatorStatus }).eq("user_id", userId);
+      if (error) throw error;
+    }
+    if (supplierStatus) {
+      const { error } = await supabase.from("supplier_profiles").update({ status: supplierStatus }).eq("user_id", userId);
+      if (error) throw error;
     }
 
-    // Send email based on new status
-    const firstName = targetUser.full_name?.split(" ")[0] || "Ami";
-    
-    if (status === "active" || status === "approved") {
-      await sendActivationEmail(targetUser.email!, firstName);
-    } else if (status === "rejected") {
-      await sendRejectionEmail(targetUser.email!, firstName);
+    const wasActive = targetUser.status === "active" || targetUser.status === "approved";
+    if (status && targetUser.email && status !== targetUser.status) {
+      const firstName = targetUser.full_name?.split(" ")[0] || "Ami";
+      if ((status === "active" || status === "approved") && !wasActive) {
+        await sendActivationEmail(targetUser.email, firstName);
+      } else if (status === "rejected") {
+        await sendRejectionEmail(targetUser.email, firstName);
+      }
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error in /api/admin/users/status:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }

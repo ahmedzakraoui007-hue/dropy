@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { fetchProfileCards } from "@/lib/profile-cards";
 import { useSearchParams } from "next/navigation";
 import { 
   Send, 
@@ -97,8 +98,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
                 id,
                 title,
                 selected_creator_id,
-                store:stores(name, logo_url, vendor_id),
-                creator:profiles!content_briefs_selected_creator_id_fkey(id, full_name, avatar_url)
+                store:stores(name, logo_url, vendor_id)
               `)
               .in("store_id", storeIds)
               .not("selected_creator_id", "is", null);
@@ -107,7 +107,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
           }
         }
       
-        // Build conversations from briefs (deduplicate by brief_id)
+        const creatorCards = await fetchProfileCards(supabase, briefs.map((b: any) => b?.selected_creator_id));
         const convMap = new Map<string, Conversation>();
         
         for (const brief of briefs) {
@@ -123,8 +123,8 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
           otherPartyAvatar = brief.store?.logo_url || "";
         } else {
           otherPartyId = brief.selected_creator_id || "";
-          otherPartyName = brief.creator?.full_name || "Créateur";
-          otherPartyAvatar = brief.creator?.avatar_url || "";
+          otherPartyName = creatorCards.get(otherPartyId)?.full_name || "Créateur";
+          otherPartyAvatar = creatorCards.get(otherPartyId)?.avatar_url || "";
         }
         
         // Get last message for this brief
@@ -164,8 +164,7 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
                 id,
                 title,
                 selected_creator_id,
-                store:stores(name, logo_url, vendor_id),
-                creator:profiles!content_briefs_selected_creator_id_fkey(id, full_name, avatar_url)
+                store:stores(name, logo_url, vendor_id)
               `)
               .eq("id", briefIdParam)
               .single();
@@ -182,8 +181,9 @@ export function Messaging({ userRole }: { userRole: 'seller' | 'creator' }) {
                 otherPartyAvatar = store?.logo_url || "";
               } else {
                 otherPartyId = briefData.selected_creator_id || "";
-                otherPartyName = (briefData.creator as any)?.full_name || "Créateur";
-                otherPartyAvatar = (briefData.creator as any)?.avatar_url || "";
+                const card = (await fetchProfileCards(supabase, [otherPartyId])).get(otherPartyId);
+                otherPartyName = card?.full_name || "Créateur";
+                otherPartyAvatar = card?.avatar_url || "";
               }
               
               const newConv: Conversation = {
