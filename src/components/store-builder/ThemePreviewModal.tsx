@@ -54,7 +54,7 @@ export function ThemePreviewModal({
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => setDevice('desktop')}
-                                title="Desktop View"
+                                title="Vue ordinateur"
                             >
                                 <Monitor className="w-4 h-4" />
                             </Button>
@@ -63,7 +63,7 @@ export function ThemePreviewModal({
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => setDevice('tablet')}
-                                title="Tablet View"
+                                title="Vue tablette"
                             >
                                 <Tablet className="w-4 h-4" />
                             </Button>
@@ -72,7 +72,7 @@ export function ThemePreviewModal({
                                 size="icon"
                                 className="h-8 w-8"
                                 onClick={() => setDevice('mobile')}
-                                title="Mobile View"
+                                title="Vue mobile"
                             >
                                 <Smartphone className="w-4 h-4" />
                             </Button>

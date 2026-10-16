@@ -72,7 +72,7 @@ export default function TrendingPage() {
         <div className="relative z-10 max-w-2xl">
           <Badge className="bg-white/20 hover:bg-white/30 border-0 mb-4 text-white">
             <Flame className="w-3 h-3 mr-1" />
-            Winning Products Finder
+            Produits gagnants
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Découvrez les produits qui font le <span className="underline decoration-white/30">buzz</span>

@@ -60,15 +60,15 @@ export default function AdminBriefsPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Project Moderation</h1>
-          <p className="text-muted-foreground">Monitor and manage all content briefs on the platform</p>
+          <h1 className="text-3xl font-bold">Modération des projets</h1>
+          <p className="text-muted-foreground">Suivez et gérez tous les briefs de contenu de la plateforme</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by title or store..." 
+              placeholder="Rechercher par titre ou boutique..." 
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -76,7 +76,7 @@ export default function AdminBriefsPage() {
           </div>
           <Button variant="outline" className="gap-2">
             <Filter className="w-4 h-4" />
-            Filters
+            Filtres
           </Button>
         </div>
 
@@ -90,9 +90,9 @@ export default function AdminBriefsPage() {
               <thead className="bg-muted text-xs uppercase font-bold text-muted-foreground">
                 <tr>
                   <th className="px-6 py-3">Mission</th>
-                  <th className="px-6 py-3">Store</th>
+                  <th className="px-6 py-3">Boutique</th>
                   <th className="px-6 py-3">Budget</th>
-                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Statut</th>
                   <th className="px-6 py-3">Date</th>
                   <th className="px-6 py-3"></th>
                 </tr>
@@ -133,13 +133,13 @@ export default function AdminBriefsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="gap-2" onClick={() => window.open(`/seller/content/briefs/${brief.id}`, "_blank")}>
-                            <Eye className="w-4 h-4" /> View Details
+                            <Eye className="w-4 h-4" /> Voir les détails
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2 text-destructive">
-                            <AlertTriangle className="w-4 h-4" /> Flag Content
+                            <AlertTriangle className="w-4 h-4" /> Signaler le contenu
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2 text-destructive">
-                            <XCircle className="w-4 h-4" /> Cancel Project
+                            <XCircle className="w-4 h-4" /> Annuler le projet
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

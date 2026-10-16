@@ -98,7 +98,7 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search products..."
+          placeholder="Rechercher un produit..."
           className="pl-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

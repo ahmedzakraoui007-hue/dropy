@@ -172,7 +172,7 @@ export default function DesignPage() {
                   </div>
                   <div className="flex-1 space-y-4 w-full">
                     <div className="space-y-1">
-                      <h4 className="font-bold text-gray-900">Upload Logo</h4>
+                      <h4 className="font-bold text-gray-900">Importer un logo</h4>
                       <p className="text-xs text-gray-500">Format PNG, JPG ou SVG recommandé. Taille max 2MB.</p>
                     </div>
                     <div className="flex gap-3">

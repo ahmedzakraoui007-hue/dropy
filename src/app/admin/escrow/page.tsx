@@ -53,7 +53,7 @@ export default function AdminEscrowDisputes() {
         setDisputes(data);
       }
     } catch (error) {
-      toast.error("Failed to load disputes");
+      toast.error("Impossible de charger les litiges");
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,7 @@ export default function AdminEscrowDisputes() {
 
   const handleResolve = async () => {
     if (!resolutionNotes) {
-      toast.error("Please provide resolution notes");
+      toast.error("Veuillez saisir une note de décision");
       return;
     }
 
@@ -79,7 +79,7 @@ export default function AdminEscrowDisputes() {
       });
 
       if (response.ok) {
-        toast.success("Dispute resolved successfully");
+        toast.success("Litige résolu");
         setSelectedDispute(null);
         fetchDisputes();
       } else {
@@ -87,7 +87,7 @@ export default function AdminEscrowDisputes() {
         toast.error(error.error || "Failed to resolve dispute");
       }
     } catch (error) {
-      toast.error("An error occurred");
+      toast.error("Une erreur est survenue");
     } finally {
       setIsResolving(false);
     }
@@ -101,9 +101,9 @@ export default function AdminEscrowDisputes() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "open":
-        return <Badge variant="destructive" className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Open</Badge>;
+        return <Badge variant="destructive" className="flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Ouvert</Badge>;
       case "resolved":
-        return <Badge variant="default" className="bg-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Resolved</Badge>;
+        return <Badge variant="default" className="bg-emerald-500 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Résolu</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -117,7 +117,7 @@ export default function AdminEscrowDisputes() {
             <Scale className="w-8 h-8 text-primary" />
             Escrow & Disputes
           </h1>
-          <p className="text-muted-foreground">Arbitrate between sellers and creators to resolve mission disputes.</p>
+          <p className="text-muted-foreground">Arbitrez entre vendeurs et créateurs pour résoudre les litiges.</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative w-64">
@@ -142,8 +142,8 @@ export default function AdminEscrowDisputes() {
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
               <Clock className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold">No disputes found</h3>
-            <p className="text-muted-foreground">Everything is running smoothly.</p>
+            <h3 className="text-lg font-semibold">Aucun litige</h3>
+            <p className="text-muted-foreground">Tout se passe bien.</p>
           </Card>
         ) : (
           filteredDisputes.map((dispute) => (
@@ -165,17 +165,17 @@ export default function AdminEscrowDisputes() {
                   
                   <h3 className="text-xl font-bold mb-2">{dispute.brief?.title}</h3>
                   <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                    <p className="font-medium text-sm text-muted-foreground uppercase mb-1">Reason for Dispute:</p>
+                    <p className="font-medium text-sm text-muted-foreground uppercase mb-1">Motif du litige :</p>
                     <p className="text-sm">{dispute.reason}</p>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Amount in Escrow</p>
+                      <p className="text-muted-foreground">Montant en séquestre</p>
                       <p className="font-bold text-lg">€{dispute.payment?.amount?.toFixed(2)}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Opened By</p>
+                      <p className="text-muted-foreground">Ouvert par</p>
                       <p className="font-medium">{dispute.opened_by_profile?.full_name}</p>
                       <p className="text-xs text-muted-foreground">{dispute.opened_by_profile?.email}</p>
                     </div>
@@ -192,14 +192,14 @@ export default function AdminEscrowDisputes() {
                         setReleasedAmount("0");
                       }}
                     >
-                      <Gavel className="w-4 h-4" /> Arbitrate
+                      <Gavel className="w-4 h-4" /> Arbitrer
                     </Button>
                   ) : (
                     <div className="text-center space-y-2">
-                      <p className="text-xs font-bold uppercase text-emerald-500">Resolved</p>
+                      <p className="text-xs font-bold uppercase text-emerald-500">Résolu</p>
                       <p className="text-sm font-medium">{dispute.resolution_type.replace('_', ' ')}</p>
                       <Button variant="outline" size="sm" className="w-full gap-2">
-                        <ExternalLink className="w-3 h-3" /> View Details
+                        <ExternalLink className="w-3 h-3" /> Voir les détails
                       </Button>
                     </div>
                   )}
@@ -216,10 +216,10 @@ export default function AdminEscrowDisputes() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-destructive" />
-              Dispute Arbitration
+              Arbitrage des litiges
             </DialogTitle>
             <DialogDescription>
-              Carefully review the evidence and decide how to split the escrowed funds.
+              Examinez les preuves et décidez de la répartition des fonds en séquestre.
             </DialogDescription>
           </DialogHeader>
 
@@ -228,21 +228,21 @@ export default function AdminEscrowDisputes() {
               <div className="grid grid-cols-2 gap-4">
                 <Card className="bg-muted/30">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total in Escrow</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Total en séquestre</p>
                     <p className="text-2xl font-bold">€{selectedDispute.payment?.amount?.toFixed(2)}</p>
                   </CardContent>
                 </Card>
                 <Card className="bg-muted/30">
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Current Status</p>
-                    <Badge variant="destructive">Needs Review</Badge>
+                    <p className="text-xs text-muted-foreground uppercase font-bold mb-1">Statut actuel</p>
+                    <Badge variant="destructive">À examiner</Badge>
                   </CardContent>
                 </Card>
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Resolution Action</label>
+                  <label className="text-sm font-medium">Décision</label>
                   <Select 
                     value={resolutionType} 
                     onValueChange={(val) => {
@@ -257,11 +257,11 @@ export default function AdminEscrowDisputes() {
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select action" />
+                      <SelectValue placeholder="Choisir une action" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="refund_full">Full Refund to Seller</SelectItem>
-                      <SelectItem value="release_full">Full Release to Creator</SelectItem>
+                      <SelectItem value="refund_full">Remboursement total au vendeur</SelectItem>
+                      <SelectItem value="release_full">Versement total au créateur</SelectItem>
                       <SelectItem value="refund_partial">Partial Refund & Release</SelectItem>
                     </SelectContent>
                   </Select>
@@ -270,7 +270,7 @@ export default function AdminEscrowDisputes() {
                 {(resolutionType === 'refund_partial') && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Refund to Seller (€)</label>
+                      <label className="text-sm font-medium">Remboursement au vendeur (€)</label>
                       <Input 
                         type="number" 
                         value={refundAmount} 
@@ -281,7 +281,7 @@ export default function AdminEscrowDisputes() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Release to Creator (€)</label>
+                      <label className="text-sm font-medium">Versement au créateur (€)</label>
                       <Input 
                         type="number" 
                         value={releasedAmount}
@@ -295,9 +295,9 @@ export default function AdminEscrowDisputes() {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Resolution Notes (Visible to both parties)</label>
+                  <label className="text-sm font-medium">Note de décision (visible par les deux parties)</label>
                   <Textarea 
-                    placeholder="Explain the decision..." 
+                    placeholder="Expliquez la décision..." 
                     className="min-h-[100px]"
                     value={resolutionNotes}
                     onChange={(e) => setResolutionNotes(e.target.value)}
@@ -308,13 +308,13 @@ export default function AdminEscrowDisputes() {
           )}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setSelectedDispute(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setSelectedDispute(null)}>Annuler</Button>
             <Button 
               className="gap-2" 
               onClick={handleResolve}
               disabled={isResolving}
             >
-              {isResolving ? "Processing..." : <><SendHorizontal className="w-4 h-4" /> Finalize Resolution</>}
+              {isResolving ? "Processing..." : <><SendHorizontal className="w-4 h-4" /> Finaliser la décision</>}
             </Button>
           </DialogFooter>
         </DialogContent>

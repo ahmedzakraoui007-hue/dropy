@@ -63,7 +63,7 @@ export function ApplicationCard({
 
         {application.portfolio_urls && application.portfolio_urls.length > 0 && (
           <div>
-            <h4 className="text-sm font-semibold mb-2">Portfolio Preview</h4>
+            <h4 className="text-sm font-semibold mb-2">Aperçu du portfolio</h4>
             <div className="grid grid-cols-4 gap-2">
               {application.portfolio_urls.slice(0, 4).map((url, i) => (
                 <div key={i} className="aspect-square bg-gray-100 rounded overflow-hidden relative group">

@@ -97,16 +97,16 @@ export default function AdminReviewsPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Review Moderation</h1>
-          <p className="text-muted-foreground">Manage and moderate marketplace reviews</p>
+          <h1 className="text-3xl font-bold">Modération des avis</h1>
+          <p className="text-muted-foreground">Gérez et modérez les avis</p>
         </div>
 
         <Tabs defaultValue="creator" onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-muted/50 p-1 rounded-xl">
-            <TabsTrigger value="creator">Creators</TabsTrigger>
-            <TabsTrigger value="product">Products</TabsTrigger>
-            <TabsTrigger value="store">Stores</TabsTrigger>
-            <TabsTrigger value="supplier">Suppliers</TabsTrigger>
+            <TabsTrigger value="creator">Créateurs</TabsTrigger>
+            <TabsTrigger value="product">Produits</TabsTrigger>
+            <TabsTrigger value="store">Boutiques</TabsTrigger>
+            <TabsTrigger value="supplier">Fournisseurs</TabsTrigger>
           </TabsList>
 
           <div className="flex flex-col md:flex-row gap-4">
@@ -129,7 +129,7 @@ export default function AdminReviewsPage() {
             <div className="grid grid-cols-1 gap-4">
               {filteredReviews.length === 0 ? (
                 <div className="text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed">
-                  <p className="text-muted-foreground">No reviews found in this category.</p>
+                  <p className="text-muted-foreground">Aucun avis dans cette catégorie.</p>
                 </div>
               ) : (
                 filteredReviews.map((review) => (
@@ -193,7 +193,7 @@ export default function AdminReviewsPage() {
                               className="w-full bg-emerald-500 hover:bg-emerald-600"
                               onClick={() => handleUpdateStatus(review.id, activeTab === "creator" ? "approved" : "published")}
                             >
-                              <ThumbsUp className="w-3 h-3 mr-1.5" /> Approve
+                              <ThumbsUp className="w-3 h-3 mr-1.5" /> Approuver
                             </Button>
                           )}
                           {(review.status === "approved" || review.status === "published" || review.status === "pending") && (
@@ -203,7 +203,7 @@ export default function AdminReviewsPage() {
                               className="w-full text-destructive"
                               onClick={() => handleUpdateStatus(review.id, "rejected")}
                             >
-                              <ThumbsDown className="w-3 h-3 mr-1.5" /> Reject
+                              <ThumbsDown className="w-3 h-3 mr-1.5" /> Refuser
                             </Button>
                           )}
                         </div>

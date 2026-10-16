@@ -72,11 +72,11 @@ export default function CreatorPaymentsPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Earnings & Payments</h1>
-            <p className="text-muted-foreground">Manage your revenue and withdrawals</p>
+            <h1 className="text-3xl font-bold">Revenus et paiements</h1>
+            <p className="text-muted-foreground">Gérez vos revenus et vos retraits</p>
           </div>
           <Button className="bg-gradient-to-r from-violet-500 to-purple-600">
-            Withdraw Funds
+            Retirer des fonds
             <ArrowUpRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -86,7 +86,7 @@ export default function CreatorPaymentsPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium opacity-80">Available for Withdrawal</p>
+                  <p className="text-sm font-medium opacity-80">Disponible au retrait</p>
                   <h3 className="text-4xl font-bold mt-1">{stats.available.toFixed(2)} TND</h3>
                 </div>
                 <div className="p-2 bg-white/10 rounded-lg">
@@ -100,7 +100,7 @@ export default function CreatorPaymentsPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Held in Escrow</p>
+                  <p className="text-sm font-medium text-muted-foreground">En séquestre</p>
                   <h3 className="text-4xl font-bold mt-1">{stats.escrow.toFixed(2)} TND</h3>
                 </div>
                 <div className="p-2 bg-muted rounded-lg">
@@ -114,7 +114,7 @@ export default function CreatorPaymentsPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Lifetime Earnings</p>
+                  <p className="text-sm font-medium text-muted-foreground">Gains totaux</p>
                   <h3 className="text-4xl font-bold mt-1">{stats.total.toFixed(2)} TND</h3>
                 </div>
                 <div className="p-2 bg-emerald-500/10 rounded-lg">
@@ -130,12 +130,12 @@ export default function CreatorPaymentsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Transaction History</CardTitle>
-                  <CardDescription>Recent payments and withdrawals</CardDescription>
+                  <CardTitle>Historique des transactions</CardTitle>
+                  <CardDescription>Paiements et retraits récents</CardDescription>
                 </div>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Download className="w-4 h-4" />
-                  Export CSV
+                  Exporter en CSV
                 </Button>
               </CardHeader>
               <CardContent>
@@ -146,7 +146,7 @@ export default function CreatorPaymentsPage() {
                 ) : payments.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
                     <History className="w-12 h-12 mx-auto mb-2 opacity-10" />
-                    <p>No transactions yet</p>
+                    <p>Aucune transaction pour le moment</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -181,7 +181,7 @@ export default function CreatorPaymentsPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Withdrawal Methods</CardTitle>
+                <CardTitle>Moyens de retrait</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-xl border border-border/50 bg-muted/30 flex items-center justify-between">
@@ -190,13 +190,13 @@ export default function CreatorPaymentsPage() {
                       <CreditCard className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Bank Transfer</p>
-                      <p className="text-xs text-muted-foreground">Main account</p>
+                      <p className="text-sm font-medium">Virement bancaire</p>
+                      <p className="text-xs text-muted-foreground">Compte principal</p>
                     </div>
                   </div>
-                  <Badge variant="outline">Default</Badge>
+                  <Badge variant="outline">Par défaut</Badge>
                 </div>
-                <Button variant="outline" className="w-full text-xs">Manage Methods</Button>
+                <Button variant="outline" className="w-full text-xs">Gérer les moyens</Button>
               </CardContent>
             </Card>
 
@@ -204,10 +204,10 @@ export default function CreatorPaymentsPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-blue-600 mb-2">
                   <AlertCircle className="w-5 h-5" />
-                  <p className="font-bold">Payment Schedule</p>
+                  <p className="font-bold">Calendrier des paiements</p>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Withdrawals are processed every Tuesday and Thursday. Minimum withdrawal amount is 50 TND.
+                  Les retraits sont traités chaque mardi et jeudi. Montant minimum : 50 TND.
                 </p>
               </CardContent>
             </Card>

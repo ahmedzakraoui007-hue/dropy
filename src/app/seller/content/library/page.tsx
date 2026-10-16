@@ -78,8 +78,8 @@ export default function ContentLibraryPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Content Library</h1>
-            <p className="text-muted-foreground">Your collection of purchased photos, videos and designs</p>
+            <h1 className="text-3xl font-bold">Bibliothèque de contenu</h1>
+            <p className="text-muted-foreground">Vos photos, vidéos et designs achetés</p>
           </div>
           <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
             <Button 
@@ -105,7 +105,7 @@ export default function ContentLibraryPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by filename or type..." 
+              placeholder="Rechercher par nom ou type..." 
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -113,7 +113,7 @@ export default function ContentLibraryPage() {
           </div>
           <Button variant="outline" className="gap-2">
             <Filter className="w-4 h-4" />
-            Filters
+            Filtres
           </Button>
         </div>
 
@@ -126,9 +126,9 @@ export default function ContentLibraryPage() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <ImageIcon className="w-10 h-10 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Library is empty</h3>
+            <h3 className="text-xl font-semibold mb-2">La bibliothèque est vide</h3>
             <p className="text-muted-foreground max-w-sm">
-              Your purchased content will appear here once missions are completed.
+              Vos contenus achetés apparaîtront ici une fois les missions terminées.
             </p>
           </Card>
         ) : viewMode === "grid" ? (
@@ -176,13 +176,13 @@ export default function ContentLibraryPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem className="gap-2">
-                          <Download className="w-4 h-4" /> Download
+                          <Download className="w-4 h-4" /> Télécharger
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2">
                           <Star className="w-4 h-4" /> {item.is_favorite ? "Remove from Favorites" : "Add to Favorites"}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive">
-                          Delete
+                          Supprimer
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -196,9 +196,9 @@ export default function ContentLibraryPage() {
             <table className="w-full text-left">
               <thead className="bg-muted text-xs uppercase font-bold text-muted-foreground">
                 <tr>
-                  <th className="px-6 py-3">File</th>
+                  <th className="px-6 py-3">Fichier</th>
                   <th className="px-6 py-3">Type</th>
-                  <th className="px-6 py-3">Size</th>
+                  <th className="px-6 py-3">Taille</th>
                   <th className="px-6 py-3">Date</th>
                   <th className="px-6 py-3"></th>
                 </tr>
@@ -238,7 +238,7 @@ export default function ContentLibraryPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem className="gap-2">
-                              <Download className="w-4 h-4" /> Download
+                              <Download className="w-4 h-4" /> Télécharger
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2">
                               <Star className="w-4 h-4" /> {item.is_favorite ? "Remove from Favorites" : "Add to Favorites"}

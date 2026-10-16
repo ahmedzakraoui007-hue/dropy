@@ -83,15 +83,15 @@ export default function AdminCreatorsPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Creator Management</h1>
-          <p className="text-muted-foreground">Approve and moderate marketplace creators</p>
+          <h1 className="text-3xl font-bold">Gestion des créateurs</h1>
+          <p className="text-muted-foreground">Approuvez et modérez les créateurs</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search by name or email..." 
+              placeholder="Rechercher par nom ou email..." 
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -99,7 +99,7 @@ export default function AdminCreatorsPage() {
           </div>
           <Button variant="outline" className="gap-2">
             <Filter className="w-4 h-4" />
-            Filters
+            Filtres
           </Button>
         </div>
 
@@ -112,10 +112,10 @@ export default function AdminCreatorsPage() {
             <table className="w-full text-left">
               <thead className="bg-muted text-xs uppercase font-bold text-muted-foreground">
                 <tr>
-                  <th className="px-6 py-3">Creator</th>
-                  <th className="px-6 py-3">Specialties</th>
+                  <th className="px-6 py-3">Créateur</th>
+                  <th className="px-6 py-3">Spécialités</th>
                   <th className="px-6 py-3">Performance</th>
-                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Statut</th>
                   <th className="px-6 py-3"></th>
                 </tr>
               </thead>

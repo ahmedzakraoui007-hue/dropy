@@ -60,7 +60,7 @@ export default function BriefDetailsPage() {
         .single();
 
       if (briefError) {
-        toast.error("Brief not found");
+        toast.error("Brief introuvable");
         router.push("/seller/content/briefs");
         return;
       }
@@ -113,7 +113,7 @@ export default function BriefDetailsPage() {
 
       // Handle Stripe Payment
       const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-      if (!stripe) throw new Error("Stripe failed to load");
+      if (!stripe) throw new Error("Le paiement n'a pas pu se charger");
 
       const { error: stripeError } = await stripe.confirmCardPayment(data.clientSecret, {
         payment_method: {
@@ -124,7 +124,7 @@ export default function BriefDetailsPage() {
 
       if (stripeError) throw stripeError;
 
-      toast.success("Payment successful! Funds held in escrow.");
+      toast.success("Paiement réussi ! Fonds conservés en séquestre.");
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Payment failed");
@@ -143,7 +143,7 @@ export default function BriefDetailsPage() {
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      toast.success("Funds released to creator! Project completed.");
+      toast.success("Fonds versés au créateur ! Projet terminé.");
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Failed to release funds");
@@ -178,7 +178,7 @@ export default function BriefDetailsPage() {
                         <Badge variant="outline" className="capitalize">{brief.content_type}</Badge>
                         <Badge>{brief.status}</Badge>
                         {brief.is_disputed && (
-                          <Badge variant="destructive" className="animate-pulse">Disputed</Badge>
+                          <Badge variant="destructive" className="animate-pulse">En litige</Badge>
                         )}
                       </div>
                       <CardTitle className="text-3xl">{brief.title}</CardTitle>
@@ -194,7 +194,7 @@ export default function BriefDetailsPage() {
                         onClick={() => setIsDisputeOpen(true)}
                       >
                         <ShieldAlert className="w-4 h-4 mr-2" />
-                        Open Dispute
+                        Ouvrir un litige
                       </Button>
                     )}
                   </div>
@@ -207,15 +207,15 @@ export default function BriefDetailsPage() {
                     <p className="font-semibold">{brief.budget_min} - {brief.budget_max} TND</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Deadline</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
                     <p className="font-semibold">{format(new Date(brief.deadline), "PP")}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Location</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Lieu</p>
                     <p className="font-semibold">{brief.preferred_city || "Remote"}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Rights</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Droits</p>
                     <p className="font-semibold capitalize">{brief.rights_type?.replace("_", " ")}</p>
                   </div>
                 </div>
@@ -226,7 +226,7 @@ export default function BriefDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold">Deliverables</h3>
+                  <h3 className="text-lg font-bold">Livrables</h3>
                   <div className="p-4 rounded-xl bg-muted/50 border border-border">
                     <p className="text-muted-foreground whitespace-pre-wrap">{brief.deliverables}</p>
                   </div>
@@ -234,7 +234,7 @@ export default function BriefDetailsPage() {
 
                 {brief.products && brief.products.length > 0 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-bold">Related Products</h3>
+                    <h3 className="text-lg font-bold">Produits concernés</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {brief.products.map((product: any) => (
                         <Card key={product.id} className="flex items-center gap-3 p-3 border-border/50">
@@ -257,9 +257,9 @@ export default function BriefDetailsPage() {
                       <div>
                         <CardTitle className="text-blue-700 flex items-center gap-2">
                           <Package className="w-5 h-5" />
-                          Review Deliverables
+                          Examiner les livrables
                         </CardTitle>
-                        <CardDescription>The creator has submitted the final files. Review them before releasing the funds.</CardDescription>
+                        <CardDescription>Le créateur a envoyé les fichiers finaux. Examinez-les avant de libérer les fonds.</CardDescription>
                       </div>
                       <Button 
                         onClick={handleReleaseFunds}
@@ -274,7 +274,7 @@ export default function BriefDetailsPage() {
                       {deliveries.map((delivery: any) => (
                         <div key={delivery.id} className="space-y-4">
                           <div className="p-4 rounded-xl bg-white border border-blue-100">
-                            <p className="text-sm font-medium mb-3">Creator Message:</p>
+                            <p className="text-sm font-medium mb-3">Message du créateur :</p>
                             <p className="text-sm text-muted-foreground italic">&quot;{delivery.message}&quot;</p>
                           </div>
                           
@@ -315,14 +315,14 @@ export default function BriefDetailsPage() {
                     <CardHeader>
                       <CardTitle className="text-emerald-700 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5" />
-                        Project Completed
+                        Projet terminé
                       </CardTitle>
-                      <CardDescription>The funds have been released and the content is now in your library.</CardDescription>
+                      <CardDescription>Les fonds ont été versés et le contenu est maintenant dans votre bibliothèque.</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Button variant="outline" className="w-full gap-2" onClick={() => router.push('/seller/content/library')}>
                         <Package className="w-4 h-4" />
-                        View in Content Library
+                        Voir dans la bibliothèque
                       </Button>
                     </CardContent>
                   </Card>
@@ -376,9 +376,9 @@ export default function BriefDetailsPage() {
                   <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                     <Users className="w-8 h-8 text-muted-foreground opacity-20" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">No applications yet</h3>
+                  <h3 className="text-lg font-semibold mb-2">Aucune candidature pour le moment</h3>
                   <p className="text-muted-foreground">
-                    Your brief is published. Creators will start applying soon!
+                    Votre brief est publié. Les créateurs vont bientôt postuler !
                   </p>
                 </Card>
               ) : (
@@ -447,16 +447,16 @@ export default function BriefDetailsPage() {
                                   Message
                                 </Button>
                                 <Button variant="ghost" className="w-full text-destructive">
-                                  Reject
+                                  Refuser
                                 </Button>
                               </>
                             ) : app.status === "accepted" ? (
                               <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                                 <CheckCircle2 className="w-8 h-8" />
-                                <span className="text-xs font-bold uppercase tracking-wider">Hired</span>
+                                <span className="text-xs font-bold uppercase tracking-wider">Retenu</span>
                               </div>
                             ) : (
-                              <Badge variant="outline" className="justify-center py-2">Not Selected</Badge>
+                              <Badge variant="outline" className="justify-center py-2">Non retenu</Badge>
                             )}
                           </div>
                         </div>
@@ -473,9 +473,9 @@ export default function BriefDetailsPage() {
               <div className="bg-primary p-4 text-white">
                 <div className="flex items-center gap-2 mb-1">
                   <Shield className="w-5 h-5" />
-                  <p className="font-bold">Dropy Escrow</p>
+                  <p className="font-bold">Séquestre Dropy</p>
                 </div>
-                <p className="text-xs opacity-90">Your payment is 100% protected</p>
+                <p className="text-xs opacity-90">Votre paiement est 100 % protégé</p>
               </div>
               <CardContent className="pt-6 space-y-4">
                 <div className="space-y-3">
@@ -483,25 +483,25 @@ export default function BriefDetailsPage() {
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                       <span className="text-xs font-bold text-primary">1</span>
                     </div>
-                    <p className="text-sm">Funds are held by Dropy upon acceptance</p>
+                    <p className="text-sm">Les fonds sont conservés par Dropy dès l'acceptation</p>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                       <span className="text-xs font-bold text-primary">2</span>
                     </div>
-                    <p className="text-sm">Creator works on your project and delivers</p>
+                    <p className="text-sm">Le créateur réalise votre projet et le livre</p>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                       <span className="text-xs font-bold text-primary">3</span>
                     </div>
-                    <p className="text-sm">You review the work and request revisions if needed</p>
+                    <p className="text-sm">Vous examinez le travail et demandez des retouches si besoin</p>
                   </div>
                   <div className="flex items-start gap-3">
                     <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
                       <span className="text-xs font-bold text-primary">4</span>
                     </div>
-                    <p className="text-sm">Funds are released only when you approve the content</p>
+                    <p className="text-sm">Les fonds ne sont versés qu'après votre validation du contenu</p>
                   </div>
                 </div>
               </CardContent>
@@ -509,7 +509,7 @@ export default function BriefDetailsPage() {
 
             <Card>
               <CardHeader>
-                  <CardTitle>Timeline</CardTitle>
+                  <CardTitle>Chronologie</CardTitle>
                 </CardHeader>
               <CardContent className="space-y-4">
                   <div className="relative pl-6 pb-6 border-l border-border">

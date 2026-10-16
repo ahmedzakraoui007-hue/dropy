@@ -46,9 +46,9 @@ const CONTENT_TYPES = [
 ];
 
 const RIGHTS_TYPES = [
-  { id: "posting", label: "Posting Only", description: "Right to post on your social media" },
-  { id: "no_posting", label: "Internal Use Only", description: "Right to use internally without posting" },
-  { id: "commercial_unlimited", label: "Commercial Unlimited", description: "Full commercial rights forever" },
+  { id: "posting", label: "Publication uniquement", description: "Droit de publier sur vos réseaux sociaux" },
+  { id: "no_posting", label: "Usage interne uniquement", description: "Droit d'utilisation interne sans publication" },
+  { id: "commercial_unlimited", label: "Commercial illimité", description: "Droits commerciaux complets et illimités" },
 ];
 
 export default function CreateBriefPage() {
@@ -73,12 +73,12 @@ export default function CreateBriefPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !contentType || !budgetMin || !budgetMax || !deadline || !deliverables) {
-      toast.error("Please fill in all required fields");
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
     if (!check('maxBriefsPerMonth')) {
-      toast.error("Brief limit reached", {
+      toast.error("Limite de briefs atteinte", {
         description: `Your ${plan} plan is limited to ${limits.maxBriefsPerMonth} briefs per month.`
       });
       return;
@@ -87,7 +87,7 @@ export default function CreateBriefPage() {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error("Non connecté");
 
       // Get store_id
       const { data: store } = await supabase
@@ -96,7 +96,7 @@ export default function CreateBriefPage() {
         .eq("vendor_id", user.id)
         .single();
 
-      if (!store) throw new Error("Store not found");
+      if (!store) throw new Error("Boutique introuvable");
 
       // Upload reference images if any (simplified for now - just logging)
       // In a real app, you'd upload these to Supabase Storage
@@ -124,7 +124,7 @@ export default function CreateBriefPage() {
 
       if (error) throw error;
 
-      toast.success("Brief published successfully!");
+      toast.success("Brief publié avec succès !");
       router.push("/seller/content/briefs");
     } catch (error: any) {
       toast.error(error.message || "Failed to create brief");
@@ -149,17 +149,17 @@ export default function CreateBriefPage() {
           onClick={() => router.back()}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          Retour
         </Button>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Create a Content Brief</h1>
-            <p className="text-muted-foreground">Define your needs and find the perfect creator</p>
+            <h1 className="text-3xl font-bold">Créer un brief de contenu</h1>
+            <p className="text-muted-foreground">Définissez vos besoins et trouvez le créateur idéal</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => router.push("/seller/content/briefs")}>
-              Cancel
+              Annuler
             </Button>
             <Button 
               onClick={handleSubmit} 
@@ -175,15 +175,15 @@ export default function CreateBriefPage() {
           <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Start with the essentials of your project</CardDescription>
+                <CardTitle>Informations générales</CardTitle>
+                <CardDescription>Commencez par l'essentiel de votre projet</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="title">Project Title*</Label>
                   <Input 
                     id="title" 
-                    placeholder="e.g. 5 Lifestyle photos for Summer Collection"
+                    placeholder="ex. 5 photos lifestyle pour la collection été"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
@@ -193,7 +193,7 @@ export default function CreateBriefPage() {
                   <Label htmlFor="description">Detailed Description*</Label>
                   <Textarea 
                     id="description" 
-                    placeholder="Describe your vision, target audience, and any specific requirements..."
+                    placeholder="Décrivez votre vision, votre cible et vos exigences particulières..."
                     className="min-h-[150px]"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -225,8 +225,8 @@ export default function CreateBriefPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Budget & Timeline</CardTitle>
-                <CardDescription>Set your expectations for cost and delivery</CardDescription>
+                <CardTitle>Budget et délais</CardTitle>
+                <CardDescription>Définissez votre budget et vos délais</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -263,7 +263,7 @@ export default function CreateBriefPage() {
                     <DatePicker 
                       date={deadline} 
                       setDate={setDeadline}
-                      placeholder="Select delivery date"
+                      placeholder="Choisir la date de livraison"
                     />
                   </div>
                 </div>
@@ -282,8 +282,8 @@ export default function CreateBriefPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Usage Rights & Location</CardTitle>
-                <CardDescription>How you intend to use the content</CardDescription>
+                <CardTitle>Droits d'utilisation et lieu</CardTitle>
+                <CardDescription>Comment comptez-vous utiliser le contenu</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <RadioGroup 
@@ -324,7 +324,7 @@ export default function CreateBriefPage() {
                       onChange={(e) => setPreferredCity(e.target.value)}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Useful if you need products to be picked up or physical presence</p>
+                  <p className="text-xs text-muted-foreground">Utile si des produits doivent être récupérés ou si une présence physique est nécessaire</p>
                 </div>
               </CardContent>
             </Card>
@@ -333,8 +333,8 @@ export default function CreateBriefPage() {
           <div className="space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Products</CardTitle>
-                <CardDescription>Select products for this mission</CardDescription>
+                <CardTitle>Produits</CardTitle>
+                <CardDescription>Sélectionnez les produits de cette mission</CardDescription>
               </CardHeader>
               <CardContent>
                 <ProductSelector 
@@ -346,8 +346,8 @@ export default function CreateBriefPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Reference Images</CardTitle>
-                <CardDescription>Mood board or style examples</CardDescription>
+                <CardTitle>Images de référence</CardTitle>
+                <CardDescription>Moodboard ou exemples de style</CardDescription>
               </CardHeader>
               <CardContent>
                 <FileUpload 
@@ -361,17 +361,17 @@ export default function CreateBriefPage() {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                  <p className="text-sm font-medium">Safe Escrow Payment</p>
+                  <p className="text-sm font-medium">Paiement sécurisé (séquestre)</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Your payment will be held securely by Dropy and released only after you approve the final content.
+                  Votre paiement est conservé en sécurité par Dropy et n'est versé qu'après validation du contenu final.
                 </p>
                 <div className="flex gap-3">
                   <AlertCircle className="w-5 h-5 text-primary shrink-0" />
                   <p className="text-sm font-medium">2 Revisions Included</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  All missions include at least 2 rounds of revisions to ensure you get exactly what you need.
+                  Chaque mission inclut au moins 2 séries de retouches pour obtenir exactement ce dont vous avez besoin.
                 </p>
               </CardContent>
             </Card>

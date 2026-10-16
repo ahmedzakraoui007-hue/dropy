@@ -42,7 +42,7 @@ export default function ApplyPage() {
         .single();
 
       if (error) {
-        toast.error("Brief not found");
+        toast.error("Brief introuvable");
         router.push("/creator/opportunities");
         return;
       }
@@ -54,14 +54,14 @@ export default function ApplyPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proposedPrice || !deliveryDays || !message) {
-      toast.error("Please fill in all required fields");
+      toast.error("Veuillez remplir tous les champs obligatoires");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error("Non connecté");
 
       // In a real app, upload portfolio samples to Storage
       const sampleUrls: string[] = [];
@@ -80,7 +80,7 @@ export default function ApplyPage() {
 
       if (error) throw error;
 
-      toast.success("Proposal submitted successfully!");
+      toast.success("Proposition envoyée !");
       router.push("/creator/missions");
     } catch (error: any) {
       toast.error(error.message || "Failed to submit proposal");
@@ -96,21 +96,21 @@ export default function ApplyPage() {
       <div className="max-w-3xl mx-auto px-4 pt-8">
         <Button variant="ghost" className="mb-6" onClick={() => router.back()}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
+          Retour
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Submit Proposal</h1>
+          <h1 className="text-3xl font-bold mb-2">Envoyer la proposition</h1>
           <p className="text-muted-foreground">
-            Applying for: <span className="font-semibold text-foreground">{brief.title}</span> by {brief.store?.name}
+            Candidature pour : <span className="font-semibold text-foreground">{brief.title}</span> by {brief.store?.name}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <Card>
             <CardHeader>
-              <CardTitle>Proposal Details</CardTitle>
-              <CardDescription>Specify your terms for this mission</CardDescription>
+              <CardTitle>Détails de la proposition</CardTitle>
+              <CardDescription>Précisez vos conditions pour cette mission</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -146,10 +146,10 @@ export default function ApplyPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="message">Why are you a good fit?*</Label>
+                <Label htmlFor="message">Pourquoi êtes-vous le bon profil ?*</Label>
                 <Textarea 
                   id="message" 
-                  placeholder="Tell the seller about your experience and how you plan to approach this project..."
+                  placeholder="Présentez votre expérience au vendeur et votre approche pour ce projet..."
                   className="min-h-[150px]"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -160,8 +160,8 @@ export default function ApplyPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Relevant Work Samples</CardTitle>
-              <CardDescription>Upload 3-5 examples of similar work</CardDescription>
+              <CardTitle>Exemples de travaux</CardTitle>
+              <CardDescription>Ajoutez 3 à 5 exemples de travaux similaires</CardDescription>
             </CardHeader>
             <CardContent>
               <FileUpload 
@@ -176,7 +176,7 @@ export default function ApplyPage() {
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex gap-3">
               <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
               <div className="text-sm">
-                <p className="font-bold">Important Information</p>
+                <p className="font-bold">Informations importantes</p>
                 <p className="text-muted-foreground mt-1">
                   If selected, the payment will be held in escrow. You will receive 85% of the proposed price ({(parseFloat(proposedPrice || "0") * 0.85).toFixed(2)} TND) after the seller approves your work.
                 </p>

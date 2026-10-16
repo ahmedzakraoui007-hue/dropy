@@ -246,7 +246,7 @@ export default function TemplateMarketplace({ onClose, onSelectTemplate }: Templ
                         <div className="space-y-2">
                           <Label className="text-xs">Logo</Label>
                           <Button variant="outline" className="w-full h-10 gap-2 text-xs">
-                            <ImageIcon className="w-4 h-4" /> Upload Logo
+                            <ImageIcon className="w-4 h-4" /> Importer un logo
                           </Button>
                         </div>
                       </div>

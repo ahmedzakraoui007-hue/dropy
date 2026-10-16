@@ -27,7 +27,7 @@ export function DisputeDialog({ isOpen, onClose, briefId, onSuccess }: DisputeDi
 
   const handleSubmit = async () => {
     if (!reason.trim()) {
-      toast.error("Please provide a reason for the dispute");
+      toast.error("Veuillez indiquer le motif du litige");
       return;
     }
 
@@ -43,7 +43,7 @@ export function DisputeDialog({ isOpen, onClose, briefId, onSuccess }: DisputeDi
       });
 
       if (response.ok) {
-        toast.success("Dispute opened successfully. Our team will review it.");
+        toast.success("Litige ouvert. Notre équipe va l'examiner.");
         onSuccess?.();
         onClose();
       } else {
@@ -51,7 +51,7 @@ export function DisputeDialog({ isOpen, onClose, briefId, onSuccess }: DisputeDi
         toast.error(data.error || "Failed to open dispute");
       }
     } catch (error) {
-      toast.error("An error occurred while opening the dispute");
+      toast.error("Une erreur est survenue lors de l'ouverture du litige");
     } finally {
       setIsSubmitting(false);
     }
@@ -63,11 +63,10 @@ export function DisputeDialog({ isOpen, onClose, briefId, onSuccess }: DisputeDi
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <ShieldAlert className="w-5 h-5" />
-            Open a Dispute
+            Ouvrir un litige
           </DialogTitle>
           <DialogDescription>
-            Are you sure you want to open a dispute for this mission? 
-            An administrator will review the case and the escrowed funds will be frozen.
+            Voulez-vous vraiment ouvrir un litige pour cette mission ? Un administrateur examinera le dossier et les fonds en séquestre seront bloqués.
           </DialogDescription>
         </DialogHeader>
 
@@ -75,15 +74,14 @@ export function DisputeDialog({ isOpen, onClose, briefId, onSuccess }: DisputeDi
           <div className="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/50 flex gap-3 text-sm text-yellow-800 dark:text-yellow-200">
             <AlertTriangle className="w-5 h-5 shrink-0" />
             <p>
-              Please provide clear details about why you are opening this dispute. 
-              Our team may contact you for further evidence.
+              Expliquez clairement pourquoi vous ouvrez ce litige. Notre équipe pourra vous demander des preuves supplémentaires.
             </p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Reason for Dispute</label>
+            <label className="text-sm font-medium">Motif du litige</label>
             <Textarea 
-              placeholder="Explain the issue in detail..." 
+              placeholder="Expliquez le problème en détail..." 
               className="min-h-[120px]"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -92,7 +90,7 @@ export function DisputeDialog({ isOpen, onClose, briefId, onSuccess }: DisputeDi
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>Annuler</Button>
           <Button 
             variant="destructive" 
             onClick={handleSubmit}

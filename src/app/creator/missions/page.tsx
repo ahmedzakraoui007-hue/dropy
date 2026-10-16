@@ -65,18 +65,18 @@ export default function CreatorMissionsPage() {
     if (brief.selected_creator_id === userId) {
       switch (brief.status) {
         case "assigned": return <Badge className="bg-purple-500">Hired - Starting</Badge>;
-        case "in_progress": return <Badge className="bg-orange-500">In Progress</Badge>;
-        case "delivered": return <Badge className="bg-blue-500">Delivered - Pending Approval</Badge>;
-        case "completed": return <Badge className="bg-emerald-500">Completed</Badge>;
+        case "in_progress": return <Badge className="bg-orange-500">En cours</Badge>;
+        case "delivered": return <Badge className="bg-blue-500">Livré - en attente de validation</Badge>;
+        case "completed": return <Badge className="bg-emerald-500">Terminé</Badge>;
         default: return <Badge>{brief.status}</Badge>;
       }
     }
 
     if (myApp) {
       switch (myApp.status) {
-        case "pending": return <Badge variant="outline">Applied - Pending</Badge>;
-        case "rejected": return <Badge variant="destructive">Not Selected</Badge>;
-        case "accepted": return <Badge className="bg-emerald-500">Accepted</Badge>;
+        case "pending": return <Badge variant="outline">Candidature envoyée - en attente</Badge>;
+        case "rejected": return <Badge variant="destructive">Non retenu</Badge>;
+        case "accepted": return <Badge className="bg-emerald-500">Accepté</Badge>;
         default: return <Badge variant="outline">{myApp.status}</Badge>;
       }
     }
@@ -89,23 +89,23 @@ export default function CreatorMissionsPage() {
       <div className="max-w-7xl mx-auto px-4 pt-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">My Missions</h1>
-            <p className="text-muted-foreground">Track your proposals and active projects</p>
+            <h1 className="text-3xl font-bold">Mes missions</h1>
+            <p className="text-muted-foreground">Suivez vos propositions et vos projets en cours</p>
           </div>
           <Button 
             onClick={() => router.push("/creator/opportunities")}
             className="bg-gradient-to-r from-violet-500 to-purple-600"
           >
-            Find New Opportunities
+            Trouver de nouvelles opportunités
           </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="w-full md:w-auto bg-muted">
-            <TabsTrigger value="all" className="flex-1 md:flex-none">All</TabsTrigger>
-            <TabsTrigger value="proposals" className="flex-1 md:flex-none">Proposals</TabsTrigger>
-            <TabsTrigger value="active" className="flex-1 md:flex-none">Active Missions</TabsTrigger>
-            <TabsTrigger value="completed" className="flex-1 md:flex-none">Completed</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1 md:flex-none">Tous</TabsTrigger>
+            <TabsTrigger value="proposals" className="flex-1 md:flex-none">Propositions</TabsTrigger>
+            <TabsTrigger value="active" className="flex-1 md:flex-none">Missions en cours</TabsTrigger>
+            <TabsTrigger value="completed" className="flex-1 md:flex-none">Terminé</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -118,12 +118,12 @@ export default function CreatorMissionsPage() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <Briefcase className="w-10 h-10 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No missions yet</h3>
+            <h3 className="text-xl font-semibold mb-2">Aucune mission pour le moment</h3>
             <p className="text-muted-foreground max-w-sm mb-6">
               You haven&apos;t applied to any missions yet. Explore opportunities to get started!
             </p>
             <Button onClick={() => router.push("/creator/opportunities")}>
-              Browse Opportunities
+              Voir les opportunités
             </Button>
           </Card>
         ) : (
@@ -179,7 +179,7 @@ export default function CreatorMissionsPage() {
                     
                     <div className="flex items-center min-w-[120px]">
                       <Button variant="ghost" className="w-full group-hover:translate-x-1 transition-transform">
-                        Details
+                        Détails
                         <ArrowRight className="ml-2 w-4 h-4" />
                       </Button>
                     </div>

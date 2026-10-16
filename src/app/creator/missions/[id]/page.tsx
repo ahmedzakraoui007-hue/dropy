@@ -58,7 +58,7 @@ export default function MissionDetailsPage() {
 
 
       if (briefError) {
-        toast.error("Mission not found");
+        toast.error("Mission introuvable");
         router.push("/creator/missions");
         return;
       }
@@ -80,14 +80,14 @@ export default function MissionDetailsPage() {
 
   const handleDeliver = async () => {
     if (deliveryFiles.length === 0) {
-      toast.error("Please upload at least one file");
+      toast.error("Veuillez envoyer au moins un fichier");
       return;
     }
 
     setIsDelivering(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error("Non connecté");
       
       // Upload files to Supabase Storage
       const uploadedFiles = [];
@@ -145,7 +145,7 @@ export default function MissionDetailsPage() {
           });
         }
 
-        toast.success("Project delivered successfully! Waiting for seller approval.");
+        toast.success("Projet livré ! En attente de validation par le vendeur.");
 
       router.refresh();
       // Reset form
@@ -192,7 +192,7 @@ export default function MissionDetailsPage() {
                           {brief.status}
                         </Badge>
                         {brief.is_disputed && (
-                          <Badge variant="destructive" className="animate-pulse">Disputed</Badge>
+                          <Badge variant="destructive" className="animate-pulse">En litige</Badge>
                         )}
                       </div>
                       <CardTitle className="text-3xl">{brief.title}</CardTitle>
@@ -221,7 +221,7 @@ export default function MissionDetailsPage() {
                       <p className="font-semibold text-primary">{myApplication?.proposed_price} TND</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">Deadline</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
                       <p className="font-semibold">{format(new Date(brief.deadline), "PP")}</p>
                     </div>
                     <div className="space-y-1">

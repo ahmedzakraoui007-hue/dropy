@@ -59,7 +59,7 @@ export default function OpportunityDetailsPage() {
         .single();
 
       if (briefError) {
-        toast.error("Opportunity not found");
+        toast.error("Opportunité introuvable");
         router.push("/creator/opportunities");
         return;
       }
@@ -121,7 +121,7 @@ export default function OpportunityDetailsPage() {
                   {matchData && (
                     <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-primary/5 border border-primary/20">
                       <span className="text-2xl font-bold text-primary">{matchData.score}%</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Match Score</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Score de compatibilité</span>
                     </div>
                   )}
                 </div>
@@ -139,7 +139,7 @@ export default function OpportunityDetailsPage() {
                       </p>
                     </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Deadline</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
                     <p className="font-semibold">{format(new Date(brief.deadline), "PP", { locale: fr })}</p>
                   </div>
                   <div className="space-y-1">
