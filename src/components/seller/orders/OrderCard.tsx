@@ -65,14 +65,14 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
               <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
             </div>
             <div className="text-right">
-              <p className="font-bold text-primary">{order.total.toLocaleString()} TND</p>
-              <p className="text-[10px] text-muted-foreground">Profit: {order.seller_profit} TND</p>
+              <p className="font-bold text-primary">{Number(order.total_amount || 0).toLocaleString()} TND</p>
+              <p className="text-[10px] text-muted-foreground">{order.payment_method === 'cod' ? 'Paiement à la livraison' : order.payment_method}</p>
             </div>
           </div>
           
           <div className="flex items-start text-xs text-muted-foreground">
             <MapPin className="w-3 h-3 mr-1 mt-0.5 shrink-0" />
-            <span className="line-clamp-1">{order.customer_city}, {order.customer_governorate}</span>
+            <span className="line-clamp-1">{[order.customer_address, order.customer_governorate].filter(Boolean).join(', ')}</span>
           </div>
 
           <div className="text-xs border-t pt-2 mt-2">

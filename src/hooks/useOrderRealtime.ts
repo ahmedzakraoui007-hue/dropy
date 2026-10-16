@@ -32,7 +32,7 @@ export function useOrderRealtime(
           toast.success(
             `🛒 Nouvelle commande #${newOrder.order_number}`,
             {
-              description: `${newOrder.customer_name} - ${(newOrder as any).total_amount ?? newOrder.total} TND`,
+              description: `${newOrder.customer_name} - ${newOrder.total_amount} TND`,
               duration: 10000,
               action: {
                 label: 'Appeler',

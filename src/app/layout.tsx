@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import VisualEditsMessenger from "../visual-edits/VisualEditsMessenger";
-import ErrorReporter from "@/components/ErrorReporter";
 import Script from "next/script";
 import { Toaster } from "@/components/ui/sonner";
 import NavbarWrapper from "@/components/layout/NavbarWrapper";
@@ -98,18 +96,10 @@ export default function RootLayout({
                 gtag('config', 'G-E670RXNKLL');
               `}
             </Script>
-            <Script
-              id="orchids-browser-logs"
-              src="https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/object/public/scripts/orchids-browser-logs.js"
-              strategy="afterInteractive"
-              data-orchids-project-id="4471a8c5-e525-4c97-9256-0602c8a71056"
-            />
-            <ErrorReporter />
             <NavbarWrapper>
               {children}
             </NavbarWrapper>
             <Toaster position="top-right" />
-            <VisualEditsMessenger />
           </LanguageProvider>
         </body>
       </html>

@@ -43,7 +43,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                 </div>
                 <div className="flex items-start text-sm text-muted-foreground">
                   <MapPin className="w-3.5 h-3.5 mr-2 mt-0.5 shrink-0" />
-                  <span>{order.customer_address}, {order.customer_city}, {order.customer_governorate}</span>
+                  <span>{[order.customer_address, order.customer_governorate].filter(Boolean).join(', ')}</span>
                 </div>
               </div>
             </section>
@@ -57,7 +57,11 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                   <div key={item.id} className="flex justify-between text-sm">
                     <div>
                       <p className="font-medium">{item.product_name}</p>
-                      {item.variant_name && <p className="text-xs text-muted-foreground">{item.variant_name}</p>}
+                      {item.variant_info && Object.keys(item.variant_info).length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {Object.entries(item.variant_info).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground">{item.quantity} x {item.unit_price} TND</p>
                     </div>
                     <span className="font-medium">{item.total_price} TND</span>
@@ -71,27 +75,22 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Livraison</span>
-                    <span>{order.shipping_cost} TND</span>
+                    <span>{order.shipping_cost ? `${order.shipping_cost} TND` : 'Gratuite'}</span>
                   </div>
+                  {Number(order.discount_amount) > 0 && (
+                    <div className="flex justify-between text-xs text-emerald-600">
+                      <span>Réduction</span>
+                      <span>-{order.discount_amount} TND</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-sm pt-1">
                     <span>Total</span>
-                    <span>{order.total} TND</span>
+                    <span>{order.total_amount} TND</span>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section>
-              <h3 className="text-sm font-semibold flex items-center mb-3">
-                <CreditCard className="w-4 h-4 mr-2" /> Profit Vendeur
-              </h3>
-              <div className="bg-primary/5 border border-primary/10 p-3 rounded-lg">
-                <div className="flex justify-between items-center font-bold text-primary">
-                  <span>Marge nette</span>
-                  <span>{order.seller_profit} TND</span>
-                </div>
-              </div>
-            </section>
           </div>
 
           <div className="space-y-6">
