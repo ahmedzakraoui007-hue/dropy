@@ -72,38 +72,51 @@ export default function SupplierAnalyticsPage() {
         .select("*", { count: "exact", head: true })
         .eq("supplier_id", user.id);
 
-      const { data: orders } = await supabase
-        .from("orders")
-        .select("id, total_amount, created_at")
-        .eq("supplier_id", user.id);
+      const days = period === "7d" ? 7 : period === "90d" ? 90 : period === "year" ? 0 : 30;
+      const now = new Date();
+      const start = days ? new Date(now.getTime() - days * 86400000) : new Date(now.getFullYear(), 0, 1);
+      const previousStart = new Date(start.getTime() - (now.getTime() - start.getTime()));
 
-      const totalOrders = orders?.length || 0;
-      const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.total_amount || 0), 0) || 0;
-
-      const { data: products } = await supabase
-        .from("products")
-        .select("id, name, images")
+      const { data: supplierOrders } = await supabase
+        .from("supplier_orders")
+        .select("id, status, created_at, items:supplier_order_items(product_id, product_name, product_image, unit_price, quantity)")
         .eq("supplier_id", user.id)
-        .limit(5);
+        .gte("created_at", previousStart.toISOString());
 
+      const all = (supplierOrders || []).filter((o) => o.status !== "cancelled" && o.status !== "rejected");
+      const current = all.filter((o) => new Date(o.created_at) >= start);
+      const previous = all.filter((o) => new Date(o.created_at) < start);
+      const revenueOf = (list: typeof all) =>
+        list.flatMap((o) => o.items || []).reduce((sum, i) => sum + Number(i.unit_price || 0) * Number(i.quantity || 0), 0);
+      const change = (now: number, before: number) => (before > 0 ? Math.round(((now - before) / before) * 100) : 0);
+
+      const totalRevenue = revenueOf(current);
       setStats({
-        totalOrders,
+        totalOrders: current.length,
         totalRevenue,
         totalProducts: productsCount || 0,
-        conversionRate: 3.2,
-        ordersChange: 12,
-        revenueChange: 8
+        conversionRate: current.filter((o) => o.status === "delivered").length,
+        ordersChange: change(current.length, previous.length),
+        revenueChange: change(totalRevenue, revenueOf(previous)),
       });
 
-      setTopProducts(
-        (products || []).map((p, i) => ({
-          id: p.id,
-          name: p.name,
-          orders: Math.floor(Math.random() * 50) + 10,
-          revenue: Math.floor(Math.random() * 2000) + 500,
-          image: p.images?.[0] || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200"
-        }))
-      );
+      const byProduct = new Map<string, TopProduct>();
+      for (const order of current) {
+        for (const item of order.items || []) {
+          const key = item.product_id || item.product_name;
+          const entry = byProduct.get(key) || {
+            id: key,
+            name: item.product_name,
+            orders: 0,
+            revenue: 0,
+            image: item.product_image || "/placeholder-product.jpg",
+          };
+          entry.orders += Number(item.quantity || 0);
+          entry.revenue += Number(item.unit_price || 0) * Number(item.quantity || 0);
+          byProduct.set(key, entry);
+        }
+      }
+      setTopProducts([...byProduct.values()].sort((x, y) => y.revenue - x.revenue).slice(0, 5));
 
       setLoading(false);
     }
@@ -141,9 +154,9 @@ export default function SupplierAnalyticsPage() {
       color: "bg-purple-500"
     },
     { 
-      title: "Conversion", 
-      value: `${stats.conversionRate}%`, 
-      change: 0.5, 
+      title: "Livrées", 
+      value: stats.conversionRate.toString(), 
+      change: 0, 
       icon: TrendingUp, 
       color: "bg-orange-500"
     },

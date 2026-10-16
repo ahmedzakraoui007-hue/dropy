@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { syncStoreOrdersFromSupplier } from '@/lib/order-sync';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(
@@ -46,17 +47,9 @@ export async function POST(
       .from('supplier_order_items')
       .update({ status: 'accepted' })
       .eq('supplier_order_id', id);
+
     
-    if (supplierOrder.order_id) {
-      await supabase
-        .from('orders')
-        .update({ 
-          status: 'confirmed',
-          confirmed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', supplierOrder.order_id);
-    }
+    await syncStoreOrdersFromSupplier(id, 'accepted');
     
     return NextResponse.json({ 
       success: true,

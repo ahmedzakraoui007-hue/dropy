@@ -6,7 +6,7 @@ const MAX_LINES = 50;
 const MAX_QUANTITY = 100;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type CartLine = { productId: string; variantId: string | null; quantity: number; variantInfo: string | null };
+type CartLine = { productId: string; variantId: string | null; quantity: number };
 
 function fail(code: string, error: string, status = 400, extra: Record<string, unknown> = {}) {
   return NextResponse.json({ success: false, code, error, ...extra }, { status });
@@ -36,12 +36,7 @@ function parseCart(raw: unknown): CartLine[] | null {
       existing.quantity += quantity;
       if (existing.quantity > MAX_QUANTITY) return null;
     } else {
-      merged.set(key, {
-        productId,
-        variantId,
-        quantity,
-        variantInfo: line.variantInfo ? String(line.variantInfo).slice(0, 200) : null,
-      });
+      merged.set(key, { productId, variantId, quantity });
     }
   }
   return [...merged.values()];
@@ -91,7 +86,7 @@ export async function POST(request: Request) {
     if (variantIds.length) {
       const { data: variants, error: variantsError } = await supabase
         .from("store_product_variants")
-        .select("*")
+        .select("*, values:store_product_variant_values(custom_value, type:variant_types(name), option:variant_options(label, value))")
         .in("id", variantIds);
       if (variantsError) throw variantsError;
       for (const v of variants || []) variantMap.set(v.id, v);
@@ -108,17 +103,43 @@ export async function POST(request: Request) {
 
       let unitPrice = Number(product.selling_price ?? product.price);
       let stock: number | null = product.stock_quantity ?? null;
-      let variant = null;
+      let variant: { id: string; info: Record<string, string> } | null = null;
 
       if (line.variantId) {
-        variant = variantMap.get(line.variantId);
-        if (!variant || variant.product_id !== product.id || variant.is_active === false) {
+        const tableVariant = variantMap.get(line.variantId);
+        const jsonVariant = Array.isArray(product.variants)
+          ? product.variants.find((v: any) => v?.id === line.variantId)
+          : null;
+
+        if (tableVariant && tableVariant.product_id === product.id && tableVariant.is_active !== false) {
+          if (tableVariant.price != null) unitPrice = Number(tableVariant.price);
+          stock = tableVariant.stock ?? null;
+          variant = {
+            id: tableVariant.id,
+            info: Object.fromEntries(
+              (tableVariant.values || []).map((v: any) => [
+                v.type?.name || "Option",
+                v.option?.label || v.option?.value || v.custom_value || "",
+              ])
+            ),
+          };
+        } else if (jsonVariant) {
+          if (jsonVariant.price != null) unitPrice = Number(jsonVariant.price);
+          stock = jsonVariant.stock ?? null;
+          const typeName = String(jsonVariant.type || "Option");
+          variant = {
+            id: jsonVariant.id,
+            info: { [typeName.charAt(0).toUpperCase() + typeName.slice(1)]: String(jsonVariant.value ?? "") },
+          };
+        } else {
           return fail("product_unavailable", "Une variante de votre panier n'est plus disponible", 409, {
             productId: line.productId,
           });
         }
-        if (variant.price != null) unitPrice = Number(variant.price);
-        stock = variant.stock ?? null;
+      } else if (product.has_variants) {
+        return fail("variant_required", `Veuillez choisir une option pour « ${product.name} »`, 409, {
+          productId: line.productId,
+        });
       }
 
       if (!Number.isFinite(unitPrice) || unitPrice < 0) {
@@ -218,7 +239,7 @@ export async function POST(request: Request) {
         unit_price: l.unitPrice,
         total_price: l.total,
         product_image: l.product.images?.[0] ?? null,
-        variant_info: l.line.variantInfo ? { label: l.line.variantInfo } : null,
+        variant_info: l.variant?.info ?? null,
         fulfillment_type: l.supplierId ? "dropshipping" : "own",
         supplier_id: l.supplierId,
       }))
@@ -231,6 +252,21 @@ export async function POST(request: Request) {
     const bySupplier = new Map<string, typeof lineItems>();
     for (const l of lineItems) {
       await supabase.rpc("decrement_store_stock", { p_id: l.product.id, p_qty: l.line.quantity });
+      if (l.variant) {
+        const tableVariant = variantMap.get(l.variant.id);
+        if (tableVariant && tableVariant.stock != null) {
+          await supabase
+            .from("store_product_variants")
+            .update({ stock: Math.max(0, tableVariant.stock - l.line.quantity) })
+            .eq("id", tableVariant.id);
+        } else if (Array.isArray(l.product.variants)) {
+          const variants = l.product.variants.map((v: any) =>
+            v?.id === l.variant!.id && v.stock != null ? { ...v, stock: Math.max(0, v.stock - l.line.quantity) } : v
+          );
+          l.product.variants = variants;
+          await supabase.from("store_products").update({ variants }).eq("id", l.product.id);
+        }
+      }
       if (l.supplierId) {
         await supabase.rpc("decrement_supplier_stock", { p_store_product_id: l.product.id, p_qty: l.line.quantity });
         const list = bySupplier.get(l.supplierId) || [];
@@ -271,7 +307,7 @@ export async function POST(request: Request) {
           product_name: i.product.name,
           product_sku: i.source.sku ?? null,
           product_image: i.product.images?.[0] ?? null,
-          variant_info: i.line.variantInfo ? { label: i.line.variantInfo } : null,
+          variant_info: i.variant?.info ?? null,
           quantity: i.line.quantity,
           unit_price: i.source.base_price ?? null,
         }))

@@ -537,6 +537,43 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
   const [product, setProduct] = useState<any>(selectedProduct || null);
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [variantOptions, setVariantOptions] = useState<{ id: string; label: string; price: number | null; stock: number | null }[]>([]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [variantError, setVariantError] = useState(false);
+
+  useEffect(() => {
+    setVariantOptions([]);
+    setSelectedVariantId(null);
+    if (!product?.id || !product.has_variants) return;
+
+    if (Array.isArray(product.variants) && product.variants.length > 0) {
+      setVariantOptions(
+        product.variants
+          .filter((v: any) => v?.id)
+          .map((v: any) => ({ id: v.id, label: String(v.value ?? ""), price: v.price ?? null, stock: v.stock ?? null }))
+      );
+      return;
+    }
+
+    createClient()
+      .from("store_product_variants")
+      .select("id, price, stock, is_active, values:store_product_variant_values(custom_value, option:variant_options(label, value))")
+      .eq("product_id", product.id)
+      .then(({ data }) => {
+        setVariantOptions(
+          (data || [])
+            .filter((v: any) => v.is_active !== false)
+            .map((v: any) => ({
+              id: v.id,
+              label: (v.values || []).map((x: any) => x.option?.label || x.option?.value || x.custom_value).filter(Boolean).join(" / "),
+              price: v.price ?? null,
+              stock: v.stock ?? null,
+            }))
+        );
+      });
+  }, [product?.id, product?.has_variants]);
+
+  const selectedVariant = variantOptions.find((v) => v.id === selectedVariantId) || null;
   
   useEffect(() => {
     if (selectedProduct?.id && storeId) {
@@ -634,17 +671,47 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
               </div>
 
                 <div className="flex items-center gap-4 mb-6">
-                  <span className="text-4xl font-black text-primary">{formatPrice(parsePrice(displayProduct.price))}</span>
+                  <span className="text-4xl font-black text-primary">{formatPrice(parsePrice(selectedVariant?.price ?? displayProduct.price))}</span>
                 </div>
 
               <p className="text-lg text-muted-foreground">{displayProduct.description}</p>
             </div>
-            <button onClick={() => onAddToCart?.({
-              id: displayProduct.id,
-              title: displayProduct.title,
-              price: displayProduct.price,
-              image: images[0]
-            })} className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Ajouter au panier</button>
+            {variantOptions.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm font-bold uppercase tracking-wider opacity-70">Choisissez une option</p>
+                <div className="flex flex-wrap gap-2">
+                  {variantOptions.map((option) => {
+                    const soldOut = option.stock != null && option.stock <= 0;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        disabled={soldOut}
+                        onClick={() => { setSelectedVariantId(option.id); setVariantError(false); }}
+                        className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all disabled:opacity-40 disabled:line-through ${selectedVariantId === option.id ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50'}`}
+                      >
+                        {option.label || "Option"}
+                      </button>
+                    );
+                  })}
+                </div>
+                {variantError && <p className="text-sm text-red-600 font-medium">Veuillez choisir une option.</p>}
+              </div>
+            )}
+            <button onClick={() => {
+              if (variantOptions.length > 0 && !selectedVariant) {
+                setVariantError(true);
+                return;
+              }
+              onAddToCart?.({
+                id: displayProduct.id,
+                title: displayProduct.title,
+                price: selectedVariant?.price ?? displayProduct.price,
+                image: images[0],
+                variantId: selectedVariant?.id,
+                variantLabel: selectedVariant?.label,
+              });
+            }} className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Ajouter au panier</button>
           </div>
         </div>
       </div>
@@ -1072,6 +1139,7 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
                 <div className="w-20 h-20 bg-muted rounded-xl overflow-hidden"><img src={item.image} className="w-full h-full object-cover" alt="" /></div>
                 <div className="flex-1">
                   <h3 className="font-bold">{item.title}</h3>
+                  {item.variantLabel && <p className="text-xs opacity-60">{item.variantLabel}</p>}
                   <p className="text-primary font-black">{formatPrice(parsePrice(item.price))}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center border border-border rounded-lg overflow-hidden bg-muted/50">
@@ -1416,7 +1484,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             storeId: store.id,
-            cart: cart.map(item => ({ productId: item.id, variantId: item.variantId || null, quantity: item.quantity || 1 })),
+            cart: cart.map(item => ({ productId: item.productId ?? item.id, variantId: item.variantId || null, quantity: item.quantity || 1 })),
             customer: formData,
             appliedPromo,
             paymentMethod,
@@ -1494,6 +1562,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm truncate">{item.title}</h4>
+                        {item.variantLabel && <p className="text-xs opacity-60">{item.variantLabel}</p>}
                         <p className="text-xs text-muted-foreground">Qté: {item.quantity || 1}</p>
                       </div>
                       <div className="text-right">
@@ -1766,12 +1835,20 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
                 section={s} 
                 store={store} 
                 onAddToCart={(p) => { 
+                  if (p.has_variants && !p.variantId) {
+                    setSelectedProduct(p);
+                    setCurrentPage("product-detail");
+                    window.scrollTo({ top: 0, behavior: "instant" });
+                    return;
+                  }
+                  const productId = p.productId ?? p.id;
+                  const key = p.variantId ? `${productId}:${p.variantId}` : productId;
                   setCart(prev => {
-                    const existing = prev.find(item => item.id === p.id);
+                    const existing = prev.find(item => item.id === key);
                     if (existing) {
-                      return prev.map(item => item.id === p.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item);
+                      return prev.map(item => item.id === key ? { ...item, quantity: (item.quantity || 1) + 1 } : item);
                     }
-                    return [...prev, { ...p, quantity: 1 }];
+                    return [...prev, { ...p, id: key, productId, quantity: 1 }];
                   });
                   setIsCartOpen(true); 
                 }} 

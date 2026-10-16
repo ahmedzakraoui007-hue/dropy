@@ -49,7 +49,7 @@ interface SupplierOrder {
     product_name: string;
     product_sku?: string;
     product_image?: string;
-    variant_info?: { size?: string; color?: string };
+    variant_info?: Record<string, string> | null;
     quantity: number;
     status: string;
   }[];
@@ -205,7 +205,7 @@ export default function SupplierOrdersPage() {
                 <tr>
                   <td></td>
                   <td>${item.product_name}</td>
-                  <td>${item.variant_info?.size || '-'} / ${item.variant_info?.color || '-'}</td>
+                  <td>${Object.values(item.variant_info || {}).join(' / ') || '-'}</td>
                   <td>${item.quantity}</td>
                 </tr>
               `).join('')}
@@ -434,12 +434,9 @@ export default function SupplierOrdersPage() {
                           <div className="flex-1">
                             <p className="font-medium">{item.product_name}</p>
                             <div className="flex gap-2 mt-1">
-                              {item.variant_info?.size && (
-                                <Badge variant="outline" className="text-xs">Taille: {item.variant_info.size}</Badge>
-                              )}
-                              {item.variant_info?.color && (
-                                <Badge variant="outline" className="text-xs">Couleur: {item.variant_info.color}</Badge>
-                              )}
+                              {Object.entries(item.variant_info || {}).map(([key, value]) => (
+                                <Badge key={key} variant="outline" className="text-xs">{key}: {value}</Badge>
+                              ))}
                             </div>
                           </div>
                           <div className="text-right">

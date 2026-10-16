@@ -79,8 +79,7 @@ function generatePreparationSlipHTML(data: {
       <td style="padding: 12px; border: 1px solid #ddd;">${item.quantity}</td>
       <td style="padding: 12px; border: 1px solid #ddd;">${item.product_sku || '-'}</td>
       <td style="padding: 12px; border: 1px solid #ddd;">${item.product_name}</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">${item.variant_info?.size || '-'}</td>
-      <td style="padding: 12px; border: 1px solid #ddd;">${item.variant_info?.color || '-'}</td>
+      <td style="padding: 12px; border: 1px solid #ddd;">${Object.entries(item.variant_info || {}).map(([k, v]) => `${k}: ${v}`).join(', ') || '-'}</td>
     </tr>
   `).join('');
 
@@ -263,8 +262,7 @@ function generatePreparationSlipHTML(data: {
             <th style="width: 60px;">QTÉ</th>
             <th style="width: 120px;">RÉFÉRENCE</th>
             <th>PRODUIT</th>
-            <th style="width: 80px;">TAILLE</th>
-            <th style="width: 100px;">COULEUR</th>
+            <th style="width: 180px;">OPTIONS</th>
           </tr>
         </thead>
         <tbody>

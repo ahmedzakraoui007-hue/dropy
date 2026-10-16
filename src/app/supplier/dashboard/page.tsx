@@ -60,24 +60,18 @@ export default function SupplierDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("supplier_id", user.id);
 
-      const { count: ordersCount } = await supabase
-        .from("orders")
-        .select("*", { count: "exact", head: true })
+      const { data: supplierOrders } = await supabase
+        .from("supplier_orders")
+        .select("status, items:supplier_order_items(unit_price, quantity)")
         .eq("supplier_id", user.id);
 
-      const { data: revenueData } = await supabase
-        .from("payments")
-        .select("supplier_amount")
-        .eq("supplier_id", user.id)
-        .eq("status", "completed");
-
-      const totalRevenue = revenueData?.reduce((sum, p) => sum + Number(p.supplier_amount || 0), 0) || 0;
-
-      const { count: pendingShipments } = await supabase
-        .from("orders")
-        .select("*", { count: "exact", head: true })
-        .eq("supplier_id", user.id)
-        .in("status", ["confirmed", "preparing"]);
+      const orders = supplierOrders || [];
+      const totalRevenue = orders
+        .filter((o) => o.status === "delivered")
+        .flatMap((o) => o.items || [])
+        .reduce((sum, i) => sum + Number(i.unit_price || 0) * Number(i.quantity || 0), 0);
+      const ordersCount = orders.length;
+      const pendingShipments = orders.filter((o) => ["pending", "accepted", "preparing"].includes(o.status)).length;
 
       setStats({
         totalProducts: productsCount || 0,

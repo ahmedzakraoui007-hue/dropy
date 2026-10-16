@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { syncStoreOrdersFromSupplier } from '@/lib/order-sync';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
 function validSignature(rawBody: string, signature: string | null) {
@@ -20,11 +21,11 @@ export async function POST(request: Request) {
     }
     const payload = JSON.parse(rawBody);
     
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     
     const { data: shipment } = await supabase
       .from('delivery_shipments')
-      .select('*, order:orders(*), supplier_order:supplier_orders(*)')
+      .select('*')
       .eq('external_tracking_id', payload.tracking_id)
       .single();
     
@@ -85,54 +86,20 @@ export async function POST(request: Request) {
         raw_data: payload,
       });
     
-    const orderStatusMap: Record<string, string> = {
-      'picked_up': 'in_transit',
-      'in_transit': 'in_transit',
-      'out_for_delivery': 'out_for_delivery',
-      'delivered': 'delivered',
-      'returned': 'returned',
-    };
-    
-    if (orderStatusMap[newStatus] && shipment.order_id) {
-      const orderUpdate: any = { 
-        status: orderStatusMap[newStatus],
-        updated_at: new Date().toISOString(),
-      };
-      
-      if (newStatus === 'delivered') {
-        orderUpdate.delivered_at = new Date().toISOString();
-      }
-      if (newStatus === 'in_transit') {
-        orderUpdate.shipped_at = orderUpdate.shipped_at || new Date().toISOString();
-      }
-      
-      await supabase
-        .from('orders')
-        .update(orderUpdate)
-        .eq('id', shipment.order_id);
-    }
-    
-    if (newStatus === 'picked_up' && shipment.supplier_order_id) {
+    if (shipment.supplier_order_id && (newStatus === 'picked_up' || newStatus === 'delivered')) {
+      const now = new Date().toISOString();
+      const supplierStatus = newStatus === 'picked_up' ? 'shipped' : 'delivered';
       await supabase
         .from('supplier_orders')
-        .update({ 
-          status: 'picked_up',
-          picked_up_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
+        .update(
+          newStatus === 'picked_up'
+            ? { status: supplierStatus, picked_up_at: now, shipped_at: now, updated_at: now }
+            : { status: supplierStatus, delivered_at: now, updated_at: now }
+        )
         .eq('id', shipment.supplier_order_id);
+      await syncStoreOrdersFromSupplier(shipment.supplier_order_id, supplierStatus);
     }
-    
-    if (newStatus === 'delivered' && shipment.supplier_order_id) {
-      await supabase
-        .from('supplier_orders')
-        .update({ 
-          status: 'completed',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', shipment.supplier_order_id);
-    }
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Webhook error:', error);
