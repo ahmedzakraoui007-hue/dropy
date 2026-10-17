@@ -79,8 +79,8 @@ export default function SupportManagement() {
           stores!inner (
             id,
             name,
-            seller_id,
-            seller_profile:profiles!seller_id(full_name)
+            seller_id:vendor_id,
+            seller_profile:profiles!vendor_id(full_name)
           )
         )
       `);

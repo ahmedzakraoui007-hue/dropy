@@ -29,7 +29,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAdd, onView }: ProductCardProps) {
-  const estimatedMargin = ((product.market_avg_price - product.base_price) / product.market_avg_price) * 100;
+  const resale = Number(product.suggested_price || product.market_avg_price || 0);
+  const estimatedMargin = resale > 0 ? ((resale - Number(product.base_price || 0)) / resale) * 100 : 0;
 
   return (
     <motion.div
@@ -101,18 +102,20 @@ export default function ProductCard({ product, onAdd, onView }: ProductCardProps
 
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                <img src={product.profiles?.avatar_url || `https://ui-avatars.com/api/?name=${product.profiles?.full_name}`} alt="Supplier" />
+              <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center overflow-hidden text-[10px] font-bold">
+                {product.profiles?.avatar_url ? (
+                  <img src={product.profiles.avatar_url} alt="" />
+                ) : (
+                  (product.profiles?.full_name || "F").charAt(0).toUpperCase()
+                )}
               </div>
               <span className="font-medium">{product.profiles?.full_name}</span>
-              <div className="flex items-center gap-0.5 text-yellow-500">
-                <Star className="w-3 h-3 fill-current" />
-                <span className="font-bold">4.8</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              {product.profiles?.city || "Tunis"}
+              {product.supplier_rating != null && (
+                <div className="flex items-center gap-0.5 text-yellow-500">
+                  <Star className="w-3 h-3 fill-current" />
+                  <span className="font-bold">{Number(product.supplier_rating).toFixed(1)}</span>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
