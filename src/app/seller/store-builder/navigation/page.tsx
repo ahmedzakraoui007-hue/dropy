@@ -78,27 +78,31 @@ export default function NavigationPage() {
     setSaving(true);
     const supabase = createClient();
     try {
-      // Upsert header
-      const { error: hError } = await supabase
-        .from("store_navigation")
-        .upsert({
+      const saveMenu = async (type: "header" | "footer", items: unknown[]) => {
+        const { data: existing } = await supabase
+          .from("store_navigation")
+          .select("id")
+          .eq("store_id", store.id)
+          .eq("type", type)
+          .limit(1)
+          .maybeSingle();
+        const row = {
           store_id: store.id,
-          type: 'header',
-          items: menuItems
-        }, { onConflict: 'store_id,type' });
-      
-      if (hError) throw hError;
+          type,
+          location: type,
+          label: type === "header" ? "Menu principal" : "Pied de page",
+          link_type: "menu",
+          link_value: type,
+          items,
+        };
+        const { error } = existing
+          ? await supabase.from("store_navigation").update(row).eq("id", existing.id)
+          : await supabase.from("store_navigation").insert(row);
+        if (error) throw error;
+      };
 
-      // Upsert footer
-      const { error: fError } = await supabase
-        .from("store_navigation")
-        .upsert({
-          store_id: store.id,
-          type: 'footer',
-          items: footerItems
-        }, { onConflict: 'store_id,type' });
-
-      if (fError) throw fError;
+      await saveMenu("header", menuItems);
+      await saveMenu("footer", footerItems);
 
       toast.success("Navigation enregistrée !");
     } catch (error) {

@@ -27,7 +27,7 @@ export function useStoreConfig(sellerId: string) {
       if (!configData) {
         const { data: created } = await supabase
           .from('store_configs')
-          .insert({ seller_id: sellerId })
+          .insert({ seller_id: sellerId, store_name: 'Ma Boutique' })
           .select('*')
           .single();
         configData = created;

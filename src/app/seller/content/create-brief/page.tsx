@@ -109,6 +109,7 @@ export default function CreateBriefPage() {
           title,
           description,
           content_type: contentType,
+          budget: parseFloat(budgetMax) || parseFloat(budgetMin) || 0,
           budget_min: parseFloat(budgetMin),
           budget_max: parseFloat(budgetMax),
           deadline: deadline.toISOString(),
