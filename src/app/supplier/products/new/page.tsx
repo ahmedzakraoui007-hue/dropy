@@ -263,14 +263,17 @@ export default function NewSupplierProductPage() {
         .from("products")
         .insert({
           name: formData.name,
+          slug: `${formData.name.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "produit"}-${Math.random().toString(36).slice(2, 8)}`,
           description: formData.description,
           base_price: parseFloat(formData.base_price),
           compare_price: formData.compare_price ? parseFloat(formData.compare_price) : null,
-          category_id: formData.category_id || null,
+          category_id: null,
+          sub_category: selectedPath[selectedPath.length - 1]?.name ?? null,
+          gender: selectedPath[1]?.name ?? selectedPath[0]?.name ?? null,
           sku: formData.sku,
           supplier_id: user.id,
           images: images,
-          status: "active",
+          status: "pending",
           is_active: true,
           weight: formData.weight ? parseFloat(formData.weight) : null,
           stock_quantity: hasVariants ? null : parseInt(formData.stock_quantity) || 0
@@ -311,7 +314,7 @@ export default function NewSupplierProductPage() {
         }
       }
 
-      toast.success("Produit ajouté avec succès");
+      toast.success("Produit envoyé ! Il sera visible par les vendeurs après validation par l'équipe Dropy.");
       router.push("/supplier/products");
     } catch (error: any) {
       console.error("Error creating product:", error);

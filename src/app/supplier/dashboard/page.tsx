@@ -107,7 +107,7 @@ export default function SupplierDashboard() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black mb-1">Dashboard Fournisseur</h1>
+          <h1 className="text-3xl font-black mb-1">Tableau de bord fournisseur</h1>
           <p className="text-muted-foreground tracking-tight">Gérez vos produits et commandes</p>
         </div>
         <Link href="/supplier/products/new">

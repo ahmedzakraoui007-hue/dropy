@@ -659,7 +659,8 @@
         "help_desc": "Notre équipe est là pour vous accompagner",
         "help_center": "Centre d'aide",
         "collapse": "Réduire",
-        "expand": "Afficher le menu"
+        "expand": "Afficher le menu",
+        "payments": "Paiements"
       }
     },
     "auth": {

@@ -106,7 +106,7 @@ export default function CreatorDashboard() {
       <div className="space-y-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black mb-1">Dashboard Créateur</h1>
+            <h1 className="text-3xl font-black mb-1">Tableau de bord créateur</h1>
             <p className="text-muted-foreground">Gérez vos projets et votre portfolio.</p>
           </div>
             <div className="flex gap-2">
