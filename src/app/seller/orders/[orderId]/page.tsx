@@ -306,6 +306,7 @@ export default function OrderDetailPage() {
           status: "delivered",
           own_products_status: "delivered",
           delivered_at: new Date().toISOString(),
+          ...(order.payment_method === "cod" ? { payment_status: "paid" } : {}),
         })
         .eq("id", order.id);
 

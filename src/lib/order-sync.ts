@@ -10,6 +10,12 @@ const STORE_STATUS_FROM_SUPPLIER: Record<string, string> = {
 
 const STATUS_RANK = ["new", "confirmed", "preparing", "shipped", "delivered"];
 
+const SELLER_MESSAGES: Record<string, string> = {
+  confirmed: "a été acceptée par le fournisseur",
+  shipped: "a été enlevée par le livreur",
+  delivered: "a été livrée au client",
+};
+
 export async function linkedStoreOrders(supplierOrderId: string) {
   const supabase = createAdminClient();
   const { data: items } = await supabase
@@ -49,7 +55,10 @@ export async function syncStoreOrdersFromSupplier(
       if (mapped && STATUS_RANK.indexOf(mapped) > STATUS_RANK.indexOf(order.status) && order.status !== "cancelled") {
         update.status = mapped;
         if (mapped === "shipped") update.shipped_at = new Date().toISOString();
-        if (mapped === "delivered") update.delivered_at = new Date().toISOString();
+        if (mapped === "delivered") {
+          update.delivered_at = new Date().toISOString();
+          if (order.payment_method === "cod") update.payment_status = "paid";
+        }
       }
       if (extra.tracking_number) update.tracking_number = extra.tracking_number;
       if (extra.shipping_company) update.shipping_company = extra.shipping_company;
@@ -57,6 +66,21 @@ export async function syncStoreOrdersFromSupplier(
     }
 
     await supabase.from("store_orders").update(update).eq("id", order.id);
+
+    const message = typeof update.status === "string" ? SELLER_MESSAGES[update.status] : undefined;
+    if (message) {
+      const { data: store } = await supabase.from("stores").select("vendor_id").eq("id", order.store_id).maybeSingle();
+      if (store?.vendor_id) {
+        await supabase.from("notifications").insert({
+          user_id: store.vendor_id,
+          type: "order_update",
+          title: "📦 Commande mise à jour",
+          message: `La commande ${order.order_number} ${message}.`,
+          link: `/seller/orders`,
+          is_read: false,
+        });
+      }
+    }
   }
 
   return orders;
