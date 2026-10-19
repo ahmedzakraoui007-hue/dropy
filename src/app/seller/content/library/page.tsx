@@ -223,7 +223,7 @@ export default function ContentLibraryPage() {
                       {(item.file_size / 1024 / 1024).toFixed(1)} MB
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {format(new Date(item.created_at), "PP")}
+                      {format(new Date(item.created_at), "dd/MM/yyyy")}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

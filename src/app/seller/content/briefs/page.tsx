@@ -64,7 +64,7 @@ export default function BriefsListPage() {
   const filteredBriefs = briefs.filter(brief => {
     const matchesSearch = brief.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === "all" || 
-      (activeTab === "active" && ["published", "assigned", "in_progress"].includes(brief.status)) ||
+      (activeTab === "active" && ["published", "assigned", "in_progress", "delivered"].includes(brief.status)) ||
       (activeTab === "completed" && brief.status === "completed") ||
       (activeTab === "draft" && brief.status === "draft");
     return matchesSearch && matchesTab;
@@ -73,8 +73,9 @@ export default function BriefsListPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "published": return <Badge className="bg-blue-500">Publié</Badge>;
-      case "assigned": return <Badge className="bg-purple-500">Attribué</Badge>;
-      case "in_progress": return <Badge className="bg-orange-500">En cours</Badge>;
+      case "cancelled": return <Badge variant="outline">Annulé</Badge>;
+      case "assigned": return <Badge className="bg-purple-500">En cours</Badge>;
+      case "in_progress": return <Badge className="bg-orange-500">Retouches</Badge>;
       case "delivered": return <Badge className="bg-emerald-500">Livré</Badge>;
       case "completed": return <Badge className="bg-gray-500">Terminé</Badge>;
       case "draft": return <Badge variant="outline">Brouillon</Badge>;
@@ -158,7 +159,7 @@ export default function BriefsListPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
-                              Deadline: {format(new Date(brief.deadline), "PP")}
+                              Date limite : {format(new Date(brief.deadline), "dd/MM/yyyy")}
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="w-4 h-4" />
@@ -195,7 +196,7 @@ export default function BriefsListPage() {
                     <div className="flex md:flex-col justify-between items-center md:items-end gap-4 min-w-[150px]">
                       <div className="text-right hidden md:block">
                         <p className="text-xs text-muted-foreground mb-1">Créé le</p>
-                        <p className="text-sm font-medium">{format(new Date(brief.created_at), "PP")}</p>
+                        <p className="text-sm font-medium">{format(new Date(brief.created_at), "dd/MM/yyyy")}</p>
                       </div>
                       <Button variant="ghost" className="group-hover:translate-x-1 transition-transform">
                         Voir les détails

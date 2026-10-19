@@ -64,11 +64,12 @@ export default function CreatorMissionsPage() {
     
     if (brief.selected_creator_id === userId) {
       switch (brief.status) {
-        case "assigned": return <Badge className="bg-purple-500">Hired - Starting</Badge>;
-        case "in_progress": return <Badge className="bg-orange-500">En cours</Badge>;
+        case "published": return <Badge className="bg-amber-500">Retenu - paiement en attente</Badge>;
+        case "assigned": return <Badge className="bg-purple-500">Retenu - mission en cours</Badge>;
+        case "in_progress": return <Badge className="bg-orange-500">Retouches demandées</Badge>;
         case "delivered": return <Badge className="bg-blue-500">Livré - en attente de validation</Badge>;
         case "completed": return <Badge className="bg-emerald-500">Terminé</Badge>;
-        default: return <Badge>{brief.status}</Badge>;
+        default: return <Badge>{({ draft: "Brouillon", published: "Publié", assigned: "En cours", in_progress: "Retouches", delivered: "Livré", completed: "Terminé", cancelled: "Annulé" } as Record<string, string>)[brief.status] || brief.status}</Badge>;
       }
     }
 
@@ -81,7 +82,7 @@ export default function CreatorMissionsPage() {
       }
     }
 
-    return <Badge variant="outline">{brief.status}</Badge>;
+    return <Badge variant="outline">{({ draft: "Brouillon", published: "Publié", assigned: "En cours", in_progress: "Retouches", delivered: "Livré", completed: "Terminé", cancelled: "Annulé" } as Record<string, string>)[brief.status] || brief.status}</Badge>;
   };
 
   return (
@@ -151,14 +152,14 @@ export default function CreatorMissionsPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
-                              Deadline: {format(new Date(mission.deadline), "PP")}
+                              Date limite : {format(new Date(mission.deadline), "dd/MM/yyyy")}
                             </span>
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {getStatusBadge(mission, mission.applications?.[0]?.creator_id)}
                           <p className="text-xs text-muted-foreground">
-                            Applied {format(new Date(mission.created_at), "PP")}
+                            Candidature du {format(new Date(mission.created_at), "dd/MM/yyyy")}
                           </p>
                         </div>
                       </div>

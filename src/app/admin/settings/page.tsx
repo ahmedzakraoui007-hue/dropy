@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
@@ -188,6 +189,19 @@ export default function AdminSettings() {
               />
               <p className="text-xs text-muted-foreground">
                 {settings.find(s => s.key === 'support_email')?.description}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="escrow_payment_details">Coordonnées de paiement Dropy (séquestre UGC)</Label>
+              <Textarea
+                id="escrow_payment_details"
+                rows={4}
+                placeholder={"RIB : ...\nD17 : ...\nFlouci : ..."}
+                value={settings.find(s => s.key === 'escrow_payment_details')?.value || ""}
+                onChange={(e) => handleUpdateSetting('escrow_payment_details', e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                {settings.find(s => s.key === 'escrow_payment_details')?.description}
               </p>
             </div>
           </CardContent>

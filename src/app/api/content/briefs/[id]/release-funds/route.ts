@@ -1,156 +1,84 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe";
+import { requireUser } from "@/lib/api-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { loadBriefForSeller, notify, notifyAdmins } from "@/lib/content-escrow";
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const supabase = await createClient();
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser(["seller"]);
+  if (!auth.ok) return auth.response;
   const { id: briefId } = await params;
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const loaded = await loadBriefForSeller(briefId, auth.user.id);
+  if ("error" in loaded) return NextResponse.json({ error: loaded.error }, { status: loaded.status });
+  const { brief } = loaded;
 
-    const { data: payment, error: paymentError } = await supabase
-      .from("content_payments")
-      .select(`
-        id,
-        brief_id,
-        store_id,
-        creator_id,
-        amount,
-        platform_commission,
-        creator_amount,
-        status,
-        stripe_payment_intent_id,
-        stripe_transfer_id
-      `)
-      .eq("brief_id", briefId)
-      .single();
-
-    if (paymentError || !payment) {
-      return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
-    }
-
-    const { data: store } = await supabase
-      .from("stores")
-      .select("vendor_id")
-      .eq("id", payment.store_id)
-      .maybeSingle();
-    const { data: requester } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (store?.vendor_id !== user.id && requester?.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (payment.status !== "escrowed") {
-      return NextResponse.json(
-        { error: `Cannot release funds. Current status: ${payment.status}` },
-        { status: 400 }
-      );
-    }
-
-    if (payment.stripe_transfer_id) {
-      return NextResponse.json(
-        { error: "Funds have already been released" },
-        { status: 400 }
-      );
-    }
-
-    const { data: creator, error: creatorError } = await supabase
-      .from("creator_profiles")
-      .select("stripe_connect_id, user_id")
-      .eq("user_id", payment.creator_id)
-      .single();
-
-    if (creatorError || !creator) {
-      return NextResponse.json({ error: "Creator profile not found" }, { status: 404 });
-    }
-
-    if (!creator.stripe_connect_id) {
-      return NextResponse.json(
-        { error: "Creator has not connected their Stripe account" },
-        { status: 400 }
-      );
-    }
-
-    const creatorAmountCents = Math.round(payment.creator_amount * 100);
-
-    const transfer = await stripe.transfers.create({
-      amount: creatorAmountCents,
-      currency: "eur",
-      destination: creator.stripe_connect_id,
-      metadata: {
-        type: "content_payout",
-        brief_id: briefId,
-        payment_id: payment.id,
-        creator_id: payment.creator_id,
-        original_amount: Math.round(payment.amount * 100).toString(),
-        platform_commission: Math.round(payment.platform_commission * 100).toString(),
-      },
-      description: `Content mission payout for brief ${briefId}`,
-    });
-
-    const { error: updateError } = await supabase
-      .from("content_payments")
-      .update({
-        status: "released",
-        stripe_transfer_id: transfer.id,
-        released_at: new Date().toISOString(),
-      })
-      .eq("id", payment.id);
-
-    if (updateError) {
-      console.error("Error updating payment record:", updateError);
-    }
-
-    const { error: briefUpdateError } = await supabase
-      .from("content_briefs")
-      .update({
-        status: "completed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", briefId);
-
-    if (briefUpdateError) {
-      console.error("Error updating brief status:", briefUpdateError);
-    }
-
-    try {
-      await supabase.rpc("increment_creator_stats", {
-        p_user_id: payment.creator_id,
-        p_earned: payment.creator_amount,
-      });
-    } catch {
-      // RPC function may not exist, silently continue
-    }
-
-    const { sendNotification } = await import("@/lib/notifications");
-    await sendNotification({
-      userId: payment.creator_id,
-      title: "💰 Paiement libéré !",
-      message: `Votre paiement de €${payment.creator_amount.toFixed(2)} a été libéré. Il arrivera sur votre compte Stripe sous peu.`,
-      type: "payment_received",
-      link: `/creator/payments`,
-      sendEmail: true,
-    });
-
-    return NextResponse.json({
-      success: true,
-      transferId: transfer.id,
-      amount: creatorAmountCents,
-      destination: creator.stripe_connect_id,
-    });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Release funds error:", errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  if (brief.status !== "delivered" || brief.is_disputed) {
+    return NextResponse.json({ error: "Aucune livraison à valider" }, { status: 400 });
   }
+
+  const admin = createAdminClient();
+  const { data: payment } = await admin.from("content_payments").select("*").eq("brief_id", briefId).maybeSingle();
+  if (!payment || payment.status !== "escrow" || !payment.escrowed_at) {
+    return NextResponse.json({ error: "Aucun paiement sécurisé pour ce brief" }, { status: 400 });
+  }
+
+  const now = new Date().toISOString();
+  await admin.from("content_payments").update({ status: "released", released_at: now }).eq("id", payment.id);
+  await admin.from("content_briefs").update({ status: "completed", updated_at: now }).eq("id", briefId);
+
+  const { data: delivery } = await admin
+    .from("content_deliveries")
+    .select("id, files")
+    .eq("brief_id", briefId)
+    .order("delivered_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (delivery) {
+    await admin.from("content_deliveries").update({ status: "approved", approved_at: now }).eq("id", delivery.id);
+    const files = Array.isArray(delivery.files) ? delivery.files : [];
+    if (files.length) {
+      await admin.from("content_library").insert(
+        files.map((file: { url: string; type?: string; filename?: string; size?: number }) => ({
+          store_id: brief.store_id,
+          brief_id: briefId,
+          file_url: file.url,
+          file_type: file.type?.startsWith("video/") ? "video" : "image",
+          filename: file.filename || null,
+          file_size: file.size || null,
+          tags: [brief.content_type].filter(Boolean),
+        }))
+      );
+    }
+  }
+
+  const { data: creator } = await admin
+    .from("creator_profiles")
+    .select("id, total_projects, total_earned")
+    .eq("user_id", payment.creator_id)
+    .maybeSingle();
+  if (creator) {
+    await admin
+      .from("creator_profiles")
+      .update({
+        total_projects: (creator.total_projects || 0) + 1,
+        total_earned: Number(creator.total_earned || 0) + Number(payment.creator_amount || 0),
+      })
+      .eq("id", creator.id);
+  }
+
+  await notify(
+    payment.creator_id,
+    "💰 Paiement validé !",
+    `Le vendeur a validé « ${brief.title} ». Votre paiement de ${Number(payment.creator_amount).toFixed(2)} TND va être versé par Dropy.`,
+    "/creator/payments",
+    "payment_received"
+  );
+  await notifyAdmins(
+    "💸 Versement créateur à effectuer",
+    `${Number(payment.creator_amount).toFixed(2)} TND à verser pour « ${brief.title} ».`,
+    "/admin/escrow"
+  );
+
+  return NextResponse.json({ success: true });
 }

@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { notify, notifyAdmins } from "@/lib/content-escrow";
 
 export async function GET(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
   const { data: profile } = await supabase
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
   try {
@@ -51,86 +53,70 @@ export async function POST(request: Request) {
     const { brief_id, reason, evidence_urls } = body;
 
     if (!brief_id || !reason) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: "Champs obligatoires manquants" }, { status: 400 });
     }
 
-    // Check if brief exists and user is involved
-    const { data: brief, error: briefError } = await supabase
+    const admin = createAdminClient();
+    const { data: brief } = await admin
       .from("content_briefs")
-      .select("id, store_id, selected_creator_id, is_disputed")
+      .select("id, title, store_id, selected_creator_id, is_disputed")
       .eq("id", brief_id)
-      .single();
+      .maybeSingle();
 
-    if (briefError || !brief) {
-      return NextResponse.json({ error: "Brief not found" }, { status: 404 });
+    if (!brief) {
+      return NextResponse.json({ error: "Mission introuvable" }, { status: 404 });
     }
 
     if (brief.is_disputed) {
-      return NextResponse.json({ error: "This mission is already in dispute" }, { status: 400 });
+      return NextResponse.json({ error: "Un litige est déjà ouvert pour cette mission" }, { status: 400 });
     }
 
-    // Get store owner
-    const { data: store } = await supabase
-      .from("stores")
-      .select("vendor_id")
-      .eq("id", brief.store_id)
-      .single();
-
+    const { data: store } = await admin.from("stores").select("vendor_id").eq("id", brief.store_id).maybeSingle();
     const isSeller = store?.vendor_id === user.id;
     const isCreator = brief.selected_creator_id === user.id;
 
     if (!isSeller && !isCreator) {
-      return NextResponse.json({ error: "You are not authorized to open a dispute for this mission" }, { status: 403 });
+      return NextResponse.json({ error: "Vous ne participez pas à cette mission" }, { status: 403 });
     }
 
-    // Get payment record
-    const { data: payment } = await supabase
+    const { data: payment } = await admin
       .from("content_payments")
-      .select("id")
+      .select("id, escrowed_at")
       .eq("brief_id", brief_id)
-      .eq("status", "escrowed")
-      .single();
+      .eq("status", "escrow")
+      .maybeSingle();
 
-    if (!payment) {
-      return NextResponse.json({ error: "No active escrow payment found for this mission" }, { status: 400 });
+    if (!payment?.escrowed_at) {
+      return NextResponse.json({ error: "Aucun paiement sous séquestre pour cette mission" }, { status: 400 });
     }
 
-    // Create dispute
-    const { data: dispute, error: disputeError } = await supabase
+    const { data: dispute, error: disputeError } = await admin
       .from("content_disputes")
       .insert({
         brief_id,
         payment_id: payment.id,
         opened_by: user.id,
-        reason,
-        evidence_urls: evidence_urls || [],
-        status: "open"
+        reason: String(reason).slice(0, 4000),
+        evidence_urls: Array.isArray(evidence_urls) ? evidence_urls.slice(0, 10) : [],
+        status: "open",
       })
       .select()
       .single();
 
-    if (disputeError) {
-      throw disputeError;
-    }
+    if (disputeError) throw disputeError;
 
-    // Update brief and payment status
-    await supabase.from("content_briefs").update({ is_disputed: true }).eq("id", brief_id);
-    await supabase.from("content_payments").update({ is_disputed: true }).eq("id", payment.id);
+    await admin.from("content_briefs").update({ is_disputed: true }).eq("id", brief_id);
+    await admin.from("content_payments").update({ is_disputed: true }).eq("id", payment.id);
 
-    // Notifications
     const otherPartyId = isSeller ? brief.selected_creator_id : store?.vendor_id;
-    const { sendNotification } = await import("@/lib/notifications");
-    
-    if (otherPartyId) {
-      await sendNotification({
-        userId: otherPartyId,
-        title: "⚠️ Litige Ouvert",
-        message: `Un litige a été ouvert pour la mission: ${brief_id}. Notre équipe va l'examiner sous peu.`,
-        type: "dispute_opened",
-        link: isSeller ? `/creator/missions/${brief_id}` : `/seller/content/briefs/${brief_id}`,
-        sendEmail: true
-      });
-    }
+    await notify(
+      otherPartyId,
+      "⚠️ Litige ouvert",
+      `Un litige a été ouvert pour la mission « ${brief.title} ». L'équipe Dropy va l'examiner.`,
+      isSeller ? `/creator/missions/${brief_id}` : `/seller/content/briefs/${brief_id}`,
+      "dispute_opened"
+    );
+    await notifyAdmins("⚖️ Nouveau litige UGC", `Litige ouvert sur « ${brief.title} ».`, "/admin/escrow");
 
     return NextResponse.json(dispute);
   } catch (error: any) {

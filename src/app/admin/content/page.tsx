@@ -183,7 +183,7 @@ export default function ContentModeration() {
                           brief.status === 'published' ? "bg-emerald-500" :
                           brief.status === 'draft' ? "bg-slate-500" : "bg-orange-500"
                         }>
-                          {brief.status}
+                          {({ draft: "Brouillon", published: "Publié", assigned: "En cours", in_progress: "Retouches", delivered: "Livré", completed: "Terminé", cancelled: "Annulé" } as Record<string, string>)[brief.status] || brief.status}
                         </Badge>
                       </TableCell>
 <TableCell className="text-xs text-muted-foreground">

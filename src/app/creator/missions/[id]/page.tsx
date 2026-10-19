@@ -41,6 +41,8 @@ export default function MissionDetailsPage() {
   const [deliveryMessage, setDeliveryMessage] = useState("");
   const [deliveryFiles, setDeliveryFiles] = useState<File[]>([]);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [payment, setPayment] = useState<any>(null);
+  const [lastDelivery, setLastDelivery] = useState<any>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -68,10 +70,26 @@ export default function MissionDetailsPage() {
         .select("*")
         .eq("brief_id", id)
         .eq("creator_id", user.id)
-        .single();
+        .maybeSingle();
+
+      const { data: paymentData } = await supabase
+        .from("content_payments")
+        .select("status, escrowed_at, released_at, stripe_transfer_id, creator_amount")
+        .eq("brief_id", id)
+        .maybeSingle();
+
+      const { data: deliveryData } = await supabase
+        .from("content_deliveries")
+        .select("status, revision_count, delivered_at")
+        .eq("brief_id", id)
+        .order("delivered_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
       setBrief(briefData);
       setMyApplication(application);
+      setPayment(paymentData);
+      setLastDelivery(deliveryData);
       setIsLoading(false);
     }
 
@@ -114,45 +132,21 @@ export default function MissionDetailsPage() {
         });
       }
 
-      const { error: deliveryError } = await supabase
-        .from("content_deliveries")
-        .insert({
-          brief_id: id,
-          creator_id: user.id,
-          files: uploadedFiles,
-          message: deliveryMessage,
-          status: "submitted"
-        });
+      const response = await fetch(`/api/content/briefs/${id}/deliver`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ files: uploadedFiles, message: deliveryMessage }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Erreur lors de la livraison");
 
-      if (deliveryError) throw deliveryError;
-
-      const { error: briefUpdateError } = await supabase
-        .from("content_briefs")
-        .update({ status: "delivered" })
-        .eq("id", id);
-
-        if (briefUpdateError) throw briefUpdateError;
-
-        // Send notification to seller
-        if (brief.store?.vendor_id) {
-          await fetch("/api/notifications/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "deliverable_submitted",
-              briefId: id
-            }),
-          });
-        }
-
-        toast.success("Projet livré ! En attente de validation par le vendeur.");
-
-      router.refresh();
-      // Reset form
+      toast.success("Projet livré ! En attente de validation par le vendeur.");
+      setBrief({ ...brief, status: "delivered" });
+      setLastDelivery({ status: "submitted", revision_count: lastDelivery?.revision_count || 0 });
       setDeliveryFiles([]);
       setDeliveryMessage("");
     } catch (error: any) {
-      toast.error(error.message || "Failed to deliver project");
+      toast.error(error.message || "Erreur lors de la livraison");
     } finally {
       setIsDelivering(false);
     }
@@ -166,7 +160,16 @@ export default function MissionDetailsPage() {
     );
   }
 
-  const isHired = brief.selected_creator_id === myApplication?.creator_id;
+  const isHired = Boolean(myApplication) && brief.selected_creator_id === myApplication?.creator_id;
+  const fundsSecured = Boolean(payment?.escrowed_at);
+  const statusLabel: Record<string, string> = {
+    published: isHired ? "En attente de paiement" : "Ouvert",
+    assigned: "En cours",
+    in_progress: "Retouches",
+    delivered: "Livré",
+    completed: "Terminé",
+    cancelled: "Annulé",
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -183,13 +186,13 @@ export default function MissionDetailsPage() {
                   <div className="flex justify-between items-start gap-4 w-full">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="capitalize">{brief.content_type}</Badge>
+                        <Badge variant="outline">{({ photography: "Photo", video: "Vidéo", ugc: "Contenu UGC", design: "Design", copywriting: "Rédaction" } as Record<string, string>)[brief.content_type] || brief.content_type}</Badge>
                         <Badge className={cn(
                           brief.status === "completed" ? "bg-emerald-500" : 
                           brief.status === "delivered" ? "bg-blue-500" :
                           "bg-primary"
                         )}>
-                          {brief.status}
+                          {statusLabel[brief.status] || brief.status}
                         </Badge>
                         {brief.is_disputed && (
                           <Badge variant="destructive" className="animate-pulse">En litige</Badge>
@@ -222,11 +225,11 @@ export default function MissionDetailsPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
-                      <p className="font-semibold">{format(new Date(brief.deadline), "PP")}</p>
+                      <p className="font-semibold">{format(new Date(brief.deadline), "dd/MM/yyyy")}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground uppercase font-bold">Statut</p>
-                      <p className="font-semibold capitalize">{brief.status}</p>
+                      <p className="font-semibold">{statusLabel[brief.status] || brief.status}</p>
                     </div>
                     <div className="space-y-1">
                       <p className="text-xs text-muted-foreground uppercase font-bold">Livraison</p>
@@ -265,11 +268,27 @@ export default function MissionDetailsPage() {
               </CardContent>
             </Card>
 
-            {isHired && (brief.status === "assigned" || brief.status === "in_progress") && (
+            {isHired && brief.status === "published" && (
+              <Card className="border-amber-500/20 bg-amber-500/5 p-8 text-center">
+                <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-xl font-bold mb-2">Vous avez été retenu !</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  {payment
+                    ? "Le vendeur a envoyé son paiement. Dropy le vérifie : vous pourrez commencer dès sa confirmation."
+                    : "Le vendeur doit maintenant envoyer le paiement à Dropy. Ne commencez pas avant la confirmation du séquestre."}
+                </p>
+              </Card>
+            )}
+
+            {isHired && (brief.status === "assigned" || brief.status === "in_progress") && !brief.is_disputed && (
               <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
-                    <CardTitle>Livrer votre travail</CardTitle>
-                    <CardDescription>Téléchargez les fichiers finaux et envoyez-les au vendeur pour approbation</CardDescription>
+                    <CardTitle>{brief.status === "in_progress" ? "Livrer la version corrigée" : "Livrer votre travail"}</CardTitle>
+                    <CardDescription>
+                      {lastDelivery?.status === "revision_requested"
+                        ? "Le vendeur a demandé des retouches (détails dans vos notifications). Envoyez les fichiers corrigés."
+                        : "Téléchargez les fichiers finaux et envoyez-les au vendeur pour approbation"}
+                    </CardDescription>
                   </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-2">
@@ -308,7 +327,7 @@ export default function MissionDetailsPage() {
                 <CheckCircle2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">Travail soumis</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Votre travail a été soumis au vendeur. Il a 48 heures pour l&apos;examiner et l&apos;approuver. Une fois approuvé, votre paiement sera libéré.
+                  Votre travail a été soumis au vendeur. Il peut le valider ou demander des retouches. Une fois validé, Dropy vous verse votre paiement.
                 </p>
               </Card>
             )}
@@ -318,7 +337,9 @@ export default function MissionDetailsPage() {
                 <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-2">Projet terminé</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Cette mission est terminée. Votre paiement a été libéré dans votre portefeuille.
+                  {payment?.stripe_transfer_id
+                    ? "Cette mission est terminée et votre paiement a été versé."
+                    : "Cette mission est terminée. Dropy va vous verser votre paiement sur le compte indiqué dans vos paramètres."}
                 </p>
                 <Button 
                   variant="outline" 
@@ -346,7 +367,7 @@ export default function MissionDetailsPage() {
               </Card>
             )}
 
-            {isHired && (
+            {isHired && fundsSecured && (
               <Card className="bg-emerald-500/10 border-emerald-500/20">
                 <CardContent className="pt-6">
                     <div className="flex items-center gap-2 text-emerald-600 mb-2">
@@ -354,7 +375,7 @@ export default function MissionDetailsPage() {
                       <p className="font-bold">Paiement sécurisé</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Les fonds sont sécurisés par Dropy. Vos revenus seront libérés automatiquement après approbation.
+                      Les fonds sont conservés par Dropy et vous seront versés après validation du vendeur.
                     </p>
                   </CardContent>
               </Card>

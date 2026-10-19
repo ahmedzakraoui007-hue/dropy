@@ -118,7 +118,7 @@ export default function AdminBriefsPage() {
                         brief.status === "published" ? "bg-blue-500" : 
                         "bg-orange-500"
                       )}>
-                        {brief.status}
+                        {({ draft: "Brouillon", published: "Publié", assigned: "En cours", in_progress: "Retouches", delivered: "Livré", completed: "Terminé", cancelled: "Annulé" } as Record<string, string>)[brief.status] || brief.status}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">

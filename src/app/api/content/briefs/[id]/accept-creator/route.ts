@@ -1,113 +1,82 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { stripe } from "@/lib/stripe";
+import { requireUser } from "@/lib/api-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { escrowPaymentDetails, loadBriefForSeller, notify } from "@/lib/content-escrow";
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const supabase = await createClient();
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser(["seller"]);
+  if (!auth.ok) return auth.response;
   const { id: briefId } = await params;
-  const { creatorId, applicationId, amount } = await request.json();
+  const { applicationId } = await request.json().catch(() => ({}));
+  if (!applicationId) return NextResponse.json({ error: "Candidature manquante" }, { status: 400 });
 
-  if (!creatorId || !applicationId || !amount) {
-    return NextResponse.json(
-      { error: "Missing required fields: creatorId, applicationId, amount" },
-      { status: 400 }
-    );
+  const loaded = await loadBriefForSeller(briefId, auth.user.id);
+  if ("error" in loaded) return NextResponse.json({ error: loaded.error }, { status: loaded.status });
+  const { brief } = loaded;
+
+  if (brief.status !== "published" || brief.selected_creator_id) {
+    return NextResponse.json({ error: "Un créateur a déjà été choisi pour ce brief" }, { status: 400 });
   }
 
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: brief, error: briefFetchError } = await supabase
-      .from("content_briefs")
-      .select("id, store_id, title, status")
-      .eq("id", briefId)
-      .single();
-
-    if (briefFetchError || !brief) {
-      return NextResponse.json({ error: "Brief not found" }, { status: 404 });
-    }
-
-    const { data: store } = await supabase
-      .from("stores")
-      .select("vendor_id")
-      .eq("id", brief.store_id)
-      .maybeSingle();
-    if (store?.vendor_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    if (brief.status !== "published") {
-      return NextResponse.json(
-        { error: "Brief is not in published status" },
-        { status: 400 }
-      );
-    }
-
-    const { data: creator, error: creatorError } = await supabase
-      .from("creator_profiles")
-      .select("id, stripe_connect_id, user_id")
-      .eq("user_id", creatorId)
-      .single();
-
-    if (creatorError || !creator) {
-      return NextResponse.json({ error: "Creator profile not found" }, { status: 404 });
-    }
-
-    const amountInCents = Math.round(amount * 100);
-    const platformCommission = Math.round(amountInCents * 0.15);
-    const creatorAmount = amountInCents - platformCommission;
-
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: "eur",
-      metadata: {
-        type: "content_escrow",
-        brief_id: briefId,
-        store_id: brief.store_id,
-        creator_id: creatorId,
-        creator_profile_id: creator.id,
-        application_id: applicationId,
-        platform_commission: platformCommission.toString(),
-        creator_amount: creatorAmount.toString(),
-        stripe_connect_id: creator.stripe_connect_id || "",
-      },
-    });
-
-    const { error: paymentError } = await supabase
-      .from("content_payments")
-      .insert({
-        brief_id: briefId,
-        store_id: brief.store_id,
-        creator_id: creatorId,
-        amount: amount,
-        platform_commission: amount * 0.15,
-        creator_amount: amount * 0.85,
-        status: "pending",
-        stripe_payment_intent_id: paymentIntent.id,
-      });
-
-    if (paymentError) {
-      await stripe.paymentIntents.cancel(paymentIntent.id);
-      throw paymentError;
-    }
-
-    return NextResponse.json({
-      success: true,
-      clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      amount: amountInCents,
-      platformCommission,
-      creatorAmount,
-    });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Accept creator error:", errorMessage);
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+  const admin = createAdminClient();
+  const { data: application } = await admin
+    .from("content_applications")
+    .select("id, creator_id, proposed_price, status")
+    .eq("id", applicationId)
+    .eq("brief_id", briefId)
+    .maybeSingle();
+  if (!application || application.status !== "pending") {
+    return NextResponse.json({ error: "Candidature introuvable" }, { status: 404 });
   }
+
+  await admin.from("content_applications").update({ status: "accepted" }).eq("id", application.id);
+  await admin
+    .from("content_briefs")
+    .update({ selected_creator_id: application.creator_id, updated_at: new Date().toISOString() })
+    .eq("id", briefId);
+
+  await notify(
+    application.creator_id,
+    "🎉 Candidature retenue",
+    `Votre candidature pour « ${brief.title} » a été retenue. La mission démarrera dès que le paiement du vendeur sera sécurisé par Dropy.`,
+    `/creator/missions/${briefId}`
+  );
+
+  return NextResponse.json({
+    success: true,
+    amount: Number(application.proposed_price),
+    paymentDetails: await escrowPaymentDetails(),
+  });
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser(["seller"]);
+  if (!auth.ok) return auth.response;
+  const { id: briefId } = await params;
+
+  const loaded = await loadBriefForSeller(briefId, auth.user.id);
+  if ("error" in loaded) return NextResponse.json({ error: loaded.error }, { status: loaded.status });
+  const { brief } = loaded;
+
+  const admin = createAdminClient();
+  const { data: payment } = await admin.from("content_payments").select("id").eq("brief_id", briefId).maybeSingle();
+  if (brief.status !== "published" || !brief.selected_creator_id || payment) {
+    return NextResponse.json({ error: "Ce choix ne peut plus être annulé" }, { status: 400 });
+  }
+
+  await admin
+    .from("content_applications")
+    .update({ status: "pending" })
+    .eq("brief_id", briefId)
+    .eq("creator_id", brief.selected_creator_id);
+  await admin.from("content_briefs").update({ selected_creator_id: null, updated_at: new Date().toISOString() }).eq("id", briefId);
+
+  await notify(
+    brief.selected_creator_id,
+    "Mission annulée",
+    `Le vendeur a annulé sa sélection pour « ${brief.title} » avant le paiement.`,
+    `/creator/opportunities/${briefId}`
+  );
+
+  return NextResponse.json({ success: true });
 }

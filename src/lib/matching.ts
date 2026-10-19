@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/client";
-
 interface MatchScore {
   creatorId: string;
   briefId: string;

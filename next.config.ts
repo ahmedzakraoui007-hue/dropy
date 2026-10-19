@@ -28,9 +28,23 @@ const nextConfig: NextConfig = {
         destination: '/forgot-password',
         permanent: true,
       },
+      {
+        source: '/seller/ugc',
+        destination: '/seller/content/briefs',
+        permanent: true,
+      },
+      {
+        source: '/seller/ugc/create',
+        destination: '/seller/content/create-brief',
+        permanent: true,
+      },
+      {
+        source: '/seller/ugc/:id*',
+        destination: '/seller/content/briefs/:id*',
+        permanent: true,
+      },
     ];
   },
 };
 
 export default nextConfig;
-// Orchids restart: 1769364204053

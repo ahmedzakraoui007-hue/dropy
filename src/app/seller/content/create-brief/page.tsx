@@ -38,11 +38,11 @@ import { QuotaAlert } from "@/components/ui/quota-alert";
 import { cn } from "@/lib/utils";
 
 const CONTENT_TYPES = [
-  { id: "photography", label: "Photography", icon: Camera, color: "text-blue-500" },
-  { id: "video", label: "Video", icon: Video, color: "text-purple-500" },
-  { id: "ugc", label: "UGC Content", icon: Users, color: "text-emerald-500" },
+  { id: "photography", label: "Photo", icon: Camera, color: "text-blue-500" },
+  { id: "video", label: "Vidéo", icon: Video, color: "text-purple-500" },
+  { id: "ugc", label: "Contenu UGC", icon: Users, color: "text-emerald-500" },
   { id: "design", label: "Design", icon: Palette, color: "text-orange-500" },
-  { id: "copywriting", label: "Copywriting", icon: FileText, color: "text-pink-500" },
+  { id: "copywriting", label: "Rédaction", icon: FileText, color: "text-pink-500" },
 ];
 
 const RIGHTS_TYPES = [
@@ -77,9 +77,16 @@ export default function CreateBriefPage() {
       return;
     }
 
+    const min = parseFloat(budgetMin);
+    const max = parseFloat(budgetMax);
+    if (!(min > 0) || !(max > 0) || min > max) {
+      toast.error("Le budget minimum doit être positif et inférieur ou égal au budget maximum");
+      return;
+    }
+
     if (!check('maxBriefsPerMonth')) {
       toast.error("Limite de briefs atteinte", {
-        description: `Your ${plan} plan is limited to ${limits.maxBriefsPerMonth} briefs per month.`
+        description: `Votre plan ${plan} est limité à ${limits.maxBriefsPerMonth} brief(s) par mois.`
       });
       return;
     }
@@ -98,9 +105,13 @@ export default function CreateBriefPage() {
 
       if (!store) throw new Error("Boutique introuvable");
 
-      // Upload reference images if any (simplified for now - just logging)
-      // In a real app, you'd upload these to Supabase Storage
       const imageUrls: string[] = [];
+      for (const file of referenceImages) {
+        const path = `${user.id}/briefs/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error: uploadError } = await supabase.storage.from("store-assets").upload(path, file);
+        if (uploadError) throw new Error("Échec de l'envoi d'une image de référence");
+        imageUrls.push(supabase.storage.from("store-assets").getPublicUrl(path).data.publicUrl);
+      }
 
       const { data, error } = await supabase
         .from("content_briefs")
@@ -109,9 +120,9 @@ export default function CreateBriefPage() {
           title,
           description,
           content_type: contentType,
-          budget: parseFloat(budgetMax) || parseFloat(budgetMin) || 0,
-          budget_min: parseFloat(budgetMin),
-          budget_max: parseFloat(budgetMax),
+          budget: max,
+          budget_min: min,
+          budget_max: max,
           deadline: deadline.toISOString(),
           deliverables,
           products: selectedProducts,
@@ -125,10 +136,12 @@ export default function CreateBriefPage() {
 
       if (error) throw error;
 
+      await fetch(`/api/content/briefs/${data.id}/publish`, { method: "POST" }).catch(() => null);
+
       toast.success("Brief publié avec succès !");
       router.push("/seller/content/briefs");
     } catch (error: any) {
-      toast.error(error.message || "Failed to create brief");
+      toast.error(error.message || "Erreur lors de la création du brief");
     } finally {
       setIsSubmitting(false);
     }
@@ -167,7 +180,7 @@ export default function CreateBriefPage() {
               disabled={isSubmitting}
               className="bg-gradient-to-r from-violet-500 to-purple-600"
             >
-              {isSubmitting ? "Publishing..." : "Publish Brief"}
+              {isSubmitting ? "Publication..." : "Publier le brief"}
             </Button>
           </div>
         </div>
@@ -181,7 +194,7 @@ export default function CreateBriefPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Project Title*</Label>
+                  <Label htmlFor="title">Titre du projet*</Label>
                   <Input 
                     id="title" 
                     placeholder="ex. 5 photos lifestyle pour la collection été"
@@ -191,7 +204,7 @@ export default function CreateBriefPage() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Detailed Description*</Label>
+                  <Label htmlFor="description">Description détaillée*</Label>
                   <Textarea 
                     id="description" 
                     placeholder="Décrivez votre vision, votre cible et vos exigences particulières..."
@@ -202,7 +215,7 @@ export default function CreateBriefPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <Label>Content Type*</Label>
+                  <Label>Type de contenu*</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {CONTENT_TYPES.map((type) => (
                       <div
@@ -232,7 +245,7 @@ export default function CreateBriefPage() {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="budget-min">Budget Range (TND)*</Label>
+                    <Label htmlFor="budget-min">Fourchette de budget (TND)*</Label>
                     <div className="flex items-center gap-3">
                       <div className="relative flex-1">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -245,7 +258,7 @@ export default function CreateBriefPage() {
                           onChange={(e) => setBudgetMin(e.target.value)}
                         />
                       </div>
-                      <span className="text-muted-foreground">to</span>
+                      <span className="text-muted-foreground">à</span>
                       <div className="relative flex-1">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
@@ -260,7 +273,7 @@ export default function CreateBriefPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Deadline*</Label>
+                    <Label>Date limite*</Label>
                     <DatePicker 
                       date={deadline} 
                       setDate={setDeadline}
@@ -270,10 +283,10 @@ export default function CreateBriefPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="deliverables">Specific Deliverables*</Label>
+                  <Label htmlFor="deliverables">Livrables attendus*</Label>
                   <Textarea 
                     id="deliverables" 
-                    placeholder="e.g. 5 high-res JPG photos, 1 edited vertical video (15-30s)..."
+                    placeholder="ex. 5 photos JPG haute résolution, 1 vidéo verticale montée (15-30 s)..."
                     value={deliverables}
                     onChange={(e) => setDeliverables(e.target.value)}
                   />
@@ -314,12 +327,12 @@ export default function CreateBriefPage() {
                 </RadioGroup>
 
                 <div className="space-y-2">
-                  <Label htmlFor="city">Preferred City (Optional)</Label>
+                  <Label htmlFor="city">Ville souhaitée (facultatif)</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input 
                       id="city" 
-                      placeholder="e.g. Tunis, Sousse, Sfax..." 
+                      placeholder="ex. Tunis, Sousse, Sfax..." 
                       className="pl-10"
                       value={preferredCity}
                       onChange={(e) => setPreferredCity(e.target.value)}
@@ -369,7 +382,7 @@ export default function CreateBriefPage() {
                 </p>
                 <div className="flex gap-3">
                   <AlertCircle className="w-5 h-5 text-primary shrink-0" />
-                  <p className="text-sm font-medium">2 Revisions Included</p>
+                  <p className="text-sm font-medium">2 retouches incluses</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Chaque mission inclut au moins 2 séries de retouches pour obtenir exactement ce dont vous avez besoin.

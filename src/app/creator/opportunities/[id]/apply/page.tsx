@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  DollarSign, 
-  Clock, 
+import {
+  ArrowLeft,
+  DollarSign,
+  Clock,
   Send,
   Upload,
   CheckCircle2,
@@ -63,27 +63,31 @@ export default function ApplyPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Non connecté");
 
-      // In a real app, upload portfolio samples to Storage
       const sampleUrls: string[] = [];
+      for (const file of portfolioSamples.slice(0, 5)) {
+        const path = `${user.id}/applications/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+        const { error: uploadError } = await supabase.storage.from("store-assets").upload(path, file);
+        if (uploadError) throw new Error("Échec de l'envoi d'un exemple");
+        sampleUrls.push(supabase.storage.from("store-assets").getPublicUrl(path).data.publicUrl);
+      }
 
-      const { error } = await supabase
-        .from("content_applications")
-        .insert({
-          brief_id: id,
-          creator_id: user.id,
-          proposed_price: parseFloat(proposedPrice),
-          delivery_days: parseInt(deliveryDays),
+      const response = await fetch(`/api/content/briefs/${id}/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          proposed_price: proposedPrice,
+          delivery_days: deliveryDays,
           message,
           portfolio_samples: sampleUrls,
-          status: "pending"
-        });
-
-      if (error) throw error;
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Erreur lors de l'envoi de la proposition");
 
       toast.success("Proposition envoyée !");
       router.push("/creator/missions");
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit proposal");
+      toast.error(error.message || "Erreur lors de l'envoi de la proposition");
     } finally {
       setIsSubmitting(false);
     }
@@ -118,10 +122,10 @@ export default function ApplyPage() {
                   <Label htmlFor="price">Proposed Price (TND)*</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      id="price" 
-                      type="number" 
-                      placeholder="0.00" 
+                    <Input
+                      id="price"
+                      type="number"
+                      placeholder="0.00"
                       className="pl-10"
                       value={proposedPrice}
                       onChange={(e) => setProposedPrice(e.target.value)}
@@ -133,10 +137,10 @@ export default function ApplyPage() {
                   <Label htmlFor="days">Delivery Time (Days)*</Label>
                   <div className="relative">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      id="days" 
-                      type="number" 
-                      placeholder="e.g. 5" 
+                    <Input
+                      id="days"
+                      type="number"
+                      placeholder="e.g. 5"
                       className="pl-10"
                       value={deliveryDays}
                       onChange={(e) => setDeliveryDays(e.target.value)}
@@ -147,8 +151,8 @@ export default function ApplyPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="message">Pourquoi êtes-vous le bon profil ?*</Label>
-                <Textarea 
-                  id="message" 
+                <Textarea
+                  id="message"
                   placeholder="Présentez votre expérience au vendeur et votre approche pour ce projet..."
                   className="min-h-[150px]"
                   value={message}
@@ -164,7 +168,7 @@ export default function ApplyPage() {
               <CardDescription>Ajoutez 3 à 5 exemples de travaux similaires</CardDescription>
             </CardHeader>
             <CardContent>
-              <FileUpload 
+              <FileUpload
                 onFilesSelected={setPortfolioSamples}
                 maxFiles={5}
                 acceptedTypes={["image/*", "video/*"]}
@@ -178,17 +182,17 @@ export default function ApplyPage() {
               <div className="text-sm">
                 <p className="font-bold">Informations importantes</p>
                 <p className="text-muted-foreground mt-1">
-                  If selected, the payment will be held in escrow. You will receive 85% of the proposed price ({(parseFloat(proposedPrice || "0") * 0.85).toFixed(2)} TND) after the seller approves your work.
+                  Si vous êtes retenu, le vendeur paie Dropy qui conserve les fonds en séquestre. Vous recevez le prix proposé, moins la commission Dropy, dès que le vendeur valide votre travail.
                 </p>
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-14 text-lg bg-gradient-to-r from-violet-500 to-purple-600"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Submitting..." : "Submit Proposal"}
+              {isSubmitting ? "Envoi..." : "Envoyer la proposition"}
               <Send className="w-5 h-5 ml-2" />
             </Button>
           </div>

@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import { ContentPaymentsPanel } from "@/components/admin/ContentPaymentsPanel";
 
 export default function AdminEscrowDisputes() {
   const [disputes, setDisputes] = useState<any[]>([]);
@@ -110,20 +111,20 @@ export default function AdminEscrowDisputes() {
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Scale className="w-8 h-8 text-primary" />
-            Escrow & Disputes
+            Séquestre & Litiges
           </h1>
-          <p className="text-muted-foreground">Arbitrez entre vendeurs et créateurs pour résoudre les litiges.</p>
+          <p className="text-muted-foreground">Paiements UGC sous séquestre, versements aux créateurs et arbitrage des litiges.</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="relative w-64">
+          <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search disputes..." 
+              placeholder="Rechercher un litige..." 
               className="pl-9"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -131,6 +132,8 @@ export default function AdminEscrowDisputes() {
           </div>
         </div>
       </div>
+
+      <ContentPaymentsPanel />
 
       <div className="grid grid-cols-1 gap-6">
         {loading ? (

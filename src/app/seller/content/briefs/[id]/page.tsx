@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { fetchProfileCards } from "@/lib/profile-cards";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  Calendar,
+  DollarSign,
+  MapPin,
+  Clock,
+  CheckCircle2,
   XCircle,
   MessageSquare,
   ExternalLink,
@@ -22,7 +22,6 @@ import {
   Lock,
   ShieldAlert
 } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,9 +32,28 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Video, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 import { AddReviewForm } from "@/components/reviews/AddReviewForm";
 import { ReviewList } from "@/components/reviews/ReviewList";
+
+const BRIEF_STATUS: Record<string, string> = {
+  draft: "Brouillon",
+  published: "Publié",
+  assigned: "En cours",
+  in_progress: "Retouches en cours",
+  delivered: "Livré",
+  completed: "Terminé",
+  cancelled: "Annulé",
+};
+
+const RIGHTS: Record<string, string> = {
+  posting: "Publication uniquement",
+  no_posting: "Usage interne",
+  commercial_unlimited: "Commercial illimité",
+};
 
 export default function BriefDetailsPage() {
   const { id } = useParams();
@@ -48,6 +66,13 @@ export default function BriefDetailsPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
   const [existingReviews, setExistingReviews] = useState<any[]>([]);
+  const [payment, setPayment] = useState<any>(null);
+  const [paymentDetails, setPaymentDetails] = useState("");
+  const [payMethod, setPayMethod] = useState("bank_transfer");
+  const [payReference, setPayReference] = useState("");
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [showRevision, setShowRevision] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     async function fetchBriefDetails() {
@@ -104,6 +129,13 @@ export default function BriefDetailsPage() {
         .select("*")
         .eq("brief_id", id);
 
+      const { data: paymentData } = await supabase
+        .from("content_payments")
+        .select("*")
+        .eq("brief_id", id)
+        .maybeSingle();
+
+      setPayment(paymentData);
       setBrief(briefData);
       setApplications(appsWithCreators);
       setDeliveries(delivData || []);
@@ -112,64 +144,70 @@ export default function BriefDetailsPage() {
     }
 
     fetchBriefDetails();
-  }, [id, supabase, router]);
+  }, [id, reloadKey]);
+
+  const callApi = async (path: string, init: RequestInit, success: string) => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/content/briefs/${id}/${path}`, {
+        headers: { "Content-Type": "application/json" },
+        ...init,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Une erreur est survenue");
+      toast.success(success);
+      setReloadKey((k) => k + 1);
+      return data;
+    } catch (error: any) {
+      toast.error(error.message || "Une erreur est survenue");
+      return null;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleAcceptApplication = async (application: any) => {
-    setIsProcessing(true);
-    try {
-      const response = await fetch(`/api/content/briefs/${id}/accept-creator`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          creatorId: application.creator_id,
-          applicationId: application.id,
-          amount: application.proposed_price
-        })
-      });
+    const data = await callApi(
+      "accept-creator",
+      { method: "POST", body: JSON.stringify({ applicationId: application.id }) },
+      "Créateur retenu ! Envoyez maintenant le paiement à Dropy."
+    );
+    if (data) setPaymentDetails(data.paymentDetails || "");
+  };
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
+  const handleCancelSelection = () =>
+    callApi("accept-creator", { method: "DELETE" }, "Sélection annulée");
 
-      // Handle Stripe Payment
-      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-      if (!stripe) throw new Error("Le paiement n'a pas pu se charger");
+  const handleDeclarePayment = () =>
+    callApi(
+      "payment",
+      { method: "POST", body: JSON.stringify({ method: payMethod, reference: payReference }) },
+      "Paiement déclaré. Dropy le vérifie et vous confirmera la mise sous séquestre."
+    );
 
-      const { error: stripeError } = await stripe.confirmCardPayment(data.clientSecret, {
-        payment_method: {
-          card: { token: 'tok_visa' }, // In real app, use Elements
-          billing_details: { name: 'Seller Name' }
-        }
-      });
-
-      if (stripeError) throw stripeError;
-
-      toast.success("Paiement réussi ! Fonds conservés en séquestre.");
-      router.refresh();
-    } catch (error: any) {
-      toast.error(error.message || "Payment failed");
-    } finally {
-      setIsProcessing(false);
+  const handleRequestRevision = async () => {
+    const data = await callApi(
+      "request-revision",
+      { method: "POST", body: JSON.stringify({ notes: revisionNotes }) },
+      "Demande de retouches envoyée au créateur"
+    );
+    if (data) {
+      setRevisionNotes("");
+      setShowRevision(false);
     }
   };
 
-  const handleReleaseFunds = async () => {
-    setIsProcessing(true);
-    try {
-      const response = await fetch(`/api/content/briefs/${id}/release-funds`, {
-        method: "POST"
-      });
+  const handleReleaseFunds = () =>
+    callApi("release-funds", { method: "POST" }, "Contenu validé ! Le créateur va être payé et les fichiers sont dans votre bibliothèque.");
 
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-
-      toast.success("Fonds versés au créateur ! Projet terminé.");
-      router.refresh();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to release funds");
-    } finally {
-      setIsProcessing(false);
+  useEffect(() => {
+    if (brief?.status === "published" && brief?.selected_creator_id && !payment && !paymentDetails) {
+      fetch("/api/content/escrow-details")
+        .then((r) => r.json())
+        .then((d) => setPaymentDetails(d.paymentDetails || ""))
+        .catch(() => null);
     }
-  };
+  }, [brief, payment, paymentDetails]);
 
   if (isLoading) {
     return (
@@ -194,21 +232,21 @@ export default function BriefDetailsPage() {
                   <div className="flex justify-between items-start gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="capitalize">{brief.content_type}</Badge>
-                        <Badge>{brief.status}</Badge>
+                        <Badge variant="outline">{({ photography: "Photo", video: "Vidéo", ugc: "Contenu UGC", design: "Design", copywriting: "Rédaction" } as Record<string, string>)[brief.content_type] || brief.content_type}</Badge>
+                        <Badge>{BRIEF_STATUS[brief.status] || brief.status}</Badge>
                         {brief.is_disputed && (
                           <Badge variant="destructive" className="animate-pulse">En litige</Badge>
                         )}
                       </div>
                       <CardTitle className="text-3xl">{brief.title}</CardTitle>
                       <CardDescription className="mt-2">
-                        Created on {format(new Date(brief.created_at), "PPP")}
+                        Créé le {format(new Date(brief.created_at), "dd/MM/yyyy")}
                       </CardDescription>
                     </div>
                     {!brief.is_disputed && (brief.status === "assigned" || brief.status === "delivered") && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="text-destructive hover:bg-destructive/10"
                         onClick={() => setIsDisputeOpen(true)}
                       >
@@ -227,15 +265,15 @@ export default function BriefDetailsPage() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
-                    <p className="font-semibold">{format(new Date(brief.deadline), "PP")}</p>
+                    <p className="font-semibold">{brief.deadline ? format(new Date(brief.deadline), "dd/MM/yyyy") : "—"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground uppercase font-bold">Lieu</p>
-                    <p className="font-semibold">{brief.preferred_city || "Remote"}</p>
+                    <p className="font-semibold">{brief.preferred_city || "À distance"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground uppercase font-bold">Droits</p>
-                    <p className="font-semibold capitalize">{brief.rights_type?.replace("_", " ")}</p>
+                    <p className="font-semibold">{RIGHTS[brief.rights_type] || brief.rights_type || "—"}</p>
                   </div>
                 </div>
 
@@ -270,6 +308,55 @@ export default function BriefDetailsPage() {
               </CardContent>
             </Card>
 
+                {brief.status === "published" && brief.selected_creator_id && (
+                  <Card className="border-amber-500/30 bg-amber-500/5">
+                    <CardHeader>
+                      <CardTitle className="text-amber-700 flex items-center gap-2">
+                        <Lock className="w-5 h-5" />
+                        {payment ? "Paiement en cours de vérification" : "Envoyez le paiement à Dropy"}
+                      </CardTitle>
+                      <CardDescription>
+                        {payment
+                          ? `Votre paiement de ${Number(payment.amount).toFixed(2)} TND (réf. ${payment.transaction_ref}) est en cours de vérification. La mission démarrera dès sa confirmation.`
+                          : `Montant à payer : ${Number(applications.find((a) => a.status === "accepted")?.proposed_price || brief.budget).toFixed(2)} TND. Les fonds restent bloqués chez Dropy jusqu'à votre validation du contenu.`}
+                      </CardDescription>
+                    </CardHeader>
+                    {!payment && (
+                      <CardContent className="space-y-4">
+                        <div className="p-4 rounded-xl bg-white border border-amber-100 text-sm whitespace-pre-wrap">
+                          {paymentDetails || "Les coordonnées de paiement Dropy vous seront communiquées par le support."}
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Moyen de paiement</Label>
+                            <select
+                              value={payMethod}
+                              onChange={(e) => setPayMethod(e.target.value)}
+                              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                            >
+                              <option value="bank_transfer">Virement bancaire</option>
+                              <option value="d17">D17</option>
+                              <option value="flouci">Flouci</option>
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="pay-ref">Référence de la transaction</Label>
+                            <Input id="pay-ref" value={payReference} onChange={(e) => setPayReference(e.target.value)} placeholder="ex. n° de virement" />
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button onClick={handleDeclarePayment} disabled={isProcessing || payReference.trim().length < 3} className="bg-gradient-to-r from-violet-500 to-purple-600">
+                            J&apos;ai effectué le paiement
+                          </Button>
+                          <Button variant="ghost" onClick={handleCancelSelection} disabled={isProcessing}>
+                            Changer de créateur
+                          </Button>
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                )}
+
                 {brief.status === "delivered" && (
                   <Card className="border-blue-500/20 bg-blue-500/5">
                     <CardHeader className="flex flex-row items-center justify-between">
@@ -280,23 +367,37 @@ export default function BriefDetailsPage() {
                         </CardTitle>
                         <CardDescription>Le créateur a envoyé les fichiers finaux. Examinez-les avant de libérer les fonds.</CardDescription>
                       </div>
-                      <Button 
-                        onClick={handleReleaseFunds}
-                        disabled={isProcessing}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        {isProcessing ? "Releasing..." : "Approve & Release Funds"}
-                        <CheckCircle2 className="w-4 h-4 ml-2" />
-                      </Button>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          onClick={handleReleaseFunds}
+                          disabled={isProcessing || brief.is_disputed}
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                          {isProcessing ? "Validation..." : "Valider et payer le créateur"}
+                          <CheckCircle2 className="w-4 h-4 ml-2" />
+                        </Button>
+                        <Button variant="outline" onClick={() => setShowRevision((v) => !v)} disabled={isProcessing || brief.is_disputed}>
+                          Demander des retouches
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                      {showRevision && (
+                        <div className="space-y-3 p-4 rounded-xl bg-white border border-blue-100">
+                          <Label htmlFor="revision">Retouches souhaitées</Label>
+                          <Textarea id="revision" value={revisionNotes} onChange={(e) => setRevisionNotes(e.target.value)} placeholder="Décrivez précisément ce qui doit être modifié..." />
+                          <Button onClick={handleRequestRevision} disabled={isProcessing || revisionNotes.trim().length < 5}>
+                            Envoyer la demande
+                          </Button>
+                        </div>
+                      )}
                       {deliveries.map((delivery: any) => (
                         <div key={delivery.id} className="space-y-4">
                           <div className="p-4 rounded-xl bg-white border border-blue-100">
                             <p className="text-sm font-medium mb-3">Message du créateur :</p>
                             <p className="text-sm text-muted-foreground italic">&quot;{delivery.message}&quot;</p>
                           </div>
-                          
+
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                             {delivery.files?.map((file: any, i: number) => (
                               <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border bg-muted">
@@ -305,7 +406,7 @@ export default function BriefDetailsPage() {
                                 ) : (
                                   <div className="w-full h-full flex flex-col items-center justify-center gap-2">
                                     <Video className="w-8 h-8 text-muted-foreground" />
-                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Video</span>
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground">Vidéo</span>
                                   </div>
                                 )}
                                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -336,7 +437,7 @@ export default function BriefDetailsPage() {
                         <CheckCircle2 className="w-5 h-5" />
                         Projet terminé
                       </CardTitle>
-                      <CardDescription>Les fonds ont été versés et le contenu est maintenant dans votre bibliothèque.</CardDescription>
+                      <CardDescription>Vous avez validé le contenu : il est dans votre bibliothèque et Dropy verse le paiement au créateur.</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <Button variant="outline" className="w-full gap-2" onClick={() => router.push('/seller/content/library')}>
@@ -355,7 +456,7 @@ export default function BriefDetailsPage() {
                           <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200">En attente d'avis</Badge>
                         )}
                       </div>
-                      
+
                       {existingReviews.length > 0 ? (
                         <ReviewList reviews={existingReviews} type="creator" />
                       ) : (
@@ -364,9 +465,9 @@ export default function BriefDetailsPage() {
                             <p className="text-sm text-muted-foreground mb-6">
                               Le projet est terminé ! Prenez un moment pour évaluer le travail de {applications.find(a => a.status === 'accepted')?.creator?.full_name}.
                             </p>
-                            <AddReviewForm 
+                            <AddReviewForm
                               type="creator"
-                              targetId={brief.creator_id}
+                              targetId={brief.selected_creator_id}
                               briefId={brief.id}
                               storeId={brief.store_id}
                               onSuccess={() => {
@@ -386,7 +487,7 @@ export default function BriefDetailsPage() {
 
                   <div className="space-y-6 pt-12">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Applications ({applications.length})</h2>
+                  <h2 className="text-2xl font-bold">Candidatures ({applications.length})</h2>
                 </div>
 
 
@@ -421,7 +522,7 @@ export default function BriefDetailsPage() {
                                     <h4 className="font-bold text-lg">{app.creator.full_name}</h4>
                                     <Badge variant="outline" className="flex items-center gap-1">
                                       <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                      {app.creator.rating || "N/A"}
+                                      {app.creator.rating || "Nouveau"}
                                     </Badge>
                                   </div>
                                   <p className="text-sm text-muted-foreground">
@@ -431,7 +532,7 @@ export default function BriefDetailsPage() {
                               </div>
                               <div className="text-right">
                                 <p className="text-2xl font-bold text-primary">{app.proposed_price} TND</p>
-                                <p className="text-sm text-muted-foreground">{app.delivery_days} days delivery</p>
+                                <p className="text-sm text-muted-foreground">Livraison en {app.delivery_days} jour(s)</p>
                               </div>
                             </div>
 
@@ -442,11 +543,11 @@ export default function BriefDetailsPage() {
                             {app.portfolio_samples && app.portfolio_samples.length > 0 && (
                               <div className="grid grid-cols-3 gap-2">
                                 {app.portfolio_samples.slice(0, 3).map((sample: string, i: number) => (
-                                  <img 
-                                    key={i} 
-                                    src={sample} 
-                                    alt="Portfolio" 
-                                    className="w-full h-24 object-cover rounded-lg" 
+                                  <img
+                                    key={i}
+                                    src={sample}
+                                    alt="Portfolio"
+                                    className="w-full h-24 object-cover rounded-lg"
                                   />
                                 ))}
                               </div>
@@ -454,21 +555,14 @@ export default function BriefDetailsPage() {
                           </div>
 
                           <div className="flex flex-col gap-2 min-w-[150px]">
-                            {brief.status === "published" ? (
-                              <>
-                                <Button 
-                                  className="w-full bg-gradient-to-r from-violet-500 to-purple-600"
-                                  onClick={() => handleAcceptApplication(app)}
-                                >
-                                  Accept & Pay
-                                </Button>
-                                <Button variant="outline" className="w-full">
-                                  Message
-                                </Button>
-                                <Button variant="ghost" className="w-full text-destructive">
-                                  Refuser
-                                </Button>
-                              </>
+                            {brief.status === "published" && !brief.selected_creator_id && app.status === "pending" ? (
+                              <Button
+                                className="w-full bg-gradient-to-r from-violet-500 to-purple-600"
+                                onClick={() => handleAcceptApplication(app)}
+                                disabled={isProcessing}
+                              >
+                                Choisir ce créateur
+                              </Button>
                             ) : app.status === "accepted" ? (
                               <div className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                                 <CheckCircle2 className="w-8 h-8" />
@@ -534,19 +628,19 @@ export default function BriefDetailsPage() {
                   <div className="relative pl-6 pb-6 border-l border-border">
                     <div className="absolute left-[-5px] top-0 w-[9px] h-[9px] rounded-full bg-emerald-500" />
                     <p className="text-xs text-muted-foreground">Publié</p>
-                    <p className="text-sm font-medium">{format(new Date(brief.created_at), "PPp")}</p>
+                    <p className="text-sm font-medium">{format(new Date(brief.created_at), "dd/MM/yyyy HH:mm")}</p>
                   </div>
                   <div className={cn(
                     "relative pl-6 pb-6 border-l",
-                    brief.status === "assigned" || brief.status === "completed" ? "border-emerald-500" : "border-border"
+                    brief.status !== "published" ? "border-emerald-500" : "border-border"
                   )}>
                     <div className={cn(
                       "absolute left-[-5px] top-0 w-[9px] h-[9px] rounded-full",
-                      brief.status === "assigned" || brief.status === "completed" ? "bg-emerald-500" : "bg-muted"
+                      brief.status !== "published" ? "bg-emerald-500" : "bg-muted"
                     )} />
                     <p className="text-xs text-muted-foreground">Créateur assigné</p>
                     <p className="text-sm font-medium">
-                      {brief.status === "assigned" ? "En cours" : "En attente"}
+                      {brief.status === "published" ? (brief.selected_creator_id ? "Paiement en attente" : "En attente") : "Fait"}
                     </p>
                   </div>
                   <div className={cn(
@@ -558,7 +652,7 @@ export default function BriefDetailsPage() {
                       brief.status === "completed" ? "bg-emerald-500" : "bg-muted"
                     )} />
                     <p className="text-xs text-muted-foreground">Terminé</p>
-                    <p className="text-sm font-medium">En attente</p>
+                    <p className="text-sm font-medium">{brief.status === "completed" ? "Fait" : "En attente"}</p>
                   </div>
                 </CardContent>
             </Card>
@@ -580,9 +674,9 @@ export default function BriefDetailsPage() {
           </div>
         </div>
       </div>
-      <DisputeDialog 
-        isOpen={isDisputeOpen} 
-        onClose={() => setIsDisputeOpen(false)} 
+      <DisputeDialog
+        isOpen={isDisputeOpen}
+        onClose={() => setIsDisputeOpen(false)}
         briefId={id as string}
         onSuccess={() => {
           setBrief({ ...brief, is_disputed: true });
