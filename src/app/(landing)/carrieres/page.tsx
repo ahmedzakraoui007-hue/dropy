@@ -80,7 +80,7 @@ export default function CarrieresPage() {
               ? "ديما نلوجو على مواهب جديدة. ابعتلنا سيرتك الذاتية وقولنا كيفاش تنجم تعاونا." 
               : "Nous sommes toujours à la recherche de talents exceptionnels. Envoyez-nous votre candidature spontanée et racontez-nous comment vous pouvez nous aider."}
           </p>
-          <a href="mailto:carrieres@dropy.store">
+          <a href="mailto:ahmed@dropy.store">
             <Button variant="outline" className="h-12 px-8 rounded-xl border-slate-200">
               {dir === 'rtl' ? "ترشح بصفة تلقائية" : "Candidature spontanée"}
             </Button>

@@ -855,7 +855,7 @@ function BordereauProfessionnel({ order }: { order: SupplierOrder }) {
         <div className="mt-8 pt-6 border-t text-center text-xs text-muted-foreground">
           <p>Document généré automatiquement par la plateforme DROPY</p>
           <p className="mt-1">
-            En cas de litige, veuillez contacter: support@dropy.store | +216 XX XXX XXX
+            En cas de litige, veuillez contacter: ahmed@dropy.store | +216 XX XXX XXX
           </p>
           <p className="mt-2 text-[10px]">
             Ce document fait foi de la livraison des marchandises décrites ci-dessus.
