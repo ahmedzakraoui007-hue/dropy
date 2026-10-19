@@ -91,7 +91,7 @@ export default function NavigationPage() {
           type,
           location: type,
           label: type === "header" ? "Menu principal" : "Pied de page",
-          link_type: "menu",
+          link_type: "page",
           link_value: type,
           items,
         };
@@ -261,7 +261,7 @@ function NavigationItem({ item, pages, onUpdate, onRemove }: any) {
                 <SelectItem value="/">Accueil</SelectItem>
                 <SelectItem value="/shop">Toute la boutique</SelectItem>
                 {pages.map((p: any) => (
-                  <SelectItem key={p.id} value={`/${p.slug}`}>{p.name}</SelectItem>
+                  <SelectItem key={p.id} value={`/${p.slug}`}>{p.title || p.name || p.slug}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

@@ -42,6 +42,7 @@ import {
   ALL_CONVERSION_TEMPLATES, 
   getTemplatesByCategory, 
   getTemplateById,
+  TEMPLATE_SECTION_TYPES,
   getTotalTemplateCount,
   TemplateVariant 
 } from "@/lib/conversion-templates";
@@ -108,7 +109,7 @@ export default function SectionLibrary({ onAdd, onClose }: SectionLibraryProps) 
   }));
 
   const handleAddTemplate = (template: TemplateVariant) => {
-    const sectionType = template.id.split('_')[0];
+    const sectionType = TEMPLATE_SECTION_TYPES[template.id] || template.id.split('_')[0];
     onAdd(sectionType, template.config);
   };
 

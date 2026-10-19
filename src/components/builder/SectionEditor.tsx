@@ -1108,7 +1108,7 @@ export default function SectionEditor({ section, onChange }: SectionEditorProps)
                 <Input value={config.title || ""} onChange={(e) => handleConfigChange("title", e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>URL Vidéo (YouTube/Vimeo)</Label>
+                <Label>URL vidéo (YouTube, Vimeo ou MP4)</Label>
                 <Input placeholder="https://..." value={config.videoUrl || ""} onChange={(e) => handleConfigChange("videoUrl", e.target.value)} />
               </div>
               <div className="flex items-center gap-4 py-2 border-t">
@@ -1120,6 +1120,41 @@ export default function SectionEditor({ section, onChange }: SectionEditorProps)
             </div>
           );
 
+        case "contact":
+          return (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Titre</Label>
+                <Input value={config.title || ""} onChange={(e) => handleConfigChange("title", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Texte d&apos;introduction</Label>
+                <Textarea value={config.subtitle || ""} onChange={(e) => handleConfigChange("subtitle", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Téléphone</Label>
+                <Input placeholder="+216 ..." value={config.phone || ""} onChange={(e) => handleConfigChange("phone", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>WhatsApp (si différent)</Label>
+                <Input placeholder="+216 ..." value={config.whatsapp || ""} onChange={(e) => handleConfigChange("whatsapp", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input type="email" value={config.email || ""} onChange={(e) => handleConfigChange("email", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Adresse</Label>
+                <Input value={config.address || ""} onChange={(e) => handleConfigChange("address", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Horaires</Label>
+                <Input placeholder="Lun-Sam, 9h-18h" value={config.hours || ""} onChange={(e) => handleConfigChange("hours", e.target.value)} />
+              </div>
+              <p className="text-xs text-muted-foreground">Le formulaire envoie le message sur WhatsApp, ou par email si aucun numéro n&apos;est renseigné.</p>
+            </div>
+          );
+
         case "countdown":
           return (
             <div className="space-y-4">
@@ -1128,8 +1163,16 @@ export default function SectionEditor({ section, onChange }: SectionEditorProps)
                 <Input type="datetime-local" value={config.endDate || ""} onChange={(e) => handleConfigChange("endDate", e.target.value)} />
               </div>
               <div className="space-y-2">
+                <Label>Titre</Label>
+                <Input value={config.title || ""} onChange={(e) => handleConfigChange("title", e.target.value)} />
+              </div>
+              <div className="space-y-2">
                 <Label>Message</Label>
                 <Input placeholder="L'offre se termine dans :" value={config.message || ""} onChange={(e) => handleConfigChange("message", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Texte du bouton (facultatif)</Label>
+                <Input value={config.ctaText || ""} onChange={(e) => handleConfigChange("ctaText", e.target.value)} />
               </div>
             </div>
           );

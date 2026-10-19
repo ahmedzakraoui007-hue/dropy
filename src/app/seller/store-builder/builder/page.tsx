@@ -579,9 +579,13 @@ export default function BuilderPage() {
             show_in_menu: p.show_in_navigation ?? true,
           }))
         );
-        const homePage = pagesData.find(p => p.slug === "home") || pagesData[0];
+        const params = new URLSearchParams(window.location.search);
+        const requested = params.get("page");
+        const homePage = pagesData.find(p => p.slug === requested) || pagesData.find(p => p.slug === "home") || pagesData[0];
         setCurrentPageSlug(homePage.slug);
         setSections(homePage.sections || []);
+        const requestedTab = params.get("tab");
+        if (requestedTab && ["sections", "theme", "pages", "navigation", "launch"].includes(requestedTab)) setActiveTab(requestedTab);
       } else {
         // Create default home page if none exists (should be handled by SQL migration but just in case)
         const defaultPage: Page = {

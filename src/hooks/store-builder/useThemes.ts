@@ -33,8 +33,14 @@ export function useThemes() {
           .limit(1)
           .maybeSingle();
 
-        if (config?.theme_id) {
-          setCurrentThemeId(config.theme_id);
+        const { data: storeRow } = await supabase
+          .from('stores')
+          .select('theme_config')
+          .eq('vendor_id', user.id)
+          .maybeSingle();
+        const storeThemeId = (storeRow?.theme_config as any)?.theme_id;
+        if (storeThemeId || config?.theme_id) {
+          setCurrentThemeId(storeThemeId || config?.theme_id);
         }
       } catch (error) {
         console.error('Error loading theme:', error);
@@ -49,7 +55,6 @@ export function useThemes() {
   // Appliquer un thème
   const applyTheme = async (theme: Theme) => {
     setIsApplying(true);
-    console.log('🎨 Applying theme:', theme.id, theme.name);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -58,12 +63,11 @@ export function useThemes() {
         throw new Error('Non authentifié');
       }
 
-      console.log('👤 User ID:', user.id);
 
       // 0. Récupérer le store_id et le nom
       const { data: store, error: storeError } = await supabase
         .from('stores')
-        .select('id, name')
+        .select('id, name, theme_config')
         .eq('vendor_id', user.id)
         .single();
 
@@ -83,7 +87,6 @@ export function useThemes() {
         updated_at: new Date().toISOString(),
       };
 
-      console.log('📝 Config data to save:', configData);
 
       const { data: sellerProfile } = await supabase
         .from('seller_profiles')
@@ -107,7 +110,34 @@ export function useThemes() {
         throw new Error(`Erreur config: ${configError.message} (${configError.code})`);
       }
 
-      console.log('✅ Config saved successfully');
+      const firstFont = (f?: string) => (f || '').replace(/['"]/g, '').split(',')[0].trim() || 'Inter';
+      const radiusPx = parseFloat(theme.layout?.borderRadius || '8');
+      const current = (store.theme_config || {}) as Record<string, any>;
+      const { error: storeThemeError } = await supabase
+        .from('stores')
+        .update({
+          theme_config: {
+            ...current,
+            theme_id: theme.id,
+            colors: {
+              ...(current.colors || {}),
+              primary: theme.colors.primary,
+              secondary: theme.colors.secondary,
+              accent: theme.colors.accent,
+              background: theme.colors.background,
+              text: theme.colors.text,
+            },
+            typography: {
+              ...(current.typography || {}),
+              fontHeading: firstFont(theme.typography?.headingFont),
+              fontBody: firstFont(theme.typography?.bodyFont),
+            },
+            fonts: { heading: firstFont(theme.typography?.headingFont), body: firstFont(theme.typography?.bodyFont) },
+            spacing: { ...(current.spacing || {}), borderRadius: radiusPx <= 0 ? 'none' : radiusPx >= 999 ? 'full' : 'md' },
+          },
+        })
+        .eq('id', store.id);
+      if (storeThemeError) throw new Error(`Erreur thème boutique: ${storeThemeError.message}`);
 
       // 2. Vérifier si des pages existent déjà pour ce store
       const { data: existingPages, error: queryError } = await supabase
@@ -120,12 +150,10 @@ export function useThemes() {
         throw new Error(`Erreur query: ${queryError.message}`);
       }
 
-      console.log('📄 Existing pages:', existingPages?.length || 0);
 
       // 3. Si aucune page, créer les pages par défaut du thème
       if (!existingPages || existingPages.length === 0) {
         if (theme.defaultSections && theme.defaultSections.length > 0) {
-          console.log('[applyTheme] Creating default pages...');
 
           // Map sections to ensure valid JSON structure if needed
           const sectionsPayload = theme.defaultSections.map(s => ({
@@ -151,18 +179,14 @@ export function useThemes() {
             console.error('[applyTheme] Page Insert Error:', pageError);
             throw new Error(`Erreur insertion pages: ${pageError.message}`);
           }
-          console.log('✅ Default pages created');
         } else {
-          console.log('⚠️ Theme has no defaultSections');
         }
       } else {
-        console.log('Pages existantes conservées.');
       }
 
       setCurrentThemeId(theme.id);
       toast.success(`Thème "${theme.name}" appliqué avec succès !`);
 
-      console.log('🔄 Redirecting to /design...');
       router.push('/seller/store-builder/design');
       router.refresh(); // Force reload to ensure /design gets new colors
 

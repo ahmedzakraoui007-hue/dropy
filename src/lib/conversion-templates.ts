@@ -1264,22 +1264,22 @@ export const PRODUCT_PAGE_TEMPLATES: TemplateVariant[] = [
 // EXPORT ALL TEMPLATES
 // ============================================
 
-export const ALL_CONVERSION_TEMPLATES: TemplateCategory[] = [
+const RAW_CONVERSION_TEMPLATES: TemplateCategory[] = [
   {
     id: 'hero',
-    name: 'Hero Sections',
+    name: 'Bannières Hero',
     icon: 'Image',
     templates: HERO_TEMPLATES
   },
   {
     id: 'products',
-    name: 'Product Grids',
+    name: 'Grilles produits',
     icon: 'ShoppingBag',
     templates: PRODUCT_GRID_TEMPLATES
   },
   {
     id: 'social_proof',
-    name: 'Social Proof',
+    name: 'Preuve sociale',
     icon: 'Star',
     templates: SOCIAL_PROOF_TEMPLATES
   },
@@ -1291,29 +1291,62 @@ export const ALL_CONVERSION_TEMPLATES: TemplateCategory[] = [
   },
   {
     id: 'footer',
-    name: 'Footer',
+    name: 'Pied de page',
     icon: 'Layout',
     templates: FOOTER_TEMPLATES
   },
   {
     id: 'contact',
-    name: 'Contact & About',
+    name: 'Contact & À propos',
     icon: 'Info',
     templates: CONTACT_TEMPLATES
   },
   {
     id: 'cart',
-    name: 'Cart & Checkout',
+    name: 'Panier & Commande',
     icon: 'ShoppingCart',
     templates: CART_TEMPLATES
   },
   {
     id: 'product_page',
-    name: 'Product Page',
+    name: 'Page produit',
     icon: 'Package',
     templates: PRODUCT_PAGE_TEMPLATES
   }
 ];
+
+export const TEMPLATE_SECTION_TYPES: Record<string, string> = {
+  hero_bold_statement: 'hero',
+  hero_split_screen: 'hero',
+  hero_video_background: 'hero',
+  hero_minimalist_luxury: 'hero',
+  hero_countdown_urgency: 'countdown',
+  grid_classic_filters: 'products',
+  grid_masonry: 'products',
+  grid_quick_shop: 'products',
+  grid_scrolling_row: 'products',
+  grid_recommendations: 'recommended_products',
+  proof_reviews_carousel: 'testimonials',
+  proof_stats_counter: 'stats',
+  proof_trust_badges: 'trust_badges',
+  newsletter_incentive: 'newsletter',
+  newsletter_banner: 'newsletter',
+  newsletter_product_preview: 'newsletter',
+  footer_complete: 'footer',
+  footer_minimal: 'footer',
+  footer_newsletter: 'footer',
+  about_brand_story: 'about',
+  about_values: 'features',
+  contact_form: 'contact',
+  contact_whatsapp: 'contact',
+  checkout_one_page: 'checkout',
+  product_gallery_info: 'product_detail',
+  product_video_hero: 'video',
+};
+
+export const ALL_CONVERSION_TEMPLATES: TemplateCategory[] = RAW_CONVERSION_TEMPLATES
+  .map((category) => ({ ...category, templates: category.templates.filter((t) => TEMPLATE_SECTION_TYPES[t.id]) }))
+  .filter((category) => category.templates.length > 0);
 
 export const getTemplatesByCategory = (categoryId: string): TemplateVariant[] => {
   const category = ALL_CONVERSION_TEMPLATES.find(c => c.id === categoryId);

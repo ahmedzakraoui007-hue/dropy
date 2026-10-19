@@ -125,7 +125,7 @@ export default function StoreBuilderLayout({ children }: StoreBuilderLayoutProps
             asChild
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-100 flex items-center gap-2"
           >
-            <Link href={store?.slug ? `/shop/${store.slug}` : "/seller/store-builder"} target="_blank">
+            <Link href={store?.slug ? `/${store.slug}` : "/seller/store-builder"} target="_blank">
               <ExternalLink className="w-4 h-4" />
               Voir ma boutique
             </Link>

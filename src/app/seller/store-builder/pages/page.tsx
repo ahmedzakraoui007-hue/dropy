@@ -138,7 +138,7 @@ export default function PagesPage() {
                 </div>
                   <div className="flex items-center gap-2">
                     <Button asChild variant="outline" size="sm" className="rounded-lg border-gray-100 h-9 font-bold">
-                      <Link href={`/seller/store-builder/builder/${page.id}`}>
+                      <Link href={`/seller/store-builder/builder?page=${encodeURIComponent(page.slug)}`}>
                         Éditer
                       </Link>
                     </Button>

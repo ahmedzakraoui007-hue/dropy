@@ -73,14 +73,6 @@ export const SECTION_LIBRARY = [
     thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
   },
   {
-    id: 'wishlist',
-    name: 'Favoris',
-    icon: Heart,
-    category: 'Marketing & Conversion',
-    description: 'Section de liste d\'envies',
-    thumbnail: 'https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=800&q=80',
-  },
-  {
     id: 'trust_badges',
     name: 'Badges de Confiance',
     icon: Shield,
@@ -147,14 +139,6 @@ export const SECTION_LIBRARY = [
     category: 'Contenu & Infos',
     description: 'Histoire et mission de la marque',
     thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&q=80',
-  },
-  {
-    id: 'blog',
-    name: 'Articles Blog',
-    icon: Type,
-    category: 'Contenu & Infos',
-    description: 'Liste articles de blog',
-    thumbnail: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80',
   },
   {
     id: 'video',
@@ -265,14 +249,6 @@ export const SECTION_LIBRARY = [
     category: 'Layout',
     description: 'Bas de page avec liens et copyright',
     thumbnail: 'https://images.unsplash.com/photo-1467232004584-a241de8bcf5d?w=800&q=80',
-  },
-  {
-    id: 'mega_menu',
-    name: 'Mega Menu',
-    icon: Layout,
-    category: 'Navigation',
-    description: 'Menu de navigation avancé multi-colonnes',
-    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80',
   }
 ];
 
@@ -630,6 +606,22 @@ export const getPlaceholderConfig = (type: string) => {
         { label: "Homme", link: "/shop" },
         { label: "Contact", link: "/contact" }
       ]
+    };
+  case 'countdown':
+    return {
+      title: "Vente flash",
+      message: "L'offre se termine dans :",
+      endDate: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16),
+      ctaText: "J'en profite",
+      ctaLink: "/shop",
+      paddingY: 80
+    };
+  case 'contact':
+    return {
+      title: "Contactez-nous",
+      subtitle: "Une question sur une commande ou un produit ? Écrivez-nous, nous répondons rapidement.",
+      hours: "Lun-Sam, 9h-18h",
+      paddingY: 96
     };
   case 'video':
     return {

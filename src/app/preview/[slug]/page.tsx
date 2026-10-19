@@ -117,7 +117,7 @@ const PreviewButton = ({ config, className, children, onClick }: { config?: any,
     const link = config?.ctaLink || config?.cta_link || config?.link;
     if (link) {
       const internalPages = ['home', 'shop', 'products', 'about', 'contact', 'cart', 'checkout'];
-      const slug = link.replace(/^\//, '');
+      const slug = link.replace(/^\//, '').replace(/^shop\/(products|shop)$/, 'shop');
       
       if (link.startsWith('/product/') || link.startsWith('product/')) {
         window.parent.postMessage({ type: 'NAVIGATE', page: 'product-detail' }, '*');
@@ -339,7 +339,7 @@ const TrustBadges = ({ sectionId, config }: { sectionId: string, config: any }) 
       {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-2xl font-bold mb-12 text-center block" />}
       <div className={config.layout === 'row' 
         ? "flex flex-wrap justify-center gap-8 md:gap-16" 
-        : `grid gap-8 grid-cols-2 md:grid-cols-${config.columns || 4}`
+        : `grid gap-8 grid-cols-2 ${gridCols(config.columns, 4)}`
       }>
         {(config.items || []).map((item: any, i: number) => (
           <div key={i} className={`flex ${config.layout === 'row' ? 'flex-row items-center gap-4' : 'flex-col items-center text-center'} p-6 bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow`}>
@@ -425,6 +425,7 @@ const Pricing = ({ sectionId, config }: { sectionId: string, config: any }) => (
 const Stats = ({ sectionId, config }: { sectionId: string, config: any }) => (
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "#0f172a", color: config.textColor || "#ffffff" }}>
     <div className="max-w-7xl mx-auto">
+      {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-3xl md:text-4xl font-black mb-12 text-center block" />}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
         {(config.stats || []).map((stat: any, i: number) => (
           <div key={i} className="space-y-2">
@@ -575,15 +576,18 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
 
   const selectedVariant = variantOptions.find((v) => v.id === selectedVariantId) || null;
   
+  const [inBuilder, setInBuilder] = useState(false);
+  useEffect(() => setInBuilder(window.parent !== window), []);
+
   useEffect(() => {
-    if (selectedProduct?.id && storeId) {
+    const wantedId = selectedProduct?.id || config.productId;
+    if (storeId && (wantedId || !selectedProduct)) {
       setLoading(true);
       const supabase = createClient();
-      supabase
-        .from("store_products")
-        .select("*")
-        .eq("id", selectedProduct.id)
-        .single()
+      let query = supabase.from("store_products").select("*").eq("store_id", storeId).eq("is_active", true);
+      query = wantedId ? query.eq("id", wantedId) : query.order("created_at", { ascending: false }).limit(1);
+      query
+        .maybeSingle()
         .then(({ data }) => {
           if (data) {
             setProduct({
@@ -602,7 +606,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
     } else if (selectedProduct) {
       setProduct(selectedProduct);
     }
-  }, [selectedProduct, storeId]);
+  }, [selectedProduct, storeId, config.productId]);
 
   useEffect(() => {
     const productId = product?.id || config.productId;
@@ -627,6 +631,8 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
   };
 
   const images = displayProduct.images?.length > 0 ? displayProduct.images : [displayProduct.image];
+
+  if (!product && !loading && !inBuilder) return null;
 
   if (loading) {
     return (
@@ -778,7 +784,7 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: 
             <p className="text-sm mt-2">Ajoutez des produits depuis votre espace vendeur</p>
           </div>
         ) : (
-          <div className={`grid gap-x-6 gap-y-12 grid-cols-2 md:grid-cols-${config.columns || 4}`}>
+          <div className={`grid gap-x-6 gap-y-12 grid-cols-2 ${gridCols(config.columns, 4)}`}>
             {displayItems.slice(0, config.limit || 12).map((item: any, i: number) => {
               const data = typeof item === 'number' ? { title: `Produit ${item}`, price: "49.00", image: placeholders[i % 3] } : item;
               return (
@@ -812,7 +818,7 @@ const Features = ({ sectionId, config }: { sectionId: string, config: any }) => 
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
     <div className="max-w-7xl mx-auto text-center">
       {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-3xl md:text-4xl font-bold mb-16 block" />}
-      <div className={`grid gap-12 grid-cols-1 md:grid-cols-${config.columns || 4}`}>
+      <div className={`grid gap-12 grid-cols-1 ${gridCols(config.columns, 4)}`}>
         {(config.features || []).map((f: any, i: number) => (
           <div key={i} className="flex flex-col items-center">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 text-2xl font-bold">!</div>
@@ -825,20 +831,23 @@ const Features = ({ sectionId, config }: { sectionId: string, config: any }) => 
   </section>
 );
 
-const Footer = ({ sectionId, config }: { sectionId: string, config: any }) => (
+const Footer = ({ sectionId, config, links = [], store }: { sectionId: string, config: any, links?: any[], store?: any }) => (
   <footer className="py-20 px-4 bg-slate-950 text-slate-300 border-t border-white/10">
     <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
       <div className="space-y-6">
-        <div className="text-2xl font-black text-white tracking-tighter"><EditableText sectionId={sectionId} field="brandName" text={config.brandName || "BOUTIQUE"} /></div>
+        <div className="text-2xl font-black text-white tracking-tighter"><EditableText sectionId={sectionId} field="brandName" text={config.brandName || store?.name || "Boutique"} /></div>
         <EditableText tag="p" sectionId={sectionId} field="description" text={config.description || "Votre destination premium."} className="text-slate-400 block" />
       </div>
+      {(config.address || config.phone || store?.contact_phone || store?.contact_email) ? (
       <div>
         <h4 className="text-white font-bold mb-6">Contact</h4>
         <ul className="space-y-4 text-sm">
-          <li>📍 <EditableText sectionId={sectionId} field="address" text={config.address || "Tunis, Tunisie"} /></li>
-          <li>📞 <EditableText sectionId={sectionId} field="phone" text={config.phone || "+216 71 000 000"} /></li>
+          {config.address && <li>📍 <EditableText sectionId={sectionId} field="address" text={config.address} /></li>}
+          {(config.phone || store?.contact_phone) && <li>📞 <a href={`tel:${config.phone || store?.contact_phone}`} className="hover:text-white">{config.phone || store?.contact_phone}</a></li>}
+          {store?.contact_email && <li>✉️ <a href={`mailto:${store.contact_email}`} className="hover:text-white">{store.contact_email}</a></li>}
         </ul>
       </div>
+      ) : <div className="hidden md:block" />}
       <div>
         <h4 className="text-white font-bold mb-6">Suivi</h4>
         <button 
@@ -849,8 +858,15 @@ const Footer = ({ sectionId, config }: { sectionId: string, config: any }) => (
         </button>
       </div>
     </div>
+    {links.length > 0 && (
+      <div className="max-w-7xl mx-auto mt-12 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+        {links.map((l: any) => (
+          <button key={l.id || l.label} onClick={() => navigateTo(l.url)} className="hover:text-white transition-colors">{l.label}</button>
+        ))}
+      </div>
+    )}
     <div className="mt-16 pt-8 border-t border-white/5 text-center text-sm text-slate-500">
-      <EditableText sectionId={sectionId} field="copyright" text={config.copyright || "© 2026. Tous droits réservés."} />
+      <EditableText sectionId={sectionId} field="copyright" text={config.copyright || `© ${new Date().getFullYear()} ${store?.name || ""}. Tous droits réservés.`} />
     </div>
   </footer>
 );
@@ -940,7 +956,7 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
             <p>Aucun produit disponible</p>
           </div>
         ) : (
-          <div className={`grid gap-6 grid-cols-2 md:grid-cols-${config.columns || 4}`}>
+          <div className={`grid gap-6 grid-cols-2 ${gridCols(config.columns, 4)}`}>
             {displayItems.slice(0, config.limit || 4).map((item: any, i: number) => (
               <div 
                 key={item.id || i} 
@@ -1105,25 +1121,63 @@ const MegaMenu = ({ sectionId, config, store, onOpenCart, cartCount = 0 }: { sec
   );
 };
 
-const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, pages?: any[], onOpenCart?: () => void, cartCount?: number }) => (
-  <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-4 py-4">
-    <div className="max-w-7xl mx-auto flex items-center justify-between">
-      <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: 'home' }, '*')} className="text-2xl font-bold tracking-tighter text-primary flex items-center gap-2">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white text-sm">{store?.name?.charAt(0) || "D"}</div>
-        {store?.name || "Boutique"}
-      </button>
+const navigateTo = (url: string) => {
+  const link = (url || "").trim();
+  if (/^https?:\/\//i.test(link)) {
+    window.open(link, "_blank", "noopener,noreferrer");
+    return;
+  }
+  const page = link.replace(/^\//, "").replace(/^shop\/(products|shop)$/, "shop") || "home";
+  window.parent.postMessage({ type: 'NAVIGATE', page }, '*');
+};
+
+const headerLinks = (store: any, pages: any[]) => {
+  const custom = (store?.headerLinks || []).filter((i: any) => i?.label);
+  if (custom.length) return custom.map((i: any) => ({ key: i.id || i.label, label: i.label, url: i.url || "/" }));
+  const visible = pages.filter((p) => p.is_published !== false && p.show_in_navigation !== false && p.show_in_menu !== false && p.slug);
+  if (!visible.length) return [{ key: "home", label: "Accueil", url: "/home" }, { key: "shop", label: "Produits", url: "/shop" }];
+  return visible.map((p) => ({ key: p.id || p.slug, label: p.title || p.name || p.slug, url: p.is_homepage ? "/home" : `/${p.slug}` }));
+};
+
+const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, pages?: any[], onOpenCart?: () => void, cartCount?: number }) => {
+  const [open, setOpen] = useState(false);
+  const links = headerLinks(store, pages);
+  return (
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-4 py-4">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <button onClick={() => navigateTo("/home")} className="text-2xl font-bold tracking-tighter text-primary flex items-center gap-2 min-w-0">
+          {store?.logo_url ? (
+            <img src={store.logo_url} alt={store?.name || ""} className="h-8 w-auto object-contain" />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white text-sm shrink-0">{store?.name?.charAt(0) || "D"}</div>
+          )}
+          <span className="truncate">{store?.name || "Boutique"}</span>
+        </button>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-          {(pages.length > 0 ? pages.filter(p => p.is_published && (p.show_in_menu !== false)) : [{ name: 'Accueil', slug: 'home' }, { name: 'Produits', slug: 'shop' }]).map(p => (
-            <button key={p.slug} onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: p.slug }, '*')} className="hover:text-primary transition-colors">{p.name}</button>
+          {links.map((l: any) => (
+            <button key={l.key} onClick={() => navigateTo(l.url)} className="hover:text-primary transition-colors">{l.label}</button>
           ))}
         </nav>
-      <button onClick={onOpenCart} className="p-2 hover:bg-muted rounded-full relative">
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-        <span className="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full font-bold">{cartCount}</span>
-      </button>
-    </div>
-  </header>
-);
+        <div className="flex items-center gap-1">
+          <button onClick={onOpenCart} className="p-2 hover:bg-muted rounded-full relative" aria-label="Panier">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+            <span className="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full font-bold">{cartCount}</span>
+          </button>
+          <button onClick={() => setOpen((v) => !v)} className="md:hidden p-2 hover:bg-muted rounded-full" aria-label="Menu">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={open ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
+          </button>
+        </div>
+      </div>
+      {open && (
+        <nav className="md:hidden max-w-7xl mx-auto mt-4 flex flex-col border-t border-border pt-2">
+          {links.map((l: any) => (
+            <button key={l.key} onClick={() => { setOpen(false); navigateTo(l.url); }} className="text-left py-3 text-sm font-medium hover:text-primary">{l.label}</button>
+          ))}
+        </nav>
+      )}
+    </header>
+  );
+};
 
   const CartDrawer = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity }: { isOpen: boolean, onClose: () => void, cart: any[], onRemove: (id: string) => void, onUpdateQuantity: (id: string, delta: number) => void }) => {
     if (!isOpen) return null;
@@ -1181,7 +1235,7 @@ const Testimonials = ({ sectionId, config }: { sectionId: string, config: any })
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
     <div className="max-w-7xl mx-auto">
       {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-4xl font-black mb-16 text-center block" />}
-      <div className={`grid gap-8 md:grid-cols-${config.columns || 3}`}>
+      <div className={`grid gap-8 ${gridCols(config.columns, 3)}`}>
         {(config.testimonials || []).map((t: any, i: number) => (
           <div key={i} className="p-8 bg-card rounded-3xl border border-border shadow-sm hover:shadow-xl transition-all group">
             <div className="flex gap-1 mb-6">
@@ -1251,7 +1305,7 @@ const Collections = ({ sectionId, config }: { sectionId: string, config: any }) 
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
     <div className="max-w-7xl mx-auto">
       {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-4xl font-black mb-12 text-center block" />}
-      <div className={`grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-${config.columns || 3}`}>
+      <div className={`grid gap-6 grid-cols-1 sm:grid-cols-2 ${gridCols(config.columns, 3)}`}>
         {(config.items || []).map((item: any, i: number) => (
           <div key={i} className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[16/9]" onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: item.link?.replace('/', '') || 'shop' }, '*')}>
             <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.title} />
@@ -1275,10 +1329,7 @@ const ContentSection = ({ sectionId, config }: { sectionId: string, config: any 
         text={config.title || ""} 
         className="text-3xl font-black mb-8 block" 
       />
-      <div 
-        dangerouslySetInnerHTML={{ __html: config.content || "" }} 
-        className="text-muted-foreground leading-relaxed"
-      />
+      <SafeHtml html={config.content || ""} className="text-muted-foreground leading-relaxed" />
     </div>
   </section>
 );
@@ -1514,7 +1565,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
       <section className={`px-4 ${config.animation || 'fade-in'}`} style={getSectionStyle(config)}>
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12">
-            <div className="space-y-8 bg-card p-8 rounded-3xl border border-border shadow-sm">
+            <div className="space-y-8 bg-card p-5 md:p-8 rounded-3xl border border-border shadow-sm">
               <h2 className="text-2xl font-black"><EditableText sectionId={sectionId} field="title" text={config.title || "Finalisez votre commande"} /></h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
@@ -1552,7 +1603,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
               </form>
             </div>
             <div className="space-y-6">
-              <div className="bg-muted/30 p-8 rounded-3xl border border-border">
+              <div className="bg-muted/30 p-5 md:p-8 rounded-3xl border border-border">
                 <h3 className="font-bold mb-6">Résumé de la commande ({cart.reduce((acc, item) => acc + (item.quantity || 1), 0)} articles)</h3>
                 <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
                   {cart.map((item) => (
@@ -1628,9 +1679,334 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
 
 
 
+const ALLOWED_TAGS = new Set(["P", "BR", "STRONG", "B", "EM", "I", "U", "S", "H1", "H2", "H3", "H4", "UL", "OL", "LI", "A", "BLOCKQUOTE", "SPAN", "DIV", "HR", "TABLE", "THEAD", "TBODY", "TR", "TH", "TD"]);
+
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+const sanitizeHtml = (html: string): string => {
+  if (!html) return "";
+  if (typeof window === "undefined" || typeof DOMParser === "undefined") {
+    return escapeHtml(html.replace(/<[^>]*>/g, " "));
+  }
+  const doc = new DOMParser().parseFromString(`<div>${html}</div>`, "text/html");
+  const clean = (node: Element) => {
+    for (const child of Array.from(node.children)) {
+      if (!ALLOWED_TAGS.has(child.tagName)) {
+        if (["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "SVG", "MATH", "TEMPLATE"].includes(child.tagName)) {
+          child.remove();
+        } else {
+          clean(child);
+          child.replaceWith(...Array.from(child.childNodes));
+        }
+        continue;
+      }
+      for (const attr of Array.from(child.attributes)) {
+        const name = attr.name.toLowerCase();
+        const keep = child.tagName === "A" && name === "href" && /^(https?:|mailto:|tel:|\/|#)/i.test(attr.value.trim());
+        if (!keep) child.removeAttribute(attr.name);
+      }
+      if (child.tagName === "A") {
+        child.setAttribute("rel", "noopener noreferrer nofollow");
+        child.setAttribute("target", "_blank");
+      }
+      clean(child);
+    }
+  };
+  const root = doc.body.firstElementChild as Element;
+  clean(root);
+  return root.innerHTML;
+};
+
+const SafeHtml = ({ html, className }: { html: string; className?: string }) => {
+  const [clean, setClean] = useState(() => (typeof window === "undefined" ? "" : sanitizeHtml(html)));
+  useEffect(() => setClean(sanitizeHtml(html)), [html]);
+  return <div className={className} dangerouslySetInnerHTML={{ __html: clean }} />;
+};
+
+const GRID_COLS: Record<number, string> = {
+  1: "md:grid-cols-1",
+  2: "md:grid-cols-2",
+  3: "md:grid-cols-3",
+  4: "md:grid-cols-4",
+  5: "md:grid-cols-5",
+  6: "md:grid-cols-6",
+};
+const gridCols = (n: any, fallback = 4) => GRID_COLS[Number(n)] || GRID_COLS[fallback];
+
+const Countdown = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const target = config.endDate || config.targetDate || config.end_date;
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const end = target ? new Date(target).getTime() : NaN;
+  const left = now === null || isNaN(end) ? null : Math.max(0, end - now);
+  const parts = left === null
+    ? [["--", "Jours"], ["--", "Heures"], ["--", "Min"], ["--", "Sec"]]
+    : [
+        [Math.floor(left / 86400000), "Jours"],
+        [Math.floor((left / 3600000) % 24), "Heures"],
+        [Math.floor((left / 60000) % 60), "Min"],
+        [Math.floor((left / 1000) % 60), "Sec"],
+      ].map(([v, l]) => [String(v).padStart(2, "0"), l]);
+  return (
+    <section className="px-4" style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "#0f172a", color: config.textColor || "#ffffff" }}>
+      <div className="max-w-4xl mx-auto text-center space-y-8">
+        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Offre limitée"} className="text-3xl md:text-4xl font-black block" />
+        {(config.subtitle || config.message) && <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || config.message} className="text-lg opacity-80 block" />}
+        {left === 0 ? (
+          <p className="text-xl font-bold">{config.expiredText || "Cette offre est terminée"}</p>
+        ) : (
+          <div className="flex justify-center gap-3 md:gap-6">
+            {parts.map(([value, label]) => (
+              <div key={label} className="w-16 md:w-24 rounded-2xl bg-white/10 py-4">
+                <div className="text-2xl md:text-4xl font-black tabular-nums">{value}</div>
+                <div className="text-[10px] md:text-xs uppercase tracking-widest opacity-70 mt-1">{label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {(config.ctaText || config.ctaLink) && left !== 0 && <PreviewButton config={config} />}
+      </div>
+    </section>
+  );
+};
+
+const videoEmbedUrl = (url: string): string | null => {
+  if (!url) return null;
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/);
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}`;
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
+};
+
+const VideoSection = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const url = config.videoUrl || config.url || "";
+  const embed = videoEmbedUrl(url);
+  const direct = !embed && /\.(mp4|webm|mov)(\?|$)/i.test(url);
+  const [inBuilder, setInBuilder] = useState(false);
+  useEffect(() => setInBuilder(window.parent !== window), []);
+  if (!embed && !direct && !inBuilder) return null;
+  return (
+    <section className="px-4" style={getSectionStyle(config)}>
+      <div className="max-w-5xl mx-auto space-y-8">
+        {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-3xl md:text-4xl font-black text-center block" />}
+        <div className="relative w-full overflow-hidden rounded-3xl bg-black shadow-2xl" style={{ aspectRatio: config.aspectRatio || "16/9" }}>
+          {embed ? (
+            <iframe src={embed} className="absolute inset-0 w-full h-full" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={config.title || "Vidéo"} />
+          ) : direct ? (
+            <video src={url} className="absolute inset-0 w-full h-full object-cover" controls playsInline autoPlay={Boolean(config.autoplay)} muted={Boolean(config.autoplay)} />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">Ajoutez un lien YouTube, Vimeo ou MP4</div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const ContactSection = ({ sectionId, config, store }: { sectionId: string, config: any, store: any }) => {
+  const phone = config.phone || store?.contact_phone || "";
+  const email = config.email || store?.contact_email || "";
+  const whatsapp = (config.whatsapp || store?.whatsapp_number || phone || "").replace(/[^\d]/g, "");
+  const address = config.address || "";
+  const [form, setForm] = useState({ name: "", message: "" });
+  const send = () => {
+    const text = `Bonjour, je suis ${form.name}. ${form.message}`;
+    if (whatsapp) window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, "_blank");
+    else if (email) window.location.href = `mailto:${email}?subject=${encodeURIComponent("Contact boutique")}&body=${encodeURIComponent(text)}`;
+  };
+  return (
+    <section className="px-4" style={getSectionStyle(config)}>
+      <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
+        <div className="space-y-6">
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Contactez-nous"} className="text-3xl md:text-4xl font-black block" />
+          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Une question sur une commande ou un produit ? Écrivez-nous."} className="text-muted-foreground block" />
+          <div className="space-y-3 text-sm">
+            {phone && <p><span className="font-bold">Téléphone : </span><a href={`tel:${phone}`} className="hover:text-primary">{phone}</a></p>}
+            {email && <p><span className="font-bold">Email : </span><a href={`mailto:${email}`} className="hover:text-primary">{email}</a></p>}
+            {address && <p><span className="font-bold">Adresse : </span>{address}</p>}
+            {config.hours && <p><span className="font-bold">Horaires : </span>{config.hours}</p>}
+          </div>
+        </div>
+        <div className="space-y-4 rounded-3xl border border-border p-6 bg-card">
+          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Votre nom" className="w-full rounded-xl border border-border bg-background px-4 py-3" />
+          <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Votre message" rows={5} className="w-full rounded-xl border border-border bg-background px-4 py-3" />
+          <button
+            onClick={send}
+            disabled={!form.message.trim() || (!whatsapp && !email)}
+            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold disabled:opacity-50"
+          >
+            {whatsapp ? "Envoyer sur WhatsApp" : "Envoyer par email"}
+          </button>
+          {!whatsapp && !email && <p className="text-xs text-muted-foreground text-center">Ajoutez un téléphone ou un email dans les réglages de la section.</p>}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const ImageWithText = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const imageRight = (config.imagePosition || config.layout) === "right";
+  return (
+    <section className="px-4" style={getSectionStyle(config)}>
+      <div className={`max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center`}>
+        <div className={`rounded-3xl overflow-hidden aspect-[4/3] bg-muted ${imageRight ? "md:order-2" : ""}`}>
+          {(config.image || config.imageUrl) && <img src={config.image || config.imageUrl} alt={config.title || ""} className="w-full h-full object-cover" />}
+        </div>
+        <div className="space-y-6">
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Notre histoire"} className="text-3xl md:text-4xl font-black block" />
+          {config.content ? (
+            <SafeHtml html={config.content} className="text-muted-foreground leading-relaxed" />
+          ) : (
+            <EditableText tag="p" sectionId={sectionId} field="text" text={config.text || config.description || "Racontez ce qui rend votre boutique unique."} className="text-muted-foreground leading-relaxed block" />
+          )}
+          {(config.ctaText || config.ctaLink) && <PreviewButton config={config} />}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const CtaBanner = ({ sectionId, config }: { sectionId: string, config: any }) => (
+  <section className="px-4" style={{ ...getSectionStyle({ paddingY: 64, ...config }), backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
+    <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+      <div className="space-y-2">
+        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Offre spéciale"} className="text-2xl md:text-4xl font-black block" />
+        {(config.description || config.subtitle) && <EditableText tag="p" sectionId={sectionId} field="description" text={config.description || config.subtitle} className="opacity-90 block" />}
+      </div>
+      <PreviewButton config={config} className="bg-white text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition-all shrink-0">
+        {config.ctaText || "J'en profite"}
+      </PreviewButton>
+    </div>
+  </section>
+);
+
+const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, config: any, storeId?: string }) => {
+  const [categories, setCategories] = useState<{ name: string; image: string | null; count: number }[]>([]);
+  useEffect(() => {
+    if (!storeId) return;
+    createClient()
+      .from("store_products")
+      .select("category, images")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .not("category", "is", null)
+      .limit(500)
+      .then(({ data }) => {
+        const map = new Map<string, { name: string; image: string | null; count: number }>();
+        for (const p of data || []) {
+          const name = String(p.category || "").trim();
+          if (!name) continue;
+          const entry = map.get(name) || { name, image: Array.isArray(p.images) ? p.images[0] || null : null, count: 0 };
+          entry.count += 1;
+          map.set(name, entry);
+        }
+        setCategories([...map.values()].sort((a, b) => b.count - a.count).slice(0, Number(config.limit) || 8));
+      });
+  }, [storeId, config.limit]);
+
+  if (!categories.length) {
+    return typeof window !== "undefined" && window.parent !== window ? (
+      <div className="p-10 text-center text-sm text-muted-foreground border-2 border-dashed">Les catégories de vos produits apparaîtront ici.</div>
+    ) : null;
+  }
+
+  return (
+    <section className="px-4" style={getSectionStyle(config)}>
+      <div className="max-w-7xl mx-auto">
+        {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-3xl md:text-4xl font-black mb-12 text-center block" />}
+        <div className={`grid gap-6 grid-cols-2 ${gridCols(config.gridColumns || config.columns, 3)}`}>
+          {categories.map((c) => (
+            <button
+              key={c.name}
+              onClick={() => window.parent.postMessage({ type: "NAVIGATE", page: "shop", category: c.name }, "*")}
+              className="group relative overflow-hidden rounded-2xl aspect-square bg-muted text-left"
+            >
+              {c.image && <img src={c.image} alt={c.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />}
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white">
+                <span className="text-xl font-black">{c.name}</span>
+                {config.showProductCount !== false && <span className="text-xs opacity-80 mt-1">{c.count} produit{c.count > 1 ? "s" : ""}</span>}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const SECTION_ALIASES: Record<string, string> = {
+  featured_products: "products",
+  product_grid: "products",
+  icon_grid: "features",
+  benefits: "features",
+  brand_logos: "logo_carousel",
+  faq_preview: "faq",
+  about_preview: "about",
+  rich_text: "about",
+  categories: "store_categories",
+  categories_grid: "store_categories",
+  collection_grid: "collections",
+  banner: "cta_banner",
+};
+
+const normalizeSection = (section: any) => {
+  const raw = section.config ?? section.content ?? {};
+  const type = SECTION_ALIASES[section.type] || section.type;
+  const config: any = { ...raw };
+  if (type === "products") {
+    config.limit = raw.limit ?? raw.count;
+  }
+  if (type === "features" && !raw.features && Array.isArray(raw.items)) config.features = raw.items;
+  if (type === "faq" && !raw.faqs && Array.isArray(raw.items)) config.faqs = raw.items;
+  if (type === "logo_carousel" && !raw.logos && Array.isArray(raw.items)) config.logos = raw.items.map((i: any) => (typeof i === "string" ? i : i.image || i.logo)).filter(Boolean);
+  if (type === "about" && !raw.content && (raw.text || raw.description)) config.content = escapeHtml(String(raw.text || raw.description)).replace(/\n/g, "<br/>");
+  if (type === "promo_banner" && !raw.text && (raw.title || raw.description)) config.text = [raw.title, raw.description].filter(Boolean).join(" — ");
+  if (type === "hero") {
+    const variants: Record<string, string> = { bold_statement: "bold", split_screen: "split", video_background: "video", minimalist: "classic", minimalist_luxury: "classic" };
+    if (variants[raw.variant]) config.variant = variants[raw.variant];
+    if (!raw.title && raw.singleWord) config.title = raw.singleWord;
+    if (!raw.backgroundImage && (raw.image || raw.productImage || raw.fallbackImage)) config.backgroundImage = raw.image || raw.productImage || raw.fallbackImage;
+  }
+  if (type === "countdown") {
+    if (!raw.endDate && raw.countdownEndDate) config.endDate = raw.countdownEndDate;
+    if (!raw.message && raw.badge) config.message = raw.badge;
+  }
+  if (type === "testimonials" && !raw.testimonials && Array.isArray(raw.reviews)) {
+    config.testimonials = raw.reviews.map((r: any) => ({ name: r.author || r.name, rating: r.rating, text: r.text }));
+  }
+  if (type === "trust_badges" && !raw.items && Array.isArray(raw.badges)) config.items = raw.badges;
+  if (type === "features" && !raw.features && Array.isArray(raw.values)) config.features = raw.values;
+  if (type === "stats" && Array.isArray(raw.stats)) {
+    config.stats = raw.stats.map((st: any) => ({ ...st, value: typeof st.value === "number" ? `${st.value.toLocaleString("fr-FR")}${st.suffix || ""}` : st.value }));
+  }
+  if (type === "contact") {
+    const info = raw.contactInfo || {};
+    config.phone = raw.phone || info.phone;
+    config.email = raw.email || info.email;
+    config.address = raw.address || info.address;
+    config.hours = raw.hours || info.hours;
+    config.whatsapp = raw.whatsapp || raw.whatsappNumber;
+    for (const key of ["phone", "whatsapp"]) {
+      if (config[key] && String(config[key]).replace(/\D/g, "").length < 8) delete config[key];
+    }
+  }
+  if (type === "about" && !raw.image && raw.founderImage) config.image = raw.founderImage;
+  if (type === "video" && !raw.title && raw.overlayContent?.title) config.title = raw.overlayContent.title;
+  if (type === "collections" && !Array.isArray(raw.items)) return { ...section, type: "store_categories", config };
+  if (type === "about" && config.image) return { ...section, type: "image_with_text", config };
+  return { ...section, type, config };
+};
+
 const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
-  const commonProps = { sectionId: section.id, config: section.config ?? section.content ?? {} };
   if (section.is_visible === false) return null;
+  section = normalizeSection(section);
+  const commonProps = { sectionId: section.id, config: section.config };
   const handleAction = (type: string, id: string) => window.parent.postMessage({ type: 'SECTION_ACTION', actionType: type, sectionId: id }, '*');
   const renderSection = () => {
     switch (section.type) {
@@ -1657,10 +2033,16 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
       case "faq": return <FAQ {...commonProps} />;
         case "newsletter": return <Newsletter {...commonProps} />;
         case "reviews": return <ReviewsSection {...commonProps} />;
-        case "footer": return <Footer {...commonProps} />;
+        case "footer": return <Footer {...commonProps} store={store} links={(store?.footerLinks || []).filter((l: any) => l?.label)} />;
 
         case "recommended_products": return <RecommendedProducts {...commonProps} onAddToCart={onAddToCart} storeId={store?.id} onSelectProduct={onSelectProduct} />;
         case "checkout": return <Checkout {...commonProps} store={store} cart={cart} slug={slug} onClearCart={onClearCart} />;
+        case "countdown": return <Countdown {...commonProps} />;
+        case "video": return <VideoSection {...commonProps} />;
+        case "contact": return <ContactSection {...commonProps} store={store} />;
+        case "image_with_text": return <ImageWithText {...commonProps} />;
+        case "cta_banner": return <CtaBanner {...commonProps} />;
+        case "store_categories": return <StoreCategories {...commonProps} storeId={store?.id} />;
 
 
       default: return typeof window !== "undefined" && window.parent !== window ? <div className="p-10 text-center border-2 border-dashed">Section {section.type}</div> : null;
@@ -1740,6 +2122,9 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
               let pagesQuery = supabase.from("store_pages").select("*").eq("store_id", storeData.id);
               if (!isBuilder) pagesQuery = pagesQuery.eq("is_published", true);
               const { data: pagesData } = await pagesQuery.order("sort_order", { ascending: true });
+              const { data: navData } = await supabase.from("store_navigation").select("type, items").eq("store_id", storeData.id);
+              const navItems = (t: string) => (navData || []).find((n: any) => n.type === t)?.items || [];
+              setStore((prev: any) => (prev ? { ...prev, headerLinks: navItems("header"), footerLinks: navItems("footer") } : prev));
               if (pagesData) {
                 setPages(pagesData);
                 const initial = sectionsForPage(currentPage, pagesData) ?? pagesData[0]?.sections ?? [];
@@ -1800,7 +2185,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
       '--primary': store?.theme_config?.colors?.primary || '#7c3aed',
       '--secondary': store?.theme_config?.colors?.secondary || '#4f46e5',
       '--font-heading': store?.theme_config?.fonts?.heading || store?.theme_config?.typography?.fontHeading || 'Inter',
-      '--font-body': store?.theme_config?.fonts?.body || 'Inter',
+      '--font-body': store?.theme_config?.fonts?.body || store?.theme_config?.typography?.fontBody || 'Inter',
       '--radius': store?.theme_config?.spacing?.borderRadius === 'full' ? '9999px' : store?.theme_config?.spacing?.borderRadius === 'md' ? '0.5rem' : '0px',
     } as React.CSSProperties}>
       <style jsx global>{`
@@ -1815,6 +2200,9 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           font-family: var(--font-body), system-ui, sans-serif !important;
           font-size: ${store?.theme_config?.typography?.scale || 100}%;
         }
+        section .grid > *, section .flex > * { min-width: 0; }
+        section h1, section h2, section h3 { overflow-wrap: anywhere; }
+        input, select, textarea { max-width: 100%; }
         .rounded-3xl { border-radius: calc(var(--radius) * 3) !important; }
         .rounded-2xl { border-radius: calc(var(--radius) * 2) !important; }
         .rounded-xl { border-radius: var(--radius) !important; }
@@ -1822,6 +2210,15 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
         .text-primary { color: var(--primary) !important; }
         .border-primary { border-color: var(--primary) !important; }
       `}</style>
+        {(() => {
+          const families = [store?.theme_config?.fonts?.heading || store?.theme_config?.typography?.fontHeading, store?.theme_config?.fonts?.body || store?.theme_config?.typography?.fontBody]
+            .map((f: any) => String(f || "").replace(/['"]/g, "").split(",")[0].trim())
+            .filter((f: string) => f && !/^(inter|system-ui|sans-serif|serif)$/i.test(f));
+          const unique = [...new Set(families)];
+          return unique.length ? (
+            <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${unique.map((f) => `family=${encodeURIComponent(f).replace(/%20/g, "+")}:wght@400;700`).join("&")}&display=swap`} />
+          ) : null;
+        })()}
         <Header store={store} pages={pages} onOpenCart={() => setIsCartOpen(true)} cartCount={cart.reduce((acc, item) => acc + (item.quantity || 1), 0)} />
         <main className="flex-1">
           {currentPage.startsWith("merci/") ? (
