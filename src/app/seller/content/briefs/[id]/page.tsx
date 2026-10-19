@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DisputeDialog } from "@/components/content/DisputeDialog";
+import { CreatorPortfolioDialog } from "@/components/content/CreatorPortfolioDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -569,8 +570,11 @@ export default function BriefDetailsPage() {
                                 <span className="text-xs font-bold uppercase tracking-wider">Retenu</span>
                               </div>
                             ) : (
-                              <Badge variant="outline" className="justify-center py-2">Non retenu</Badge>
+                              <Badge variant="outline" className="justify-center py-2">
+                                {app.status === "pending" ? "En attente" : "Non retenu"}
+                              </Badge>
                             )}
+                            <CreatorPortfolioDialog creatorId={app.creator_id} creatorName={app.creator.full_name} />
                           </div>
                         </div>
                       </CardContent>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import { Messaging } from "@/components/content/Messaging";
 
 export default function CreatorMessagesPage() {
@@ -9,7 +11,9 @@ export default function CreatorMessagesPage() {
         <h1 className="text-3xl font-bold">Messages</h1>
         <p className="text-muted-foreground">Échangez avec les vendeurs sur vos missions</p>
       </div>
-      <Messaging userRole="creator" />
+      <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
+        <Messaging userRole="creator" />
+      </Suspense>
     </div>
   );
 }
