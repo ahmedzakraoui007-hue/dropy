@@ -58,3 +58,4 @@ test-accounts.local.txt
 /playwright-report/
 /test-results/
 *.log
+!.env.example
