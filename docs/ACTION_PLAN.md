@@ -1,5 +1,26 @@
 # Dropy — Action plan to a functional platform
 
+## Status 2026-10-20 (branch `fix/production-readiness`)
+
+Decision: **everything is free during launch** (`NEXT_PUBLIC_FREE_LAUNCH=true`). Paid plans come later through a
+Tunisian gateway (Konnect / Flouci / Paymee).
+
+Done:
+- Admin can approve/reject pending sellers, suppliers and users (no approve action existed for pending accounts).
+- Free launch: free limits for everyone, no subscription menu or upgrade prompts, 0% UGC commission, Stripe endpoints off.
+- `npm run accounts:reset` reissues admin/seller/supplier/creator accounts and locks the accounts exposed in git history.
+- Middleware fails closed; only `approved`/`active` accounts reach dashboards.
+- Rate limiting on signup, password reset, checkout, order tracking, reviews, promo validation (in-memory, per instance).
+- Fake features removed (AI assistant, performance score, mocked supplier comparison, fixed ratings, fake supplier balance).
+- Courier: no more invented tracking numbers; shipments go through "Dropy Livraison" + admin shipments page.
+- Type and lint checks on in the build; CI workflow; `/api/health`; `.env.example`; 26 unused packages removed.
+
+Still open:
+- Run the three security migrations in Supabase (see "RLS audit" below) — **blocking**.
+- `supabase db pull` so the schema is versioned, then create orders atomically in one Postgres function (1.6).
+- Shared rate-limit store (Upstash) and error monitoring (Sentry) before heavy traffic.
+- Tunisian payment gateway when paid plans start (3.2, 3.3).
+
 _Audit date: 2026-10-13 · Based on the code in this repository (commit after `88c6e84`)._
 
 ## Where things stand
