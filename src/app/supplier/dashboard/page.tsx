@@ -44,17 +44,6 @@ export default function SupplierDashboard() {
         return;
       }
 
-      const { data: supplierProfile } = await supabase
-        .from("supplier_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!supplierProfile) {
-        router.replace("/supplier/signup");
-        return;
-      }
-
       const { count: productsCount } = await supabase
         .from("products")
         .select("*", { count: "exact", head: true })
