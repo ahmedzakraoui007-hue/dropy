@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { AccountStatusBadge, AccountStatusMenuItems, updateAccountStatus, STATUS_MESSAGES, type AccountStatusAction } from "@/components/admin/AccountStatus";
 import { formatDate } from "@/lib/utils";
 
 interface UserProfile {
@@ -105,28 +106,15 @@ export default function UserManagement() {
     }
   };
 
-    const updateUserStatus = async (userId: string, newStatus: string) => {
-      try {
-        const response = await fetch("/api/admin/users/status", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, status: newStatus }),
-        });
-
-        if (!response.ok) throw new Error("Erreur API");
-
-        const statusMessages: Record<string, string> = {
-          active: "Utilisateur activé & Email envoyé",
-          rejected: "Demande refusée & Email envoyé",
-          suspended: "Utilisateur suspendu",
-          approved: "Utilisateur approuvé & Email envoyé"
-        };
-        toast.success(statusMessages[newStatus] || "Statut mis à jour");
-        fetchUsers();
-      } catch (error) {
-        toast.error("Erreur lors de la mise à jour du statut");
-      }
-    };
+  const updateUserStatus = async (userId: string, newStatus: AccountStatusAction) => {
+    try {
+      const result = await updateAccountStatus(userId, newStatus);
+      toast.success(STATUS_MESSAGES[newStatus] + (result.emailSent ? " & email envoyé" : ""));
+      fetchUsers();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour du statut");
+    }
+  };
 
 
   return (
@@ -217,20 +205,7 @@ export default function UserManagement() {
                         </Badge>
                       </TableCell>
                         <TableCell>
-                          <Badge 
-                            variant={user.status === 'suspended' || user.status === 'rejected' ? "destructive" : "default"}
-                            className={
-                              user.status === 'active' || user.status === 'approved' ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20" : 
-                              user.status === 'email_verified' ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20 border-amber-500/20" :
-                              user.status === 'pending' ? "bg-slate-500/10 text-slate-500 hover:bg-slate-500/20 border-slate-500/20" : ""
-                            }
-                          >
-                            {user.status === 'suspended' ? 'Suspendu' : 
-                             user.status === 'active' || user.status === 'approved' ? 'Actif' :
-                             user.status === 'email_verified' ? 'En attente validation' :
-                             user.status === 'pending' ? 'En attente email' :
-                             user.status === 'rejected' ? 'Refusé' : user.status}
-                          </Badge>
+                          <AccountStatusBadge status={user.status} />
                         </TableCell>
 
                       <TableCell>
@@ -275,33 +250,7 @@ export default function UserManagement() {
                               Promouvoir Admin
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                              {user.status === 'email_verified' && (
-                                <>
-                                  <DropdownMenuItem onClick={() => updateUserStatus(user.id, 'active')} className="text-emerald-600 font-bold">
-                                    <UserCheck className="w-4 h-4 mr-2" />
-                                    Accepter la demande
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => updateUserStatus(user.id, 'rejected')} className="text-red-600">
-                                    <UserX className="w-4 h-4 mr-2" />
-                                    Refuser la demande
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                </>
-                              )}
-                              {user.status === 'suspended' ? (
-                                <DropdownMenuItem onClick={() => updateUserStatus(user.id, 'active')} className="text-emerald-600">
-                                  <UserCheck className="w-4 h-4 mr-2" />
-                                  Réactiver
-                                </DropdownMenuItem>
-                              ) : (
-                                user.status !== 'email_verified' && user.status !== 'pending' && (
-                                  <DropdownMenuItem onClick={() => updateUserStatus(user.id, 'suspended')} className="text-red-600">
-                                    <UserX className="w-4 h-4 mr-2" />
-                                    Suspendre
-                                  </DropdownMenuItem>
-                                )
-                              )}
-
+                            <AccountStatusMenuItems status={user.status} onChange={(s) => updateUserStatus(user.id, s)} />
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
