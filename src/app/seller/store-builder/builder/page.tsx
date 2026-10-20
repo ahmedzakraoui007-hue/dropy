@@ -75,8 +75,6 @@ import SectionLibrary from "@/components/builder/SectionLibrary";
 import SectionEditor from "@/components/builder/SectionEditor";
 import SmartWarnings from "@/components/builder/SmartWarnings";
 import CommandPalette from "@/components/builder/CommandPalette";
-import PerformanceDashboard from "@/components/builder/PerformanceDashboard";
-import AIAssistant from "@/components/builder/AIAssistant";
 import TemplateMarketplace from "@/components/builder/TemplateMarketplace";
 import { premiumTemplates } from "@/lib/templates";
 import { BuilderTemplate } from "@/lib/builder-templates";
@@ -402,8 +400,6 @@ export default function BuilderPage() {
   const [viewMode, setViewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isWarningsOpen, setIsWarningsOpen] = useState(false);
-  const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("sections");
   const [isBeginnerMode, setIsBeginnerMode] = useState(true);
@@ -1269,22 +1265,6 @@ export default function BuilderPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Performance Dialog */}
-        <Dialog open={isPerformanceOpen} onOpenChange={setIsPerformanceOpen}>
-          <DialogContent className="max-w-lg p-0 h-[70vh] overflow-hidden flex flex-col">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Performance</DialogTitle>
-            </DialogHeader>
-            <PerformanceDashboard
-              sections={sections}
-              store={store}
-              onOpenSettings={(tab) => {
-                setActiveTab(tab);
-                setIsPerformanceOpen(false);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
 
           <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
             <DialogContent className="max-w-[95vw] lg:max-w-7xl p-0 h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] border-none shadow-2xl">
@@ -1374,9 +1354,6 @@ export default function BuilderPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setIsAIAssistantOpen(true)}>
-                    <Sparkles className="w-4 h-4 mr-2 text-violet-500" /> Assistant AI
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsTemplatesOpen(true)}>
                     <Layout className="w-4 h-4 mr-2" /> Templates Premium
                   </DropdownMenuItem>
@@ -1396,9 +1373,6 @@ export default function BuilderPage() {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => setIsWarningsOpen(true)}>
                     <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" /> Vérifier les erreurs
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsPerformanceOpen(true)}>
-                    <Gauge className="w-4 h-4 mr-2 text-emerald-500" /> Score de Performance
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1855,20 +1829,6 @@ export default function BuilderPage() {
                         </p>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-violet-50 border border-violet-100 text-violet-900 space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white">
-                            <Sparkles className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-xs">Gagnez du temps</p>
-                            <p className="text-[10px] opacity-80">L&apos;IA peut construire la boutique pour vous.</p>
-                          </div>
-                        </div>
-                        <Button className="w-full bg-violet-600 text-white hover:bg-violet-700" size="sm" onClick={() => setIsAIAssistantOpen(true)}>
-                          Lancer l&apos;IA
-                        </Button>
-                      </div>
                     </div>
                   </ScrollArea>
                 </TabsContent>
@@ -1953,26 +1913,6 @@ export default function BuilderPage() {
           )}
 
         <AnimatePresence>
-          {isAIAssistantOpen && (
-            <AIAssistant 
-              onClose={() => setIsAIAssistantOpen(false)}
-              sections={sections}
-              onUpdateSections={setSections}
-              onAddSection={(type, data) => {
-                const newSection = {
-                  id: crypto.randomUUID(),
-                  type,
-                  config: data || getPlaceholderConfig(type),
-                  position: sections.length,
-                  is_visible: true
-                };
-                setSections([...sections, newSection]);
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {isTemplatesOpen && (
             <TemplateMarketplace 
               onClose={() => setIsTemplatesOpen(false)}
@@ -2003,7 +1943,7 @@ export default function BuilderPage() {
                 Lancez votre boutique e-commerce en moins de 30 minutes.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid md:grid-cols-2 gap-6 py-6">
+            <div className="grid gap-6 py-6">
               <div 
                 className="p-6 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group space-y-4"
                 onClick={() => {
@@ -2017,21 +1957,6 @@ export default function BuilderPage() {
                 <div className="space-y-1">
                   <h3 className="font-bold">Choisir un Template</h3>
                   <p className="text-sm text-muted-foreground">Partez d&apos;un design pro optimisé pour la conversion (Beauté, Fitness, Maison...)</p>
-                </div>
-              </div>
-              <div 
-                className="p-6 rounded-2xl border-2 border-border hover:border-violet-500 hover:bg-violet-50 transition-all cursor-pointer group space-y-4"
-                onClick={() => {
-                  setIsAIAssistantOpen(true);
-                  setShowOnboarding(false);
-                }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-6 h-6 text-violet-600" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold">Assistant IA</h3>
-                  <p className="text-sm text-muted-foreground">Décrivez votre niche et laissez l&apos;IA générer vos textes, images et sections.</p>
                 </div>
               </div>
             </div>

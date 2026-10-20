@@ -147,8 +147,8 @@ export default function SuppliersManagement() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Note Moyenne</p>
-                <h3 className="text-2xl font-bold">4.8/5</h3>
+                <p className="text-sm font-medium text-muted-foreground">En attente</p>
+                <h3 className="text-2xl font-bold">{suppliers.filter((s) => !s.status || s.status === "pending").length}</h3>
               </div>
               <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
                 <Star className="w-6 h-6 text-yellow-500" />

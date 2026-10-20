@@ -35,7 +35,7 @@ export const themes: Theme[] = [
                     title: 'Bienvenue dans notre boutique',
                     subtitle: 'Découvrez notre collection',
                     ctaText: 'Voir les produits',
-                    ctaLink: '/shop/products',
+                    ctaLink: '/shop',
                     overlay: true,
                     overlayOpacity: 0.2
                 },
@@ -83,7 +83,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '1200px',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Modern Living', subtitle: 'Elevate your space with our curated collection.', ctaText: 'Shop Now', ctaLink: '/shop/products', overlay: false }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Modern Living', subtitle: 'Elevate your space with our curated collection.', ctaText: 'Shop Now', ctaLink: '/shop', overlay: false }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'New Arrivals', count: 4, columns: 4 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'newsletter', content: { title: 'Join the Community', subtitle: 'Get 10% off your first order.' }, is_visible: true, styles: {} }
         ],
@@ -116,7 +116,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '1100px',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Timeless Elegance', subtitle: 'Luxury defined in every detail.', ctaText: 'Discover Collection', ctaLink: '/shop/products', overlay: true, overlayOpacity: 0.3 }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Timeless Elegance', subtitle: 'Luxury defined in every detail.', ctaText: 'Discover Collection', ctaLink: '/shop', overlay: true, overlayOpacity: 0.3 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'Signature Collection', count: 3, columns: 3 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'testimonials', content: { title: 'Client Stories' }, is_visible: true, styles: {} }
         ],
@@ -149,7 +149,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '1280px',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'BE BOLD.', subtitle: 'Stand out from the crowd.', ctaText: 'GRAB IT', ctaLink: '/shop/products', overlay: false }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'BE BOLD.', subtitle: 'Stand out from the crowd.', ctaText: 'GRAB IT', ctaLink: '/shop', overlay: false }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'Trending Now', count: 4, columns: 2 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'promo_banner', content: { title: 'FLASH SALE', subtitle: '50% OFF EVERYTHING' }, is_visible: true, styles: {} }
         ],
@@ -182,7 +182,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '1200px',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'NEXT GEN', subtitle: 'The future of shopping is here.', ctaText: 'Explore', ctaLink: '/shop/products', overlay: true, overlayOpacity: 0.6 }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'NEXT GEN', subtitle: 'The future of shopping is here.', ctaText: 'Explore', ctaLink: '/shop', overlay: true, overlayOpacity: 0.6 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'Best Sellers', count: 4, columns: 4 }, is_visible: true, styles: {} }
         ],
     },
@@ -214,7 +214,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '1100px',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Fait avec Amour', subtitle: 'Artisanat authentique et durable.', ctaText: 'Découvrir', ctaLink: '/shop/products', overlay: true, overlayOpacity: 0.2 }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Fait avec Amour', subtitle: 'Artisanat authentique et durable.', ctaText: 'Découvrir', ctaLink: '/shop', overlay: true, overlayOpacity: 0.2 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'Créations Récentes', count: 3, columns: 3 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'newsletter', content: { title: 'Restez informé', subtitle: 'Inscrivez-vous à notre newsletter.' }, is_visible: true, styles: {} }
         ],
@@ -249,7 +249,7 @@ export const themes: Theme[] = [
         },
         defaultSections: [
             { id: crypto.randomUUID(), type: 'promo_banner', content: { title: 'Livraison Gratuite', description: 'Sur toute commande de plus de 200 TND' }, is_visible: true, styles: { backgroundColor: '#3B82F6' } },
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Dernière Technologie', subtitle: 'Découvrez les gadgets de demain, aujourd\'hui.', ctaText: 'Acheter Maintenant', ctaLink: '/shop/products', overlay: true, overlayOpacity: 0.7 }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Dernière Technologie', subtitle: 'Découvrez les gadgets de demain, aujourd\'hui.', ctaText: 'Acheter Maintenant', ctaLink: '/shop', overlay: true, overlayOpacity: 0.7 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'icon_grid', content: { title: 'Pourquoi Nous Choisir', columns: 3, items: [{ id: 1, icon: 'ShieldCheck', title: 'Garantie 2 Ans', description: 'Protection complète incluse.' }, { id: 2, icon: 'Truck', title: 'Livraison Express', description: '24/48h partout en Tunisie.' }, { id: 3, icon: 'Headphones', title: 'Support 7/7', description: 'Une équipe experte à votre écoute.' }] }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'categories_grid', content: { title: 'Nos Catégories', gridColumns: 3, showProductCount: true }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'Nouveautés', count: 4, columns: 4, source: 'newest' }, is_visible: true, styles: {} }
@@ -283,7 +283,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '1200px',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Révélez Votre Éclat', subtitle: 'Soins naturels pour une peau radieuse.', ctaText: 'Voir la Collection', ctaLink: '/shop/products', overlay: false }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'Révélez Votre Éclat', subtitle: 'Soins naturels pour une peau radieuse.', ctaText: 'Voir la Collection', ctaLink: '/shop', overlay: false }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'icon_grid', content: { layout: 'horizontal', items: [{ id: 1, icon: 'Leaf', title: '100% Naturel', description: '' }, { id: 2, icon: 'Heart', title: 'Non testé sur animaux', description: '' }, { id: 3, icon: 'Sparkles', title: 'Résultats prouvés', description: '' }] }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'Les Indispensables', count: 3, columns: 3 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'testimonials', content: { title: 'Elles nous font confiance' }, is_visible: true, styles: {} },
@@ -318,7 +318,7 @@ export const themes: Theme[] = [
             containerMaxWidth: '100%',
         },
         defaultSections: [
-            { id: crypto.randomUUID(), type: 'hero', content: { title: 'DOMINEZ LE JEU', subtitle: 'Équipement pro pour athlètes exigeants.', ctaText: 'SHOPPER MAINTENANT', ctaLink: '/shop/products', overlay: true, overlayOpacity: 0.5 }, is_visible: true, styles: {} },
+            { id: crypto.randomUUID(), type: 'hero', content: { title: 'DOMINEZ LE JEU', subtitle: 'Équipement pro pour athlètes exigeants.', ctaText: 'SHOPPER MAINTENANT', ctaLink: '/shop', overlay: true, overlayOpacity: 0.5 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'categories_grid', content: { title: 'PAR SPORT', gridColumns: 4 }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'promo_banner', content: { title: 'SUMMER SALE', description: 'JUSQU\'À -50% SUR TOUT LE SITE', ctaText: 'PROFITER', backgroundColor: '#DC2626', textColor: '#FFFFFF' }, is_visible: true, styles: {} },
             { id: crypto.randomUUID(), type: 'featured_products', content: { title: 'TRENDING NOW', count: 4, columns: 4 }, is_visible: true, styles: {} }

@@ -113,12 +113,6 @@ export default function ProductDetailPage() {
       
       setSupplierReviews(reviews || []);
 
-      // Mock other suppliers for comparison
-      setOtherSuppliers([
-        { id: '1', supplier: 'Tunis Trade', price: data.base_price - 2, rating: 4.5, delivery: '3 jours', city: 'Tunis' },
-        { id: '2', supplier: 'Sfax Grossiste', price: data.base_price + 3, rating: 4.9, delivery: '2 jours', city: 'Sfax' },
-        { id: '3', supplier: 'Sahel Distribution', price: data.base_price - 1, rating: 4.7, delivery: '4 jours', city: 'Monastir' },
-      ]);
       
       setLoading(false);
     }
@@ -345,6 +339,7 @@ export default function ProductDetailPage() {
                   <p className="text-3xl font-black text-gray-900">{formatPrice(basePrice)}</p>
                 </div>
 
+                {otherSuppliers.length > 0 && (
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2 rounded-full font-bold border-gray-200 bg-white">
@@ -388,6 +383,7 @@ export default function ProductDetailPage() {
                     </div>
                   </DialogContent>
                 </Dialog>
+                )}
               </div>
 
               <div className="space-y-4 pt-6 border-t border-gray-200">
