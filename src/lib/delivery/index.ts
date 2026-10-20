@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { DeliveryProvider, CreateShipmentParams, ShipmentResult } from './types';
 import { DropyInternalProvider, TunisieLivraisonProvider } from './providers';
 
@@ -29,14 +30,11 @@ export function generatePackageCode(orderId: string): string {
 
 export function generateSupplierOrderNumber(): string {
   const year = new Date().getFullYear();
-  const random = Math.random().toString(36).substring(2, 7).toUpperCase();
-  return `SUP-${year}-${random}`;
+  return `SUP-${year}-${randomBytes(4).toString('hex').toUpperCase()}`;
 }
 
 export function generateShipmentNumber(): string {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-  return `SHP-${timestamp}-${random}`;
+  return `SHP-${randomBytes(6).toString('hex').toUpperCase()}`;
 }
 
 export * from './types';

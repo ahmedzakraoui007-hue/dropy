@@ -1,3 +1,4 @@
+import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -9,6 +10,8 @@ function lastDigits(phone: string | null | undefined) {
 }
 
 export async function GET(request: Request) {
+  const limited = rateLimit(request, "order-track", 30, 600);
+  if (limited) return limited;
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
   const number = searchParams.get("number")?.trim();

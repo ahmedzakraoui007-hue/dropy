@@ -1,3 +1,4 @@
+import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -43,6 +44,8 @@ function parseCart(raw: unknown): CartLine[] | null {
 }
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "checkout", 20, 3600);
+  if (limited) return limited;
   try {
     const body = await request.json().catch(() => null);
     if (!body) return fail("invalid_request", "Requête invalide");

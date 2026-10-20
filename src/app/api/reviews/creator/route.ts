@@ -1,3 +1,4 @@
+import { rateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -26,6 +27,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "review", 10, 3600);
+  if (limited) return limited;
   const supabase = await createClient();
   const body = await request.json();
   const { brief_id, creator_id, store_id, rating, quality_rating, communication_rating, deadline_rating, comment } = body;

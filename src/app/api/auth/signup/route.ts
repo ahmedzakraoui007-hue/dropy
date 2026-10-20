@@ -1,3 +1,4 @@
+import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendConfirmationEmail } from "@/lib/mail";
@@ -13,6 +14,8 @@ function fail(code: string, error: string, status = 400) {
 }
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "signup", 5, 3600);
+  if (limited) return limited;
   try {
     const body = await req.json().catch(() => null);
     if (!body) return fail("invalid_request", "Invalid request body");
