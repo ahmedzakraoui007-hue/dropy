@@ -5,14 +5,8 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(),
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-      {
-        protocol: 'http',
-        hostname: '**',
-      },
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
   typescript: {
