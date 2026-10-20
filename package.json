@@ -11,6 +11,7 @@
         "test:e2e:ui": "playwright test --ui",
         "test:e2e:seller": "playwright test tests/e2e/seller/",
         "test:e2e:storefront": "playwright test tests/e2e/storefront/",
+        "accounts:reset": "tsx scripts/test-accounts.ts",
         "seed": "npx tsx tests/seed/index.ts",
         "seed:cleanup": "npx tsx tests/seed/cleanup.ts",
         "test:e2e:fresh": "npm run seed && npm run test:e2e"
