@@ -19,7 +19,7 @@ export async function GET(req: Request) {
       .from("stores")
       .select("id")
       .eq("vendor_id", user.id)
-      .single();
+      .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
     if (!store) {
       return NextResponse.json({ error: "Store not found" }, { status: 404 });

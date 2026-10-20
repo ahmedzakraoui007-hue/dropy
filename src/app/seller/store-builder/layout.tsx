@@ -1,7 +1,6 @@
 "use client";
 
 import { ReactNode } from "react";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -10,71 +9,30 @@ import {
   FileText, 
   Navigation, 
   Settings, 
-  Eye, 
+  LayoutTemplate,
   ChevronLeft,
   Store,
   ExternalLink
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
+import { useSellerStore } from "@/hooks/useSellerStore";
 
 interface StoreBuilderLayoutProps {
   children: ReactNode;
 }
 
 const navItems = [
-  {
-    title: "Tableau de bord",
-    href: "/seller/store-builder",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Design & Thèmes",
-    href: "/seller/store-builder/design",
-    icon: Palette,
-  },
-  {
-    title: "Pages",
-    href: "/seller/store-builder/pages",
-    icon: FileText,
-  },
-  {
-    title: "Navigation",
-    href: "/seller/store-builder/navigation",
-    icon: Navigation,
-  },
-  {
-    title: "Paramètres",
-    href: "/seller/store-builder/settings",
-    icon: Settings,
-  },
-  {
-    title: "Aperçu en direct",
-    href: "/seller/store-builder/preview",
-    icon: Eye,
-  },
+  { title: "Ma boutique", href: "/seller/store-builder", icon: LayoutDashboard },
+  { title: "Éditeur visuel", href: "/seller/store-builder/builder", icon: LayoutTemplate },
+  { title: "Thèmes", href: "/seller/store-builder/themes", icon: Palette },
+  { title: "Menus", href: "/seller/store-builder/navigation", icon: Navigation },
+  { title: "Paramètres", href: "/seller/store-builder/settings", icon: Settings },
 ];
 
 export default function StoreBuilderLayout({ children }: StoreBuilderLayoutProps) {
   const pathname = usePathname();
-  const [store, setStore] = useState<any>(null);
-
-  useEffect(() => {
-    async function loadStore() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("stores")
-          .select("*")
-          .eq("vendor_id", user.id)
-          .single();
-        setStore(data);
-      }
-    }
-    loadStore();
-  }, []);
+  const { store } = useSellerStore();
 
   return (
     <div className="flex h-screen bg-gray-50/50">
@@ -125,7 +83,7 @@ export default function StoreBuilderLayout({ children }: StoreBuilderLayoutProps
             asChild
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-blue-100 flex items-center gap-2"
           >
-            <Link href={store?.slug ? `/${store.slug}` : "/seller/store-builder"} target="_blank">
+            <Link href={store?.slug ? `/${store.slug}` : "/seller/store-builder"} target="_blank" rel="noreferrer">
               <ExternalLink className="w-4 h-4" />
               Voir ma boutique
             </Link>

@@ -47,7 +47,7 @@ export default function NavigationPage() {
             .from("stores")
             .select("*")
             .eq("vendor_id", user.id)
-            .single();
+            .order("created_at", { ascending: true }).limit(1).maybeSingle();
         setStore(storeData);
 
         if (storeData) {
@@ -137,7 +137,7 @@ export default function NavigationPage() {
         <h1 className="text-xl font-bold text-gray-900">Aucune boutique trouvée</h1>
         <p className="text-gray-500">Vous devez d'abord créer une boutique pour accéder à la navigation.</p>
         <Button asChild>
-          <a href="/seller/store/create">Créer une boutique</a>
+          <a href="/seller/store-builder">Ma boutique</a>
         </Button>
       </div>
     );

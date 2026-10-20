@@ -2068,6 +2068,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
   const { slug } = use(params);
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState<any>(null);
+  const [canSeeOffline, setCanSeeOffline] = useState(false);
   const [sections, setSections] = useState<any[]>([]);
   const [pages, setPages] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState("home");
@@ -2101,6 +2102,10 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           const { data: storeData } = await supabase.from("stores").select("*").eq("slug", slug).single();
           if (storeData) {
             setStore(storeData);
+            if (storeData.is_active === false) {
+              const { data: { user } } = await supabase.auth.getUser();
+              setCanSeeOffline(isBuilder || user?.id === storeData.vendor_id);
+            }
             
             // Track visit (if not in builder)
             if (window.parent === window) {
@@ -2179,6 +2184,14 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
   if (loading) return <div className="flex h-screen items-center justify-center bg-white"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!store) return <div className="flex h-screen items-center justify-center bg-white"><p>Boutique non trouvée</p></div>;
+  if (store.is_active === false && !canSeeOffline) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-2 bg-white px-6 text-center">
+        <p className="text-xl font-bold text-gray-900">{store.name}</p>
+        <p className="text-gray-500">Cette boutique est momentanément indisponible. Revenez bientôt !</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white relative" style={{

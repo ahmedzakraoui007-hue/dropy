@@ -152,11 +152,11 @@ export default function NewProductPage() {
       .from("stores")
       .select("id")
       .eq("vendor_id", user.id)
-      .single();
+      .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
     if (!store) {
       toast.error("Vous devez avoir une boutique pour ajouter des produits");
-      router.push("/seller/store/create");
+      router.push("/seller/store-builder");
       return;
     }
 

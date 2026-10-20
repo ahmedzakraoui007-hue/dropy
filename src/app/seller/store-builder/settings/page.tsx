@@ -1,308 +1,251 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Globe, 
-  Search, 
-  BarChart3, 
-  Code, 
-  Check, 
-  RefreshCw,
-  ExternalLink,
-  ShieldCheck,
-  Zap,
-  Facebook,
-  Share2,
-  Image as ImageIcon
-} from "lucide-react";
+import { Globe, ImageIcon, Loader2, Save, Search, Store, Trash2, Upload } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { slugError, slugify } from "@/lib/store-slug";
+import { useSellerStore } from "@/hooks/useSellerStore";
 
-export default function SettingsPage() {
-  const [loading, setLoading] = useState(true);
+type Form = {
+  name: string;
+  description: string;
+  logo_url: string;
+  slug: string;
+  seo_title: string;
+  seo_description: string;
+};
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
+
+export default function StoreSettingsPage() {
+  const { store, setStore, loading, error } = useSellerStore();
+  const [form, setForm] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
-  const [store, setStore] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    async function loadStore() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-          const { data } = await supabase
-            .from("stores")
-            .select("*")
-            .eq("vendor_id", user.id)
-            .single();
-        setStore(data);
-      }
-      setLoading(false);
-    }
-    loadStore();
-  }, []);
-
-  const handleUpdate = (field: string, value: any) => {
-    setStore((prev: any) => (prev ? { ...prev, [field]: value } : prev));
-  };
-
-  const handleSave = async () => {
     if (!store) return;
-    setSaving(true);
-    const supabase = createClient();
-    try {
-      const { error } = await supabase
-        .from("stores")
-        .update({
-          slug: store.slug,
-          custom_domain: store.custom_domain,
-          meta_title: store.meta_title,
-          meta_description: store.meta_description,
-          meta_keywords: store.meta_keywords,
-          google_analytics_id: store.google_analytics_id,
-          facebook_pixel_id: store.facebook_pixel_id,
-          custom_head_scripts: store.custom_head_scripts,
-          custom_body_scripts: store.custom_body_scripts,
-        })
-        .eq("id", store.id);
+    setForm({
+      name: store.name || "",
+      description: store.description || "",
+      logo_url: store.logo_url || "",
+      slug: store.slug || "",
+      seo_title: store.seo_title || "",
+      seo_description: store.seo_description || "",
+    });
+  }, [store]);
 
-      if (error) throw error;
-      toast.success("Paramètres enregistrés !");
-    } catch (error) {
-      toast.error("Erreur lors de la sauvegarde");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  if (loading) return <div className="p-8">Chargement...</div>;
-
-  if (!store) {
+  if (loading || (store && !form)) {
     return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-        <h1 className="text-xl font-bold text-gray-900">Aucune boutique trouvée</h1>
-        <p className="text-gray-500">Vous devez d'abord créer une boutique pour accéder à ces paramètres.</p>
-        <Button asChild>
-          <a href="/seller/store/create">Créer une boutique</a>
-        </Button>
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
+  if (!store || !form) {
+    return <div className="p-8 text-muted-foreground">{error || "Boutique introuvable."}</div>;
+  }
+
+  const update = (field: keyof Form, value: string) => setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  const slugProblem = form.slug === store.slug ? null : slugError(form.slug);
+  const origin = typeof window !== "undefined" ? window.location.host : "dropy.store";
+
+  const uploadLogo = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choisissez une image (PNG, JPG, SVG ou WebP).");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      toast.error("Image trop lourde (2 Mo maximum).");
+      return;
+    }
+    setUploading(true);
+    const supabase = createClient();
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${store.vendor_id}/logo-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("store-assets").upload(path, file, { upsert: true });
+    if (uploadError) {
+      setUploading(false);
+      toast.error("Échec de l'envoi du logo.");
+      return;
+    }
+    const { data } = supabase.storage.from("store-assets").getPublicUrl(path);
+    update("logo_url", data.publicUrl);
+    setUploading(false);
+    toast.success("Logo prêt, pensez à enregistrer.");
+  };
+
+  const save = async () => {
+    const name = form.name.trim();
+    if (!name) {
+      toast.error("Le nom de la boutique est obligatoire.");
+      return;
+    }
+    if (slugProblem) {
+      toast.error(slugProblem);
+      return;
+    }
+
+    setSaving(true);
+    const supabase = createClient();
+
+    if (form.slug !== store.slug) {
+      const { data: taken } = await supabase.from("stores").select("id").eq("slug", form.slug).neq("id", store.id).maybeSingle();
+      if (taken) {
+        setSaving(false);
+        toast.error("Cette adresse est déjà utilisée par une autre boutique.");
+        return;
+      }
+    }
+
+    const changes = {
+      name,
+      description: form.description.trim() || null,
+      logo_url: form.logo_url || null,
+      slug: form.slug,
+      seo_title: form.seo_title.trim() || null,
+      seo_description: form.seo_description.trim() || null,
+    };
+    const { error: saveError } = await supabase.from("stores").update(changes).eq("id", store.id);
+    setSaving(false);
+
+    if (saveError) {
+      toast.error(saveError.code === "23505" ? "Cette adresse est déjà utilisée." : "Erreur lors de l'enregistrement.");
+      return;
+    }
+    setStore({ ...store, ...changes });
+    toast.success("Paramètres enregistrés");
+  };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 pb-20">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight uppercase">PARAMÈTRES BOUTIQUE</h1>
-          <p className="text-gray-500 font-medium">Domaine, SEO, Analytics et configurations avancées</p>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Paramètres de la boutique</h1>
+          <p className="text-gray-500">Ces informations apparaissent sur votre boutique et dans Google.</p>
         </div>
-        <Button 
-          onClick={handleSave} 
-          disabled={saving}
-          className="rounded-xl bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 px-8"
-        >
-          {saving ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+        <Button onClick={save} disabled={saving || uploading} className="rounded-xl bg-purple-600 hover:bg-purple-700 shrink-0">
+          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
           Enregistrer
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          {/* Domain Settings */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Globe className="w-5 h-5 text-blue-600" />
-              Adresse de la boutique
-            </h2>
-            <Card className="border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-3">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Lien Dropy (Gratuit)</Label>
-                  <div className="flex gap-2">
-                    <div className="flex-1 flex items-center bg-gray-50 rounded-xl px-4 border border-transparent focus-within:border-blue-500 transition-colors">
-                      <span className="text-gray-400 text-sm font-medium mr-1">dropy.store/shop/</span>
-                        <Input 
-                          value={store?.slug || ""} 
-                          onChange={(e) => handleUpdate('slug', e.target.value)}
-                          className="border-none bg-transparent h-11 p-0 focus-visible:ring-0 font-bold"
-                        />
-                      </div>
-                      <Button variant="outline" size="icon" className="h-11 w-11 rounded-xl border-gray-100" asChild>
-                        <a href={`/preview/${store?.slug}`} target="_blank"><ExternalLink className="w-4 h-4" /></a>
-                      </Button>
-                  </div>
-                  <p className="text-[10px] text-gray-400 italic">Lien unique pour partager votre boutique.</p>
-                </div>
-
-                <div className="pt-6 border-t border-gray-100 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                        Domaine Personnalisé
-                        <Badge className="bg-blue-600 text-white border-none text-[8px] font-black uppercase">PREMIUM</Badge>
-                      </h4>
-                      <p className="text-xs text-gray-500">Utilisez votre propre domaine (ex: www.maboutique.com)</p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input 
-                      placeholder="www.votre-domaine.com" 
-                      value={store.custom_domain || ''}
-                      onChange={(e) => handleUpdate('custom_domain', e.target.value)}
-                      className="h-11 rounded-xl bg-gray-50 border-none"
-                    />
-                    <Button variant="outline" className="rounded-xl h-11 font-bold border-gray-200">
-                      Configurer DNS
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* SEO Settings */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Search className="w-5 h-5 text-blue-600" />
-              Référencement (SEO)
-            </h2>
-            <Card className="border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Meta Title</Label>
-                  <Input 
-                    value={store.meta_title || ''}
-                    onChange={(e) => handleUpdate('meta_title', e.target.value)}
-                    placeholder="Titre affiché sur Google"
-                    className="h-11 rounded-xl bg-gray-50 border-none"
-                    maxLength={60}
-                  />
-                  <div className="flex justify-between items-center px-1">
-                    <p className="text-[10px] text-gray-400">Recommandé : 50-60 caractères</p>
-                    <span className="text-[10px] font-bold text-gray-400">{(store.meta_title || '').length}/60</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Meta Description</Label>
-                  <Textarea 
-                    value={store.meta_description || ''}
-                    onChange={(e) => handleUpdate('meta_description', e.target.value)}
-                    placeholder="Description courte de votre boutique pour les moteurs de recherche"
-                    className="rounded-xl bg-gray-50 border-none min-h-[100px] resize-none"
-                    maxLength={160}
-                  />
-                  <div className="flex justify-between items-center px-1">
-                    <p className="text-[10px] text-gray-400">Recommandé : 150-160 caractères</p>
-                    <span className="text-[10px] font-bold text-gray-400">{(store.meta_description || '').length}/160</span>
-                  </div>
-                </div>
-
-                <div className="pt-6 border-t border-gray-100 space-y-4">
-                  <h4 className="font-bold text-gray-900 flex items-center gap-2 text-sm">
-                    <Share2 className="w-4 h-4 text-blue-600" />
-                    Aperçu sur les réseaux sociaux
-                  </h4>
-                  <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                    <div className="aspect-[1200/630] bg-gray-200 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                      {store.og_image_url ? (
-                        <img src={store.og_image_url} alt="Aperçu" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="text-center p-4">
-                          <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Image Sociale</p>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-tight mb-1">DROPY.STORE</p>
-                    <h5 className="font-bold text-gray-900 text-sm">{store.meta_title || store.name}</h5>
-                    <p className="text-[10px] text-gray-500 line-clamp-1">{store.meta_description || "Visitez ma boutique sur Dropy !"}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-        </div>
-
-        <div className="space-y-8">
-          {/* Tracking & Analytics */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              Tracking
-            </h2>
-            <Card className="border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Globe className="w-4 h-4 text-emerald-500" />
-                    <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Google Analytics ID</Label>
-                  </div>
-                  <Input 
-                    placeholder="G-XXXXXXXXXX" 
-                    value={store.google_analytics_id || ''}
-                    onChange={(e) => handleUpdate('google_analytics_id', e.target.value)}
-                    className="h-11 rounded-xl bg-gray-50 border-none"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Facebook className="w-4 h-4 text-blue-600" />
-                    <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Facebook Pixel ID</Label>
-                  </div>
-                  <Input 
-                    placeholder="XXXXXXXXXXXX" 
-                    value={store.facebook_pixel_id || ''}
-                    onChange={(e) => handleUpdate('facebook_pixel_id', e.target.value)}
-                    className="h-11 rounded-xl bg-gray-50 border-none"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* Advanced Scripts */}
-          <section className="space-y-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <Code className="w-5 h-5 text-blue-600" />
-              Scripts Personnalisés
-            </h2>
-            <Card className="border-gray-100 rounded-3xl shadow-sm overflow-hidden">
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Scripts &lt;head&gt;</Label>
-                  <Textarea 
-                    placeholder="Ex: <script>...</script>" 
-                    value={store.custom_head_scripts || ''}
-                    onChange={(e) => handleUpdate('custom_head_scripts', e.target.value)}
-                    className="rounded-xl bg-gray-50 border-none min-h-[100px] font-mono text-[10px]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold uppercase tracking-widest text-gray-400">Scripts &lt;body&gt;</Label>
-                  <Textarea 
-                    placeholder="Ex: <script>...</script>" 
-                    value={store.custom_body_scripts || ''}
-                    onChange={(e) => handleUpdate('custom_body_scripts', e.target.value)}
-                    className="rounded-xl bg-gray-50 border-none min-h-[100px] font-mono text-[10px]"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
-          <div className="p-6 rounded-[2rem] bg-gray-900 text-white shadow-xl">
-            <ShieldCheck className="w-8 h-8 mb-4 text-emerald-400" />
-            <h3 className="font-bold mb-2">Sécurité & RGPD</h3>
-            <p className="text-xs text-gray-400 leading-relaxed">Toutes vos données et celles de vos clients sont protégées et conformes aux normes de sécurité.</p>
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><Store className="w-5 h-5 text-purple-600" />Identité</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nom de la boutique</Label>
+            <Input id="name" value={form.name} maxLength={60} onChange={(e) => update("name", e.target.value)} />
           </div>
-        </div>
-      </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description courte</Label>
+            <Textarea
+              id="description"
+              rows={3}
+              maxLength={300}
+              value={form.description}
+              placeholder="Ce que vous vendez, en une ou deux phrases."
+              onChange={(e) => update("description", e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Logo</Label>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl border bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-gray-300" />
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" className="rounded-xl" disabled={uploading} asChild>
+                  <label className="cursor-pointer">
+                    {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+                    {form.logo_url ? "Changer" : "Envoyer un logo"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadLogo(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                </Button>
+                {form.logo_url && (
+                  <Button variant="ghost" className="rounded-xl text-red-600" onClick={() => update("logo_url", "")}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Retirer
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><Globe className="w-5 h-5 text-purple-600" />Adresse de la boutique</CardTitle>
+          <CardDescription>Si vous la changez, l'ancien lien ne fonctionnera plus.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-purple-500">
+            <span className="px-3 text-sm text-gray-500 bg-gray-50 border-r h-10 flex items-center shrink-0">{origin}/</span>
+            <input
+              className="flex-1 h-10 px-3 text-sm outline-none min-w-0"
+              value={form.slug}
+              maxLength={40}
+              onChange={(e) => update("slug", slugify(e.target.value))}
+            />
+          </div>
+          {slugProblem && <p className="text-sm text-red-600">{slugProblem}</p>}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><Search className="w-5 h-5 text-purple-600" />Référencement Google</CardTitle>
+          <CardDescription>Laissez vide pour utiliser le nom et la description de la boutique.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="seo_title">Titre dans Google</Label>
+            <Input id="seo_title" value={form.seo_title} maxLength={60} placeholder={form.name} onChange={(e) => update("seo_title", e.target.value)} />
+            <p className="text-xs text-gray-400">{form.seo_title.length}/60</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="seo_description">Description dans Google</Label>
+            <Textarea
+              id="seo_description"
+              rows={3}
+              maxLength={160}
+              value={form.seo_description}
+              placeholder={form.description || `Découvrez la boutique ${form.name}.`}
+              onChange={(e) => update("seo_description", e.target.value)}
+            />
+            <p className="text-xs text-gray-400">{form.seo_description.length}/160</p>
+          </div>
+          <div className="rounded-2xl border bg-gray-50 p-4 space-y-1">
+            <p className="text-xs text-gray-500">{origin}/{form.slug}</p>
+            <p className="text-blue-700 font-medium truncate">{form.seo_title || form.name}</p>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {form.seo_description || form.description || `Découvrez la boutique ${form.name}.`}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -548,12 +548,13 @@ export default function BuilderPage() {
         .from("stores")
         .select("*")
         .eq("vendor_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true })
+        .limit(1);
 
       const storeData = stores?.[0];
 
       if (!storeData) {
-        router.push("/seller/store/create");
+        router.push("/seller/store-builder");
         return;
       }
 
@@ -694,7 +695,7 @@ export default function BuilderPage() {
     }
   }, [pages]);
 
-  async function handleSave(silent = false) {
+  async function handleSave(silent = false, publish = false) {
     if (!store) return;
     if (!silent) setSaving(true);
     const supabase = createClient();
@@ -727,15 +728,25 @@ export default function BuilderPage() {
           : await supabase.from("store_pages").insert(row);
         if (pageError) throw pageError;
       }
-      
+
+      const keptSlugs = new Set(rows.map((row) => row.slug));
+      const removedIds = (existingPages || [])
+        .filter((p) => !keptSlugs.has(p.slug) && p.slug !== "home")
+        .map((p) => p.id);
+      if (removedIds.length > 0) {
+        const { error: deleteError } = await supabase.from("store_pages").delete().in("id", removedIds);
+        if (deleteError) throw deleteError;
+      }
+
       const { error: storeError } = await supabase
         .from("stores")
-        .update({ theme_config: store.theme_config })
+        .update({ theme_config: store.theme_config, ...(publish ? { is_active: true } : {}) })
         .eq("id", store.id);
 
       if (storeError) throw storeError;
+      if (publish) setStore((prev) => (prev ? { ...prev, is_active: true } : prev));
 
-      if (!silent) toast.success("Boutique enregistrée !");
+      if (!silent) toast.success(publish ? "Boutique publiée et en ligne !" : "Boutique enregistrée !");
     } catch (error: any) {
       console.error("Save error:", error);
       const message = error?.message || error?.details || JSON.stringify(error) || "Erreur inconnue";
@@ -1756,7 +1767,11 @@ export default function BuilderPage() {
                                 variant="ghost" 
                                 size="icon" 
                                 className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => setPages(pages.filter(p => p.id !== page.id))}
+                                onClick={() => {
+                                  if (confirm(`Supprimer la page « ${page.title || page.name || page.slug} » ? Elle sera supprimée à l'enregistrement.`)) {
+                                    setPages(pages.filter(p => p.id !== page.id));
+                                  }
+                                }}
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
                               </Button>
@@ -1817,7 +1832,7 @@ export default function BuilderPage() {
                       <div className="pt-4 border-t border-border">
                         <Button 
                           className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold shadow-lg shadow-purple-200"
-                          onClick={() => handleSave()}
+                          onClick={() => handleSave(false, true)}
                           disabled={saving}
                         >
                           {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}

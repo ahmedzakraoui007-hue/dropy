@@ -152,7 +152,7 @@ export default function MyProductsPage() {
       .from("stores")
       .select("id")
       .eq("vendor_id", user.id)
-      .single();
+      .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
     if (!store) {
       setLoading(false);
@@ -442,7 +442,7 @@ export default function MyProductsPage() {
         <Store className="w-16 h-16 text-gray-300 mb-4" />
         <h2 className="text-xl font-semibold text-gray-900 mb-2">Créez d&apos;abord votre boutique</h2>
         <p className="text-gray-500 mb-6">Vous devez avoir une boutique pour gérer vos produits</p>
-        <Button onClick={() => router.push("/seller/store/create")}>
+        <Button onClick={() => router.push("/seller/store-builder")}>
           Créer ma boutique
         </Button>
       </div>

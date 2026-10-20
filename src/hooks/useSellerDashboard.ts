@@ -45,7 +45,7 @@ export function useSellerDashboard(sellerId: string) {
         .from('stores')
         .select('id, slug')
         .eq('vendor_id', sellerId)
-        .single();
+        .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
       if (store) {
         setProfile(prev => prev ? { ...prev, store_slug: store.slug } : null);
@@ -138,7 +138,7 @@ export function useSellerDashboard(sellerId: string) {
             .from('stores')
             .select('id')
             .eq('vendor_id', sellerId)
-            .single();
+            .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
           if (store && payload.new.store_id === store.id) {
             toast.success(`Nouvelle commande ! ${payload.new.total_amount} TND`);

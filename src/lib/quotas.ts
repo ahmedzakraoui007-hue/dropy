@@ -12,7 +12,7 @@ export interface PlanQuotas {
 
 export const QUOTAS: Record<SubscriptionPlan, PlanQuotas> = {
   free: {
-    maxStores: 3,
+    maxStores: 1,
     maxProducts: 2000,
     maxBriefsPerMonth: 30,
     maxPages: 50,

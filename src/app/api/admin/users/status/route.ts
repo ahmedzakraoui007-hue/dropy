@@ -70,6 +70,11 @@ export async function POST(request: Request) {
       if (error) throw error;
     }
 
+    if (effectiveRole === "seller" && (status === "suspended" || status === "rejected")) {
+      const { error } = await supabase.from("stores").update({ is_active: false }).eq("vendor_id", userId);
+      if (error) throw error;
+    }
+
     let emailSent = false;
     const wasActive = targetUser.status === "active" || targetUser.status === "approved";
     if (status && targetUser.email && status !== targetUser.status) {

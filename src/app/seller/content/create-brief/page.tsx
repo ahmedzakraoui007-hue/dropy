@@ -101,7 +101,7 @@ export default function CreateBriefPage() {
         .from("stores")
         .select("id")
         .eq("vendor_id", user.id)
-        .single();
+        .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
       if (!store) throw new Error("Boutique introuvable");
 
