@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertCircle, ArrowUpCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { FREE_LAUNCH } from "@/lib/launch";
 
 interface QuotaAlertProps {
   title: string;
@@ -18,6 +19,13 @@ export function QuotaAlert({ title, description, plan }: QuotaAlertProps) {
       <AlertTitle className="font-bold">{title}</AlertTitle>
       <AlertDescription className="mt-2 space-y-4">
         <p>{description}</p>
+        {FREE_LAUNCH ? (
+          <Link href="/contact">
+            <Button variant="default" size="sm" className="bg-destructive hover:bg-destructive/90 text-white">
+              Nous contacter
+            </Button>
+          </Link>
+        ) : (
         <div className="flex items-center gap-3">
           <Link href="/seller/subscription">
             <Button variant="default" size="sm" className="bg-destructive hover:bg-destructive/90 text-white">
@@ -29,6 +37,7 @@ export function QuotaAlert({ title, description, plan }: QuotaAlertProps) {
             Plan actuel : <span className="capitalize font-semibold">{plan}</span>
           </p>
         </div>
+        )}
       </AlertDescription>
     </Alert>
   );

@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { FREE_LAUNCH } from "@/lib/launch";
+import { FreeLaunchNotice } from "@/components/FreeLaunchNotice";
 
 const PLANS = {
   starter: {
@@ -389,6 +391,13 @@ function SubscriptionContent() {
 }
 
 export default function SubscriptionPage() {
+  if (FREE_LAUNCH) {
+    return (
+      <div className="max-w-3xl mx-auto py-8">
+        <FreeLaunchNotice />
+      </div>
+    );
+  }
   return (
     <Suspense fallback={<div className="flex items-center justify-center min-h-[400px]"><Loader2 className="w-8 h-8 animate-spin" /></div>}>
       <SubscriptionContent />

@@ -1,5 +1,6 @@
 "use client";
 
+import { FREE_LAUNCH } from "@/lib/launch";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,7 +43,7 @@ const navigation = [
   { name: "Fournisseurs", href: "/admin/suppliers", icon: Package },
   { name: "Livraisons", href: "/admin/shipments", icon: Truck },
   { name: "Séquestre UGC", href: "/admin/escrow", icon: Scale },
-  { name: "Abonnements Stripe", href: "/admin/subscriptions", icon: CreditCard },
+  ...(FREE_LAUNCH ? [] : [{ name: "Abonnements", href: "/admin/subscriptions", icon: CreditCard }]),
   { name: "Modération Contenu", href: "/admin/content", icon: FileText },
   { name: "Support & Litiges", href: "/admin/support", icon: MessageSquare },
 ];

@@ -6,6 +6,8 @@ import { Check, Zap, ShieldCheck, Lock, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/context/LanguageContext";
+import { FREE_LAUNCH } from "@/lib/launch";
+import { FreeLaunchNotice } from "@/components/FreeLaunchNotice";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -71,6 +73,12 @@ export default function TarifsPage() {
       </section>
 
       {/* Pricing Cards */}
+      {FREE_LAUNCH && (
+        <div className="max-w-4xl mx-auto px-4 md:px-6 -mt-6 relative z-20">
+          <FreeLaunchNotice />
+        </div>
+      )}
+
       <section className="py-12 md:py-24 px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">

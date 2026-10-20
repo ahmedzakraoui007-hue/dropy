@@ -1,4 +1,6 @@
-export type SubscriptionPlan = 'starter' | 'pro' | 'enterprise';
+import { FREE_LAUNCH } from "./launch";
+
+export type SubscriptionPlan = 'free' | 'starter' | 'pro' | 'enterprise';
 
 export interface PlanQuotas {
   maxStores: number;
@@ -9,6 +11,13 @@ export interface PlanQuotas {
 }
 
 export const QUOTAS: Record<SubscriptionPlan, PlanQuotas> = {
+  free: {
+    maxStores: 3,
+    maxProducts: 2000,
+    maxBriefsPerMonth: 30,
+    maxPages: 50,
+    storageLimitMB: 5000,
+  },
   starter: {
     maxStores: 1,
     maxProducts: 50,
@@ -33,6 +42,7 @@ export const QUOTAS: Record<SubscriptionPlan, PlanQuotas> = {
 };
 
 export const getPlanFromStatus = (plan: string | null): SubscriptionPlan => {
+  if (FREE_LAUNCH) return 'free';
   if (!plan) return 'starter';
   const p = plan.toLowerCase();
   if (p === 'pro') return 'pro';

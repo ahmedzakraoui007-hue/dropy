@@ -1,4 +1,12 @@
 {
+    "launch": {
+        "badge": "Lancement",
+        "title": "Dropy est 100 % gratuit pendant le lancement",
+        "body": "Toutes les fonctionnalités sont offertes : boutique, catalogue fournisseurs, commandes et missions UGC, sans abonnement ni commission. Les offres payantes arriveront plus tard avec un paiement tunisien (carte, D17, Flouci) et vous serez prévenu à l'avance.",
+        "limit_title": "Limite de la phase de lancement atteinte",
+        "limit_body": "Contactez-nous si vous avez besoin de plus pour votre activité.",
+        "contact": "Nous contacter"
+    },
   "nav": {
     "vendeurs": "Vendeurs",
     "creators": "Créateurs UGC",
