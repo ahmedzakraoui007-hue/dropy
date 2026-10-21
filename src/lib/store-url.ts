@@ -36,3 +36,13 @@ export function storeBasePath(slug: string, pathname: string, hostname: string) 
 export function productPath(productId: string) {
   return `/p/${productId}`;
 }
+
+export function storeViewHref(slug: string, isActive: boolean | null | undefined) {
+  if (isActive === false) return `/preview/${slug}`;
+  return STORE_ROOT_DOMAIN ? storeUrl(slug) : `/${slug}`;
+}
+
+export function storeAddressAffixes() {
+  const siteHost = SITE_URL.replace(/^https?:\/\//, "");
+  return STORE_ROOT_DOMAIN ? { prefix: "", suffix: `.${STORE_ROOT_DOMAIN}` } : { prefix: `${siteHost}/`, suffix: "" };
+}

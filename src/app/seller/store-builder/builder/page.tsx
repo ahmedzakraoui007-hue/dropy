@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -1575,7 +1576,7 @@ export default function BuilderPage() {
                           <p className="text-[11px] text-amber-800">{t("store_builder.editor_nav.custom_body")}</p>
                           <div className="flex flex-wrap gap-2">
                             <Button size="sm" variant="outline" className="h-7 text-[11px] bg-white" asChild>
-                              <a href="/seller/store-builder/navigation">{t("store_builder.editor_nav.edit_custom")}</a>
+                              <Link href="/seller/store-builder/navigation">{t("store_builder.editor_nav.edit_custom")}</Link>
                             </Button>
                             <Button
                               size="sm"

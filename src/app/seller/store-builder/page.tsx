@@ -23,6 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { storeDisplayUrl, storeUrl, storeViewHref } from "@/lib/store-url";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -63,7 +64,7 @@ export default function StoreBuilderDashboard() {
   }
 
   const isOnline = store.is_active !== false;
-  const storeUrl = typeof window !== "undefined" ? `${window.location.origin}/${store.slug}` : `/${store.slug}`;
+  const publicUrl = storeUrl(store.slug);
 
   const steps = [
     {
@@ -122,12 +123,12 @@ export default function StoreBuilderDashboard() {
           <p className="text-sm font-medium text-muted-foreground">{tr("hub.eyebrow")}</p>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight truncate">{store.name}</h1>
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-mono text-gray-600 truncate">{storeUrl.replace(/^https?:\/\//, "")}</span>
+            <span className="font-mono text-gray-600 truncate">{storeDisplayUrl(store.slug)}</span>
             <button
               type="button"
               className="text-gray-400 hover:text-gray-700"
               onClick={() => {
-                navigator.clipboard.writeText(storeUrl);
+                navigator.clipboard.writeText(publicUrl);
                 toast.success(tr("hub.copied"));
               }}
               aria-label={tr("hub.copy")}
@@ -144,7 +145,7 @@ export default function StoreBuilderDashboard() {
             </span>
           </label>
           <Button variant="outline" asChild className="rounded-xl h-11">
-            <a href={`/${store.slug}`} target="_blank" rel="noreferrer">
+            <a href={storeViewHref(store.slug, store.is_active)} target="_blank" rel="noreferrer">
               <ExternalLink className="w-4 h-4 me-2" />
               {tr("hub.view")}
             </a>

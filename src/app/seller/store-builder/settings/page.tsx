@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { slugError, slugify } from "@/lib/store-slug";
+import { storeDisplayUrl } from "@/lib/store-url";
+import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -59,7 +61,6 @@ export default function StoreSettingsPage() {
   const slugCode = form.slug === store.slug ? null : slugError(form.slug);
   const slugProblem = slugCode ? tr(`errors.${slugCode}`) : null;
   const defaultDescription = tr("default_description").replace("{name}", form.name);
-  const origin = typeof window !== "undefined" ? window.location.host : "dropy.store";
 
   const uploadLogo = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -206,15 +207,7 @@ export default function StoreSettingsPage() {
           <CardDescription>{tr("address_note")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div dir="ltr" className="flex items-center rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-purple-500">
-            <span className="px-3 text-sm text-gray-500 bg-gray-50 border-r h-10 flex items-center shrink-0">{origin}/</span>
-            <input
-              className="flex-1 h-10 px-3 text-sm outline-none min-w-0"
-              value={form.slug}
-              maxLength={40}
-              onChange={(e) => update("slug", slugify(e.target.value))}
-            />
-          </div>
+          <StoreAddressInput value={form.slug} onChange={(value) => update("slug", value)} />
           {slugProblem && <p className="text-sm text-red-600">{slugProblem}</p>}
         </CardContent>
       </Card>
@@ -243,7 +236,7 @@ export default function StoreSettingsPage() {
             <p className="text-xs text-gray-400">{form.seo_description.length}/160</p>
           </div>
           <div className="rounded-2xl border bg-gray-50 p-4 space-y-1">
-            <p className="text-xs text-gray-500">{origin}/{form.slug}</p>
+            <p className="text-xs text-gray-500">{storeDisplayUrl(form.slug)}</p>
             <p className="text-blue-700 font-medium truncate">{form.seo_title || form.name}</p>
             <p className="text-sm text-gray-600 line-clamp-2">
               {form.seo_description || form.description || defaultDescription}

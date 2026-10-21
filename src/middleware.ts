@@ -1,5 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { RESERVED_SLUGS } from '@/lib/store-slug';
+import { STORE_ROOT_DOMAIN, storeSlugFromHost, storeUrl } from '@/lib/store-url';
 
 const ROLE_AREAS = ['admin', 'seller', 'supplier', 'creator'];
 const ROLE_HOME: Record<string, string> = {
@@ -33,23 +35,40 @@ export async function middleware(request: NextRequest) {
   try {
     const hostname = request.headers.get('host') || '';
 
-    // 1. Handle Subdomain Rewrites (e.g. seller.dropy.store -> /seller/signup)
-    // Only if on subdomain and path is root? Or general rewrite?
-    // Current approach:
-    const subdomains = {
-      'creator': '/creator/signup',
-      'seller': '/seller/signup',
-      'supplier': '/supplier/signup',
-    };
-    const subdomain = hostname.split('.')[0];
-    const isLocalhost = hostname.includes('localhost');
-    const isMainDomain = isLocalhost ||
-      hostname === 'dropy.store' ||
-      hostname === 'www.dropy.store' ||
-      hostname.endsWith('.vercel.app');
+    const storeSlug = storeSlugFromHost(hostname);
+    if (storeSlug) {
+      const isAsset =
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/api/') ||
+        pathname === '/sitemap.xml' ||
+        pathname === '/robots.txt' ||
+        /\.[a-z0-9]{2,5}$/i.test(pathname);
+      if (isAsset) return NextResponse.next();
+      const url = request.nextUrl.clone();
+      url.pathname = pathname === '/' ? `/${storeSlug}` : `/${storeSlug}${pathname}`;
+      return NextResponse.rewrite(url);
+    }
 
-    if (subdomain in subdomains && pathname === '/' && !isLocalhost) {
-      return NextResponse.rewrite(new URL(subdomains[subdomain as keyof typeof subdomains], request.url));
+    const host = hostname.split(':')[0].toLowerCase();
+    if (STORE_ROOT_DOMAIN && (host === STORE_ROOT_DOMAIN || host === `www.${STORE_ROOT_DOMAIN}`)) {
+      const first = pathname.split('/')[1] || '';
+      const isStorePath =
+        /^[a-z0-9]+(-[a-z0-9]+)*$/.test(first) &&
+        !RESERVED_SLUGS.has(first) &&
+        !/^(opengraph-image|twitter-image|icon|apple-icon|manifest)/.test(first);
+      if (isStorePath) {
+        return NextResponse.redirect(`${storeUrl(first, pathname.slice(first.length + 1))}${request.nextUrl.search}`, 301);
+      }
+    }
+
+    const signupSubdomains: Record<string, string> = {
+      creator: '/creator/signup',
+      seller: '/seller/signup',
+      supplier: '/supplier/signup',
+    };
+    const subdomain = host.split('.')[0];
+    if (subdomain in signupSubdomains && pathname === '/' && !host.includes('localhost')) {
+      return NextResponse.rewrite(new URL(signupSubdomains[subdomain], request.url));
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

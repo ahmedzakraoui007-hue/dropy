@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { Toaster } from "@/components/ui/sonner";
-import NavbarWrapper from "@/components/layout/NavbarWrapper";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 export const viewport: Viewport = {
@@ -84,9 +83,7 @@ export default function RootLayout({
                 gtag('config', 'G-E670RXNKLL');
               `}
             </Script>
-            <NavbarWrapper>
-              {children}
-            </NavbarWrapper>
+            {children}
             <Toaster position="top-right" />
           </LanguageProvider>
         </body>

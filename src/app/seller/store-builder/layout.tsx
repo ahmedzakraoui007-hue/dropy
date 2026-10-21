@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { storeViewHref } from "@/lib/store-url";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -31,7 +32,7 @@ export default function StoreBuilderLayout({ children }: { children: ReactNode }
   const { store } = useSellerStore();
   const { t } = useTranslation();
   const tr = (key: string) => t(`store_builder.nav.${key}`);
-  const storeHref = store?.slug ? `/${store.slug}` : "/seller/store-builder";
+  const storeHref = store?.slug ? storeViewHref(store.slug, store.is_active) : "/seller/store-builder";
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-50/50">

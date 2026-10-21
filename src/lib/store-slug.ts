@@ -1,9 +1,9 @@
-const RESERVED_SLUGS = new Set([
+export const RESERVED_SLUGS = new Set([
   "admin", "api", "auth", "creator", "forgot-password", "help", "inscription", "login", "preview", "seller",
   "supplier", "track", "dashboard", "settings", "register", "reset-password", "a-propos", "aide", "carrieres",
   "conditions-utilisation", "contact", "createurs", "demande-en-attente", "faq", "fournisseurs",
   "mentions-legales", "politique-confidentialite", "tarifs", "vendeurs", "themes", "shop", "sitemap",
-  "robots", "favicon", "dropy", "www", "blog", "static",
+  "robots", "favicon", "dropy", "www", "blog", "static", "app", "mail", "cdn", "p",
 ]);
 
 export function slugify(value: string) {

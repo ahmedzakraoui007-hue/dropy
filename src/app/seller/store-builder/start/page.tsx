@@ -12,6 +12,8 @@ import { cn, formatPrice } from "@/lib/utils";
 import { slugError, slugify } from "@/lib/store-slug";
 import { themes } from "@/lib/themes";
 import { useThemes } from "@/hooks/store-builder/useThemes";
+import { storeDisplayUrl, storeViewHref } from "@/lib/store-url";
+import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 import { importCatalogProduct } from "@/lib/catalog-import";
@@ -156,7 +158,6 @@ export default function StoreSetupWizard() {
     setStore({ ...store, is_active: true });
   };
 
-  const origin = typeof window !== "undefined" ? window.location.host : "dropy.store";
   const isOnline = store.is_active !== false;
 
   return (
@@ -206,18 +207,13 @@ export default function StoreSetupWizard() {
             </div>
             <div className="space-y-2">
               <Label>{tr("store.address")}</Label>
-              <div dir="ltr" className="flex items-center rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-purple-500">
-                <span className="px-3 text-sm text-gray-500 bg-gray-50 border-r h-10 flex items-center shrink-0">{origin}/</span>
-                <input
-                  className="flex-1 h-10 px-3 text-sm outline-none min-w-0"
-                  value={slug}
-                  maxLength={40}
-                  onChange={(e) => {
-                    setSlugTouched(true);
-                    setSlug(slugify(e.target.value));
-                  }}
-                />
-              </div>
+              <StoreAddressInput
+                value={slug}
+                onChange={(value) => {
+                  setSlugTouched(true);
+                  setSlug(value);
+                }}
+              />
               {slugCode && <p className="text-sm text-red-600">{t(`store_builder.settings.errors.${slugCode}`)}</p>}
             </div>
             <Button onClick={saveStore} disabled={saving} className="w-full h-12 rounded-xl bg-purple-600 hover:bg-purple-700 font-bold">
@@ -349,7 +345,7 @@ export default function StoreSetupWizard() {
             <div className="space-y-1">
               <h2 className="text-2xl font-black text-gray-900">{isOnline ? tr("launch.online") : tr("launch.heading")}</h2>
               {!isOnline && <p className="text-gray-500">{tr("launch.desc")}</p>}
-              <p className="font-mono text-sm text-gray-600" dir="ltr">{origin}/{store.slug}</p>
+              <p className="font-mono text-sm text-gray-600" dir="ltr">{storeDisplayUrl(store.slug)}</p>
             </div>
             {!isOnline &&
               (productCount > 0 ? (
@@ -365,7 +361,7 @@ export default function StoreSetupWizard() {
               ))}
             <div className="flex flex-col sm:flex-row gap-3">
               <Button asChild variant="outline" className="flex-1 rounded-xl">
-                <a href={`/${store.slug}`} target="_blank" rel="noreferrer">
+                <a href={storeViewHref(store.slug, store.is_active)} target="_blank" rel="noreferrer">
                   <ExternalLink className="w-4 h-4 me-2" />
                   {tr("launch.view")}
                 </a>
