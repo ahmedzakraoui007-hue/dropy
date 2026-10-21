@@ -8,6 +8,7 @@ import { StarRating } from "@/components/reviews/StarRating";
 import { ReviewList } from "@/components/reviews/ReviewList";
 import { AddReviewForm } from "@/components/reviews/AddReviewForm";
 import { formatPrice, formatDate } from "@/lib/utils";
+import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 
 // --- HELPERS ---
 
@@ -704,6 +705,25 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 {variantError && <p className="text-sm text-red-600 font-medium">Veuillez choisir une option.</p>}
               </div>
             )}
+            {config.expressOrder !== false && (
+              <ExpressOrderForm
+                storeId={storeId}
+                productId={displayProduct.id}
+                variantId={selectedVariant?.id}
+                unitPrice={parsePrice(selectedVariant?.price ?? displayProduct.price)}
+                preview={inBuilder || !displayProduct.id}
+                title={config.expressTitle}
+                buttonText={config.expressButtonText}
+                beforeSubmit={() => {
+                  if (variantOptions.length > 0 && !selectedVariant) {
+                    setVariantError(true);
+                    return false;
+                  }
+                  return true;
+                }}
+                onOrdered={(orderId) => window.parent.postMessage({ type: "NAVIGATE", page: `merci/${orderId}` }, "*")}
+              />
+            )}
             <button onClick={() => {
               if (variantOptions.length > 0 && !selectedVariant) {
                 setVariantError(true);
@@ -717,7 +737,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 variantId: selectedVariant?.id,
                 variantLabel: selectedVariant?.label,
               });
-            }} className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Ajouter au panier</button>
+            }} className={config.expressOrder === false ? "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all" : "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors"}>Ajouter au panier</button>
           </div>
         </div>
       </div>

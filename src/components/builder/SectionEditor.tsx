@@ -442,6 +442,38 @@ export default function SectionEditor({ section, onChange }: SectionEditorProps)
           </div>
         );
 
+        case "product_detail":
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-4 rounded-xl border p-3">
+                <div>
+                  <Label>Formulaire de commande express</Label>
+                  <p className="text-xs text-muted-foreground">Le client commande directement depuis la page produit, sans passer par le panier.</p>
+                </div>
+                <Switch checked={config.expressOrder !== false} onCheckedChange={(checked) => handleConfigChange("expressOrder", checked)} />
+              </div>
+              {config.expressOrder !== false && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Titre du formulaire</Label>
+                    <Input
+                      value={config.expressTitle || ""}
+                      placeholder="Commandez maintenant, payez à la livraison"
+                      onChange={(e) => handleConfigChange("expressTitle", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Texte du bouton</Label>
+                    <Input
+                      value={config.expressButtonText || ""}
+                      placeholder="Commander maintenant"
+                      onChange={(e) => handleConfigChange("expressButtonText", e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          );
         case "products":
           return (
             <div className="space-y-4">
