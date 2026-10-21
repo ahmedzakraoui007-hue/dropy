@@ -11,13 +11,27 @@ export async function POST() {
   const admin = createAdminClient();
   const { data: existing } = await admin
     .from("stores")
-    .select("id, slug")
+    .select("id, slug, name")
     .eq("vendor_id", auth.user.id)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
 
-  if (existing) return NextResponse.json({ store: existing, created: false });
+  if (existing) {
+    const { count } = await admin
+      .from("store_pages")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", existing.id);
+    if (!count) {
+      const { error: pagesError } = await admin.rpc("create_default_store_pages", {
+        p_store_id: existing.id,
+        p_vendor_slug: existing.slug,
+        p_store_name: existing.name,
+      });
+      if (pagesError) console.error("Default pages failed:", pagesError);
+    }
+    return NextResponse.json({ store: { id: existing.id, slug: existing.slug }, created: false });
+  }
 
   const { data: profile } = await admin.from("profiles").select("full_name, email").eq("id", auth.user.id).maybeSingle();
   const name = `${profile?.full_name || profile?.email?.split("@")[0] || "Ma"} Shop`;

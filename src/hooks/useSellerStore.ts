@@ -41,12 +41,9 @@ export function useSellerStore() {
         .limit(1)
         .maybeSingle();
 
-    let { data } = await fetchStore();
-    if (!data) {
-      const response = await fetch("/api/seller/store", { method: "POST" });
-      if (response.ok) ({ data } = await fetchStore());
-      else setError("Impossible de charger votre boutique. Contactez le support.");
-    }
+    const ensured = await fetch("/api/seller/store", { method: "POST" });
+    const { data } = await fetchStore();
+    if (!data && !ensured.ok) setError("Impossible de charger votre boutique. Contactez le support.");
     setStore((data as SellerStore) ?? null);
     setLoading(false);
   }, []);

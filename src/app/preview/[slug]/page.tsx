@@ -2056,6 +2056,23 @@ const BUILT_IN_PAGES: Record<string, any[]> = {
   checkout: [{ id: "builtin-checkout", type: "checkout", config: {} }],
   "product-detail": [{ id: "builtin-product-detail", type: "product_detail", config: {} }],
   shop: [{ id: "builtin-shop", type: "products", config: { title: "Nos produits", limit: 24, columns: 4 } }],
+  home: [
+    { id: "builtin-home-hero", type: "hero", is_visible: true, config: { title: "Bienvenue", subtitle: "Découvrez nos produits", variant: "bold" } },
+    { id: "builtin-home-products", type: "products", is_visible: true, config: { title: "Nos produits", limit: 8, columns: 4, source: "store" } },
+    {
+      id: "builtin-home-trust",
+      type: "trust_badges",
+      is_visible: true,
+      config: {
+        layout: "row",
+        items: [
+          { icon: "Truck", title: "Livraison partout en Tunisie", description: "24/48h" },
+          { icon: "Shield", title: "Paiement à la livraison", description: "100% sécurisé" },
+        ],
+      },
+    },
+    { id: "builtin-home-footer", type: "footer", is_visible: true, config: {} },
+  ],
 };
 
 const sectionsForPage = (pageSlug: string, pageList: any[]) => {

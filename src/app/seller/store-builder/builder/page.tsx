@@ -580,12 +580,13 @@ export default function BuilderPage() {
         .eq("is_active", true);
       setProductCount(activeProducts ?? 0);
 
-      // Load pages
-      const { data: pagesData } = await supabase
-        .from("store_pages")
-        .select("*")
-        .eq("store_id", storeData.id)
-        .order("sort_order", { ascending: true });
+      const loadPages = () =>
+        supabase.from("store_pages").select("*").eq("store_id", storeData.id).order("sort_order", { ascending: true });
+      let { data: pagesData } = await loadPages();
+      if (!pagesData?.length) {
+        await fetch("/api/seller/store", { method: "POST" });
+        ({ data: pagesData } = await loadPages());
+      }
 
       if (pagesData && pagesData.length > 0) {
         setPages(
