@@ -48,12 +48,11 @@ export default function SellerDashboard() {
   const { checklist, loading: checklistLoading } = useOnboardingChecklist(sellerId || "");
 
   const steps = [
-    { id: 1, title: "Compléter votre profil", description: "Ajoutez vos informations personnelles et de contact", status: checklist.profile ? "completed" : "pending", icon: Users },
-    { id: 2, title: "Créer votre boutique", description: "Configurez le nom et le logo de votre boutique", status: checklist.store ? "completed" : "pending", icon: Store },
-    { id: 3, title: "Ajouter vos premiers produits", description: "Importez des produits depuis le catalogue Dropy", status: checklist.products ? "completed" : "pending", icon: Package },
-    { id: 4, title: "Configurer les paiements", description: "Liez votre compte bancaire pour recevoir vos gains", status: checklist.payment ? "completed" : "pending", icon: CreditCard },
-    { id: 5, title: "Définir vos frais de livraison", description: "Configurez vos zones et tarifs de livraison", status: checklist.shipping ? "completed" : "pending", icon: Truck },
-    { id: 6, title: "Lier un nom de domaine", description: "Utilisez votre propre domaine pour plus de professionnalisme", status: checklist.domain ? "completed" : "pending", icon: Globe },
+    { id: "store", title: "Créer votre boutique", description: "Nom, adresse et style de votre boutique, guidés en 4 étapes", status: checklist.store ? "completed" : "pending", icon: Store, href: "/seller/store-builder/start" },
+    { id: "products", title: "Ajouter vos premiers produits", description: "Importez des produits depuis le catalogue Dropy", status: checklist.products ? "completed" : "pending", icon: Package, href: "/seller/products/catalog" },
+    { id: "online", title: "Mettre votre boutique en ligne", description: "Rendez votre boutique visible pour recevoir des commandes", status: checklist.online ? "completed" : "pending", icon: Globe, href: "/seller/store-builder" },
+    { id: "payment", title: "Coordonnées de versement", description: "RIB, D17 ou Flouci pour recevoir vos gains", status: checklist.payment ? "completed" : "pending", icon: CreditCard, href: "/seller/settings" },
+    { id: "profile", title: "Compléter votre profil", description: "Votre nom et votre téléphone", status: checklist.profile ? "completed" : "pending", icon: Users, href: "/seller/settings" },
   ];
 
   const completedSteps = steps.filter(s => s.status === "completed").length;
@@ -74,27 +73,11 @@ export default function SellerDashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Bienvenue {profile?.store_name?.split(' ')[0]} sur votre tableau de bord
+            {profile?.store_name ? `Bienvenue ${profile.store_name.split(" ")[0]} 👋` : "Bienvenue 👋"}
           </h1>
           <p className="text-gray-500 mt-1">
-            Configurez votre boutique en quelques étapes simples
+            {completedSteps < steps.length ? "Configurez votre boutique en quelques étapes simples" : "Voici l'activité de votre boutique"}
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="bg-white border-gray-200 text-gray-700 font-medium h-10 px-4">
-                Aujourd'hui
-                <ChevronDown className="ml-2 w-4 h-4 text-gray-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem>Aujourd'hui</DropdownMenuItem>
-              <DropdownMenuItem>Hier</DropdownMenuItem>
-              <DropdownMenuItem>7 derniers jours</DropdownMenuItem>
-              <DropdownMenuItem>30 derniers jours</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
@@ -135,18 +118,7 @@ export default function SellerDashboard() {
         />
       </div>
 
-      {/* Alert Section */}
-      {!checklist.domain && (
-        <div className="bg-orange-50/50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-          <div className="text-sm text-orange-800">
-            <p className="font-semibold">Action requise : Nom de domaine</p>
-            <p>Vous devez disposer d'un nom de domaine pour professionnaliser votre boutique et activer les paiements par carte.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Progress Section */}
+      {completedSteps < steps.length && (
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="p-6 border-b border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -188,17 +160,9 @@ export default function SellerDashboard() {
                     {step.status === 'completed' ? (
                       <span>Terminé ✓</span>
                     ) : (
-                      <Link href={
-                        step.id === 1 ? "/seller/settings" :
-                        step.id === 2 ? "/seller/store-builder" :
-                        step.id === 3 ? "/seller/products/catalog" :
-                        step.id === 4 ? "/seller/settings?tab=payments" :
-                        step.id === 5 ? "/seller/shipping" :
-                        step.id === 6 ? "/seller/store-builder/settings" :
-                        "#"
-                      }>
-                        {step.id === 6 ? 'À valider' : 'À configurer'}
-                        <ArrowRight className="ml-1.5 w-3 h-3" />
+                      <Link href={step.href}>
+                        {step.id === "store" ? "Commencer" : "À configurer"}
+                        <ArrowRight className="ml-1.5 w-3 h-3 rtl:rotate-180" />
                       </Link>
                     )}
                   </Button>
@@ -207,12 +171,8 @@ export default function SellerDashboard() {
             ))}
           </div>
         </div>
-        <div className="p-4 bg-gray-50 flex justify-center">
-          <Button variant="link" className="text-sm text-primary font-bold">
-            Voir toutes les étapes de configuration
-          </Button>
-        </div>
       </div>
+      )}
     </div>
   );
 }

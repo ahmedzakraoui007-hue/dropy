@@ -1,5 +1,6 @@
 import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
+import { uniqueStoreSlug } from "@/lib/store-slug-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendConfirmationEmail } from "@/lib/mail";
 import { confirmLink } from "@/lib/auth-links";
@@ -159,12 +160,11 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (!existingStore) {
-        const storeName = additionalData.storeName || "Ma Boutique";
-        const slug = storeName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const storeName = String(additionalData.storeName || fullName || "Ma Boutique").trim().slice(0, 80);
         const { error } = await supabase.from("stores").insert({
           vendor_id: userId,
           name: storeName,
-          slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
+          slug: await uniqueStoreSlug(supabase, storeName),
           is_active: false,
         });
         if (error) console.error("Store creation error:", error);

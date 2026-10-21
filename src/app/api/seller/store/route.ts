@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "node:crypto";
 import { requireUser } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { slugify } from "@/lib/store-slug";
+import { uniqueStoreSlug } from "@/lib/store-slug-server";
 
 export async function POST() {
   const auth = await requireUser(["seller", "admin"]);
@@ -35,7 +34,7 @@ export async function POST() {
 
   const { data: profile } = await admin.from("profiles").select("full_name, email").eq("id", auth.user.id).maybeSingle();
   const name = `${profile?.full_name || profile?.email?.split("@")[0] || "Ma"} Shop`;
-  const slug = `${slugify(name) || "boutique"}-${randomBytes(3).toString("hex")}`;
+  const slug = await uniqueStoreSlug(admin, name);
 
   const { data: store, error } = await admin
     .from("stores")
