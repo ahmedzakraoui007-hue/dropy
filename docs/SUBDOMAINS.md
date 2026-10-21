@@ -28,6 +28,10 @@ Vercel → **Domains** (menu du compte) → `dropy.store` → **DNS Records** �
 | `_dmarc` | TXT | `v=DMARC1; p=none` | |
 | `autodiscover` | CNAME | `autodiscover.mail.hostinger.com` | |
 | `autoconfig` | CNAME | `autoconfig.mail.hostinger.com` | |
+| `send` | MX | `feedback-smtp.eu-west-1.amazonses.com` | 20 |
+| `send` | TXT | `v=spf1 include:amazonses.com ~all` | |
+| `resend._domainkey` | TXT | `p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDa5ssdvhs3yR7d9czRpWybAns15KeiBqNPwZdlvU1sNBGMIXObcKz9L739pTKIN2woV2/XW91shbKAYALdqnZoDrWVdCuRbcYjeIaDxu9yxj9/vP86EUB3xz8ny7g3Q6sifbYKyP+6AUBGarvXXEPHwzcnR68Q/ULR0XAebC1r5wIDAQAB` | |
+| `_vercel` | TXT | `vc-domain-verify=dropy.store,338c76547418237174d2` | |
 
 Les enregistrements du site lui-même (`dropy.store`, `www`, `*`) sont créés automatiquement par Vercel.
 
