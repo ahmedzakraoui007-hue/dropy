@@ -9,6 +9,7 @@ import { ReviewList } from "@/components/reviews/ReviewList";
 import { AddReviewForm } from "@/components/reviews/AddReviewForm";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
+import { storeBasePath } from "@/lib/store-url";
 
 // --- HELPERS ---
 
@@ -2115,18 +2116,34 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
     useEffect(() => {
-      const parts = window.location.pathname.split("/").filter(Boolean).map(decodeURIComponent);
-      const index = parts.indexOf(slug);
-      const rest = index >= 0 ? parts.slice(index + 1).join("/") : "";
-      if (rest) setCurrentPage(rest);
+      const applyLocation = () => {
+        const base = storeBasePath(slug, window.location.pathname, window.location.hostname);
+        const rest = window.location.pathname.slice(base.length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
+        const productMatch = rest.match(/^p\/([^/]+)$/);
+        if (productMatch) {
+          setSelectedProduct((prev: any) => (prev?.id === productMatch[1] ? prev : { id: productMatch[1] }));
+          setCurrentPage("product-detail");
+        } else {
+          setCurrentPage(rest || "home");
+        }
+      };
+      applyLocation();
+      window.addEventListener("popstate", applyLocation);
+      return () => window.removeEventListener("popstate", applyLocation);
     }, [slug]);
 
     useEffect(() => {
-      if (window.parent !== window || currentPage === "product-detail") return;
-      const base = window.location.pathname.startsWith("/preview/") ? `/preview/${slug}` : `/${slug}`;
-      const target = currentPage && currentPage !== "home" ? `${base}/${currentPage}` : base;
-      if (window.location.pathname !== target) window.history.replaceState(null, "", target);
-    }, [currentPage, slug]);
+      if (window.parent !== window) return;
+      const base = storeBasePath(slug, window.location.pathname, window.location.hostname);
+      let target = base || "/";
+      if (currentPage === "product-detail") {
+        if (!selectedProduct?.id) return;
+        target = `${base}/p/${selectedProduct.id}`;
+      } else if (currentPage && currentPage !== "home") {
+        target = `${base}/${currentPage}`;
+      }
+      if (window.location.pathname !== target) window.history.pushState(null, "", target);
+    }, [currentPage, slug, selectedProduct?.id]);
 
       useEffect(() => {
         const savedCart = localStorage.getItem(`cart_${slug}`);

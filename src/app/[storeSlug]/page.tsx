@@ -3,7 +3,7 @@ import { storeMetadata } from "@/lib/store-metadata";
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }) {
   const { storeSlug } = await params;
-  return storeMetadata(storeSlug);
+  return storeMetadata(storeSlug, []);
 }
 
 export default async function StorePage({ params }: { params: Promise<{ storeSlug: string }> }) {
