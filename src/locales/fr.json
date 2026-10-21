@@ -78,6 +78,14 @@
             "logo_ready": "Logo prêt, pensez à enregistrer.",
             "saved": "Paramètres enregistrés"
         },
+        "editor_nav": {
+            "custom_title": "Votre menu personnalisé est utilisé",
+            "custom_body": "La boutique affiche le menu créé dans « Menus ». Les réglages ci-dessous ne s'appliquent que si vous revenez au menu automatique.",
+            "edit_custom": "Modifier le menu",
+            "use_auto": "Utiliser le menu automatique",
+            "auto_done": "Menu automatique activé",
+            "auto_error": "Impossible de changer le menu."
+        },
         "theme_dialog": {
             "title": "Appliquer le thème « {name} » ?",
             "body": "Les couleurs et les polices de votre boutique vont changer. Voulez-vous aussi remplacer le contenu de votre page d'accueil par celui du thème ? Vos autres pages ne sont pas modifiées.",

@@ -101,6 +101,7 @@ import {
   getPlaceholderConfig 
 } from "@/lib/builder-sections";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/context/LanguageContext";
 
 const SECTION_ICONS: Record<string, any> = {
   hero: ImageIcon,
@@ -383,6 +384,9 @@ function PageReorderItem({
 
 export default function BuilderPage() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const [customHeaderCount, setCustomHeaderCount] = useState(0);
+  const [productCount, setProductCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -559,6 +563,22 @@ export default function BuilderPage() {
       }
 
       setStore(storeData);
+
+      const { data: headerMenu } = await supabase
+        .from("store_navigation")
+        .select("items")
+        .eq("store_id", storeData.id)
+        .eq("type", "header")
+        .limit(1)
+        .maybeSingle();
+      setCustomHeaderCount(((headerMenu?.items as any[]) || []).filter((item: any) => item?.label).length);
+
+      const { count: activeProducts } = await supabase
+        .from("store_products")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", storeData.id)
+        .eq("is_active", true);
+      setProductCount(activeProducts ?? 0);
 
       // Load pages
       const { data: pagesData } = await supabase
@@ -1548,6 +1568,38 @@ export default function BuilderPage() {
                         <p className="text-xs text-muted-foreground">Réorganisez vos pages et choisissez celles qui apparaissent dans votre menu principal.</p>
                       </div>
 
+                      {customHeaderCount > 0 && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                          <p className="text-xs font-bold text-amber-900">{t("store_builder.editor_nav.custom_title")}</p>
+                          <p className="text-[11px] text-amber-800">{t("store_builder.editor_nav.custom_body")}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" className="h-7 text-[11px] bg-white" asChild>
+                              <a href="/seller/store-builder/navigation">{t("store_builder.editor_nav.edit_custom")}</a>
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-[11px]"
+                              onClick={async () => {
+                                if (!store) return;
+                                const { error } = await createClient()
+                                  .from("store_navigation")
+                                  .update({ items: [] })
+                                  .eq("store_id", store.id)
+                                  .eq("type", "header");
+                                if (error) {
+                                  toast.error(t("store_builder.editor_nav.auto_error"));
+                                  return;
+                                }
+                                setCustomHeaderCount(0);
+                                toast.success(t("store_builder.editor_nav.auto_done"));
+                              }}
+                            >
+                              {t("store_builder.editor_nav.use_auto")}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
                             <Reorder.Group 
                               axis="y" 
                               values={pages} 
@@ -1812,10 +1864,9 @@ export default function BuilderPage() {
 
                       <div className="space-y-3">
                         {[
-                          { title: "Choisir un template", done: sections.length > 0, action: () => setIsTemplatesOpen(true) },
-                          { title: "Personnaliser le design", done: !!store?.theme_config, action: () => setActiveTab("theme") },
-                          { title: "Ajouter vos produits", done: sections.some(s => s.type === 'products'), action: () => router.push('/seller/products/catalog') },
-                          { title: "Vérifier le score de vente", done: !isWarningsOpen, action: () => setIsWarningsOpen(true) },
+                          { title: t("store_builder.hub.steps.theme"), done: Boolean(store?.theme_config?.theme_id), action: () => router.push("/seller/store-builder/themes") },
+                          { title: t("store_builder.hub.steps.logo"), done: Boolean((store as any)?.logo_url), action: () => router.push("/seller/store-builder/settings") },
+                          { title: t("store_builder.hub.steps.products"), done: productCount > 0, action: () => router.push("/seller/products/catalog") },
                         ].map((item, i) => (
                           <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.done ? "bg-emerald-500/5 border-emerald-500/20" : "bg-muted/30 border-border"}`}>
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-emerald-500 text-white" : "border-2 border-border bg-background"}`}>
@@ -1832,7 +1883,13 @@ export default function BuilderPage() {
                       <div className="pt-4 border-t border-border">
                         <Button 
                           className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold shadow-lg shadow-purple-200"
-                          onClick={() => handleSave(false, true)}
+                          onClick={() => {
+                            if (productCount === 0) {
+                              toast.error(t("store_builder.hub.need_product"));
+                              return;
+                            }
+                            handleSave(false, true);
+                          }}
                           disabled={saving}
                         >
                           {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
