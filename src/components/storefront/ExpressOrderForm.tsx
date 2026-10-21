@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
-import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, round3, type QuantityOffer } from "@/lib/store-pricing";
+import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type QuantityOffer } from "@/lib/store-pricing";
 
 export const TUNISIAN_GOVERNORATES = [
   "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili",
@@ -108,9 +108,9 @@ export function ExpressOrderForm({
 
   const field = "w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:ring-2 ring-primary";
   const lineUnit = discountedUnitPrice(unitPrice, quantity, offers);
-  const merchandise = round3(lineUnit * quantity);
+  const merchandise = roundMoney(lineUnit * quantity);
   const shipping = deliveryFeeFor(merchandise, delivery);
-  const total = round3(merchandise + shipping);
+  const total = roundMoney(merchandise + shipping);
   const savedPercent = offerPercentFor(quantity, offers);
   const quantityChoices = offers.length ? [1, ...offers.map((o) => o.min_quantity)] : [];
 
@@ -155,7 +155,7 @@ export function ExpressOrderForm({
         <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${quantityChoices.length}, minmax(0, 1fr))` }}>
           {quantityChoices.map((choice) => {
             const percent = offerPercentFor(choice, offers);
-            const price = round3(discountedUnitPrice(unitPrice, choice, offers) * choice);
+            const price = roundMoney(discountedUnitPrice(unitPrice, choice, offers) * choice);
             const active = quantity === choice;
             return (
               <button

@@ -4,8 +4,8 @@ type DeliverySettings = { delivery_fee?: number | string | null; free_delivery_t
 
 export const MAX_OFFERS = 3;
 
-export function round3(value: number) {
-  return Math.round(value * 1000) / 1000;
+export function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
 }
 
 export function normalizeOffers(raw: unknown): QuantityOffer[] {
@@ -30,7 +30,7 @@ export function offerPercentFor(quantity: number, offers: QuantityOffer[]) {
 }
 
 export function discountedUnitPrice(unitPrice: number, quantity: number, offers: QuantityOffer[]) {
-  return round3(unitPrice * (1 - offerPercentFor(quantity, offers) / 100));
+  return roundMoney(unitPrice * (1 - offerPercentFor(quantity, offers) / 100));
 }
 
 export function deliveryFeeFor(merchandiseTotal: number, settings: DeliverySettings) {
@@ -38,5 +38,5 @@ export function deliveryFeeFor(merchandiseTotal: number, settings: DeliverySetti
   const threshold = Number(settings.free_delivery_threshold);
   if (fee === 0) return 0;
   if (Number.isFinite(threshold) && threshold > 0 && merchandiseTotal >= threshold) return 0;
-  return round3(fee);
+  return roundMoney(fee);
 }

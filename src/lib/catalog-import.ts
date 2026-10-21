@@ -33,7 +33,7 @@ export async function importCatalogProduct(
   if (!product) return { ok: false, reason: "not_found" };
 
   const basePrice = Number(product.base_price || 0);
-  const price = Math.round(sellingPrice ?? suggestedSellingPrice(basePrice));
+  const price = Math.round((sellingPrice ?? suggestedSellingPrice(basePrice)) * 100) / 100;
   if (!(price > basePrice)) return { ok: false, reason: "price_below_cost" };
 
   const { data: existing } = await supabase
