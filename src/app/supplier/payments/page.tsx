@@ -53,6 +53,7 @@ export default function SupplierPaymentsPage() {
           .from("supplier_orders")
           .select("id, supplier_order_number, status, created_at, items:supplier_order_items(unit_price, quantity)")
           .eq("supplier_id", user.id)
+        .neq("status", "awaiting_confirmation")
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("bank_rib, d17_number, flouci_number").eq("id", user.id).maybeSingle(),
       ]);

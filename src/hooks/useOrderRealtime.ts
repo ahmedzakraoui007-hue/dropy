@@ -75,7 +75,7 @@ export function useOrderRealtime(
 
 export function getStatusLabel(status: OrderStatus): string {
   const labels: Record<OrderStatus, string> = {
-    new: 'Nouvelle',
+    new: 'À confirmer',
     confirmed: 'Confirmée',
     preparing: 'En préparation',
     shipped: 'Expédiée',

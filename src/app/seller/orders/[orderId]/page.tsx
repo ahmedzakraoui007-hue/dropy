@@ -97,6 +97,7 @@ interface Order {
   pickup_slot?: string;
   delivery_type?: string;
   seller_notes?: string;
+  cancel_reason?: string | null;
   items: OrderItem[];
 }
 
@@ -119,8 +120,18 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
+const CANCEL_REASON_LABELS: Record<string, string> = {
+  unreachable: "Client injoignable",
+  customer_cancelled: "Le client a annulé",
+  fake_order: "Fausse commande",
+  out_of_stock: "Rupture de stock",
+  other: "Autre raison",
+};
+
+const phoneDigits = (phone: string | null | undefined) => String(phone || "").replace(/\D/g, "").replace(/^216/, "");
+
 const statusLabels: Record<string, string> = {
-  new: "Nouvelle",
+  new: "À confirmer",
   pending: "En attente",
   confirmed: "Confirmée",
   preparing: "En préparation",
@@ -161,6 +172,8 @@ export default function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isPrepared, setIsPrepared] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("unreachable");
   const [sellerNote, setSellerNote] = useState("");
   const [pickupData, setPickupData] = useState({
     date: "",
@@ -319,6 +332,27 @@ export default function OrderDetailPage() {
     }
   }
 
+  async function updateOrderStatus(action: "confirm" | "cancel") {
+    if (!order) return;
+    setProcessing(true);
+    try {
+      const response = await fetch(`/api/seller/orders/${order.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(action === "cancel" ? { action, reason: cancelReason } : { action }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || "Erreur");
+      toast.success(action === "confirm" ? "Commande confirmée : le fournisseur la reçoit maintenant" : "Commande annulée, stock remis en vente");
+      setCancelOpen(false);
+      await loadOrder();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour");
+    } finally {
+      setProcessing(false);
+    }
+  }
+
   async function saveNote() {
     if (!order) return;
     try {
@@ -400,12 +434,56 @@ export default function OrderDetailPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" />
             Imprimer
           </Button>
         </div>
       </div>
+
+      {order.status === "new" && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="pt-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Phone className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-bold text-amber-900">Commande à confirmer</p>
+                <p className="text-sm text-amber-800">
+                  Appelez {order.customer_name || "le client"} pour vérifier la commande et l&apos;adresse. Le fournisseur ne la reçoit qu&apos;après votre confirmation.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 shrink-0">
+              {order.customer_phone && (
+                <>
+                  <Button asChild variant="outline" className="bg-white gap-2">
+                    <a href={`tel:${order.customer_phone}`}><Phone className="w-4 h-4" />Appeler</a>
+                  </Button>
+                  <Button asChild variant="outline" className="bg-white gap-2">
+                    <a href={`https://wa.me/216${phoneDigits(order.customer_phone)}`} target="_blank" rel="noreferrer"><MessageSquare className="w-4 h-4" />WhatsApp</a>
+                  </Button>
+                </>
+              )}
+              <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700" disabled={processing} onClick={() => updateOrderStatus("confirm")}>
+                <CheckCircle2 className="w-4 h-4" />
+                Confirmer
+              </Button>
+              <Button variant="outline" className="gap-2 bg-white text-red-600 border-red-200 hover:bg-red-50" disabled={processing} onClick={() => setCancelOpen(true)}>
+                <XCircle className="w-4 h-4" />
+                Annuler
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {order.status === "cancelled" && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6 text-sm text-red-800">
+            Commande annulée{order.cancel_reason ? ` : ${CANCEL_REASON_LABELS[order.cancel_reason] || order.cancel_reason}` : ""}.
+          </CardContent>
+        </Card>
+      )}
 
       {order.has_own_products && order.has_dropshipping_products && (
         <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
@@ -670,13 +748,16 @@ export default function OrderDetailPage() {
                     J'ai préparé et emballé les produits
                   </label>
                 </div>
-                <Button variant="outline" className="gap-2" size="sm">
+                <Button variant="outline" className="gap-2" size="sm" onClick={() => window.print()}>
                   <Printer className="w-4 h-4" />
                   Imprimer bon de préparation
                 </Button>
-                <Button 
-                  className="w-full gap-2" 
-                  disabled={!isPrepared || processing}
+                {order.status === "new" && (
+                  <p className="text-xs text-amber-700">Confirmez d&apos;abord la commande avec le client.</p>
+                )}
+                <Button
+                  className="w-full gap-2"
+                  disabled={!isPrepared || processing || order.status === "new"}
                   onClick={markAsPrepared}
                 >
                   <CheckCircle2 className="w-4 h-4" />
@@ -881,21 +962,57 @@ export default function OrderDetailPage() {
       </Card>
 
       <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
-        <div className="flex gap-2">
-          <Button variant="outline" className="gap-2">
-            <Phone className="w-4 h-4" />
-            Contacter le client
-          </Button>
-          <Button variant="outline" className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50">
-            <AlertCircle className="w-4 h-4" />
-            Signaler un problème
+        <div className="flex flex-wrap gap-2">
+          {order.customer_phone && (
+            <Button asChild variant="outline" className="gap-2">
+              <a href={`tel:${order.customer_phone}`}>
+                <Phone className="w-4 h-4" />
+                Contacter le client
+              </a>
+            </Button>
+          )}
+          <Button asChild variant="outline" className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50">
+            <Link href="/contact">
+              <AlertCircle className="w-4 h-4" />
+              Signaler un problème
+            </Link>
           </Button>
         </div>
-        <Button variant="outline" className="gap-2 text-red-600 border-red-200 hover:bg-red-50">
-          <XCircle className="w-4 h-4" />
-          Annuler la commande
-        </Button>
+        {["new", "confirmed", "preparing"].includes(order.status) && (
+          <Button variant="outline" className="gap-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setCancelOpen(true)}>
+            <XCircle className="w-4 h-4" />
+            Annuler la commande
+          </Button>
+        )}
       </div>
+
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Annuler la commande {order.order_number}</DialogTitle>
+            <DialogDescription>Le stock est remis en vente et le fournisseur est prévenu s&apos;il avait reçu la commande.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Motif</Label>
+            <Select value={cancelReason} onValueChange={setCancelReason}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(CANCEL_REASON_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>Retour</Button>
+            <Button className="bg-red-600 hover:bg-red-700" disabled={processing} onClick={() => updateOrderStatus("cancel")}>
+              Annuler la commande
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showPickupModal} onOpenChange={setShowPickupModal}>
         <DialogContent className="max-w-lg">

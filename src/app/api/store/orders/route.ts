@@ -248,6 +248,7 @@ export async function POST(request: Request) {
         total_price: l.total,
         product_image: l.product.images?.[0] ?? null,
         variant_info: l.variant?.info ?? null,
+        variant_id: l.variant?.id ?? null,
         fulfillment_type: l.supplierId ? "dropshipping" : "own",
         supplier_id: l.supplierId,
       }))
@@ -288,7 +289,7 @@ export async function POST(request: Request) {
         .insert({
           supplier_order_number: orderNumber("SUP"),
           supplier_id: supplierId,
-          status: "pending",
+          status: "awaiting_confirmation",
           delivery_address: {
             name: customerName,
             phone: customerPhone,
@@ -338,8 +339,8 @@ export async function POST(request: Request) {
       await supabase.from("notifications").insert({
         user_id: store.vendor_id,
         type: "new_order",
-        title: "🛍️ Nouvelle commande !",
-        message: `Vous avez reçu une nouvelle commande (${number}) de ${totalAmount.toFixed(2)} TND.`,
+        title: "🛍️ Nouvelle commande à confirmer",
+        message: `Commande ${number} de ${totalAmount.toFixed(3)} TND : appelez le client pour la confirmer.`,
         link: `/seller/orders/${order.id}`,
         is_read: false,
       });

@@ -52,7 +52,8 @@ export default function SupplierDashboard() {
       const { data: supplierOrders } = await supabase
         .from("supplier_orders")
         .select("status, items:supplier_order_items(unit_price, quantity)")
-        .eq("supplier_id", user.id);
+        .eq("supplier_id", user.id)
+        .neq("status", "awaiting_confirmation");
 
       const orders = supplierOrders || [];
       const totalRevenue = orders

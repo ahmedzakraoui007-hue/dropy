@@ -95,7 +95,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  new: "Nouvelle",
+  new: "À confirmer",
   confirmed: "Confirmée",
   preparing: "En préparation",
   ready_to_ship: "Prêt à expédier",

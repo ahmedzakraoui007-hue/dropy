@@ -38,7 +38,7 @@ interface CustomerDetails {
 }
 
 const statusConfig: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
-  new: { label: "Nouvelle", variant: "default" },
+  new: { label: "À confirmer", variant: "default" },
   confirmed: { label: "Confirmée", variant: "secondary" },
   preparing: { label: "En préparation", variant: "secondary" },
   shipped: { label: "Expédiée", variant: "outline" },

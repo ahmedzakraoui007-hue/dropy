@@ -25,7 +25,7 @@ const GOVERNORATES = [
 
 const ORDER_TABS: { id: OrderStatus | 'all'; label: string }[] = [
   { id: 'all', label: 'Toutes' },
-  { id: 'new', label: 'Nouvelles' },
+  { id: 'new', label: 'À confirmer' },
   { id: 'confirmed', label: 'Confirmées' },
   { id: 'preparing', label: 'En préparation' },
   { id: 'shipped', label: 'Expédiées' },
