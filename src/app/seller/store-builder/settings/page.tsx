@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, ImageIcon, Loader2, Save, Search, Store, Trash2, Upload } from "lucide-react";
+import { Globe, ImageIcon, Loader2, Megaphone, Save, Search, Store, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
-import { slugError, slugify } from "@/lib/store-slug";
+import { slugError } from "@/lib/store-slug";
+import { isValidFacebookPixelId, isValidTiktokPixelId } from "@/lib/storefront-tracking";
 import { storeDisplayUrl } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
 import { useSellerStore } from "@/hooks/useSellerStore";
@@ -22,7 +23,12 @@ type Form = {
   slug: string;
   seo_title: string;
   seo_description: string;
+  whatsapp_number: string;
+  facebook_pixel_id: string;
+  tiktok_pixel_id: string;
 };
+
+const whatsappDigits = (value: string) => value.replace(/\D/g, "");
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
@@ -43,6 +49,9 @@ export default function StoreSettingsPage() {
       slug: store.slug || "",
       seo_title: store.seo_title || "",
       seo_description: store.seo_description || "",
+      whatsapp_number: store.whatsapp_number || "",
+      facebook_pixel_id: store.facebook_pixel_id || "",
+      tiktok_pixel_id: store.tiktok_pixel_id || "",
     });
   }, [store]);
 
@@ -97,6 +106,19 @@ export default function StoreSettingsPage() {
       toast.error(slugProblem);
       return;
     }
+    const whatsapp = whatsappDigits(form.whatsapp_number);
+    if (whatsapp && !(whatsapp.length === 8 || (whatsapp.length >= 11 && whatsapp.length <= 15))) {
+      toast.error(tr("marketing.errors.whatsapp"));
+      return;
+    }
+    if (form.facebook_pixel_id.trim() && !isValidFacebookPixelId(form.facebook_pixel_id)) {
+      toast.error(tr("marketing.errors.facebook"));
+      return;
+    }
+    if (form.tiktok_pixel_id.trim() && !isValidTiktokPixelId(form.tiktok_pixel_id)) {
+      toast.error(tr("marketing.errors.tiktok"));
+      return;
+    }
 
     setSaving(true);
     const supabase = createClient();
@@ -117,6 +139,9 @@ export default function StoreSettingsPage() {
       slug: form.slug,
       seo_title: form.seo_title.trim() || null,
       seo_description: form.seo_description.trim() || null,
+      whatsapp_number: whatsapp || null,
+      facebook_pixel_id: form.facebook_pixel_id.trim() || null,
+      tiktok_pixel_id: form.tiktok_pixel_id.trim().toUpperCase() || null,
     };
     const { error: saveError } = await supabase.from("stores").update(changes).eq("id", store.id);
     setSaving(false);
@@ -209,6 +234,30 @@ export default function StoreSettingsPage() {
         <CardContent className="space-y-2">
           <StoreAddressInput value={form.slug} onChange={(value) => update("slug", value)} />
           {slugProblem && <p className="text-sm text-red-600">{slugProblem}</p>}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><Megaphone className="w-5 h-5 text-purple-600" />{tr("marketing.title")}</CardTitle>
+          <CardDescription>{tr("marketing.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="whatsapp_number">{tr("marketing.whatsapp")}</Label>
+            <Input id="whatsapp_number" dir="ltr" inputMode="tel" value={form.whatsapp_number} placeholder={tr("marketing.whatsapp_ph")} onChange={(e) => update("whatsapp_number", e.target.value)} />
+            <p className="text-xs text-gray-400">{tr("marketing.whatsapp_help")}</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="facebook_pixel_id">{tr("marketing.facebook")}</Label>
+            <Input id="facebook_pixel_id" dir="ltr" inputMode="numeric" value={form.facebook_pixel_id} placeholder="123456789012345" onChange={(e) => update("facebook_pixel_id", e.target.value.trim())} />
+            <p className="text-xs text-gray-400">{tr("marketing.facebook_help")}</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="tiktok_pixel_id">{tr("marketing.tiktok")}</Label>
+            <Input id="tiktok_pixel_id" dir="ltr" value={form.tiktok_pixel_id} placeholder="C4A1B2C3D4E5F6G7H8I9" onChange={(e) => update("tiktok_pixel_id", e.target.value.trim())} />
+            <p className="text-xs text-gray-400">{tr("marketing.tiktok_help")}</p>
+          </div>
         </CardContent>
       </Card>
 

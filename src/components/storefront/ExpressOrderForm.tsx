@@ -15,7 +15,8 @@ type Props = {
   variantId?: string | null;
   unitPrice: number;
   beforeSubmit?: () => boolean;
-  onOrdered: (orderId: string) => void;
+  onOrdered: (orderId: string, total: number, quantity: number) => void;
+  onStart?: () => void;
   title?: string;
   buttonText?: string;
   preview?: boolean;
@@ -30,6 +31,7 @@ export function ExpressOrderForm({
   unitPrice,
   beforeSubmit,
   onOrdered,
+  onStart,
   title,
   buttonText,
   preview,
@@ -39,8 +41,13 @@ export function ExpressOrderForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
 
   const update = (field: keyof typeof form, value: string) => {
+    if (!started) {
+      setStarted(true);
+      onStart?.();
+    }
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
@@ -85,7 +92,7 @@ export function ExpressOrderForm({
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (response.ok && data.success) onOrdered(data.orderId);
+      if (response.ok && data.success) onOrdered(data.orderId, unitPrice * quantity, quantity);
       else setServerError(data.error || "La commande n'a pas pu être envoyée. Réessayez.");
     } catch {
       setServerError("Problème de connexion. Réessayez.");

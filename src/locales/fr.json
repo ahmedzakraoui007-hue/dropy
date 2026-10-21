@@ -75,6 +75,22 @@
                 "slug_chars": "Utilisez uniquement des lettres minuscules, des chiffres et des tirets.",
                 "slug_reserved": "Cette adresse est réservée par Dropy, choisissez-en une autre."
             },
+            "marketing": {
+                "title": "Publicité et WhatsApp",
+                "desc": "Mesurez les ventes de vos publicités et laissez vos clients vous écrire.",
+                "whatsapp": "Numéro WhatsApp",
+                "whatsapp_ph": "Ex. 22 123 456",
+                "whatsapp_help": "Un bouton WhatsApp apparaîtra sur votre boutique.",
+                "facebook": "ID du pixel Facebook (Meta)",
+                "facebook_help": "Gestionnaire d'événements Meta → votre pixel → ID à 15-16 chiffres.",
+                "tiktok": "ID du pixel TikTok",
+                "tiktok_help": "TikTok Ads Manager → Outils → Événements → ID du pixel.",
+                "errors": {
+                    "whatsapp": "Numéro WhatsApp invalide (8 chiffres, ou avec l'indicatif).",
+                    "facebook": "L'ID du pixel Facebook ne contient que des chiffres (10 à 20).",
+                    "tiktok": "L'ID du pixel TikTok ne contient que des lettres et des chiffres."
+                }
+            },
             "logo_ready": "Logo prêt, pensez à enregistrer.",
             "saved": "Paramètres enregistrés"
         },

@@ -14,6 +14,9 @@ export interface SellerStore {
   theme_config: Record<string, any> | null;
   seo_title: string | null;
   seo_description: string | null;
+  whatsapp_number: string | null;
+  facebook_pixel_id: string | null;
+  tiktok_pixel_id: string | null;
   created_at: string;
 }
 
