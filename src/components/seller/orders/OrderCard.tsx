@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Phone, MessageCircle, CheckCircle, Truck, XCircle, Eye, Calendar, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
-import { getStatusLabel } from '@/hooks/useOrderRealtime';
+import { ar, fr } from 'date-fns/locale';
+import { useTranslation } from '@/context/LanguageContext';
+import { formatPrice } from '@/lib/utils';
 
 interface OrderCardProps {
   order: Order;
@@ -18,6 +19,7 @@ interface OrderCardProps {
 
 export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh }: OrderCardProps) {
   const actions = useOrderActions(sellerId);
+  const { t, locale } = useTranslation();
 
   const handleConfirm = async () => {
     if (await actions.confirmOrder(order.id)) {
@@ -45,11 +47,11 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
           <CardTitle className="text-sm font-bold">#{order.order_number}</CardTitle>
           <div className="flex items-center text-xs text-muted-foreground mt-1">
             <Calendar className="w-3 h-3 mr-1" />
-            {format(new Date(order.created_at), 'dd MMM yyyy, HH:mm', { locale: fr })}
+            {format(new Date(order.created_at), 'dd MMM yyyy, HH:mm', { locale: locale === 'ar' ? ar : fr })}
           </div>
         </div>
         <Badge className={getStatusColor(order.status)} variant="outline">
-          {getStatusLabel(order.status)}
+          {t(`seller_app.status.${order.status}`)}
         </Badge>
       </CardHeader>
       <CardContent className="py-4">
@@ -60,8 +62,8 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
               <p className="text-xs text-muted-foreground">{order.customer_phone}</p>
             </div>
             <div className="text-right">
-              <p className="font-bold text-primary">{Number(order.total_amount || 0).toLocaleString()} TND</p>
-              <p className="text-[10px] text-muted-foreground">{order.payment_method === 'cod' ? 'Paiement à la livraison' : order.payment_method}</p>
+              <p className="font-bold text-primary">{formatPrice(order.total_amount || 0)}</p>
+              <p className="text-[10px] text-muted-foreground">{order.payment_method === 'cod' ? t('seller_app.orders.card.cod') : order.payment_method}</p>
             </div>
           </div>
           
@@ -71,28 +73,28 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
           </div>
 
           <div className="text-xs border-t pt-2 mt-2">
-            <span className="font-medium">Produits:</span> {order.items?.map(item => `${item.quantity}x ${item.product_name}`).join(', ')}
+            <span className="font-medium">{t('seller_app.orders.card.products')}</span> {order.items?.map(item => `${item.quantity}x ${item.product_name}`).join(', ')}
           </div>
         </div>
       </CardContent>
       <CardFooter className="flex flex-wrap gap-2 pt-0">
         <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => onViewDetails(order)}>
-          <Eye className="w-3 h-3 mr-1" /> Détails
+          <Eye className="w-3 h-3 me-1" /> {t('seller_app.orders.card.details')}
         </Button>
         
         {order.status === 'new' && (
           <>
             <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => window.open(`tel:${order.customer_phone}`)}>
-              <Phone className="w-3 h-3 mr-1" /> Appeler
+              <Phone className="w-3 h-3 me-1" /> {t('seller_app.orders.card.call')}
             </Button>
-            <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50" onClick={() => window.open(`https://wa.me/216${order.customer_phone.replace(/\D/g, '')}`)}>
+            <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50" onClick={() => window.open(`https://wa.me/216${String(order.customer_phone || '').replace(/\D/g, '').replace(/^216/, '')}`)}>
               <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
             </Button>
             <Button variant="default" size="sm" className="h-8 px-2 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleConfirm}>
-              <CheckCircle className="w-3 h-3 mr-1" /> Confirmer
+              <CheckCircle className="w-3 h-3 me-1" /> {t('seller_app.orders.card.confirm')}
             </Button>
             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto" onClick={() => onCancel(order)}>
-              <XCircle className="w-3 h-3 mr-1" /> Annuler
+              <XCircle className="w-3 h-3 me-1" /> {t('seller_app.orders.card.cancel')}
             </Button>
           </>
         )}
@@ -100,10 +102,10 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
         {order.status === 'confirmed' && (
           <>
             <span className="inline-flex items-center text-xs font-medium text-indigo-700">
-              <Truck className="w-3 h-3 mr-1" /> Transmise au fournisseur
+              <Truck className="w-3 h-3 me-1" /> {t('seller_app.orders.card.sent')}
             </span>
             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto" onClick={() => onCancel(order)}>
-              <XCircle className="w-3 h-3 mr-1" /> Annuler
+              <XCircle className="w-3 h-3 me-1" /> {t('seller_app.orders.card.cancel')}
             </Button>
           </>
         )}

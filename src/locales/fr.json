@@ -1,4 +1,97 @@
 {
+    "seller_app": {
+        "status": {
+            "new": "À confirmer",
+            "confirmed": "Confirmée",
+            "preparing": "En préparation",
+            "shipped": "Expédiée",
+            "delivered": "Livrée",
+            "cancelled": "Annulée"
+        },
+        "orders": {
+            "title": "Gestion des commandes",
+            "subtitle": "Confirmez vos commandes par téléphone et suivez les expéditions.",
+            "refresh": "Actualiser",
+            "export": "Exporter (Excel / Sheets)",
+            "search_ph": "Rechercher par n° de commande, nom ou téléphone...",
+            "governorate": "Gouvernorat",
+            "all_governorates": "Tous les gouvernorats",
+            "tabs": {
+                "all": "Toutes",
+                "new": "À confirmer",
+                "confirmed": "Confirmées",
+                "preparing": "En préparation",
+                "shipped": "Expédiées",
+                "delivered": "Livrées",
+                "cancelled": "Annulées"
+            },
+            "empty_title": "Aucune commande trouvée",
+            "empty_desc": "Aucune commande ne correspond à ces filtres.",
+            "reset": "Réinitialiser les filtres",
+            "card": {
+                "details": "Détails",
+                "call": "Appeler",
+                "confirm": "Confirmer",
+                "cancel": "Annuler",
+                "sent": "Transmise au fournisseur",
+                "cod": "Paiement à la livraison",
+                "products": "Produits :"
+            },
+            "cancel_modal": {
+                "title": "Annuler la commande {number}",
+                "desc": "Le stock est remis en vente et le fournisseur est prévenu s'il avait reçu la commande.",
+                "reason": "Motif de l'annulation",
+                "reason_ph": "Choisissez un motif",
+                "reasons": {
+                    "unreachable": "Client injoignable",
+                    "customer_cancelled": "Annulation par le client",
+                    "out_of_stock": "Produit en rupture de stock",
+                    "order_error": "Erreur dans la commande",
+                    "zone": "Zone de livraison non couverte",
+                    "other": "Autre"
+                },
+                "custom": "Précisez le motif",
+                "custom_ph": "Indiquez la raison...",
+                "back": "Retour",
+                "submit": "Confirmer l'annulation",
+                "submitting": "Annulation..."
+            }
+        },
+        "dashboard": {
+            "welcome": "Bienvenue 👋",
+            "welcome_name": "Bienvenue {name} 👋",
+            "subtitle_setup": "Configurez votre boutique en quelques étapes simples",
+            "subtitle_active": "Voici l'activité de votre boutique",
+            "stats": {
+                "orders": "Commandes",
+                "sales": "Ventes",
+                "visitors": "Visiteurs",
+                "conversion": "Conversion",
+                "status": "Statut",
+                "verified": "Vérifié",
+                "pending": "En attente",
+                "low": "Faible",
+                "vs_last_month": "vs mois dernier"
+            },
+            "setup_title": "Configuration de votre boutique",
+            "steps_done": "{done}/{total} étapes complétées",
+            "done": "Terminé ✓",
+            "start": "Commencer",
+            "configure": "À configurer",
+            "steps": {
+                "store": "Créer votre boutique",
+                "store_desc": "Nom, adresse et style de votre boutique, guidés en 4 étapes",
+                "products": "Ajouter vos premiers produits",
+                "products_desc": "Importez des produits depuis le catalogue Dropy",
+                "online": "Mettre votre boutique en ligne",
+                "online_desc": "Rendez votre boutique visible pour recevoir des commandes",
+                "payment": "Coordonnées de versement",
+                "payment_desc": "RIB, D17 ou Flouci pour recevoir vos gains",
+                "profile": "Compléter votre profil",
+                "profile_desc": "Votre nom et votre téléphone"
+            }
+        }
+    },
     "store_builder": {
         "nav": {
             "title": "Ma boutique",

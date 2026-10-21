@@ -1,4 +1,97 @@
 {
+    "seller_app": {
+        "status": {
+            "new": "في انتظار التأكيد",
+            "confirmed": "مؤكدة",
+            "preparing": "قيد التحضير",
+            "shipped": "تم الشحن",
+            "delivered": "تم التوصيل",
+            "cancelled": "ملغاة"
+        },
+        "orders": {
+            "title": "إدارة الطلبات",
+            "subtitle": "أكّد طلباتك بالهاتف وتابع الشحنات.",
+            "refresh": "تحديث",
+            "export": "تصدير (Excel / Sheets)",
+            "search_ph": "ابحث برقم الطلب أو الاسم أو الهاتف...",
+            "governorate": "الولاية",
+            "all_governorates": "كل الولايات",
+            "tabs": {
+                "all": "الكل",
+                "new": "في انتظار التأكيد",
+                "confirmed": "مؤكدة",
+                "preparing": "قيد التحضير",
+                "shipped": "تم الشحن",
+                "delivered": "تم التوصيل",
+                "cancelled": "ملغاة"
+            },
+            "empty_title": "لا توجد طلبات",
+            "empty_desc": "لا يوجد أي طلب يطابق هذه الفلاتر.",
+            "reset": "إعادة ضبط الفلاتر",
+            "card": {
+                "details": "التفاصيل",
+                "call": "اتصال",
+                "confirm": "تأكيد",
+                "cancel": "إلغاء",
+                "sent": "أُرسلت إلى المزوّد",
+                "cod": "الدفع عند الاستلام",
+                "products": "المنتجات:"
+            },
+            "cancel_modal": {
+                "title": "إلغاء الطلب {number}",
+                "desc": "يُعاد المخزون للبيع ويتم إعلام المزوّد إذا كان قد استلم الطلب.",
+                "reason": "سبب الإلغاء",
+                "reason_ph": "اختر سبباً",
+                "reasons": {
+                    "unreachable": "تعذّر الاتصال بالزبون",
+                    "customer_cancelled": "ألغى الزبون الطلب",
+                    "out_of_stock": "المنتج غير متوفر",
+                    "order_error": "خطأ في الطلب",
+                    "zone": "منطقة التوصيل غير مشمولة",
+                    "other": "سبب آخر"
+                },
+                "custom": "حدّد السبب",
+                "custom_ph": "اكتب السبب...",
+                "back": "رجوع",
+                "submit": "تأكيد الإلغاء",
+                "submitting": "جارٍ الإلغاء..."
+            }
+        },
+        "dashboard": {
+            "welcome": "مرحباً 👋",
+            "welcome_name": "مرحباً {name} 👋",
+            "subtitle_setup": "جهّز متجرك في بضع خطوات بسيطة",
+            "subtitle_active": "هذا نشاط متجرك",
+            "stats": {
+                "orders": "الطلبات",
+                "sales": "المبيعات",
+                "visitors": "الزوار",
+                "conversion": "التحويل",
+                "status": "الحالة",
+                "verified": "موثّق",
+                "pending": "في الانتظار",
+                "low": "ضعيف",
+                "vs_last_month": "مقارنة بالشهر الماضي"
+            },
+            "setup_title": "تجهيز متجرك",
+            "steps_done": "{done}/{total} خطوات مكتملة",
+            "done": "تم ✓",
+            "start": "ابدأ",
+            "configure": "للإعداد",
+            "steps": {
+                "store": "إنشاء متجرك",
+                "store_desc": "اسم متجرك وعنوانه وتصميمه، بمرافقة في 4 خطوات",
+                "products": "إضافة منتجاتك الأولى",
+                "products_desc": "استورد منتجات من كتالوج دروبي",
+                "online": "نشر متجرك",
+                "online_desc": "اجعل متجرك مرئياً لتستقبل الطلبات",
+                "payment": "بيانات التحويل",
+                "payment_desc": "RIB أو D17 أو Flouci لاستلام أرباحك",
+                "profile": "إكمال ملفك الشخصي",
+                "profile_desc": "اسمك ورقم هاتفك"
+            }
+        }
+    },
     "store_builder": {
         "nav": {
             "title": "متجري",

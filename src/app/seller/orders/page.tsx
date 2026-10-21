@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useOrders } from '@/hooks/useOrders';
 import { useOrderActions } from '@/hooks/useOrderActions';
+import { useTranslation } from "@/context/LanguageContext";
 import { OrderCard } from '@/components/seller/orders/OrderCard';
 import { OrderDetailsModal } from '@/components/seller/orders/OrderDetailsModal';
 import { CancelOrderModal } from '@/components/seller/orders/CancelOrderModal';
@@ -23,18 +24,11 @@ const GOVERNORATES = [
   "Sousse", "Tataouine", "Tozeur", "Tunis", "Zaghouan"
 ];
 
-const ORDER_TABS: { id: OrderStatus | 'all'; label: string }[] = [
-  { id: 'all', label: 'Toutes' },
-  { id: 'new', label: 'À confirmer' },
-  { id: 'confirmed', label: 'Confirmées' },
-  { id: 'preparing', label: 'En préparation' },
-  { id: 'shipped', label: 'Expédiées' },
-  { id: 'delivered', label: 'Livrées' },
-  { id: 'cancelled', label: 'Annulées' },
-];
+const ORDER_TABS: (OrderStatus | 'all')[] = ['all', 'new', 'confirmed', 'preparing', 'shipped', 'delivered', 'cancelled'];
 import { createClient } from '@/lib/supabase/client';
 
 export default function SellerOrdersPage() {
+  const { t } = useTranslation();
   const [sellerId, setSellerId] = useState('');
 
   useEffect(() => {
@@ -92,9 +86,9 @@ export default function SellerOrdersPage() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Gestion des Commandes</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("seller_app.orders.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Gérez vos ventes, confirmez les commandes et suivez les expéditions.
+            {t("seller_app.orders.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -112,11 +106,11 @@ export default function SellerOrdersPage() {
             }}
           >
             <Download className="w-4 h-4 mr-2" />
-            Exporter (Excel / Sheets)
+            {t("seller_app.orders.export")}
           </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={loading}>
             <RotateCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Actualiser
+            {t("seller_app.orders.refresh")}
           </Button>
         </div>
       </div>
@@ -127,7 +121,7 @@ export default function SellerOrdersPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par #CMD, nom ou téléphone..."
+                placeholder={t("seller_app.orders.search_ph")}
                 className="pl-10"
                 value={filters.search}
                 onChange={handleSearchChange}
@@ -137,10 +131,10 @@ export default function SellerOrdersPage() {
           <div className="w-full md:w-64 space-y-2">
             <Select onValueChange={handleGovernorateChange} value={filters.governorate || 'all'}>
               <SelectTrigger>
-                <SelectValue placeholder="Gouvernorat" />
+                <SelectValue placeholder={t("seller_app.orders.governorate")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous les gouvernorats</SelectItem>
+                <SelectItem value="all">{t("seller_app.orders.all_governorates")}</SelectItem>
                 {GOVERNORATES.map(gov => (
                   <SelectItem key={gov} value={gov}>{gov}</SelectItem>
                 ))}
@@ -152,10 +146,10 @@ export default function SellerOrdersPage() {
         <Tabs value={filters.status} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-muted/50">
             {ORDER_TABS.map(tab => (
-              <TabsTrigger key={tab.id} value={tab.id} className="px-4 py-2 text-xs md:text-sm">
-                {tab.label}
+              <TabsTrigger key={tab} value={tab} className="px-4 py-2 text-xs md:text-sm">
+                {t(`seller_app.orders.tabs.${tab}`)}
                 <span className="ml-2 px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                  {counts[tab.id]}
+                  {counts[tab]}
                 </span>
               </TabsTrigger>
             ))}
@@ -172,15 +166,15 @@ export default function SellerOrdersPage() {
       ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed rounded-xl bg-muted/20">
           <PackageX className="w-12 h-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">Aucune commande trouvée</h3>
+          <h3 className="text-lg font-medium">{t("seller_app.orders.empty_title")}</h3>
           <p className="text-muted-foreground text-sm max-w-xs text-center">
-            Il n'y a pas de commandes correspondant à vos critères de recherche ou pour ce statut.
+            {t("seller_app.orders.empty_desc")}
           </p>
           <Button
             variant="link"
             onClick={() => setFilters({ status: 'all', search: '', dateFrom: null, dateTo: null, governorate: null })}
           >
-            Réinitialiser les filtres
+            {t("seller_app.orders.reset")}
           </Button>
         </div>
       ) : (

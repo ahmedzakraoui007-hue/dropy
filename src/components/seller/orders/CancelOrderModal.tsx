@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useOrderActions } from '@/hooks/useOrderActions';
+import { useTranslation } from '@/context/LanguageContext';
 
 interface CancelOrderModalProps {
   order: Order | null;
@@ -15,16 +16,11 @@ interface CancelOrderModalProps {
   onSuccess: () => void;
 }
 
-const CANCEL_REASONS = [
-  "Client injoignable",
-  "Annulation par le client",
-  "Produit en rupture de stock",
-  "Erreur dans la commande",
-  "Zone de livraison non couverte",
-  "Autre"
-];
+const CANCEL_REASONS = ["unreachable", "customer_cancelled", "out_of_stock", "order_error", "zone", "other"];
 
 export function CancelOrderModal({ order, sellerId, isOpen, onClose, onSuccess }: CancelOrderModalProps) {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.orders.cancel_modal.${key}`);
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +28,7 @@ export function CancelOrderModal({ order, sellerId, isOpen, onClose, onSuccess }
 
   const handleCancel = async () => {
     if (!order) return;
-    const finalReason = reason === "Autre" ? customReason : reason;
+    const finalReason = reason === "other" ? customReason || "other" : reason;
     
     setLoading(true);
     if (await actions.cancelOrder(order.id, finalReason)) {
@@ -46,32 +42,32 @@ export function CancelOrderModal({ order, sellerId, isOpen, onClose, onSuccess }
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Annuler la commande #{order?.order_number}</DialogTitle>
+          <DialogTitle>{tr("title").replace("{number}", order?.order_number ?? "")}</DialogTitle>
           <DialogDescription>
-            Cette action est irréversible. Veuillez indiquer le motif de l'annulation.
+            {tr("desc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Motif de l'annulation</Label>
+            <Label>{tr("reason")}</Label>
             <Select onValueChange={setReason} value={reason}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionnez un motif" />
+                <SelectValue placeholder={tr("reason_ph")} />
               </SelectTrigger>
               <SelectContent>
                 {CANCEL_REASONS.map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                  <SelectItem key={r} value={r}>{tr(`reasons.${r}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {reason === "Autre" && (
+          {reason === "other" && (
             <div className="space-y-2">
-              <Label>Précisez le motif</Label>
+              <Label>{tr("custom")}</Label>
               <Textarea 
-                placeholder="Indiquez la raison..."
+                placeholder={tr("custom_ph")}
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
               />
@@ -80,13 +76,13 @@ export function CancelOrderModal({ order, sellerId, isOpen, onClose, onSuccess }
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={onClose} disabled={loading}>Annuler</Button>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>{tr("back")}</Button>
           <Button 
             variant="destructive" 
             onClick={handleCancel} 
-            disabled={!reason || (reason === "Autre" && !customReason) || loading}
+            disabled={!reason || (reason === "other" && !customReason) || loading}
           >
-            {loading ? "Annulation..." : "Confirmer l'annulation"}
+            {loading ? tr("submitting") : tr("submit")}
           </Button>
         </DialogFooter>
       </DialogContent>
