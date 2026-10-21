@@ -86,6 +86,58 @@
             "auto_done": "Menu automatique activé",
             "auto_error": "Impossible de changer le menu."
         },
+        "wizard": {
+            "title": "Créons votre boutique",
+            "subtitle": "4 étapes, quelques minutes.",
+            "back": "Retour",
+            "next": "Continuer",
+            "skip": "Passer cette étape",
+            "steps": {
+                "store": "Votre boutique",
+                "style": "Votre style",
+                "products": "Vos produits",
+                "launch": "En ligne"
+            },
+            "store": {
+                "heading": "Comment s'appelle votre boutique ?",
+                "name": "Nom de la boutique",
+                "name_ph": "Ex. Bijoux Yasmine",
+                "address": "Adresse de votre boutique"
+            },
+            "style": {
+                "heading": "Choisissez un style",
+                "desc": "Couleurs, polices et page d'accueil. Vous pourrez tout modifier ensuite dans l'éditeur.",
+                "choose": "Choisir",
+                "current": "Actuel",
+                "applying": "Application…"
+            },
+            "products": {
+                "heading": "Ajoutez vos premiers produits",
+                "desc": "Choisissez des produits du catalogue Dropy. Le fournisseur gère le stock et l'expédition, vous encaissez la marge.",
+                "price": "Votre prix",
+                "margin": "Marge",
+                "added": "Déjà ajouté",
+                "add": "Ajouter {count} produit(s)",
+                "adding": "Ajout…",
+                "empty": "Le catalogue est vide pour le moment. Vous pourrez ajouter vos propres produits plus tard.",
+                "done": "{count} produit(s) ajouté(s)"
+            },
+            "launch": {
+                "heading": "Votre boutique est prête !",
+                "desc": "Mettez-la en ligne pour recevoir vos premières commandes.",
+                "publish": "Mettre ma boutique en ligne",
+                "online": "Votre boutique est en ligne 🎉",
+                "view": "Voir ma boutique",
+                "edit": "Personnaliser dans l'éditeur",
+                "need_product": "Ajoutez au moins un produit pour mettre votre boutique en ligne.",
+                "add_products": "Ajouter des produits"
+            },
+            "banner": {
+                "title": "Créez votre boutique en 4 étapes",
+                "desc": "Nom, style, produits, mise en ligne : on vous guide.",
+                "cta": "Commencer"
+            }
+        },
         "theme_dialog": {
             "title": "Appliquer le thème « {name} » ?",
             "body": "Les couleurs et les polices de votre boutique vont changer. Voulez-vous aussi remplacer le contenu de votre page d'accueil par celui du thème ? Vos autres pages ne sont pas modifiées.",

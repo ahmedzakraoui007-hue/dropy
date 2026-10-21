@@ -84,7 +84,7 @@ export default function CatalogPage() {
       return;
     }
 
-    const result = await importCatalogProduct(createClient(), product.id);
+    const result = await importCatalogProduct(createClient(), product.id, product.suggested_price);
     if (result.ok) toast.success("Produit ajouté à votre boutique !");
     else toast.error(CATALOG_IMPORT_MESSAGES[result.reason]);
   };

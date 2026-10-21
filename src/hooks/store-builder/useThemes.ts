@@ -41,7 +41,7 @@ export function useThemes() {
   }, [supabase]);
 
   // Appliquer un thème
-  const applyTheme = async (theme: Theme, options: { replaceHome?: boolean } = {}) => {
+  const applyTheme = async (theme: Theme, options: { replaceHome?: boolean; redirect?: boolean } = {}) => {
     setIsApplying(true);
 
     try {
@@ -132,7 +132,8 @@ export function useThemes() {
       setCurrentThemeId(theme.id);
       toast.success(`Thème "${theme.name}" appliqué avec succès !`);
 
-      router.push('/seller/store-builder/builder');
+      if (options.redirect !== false) router.push('/seller/store-builder/builder');
+      return true;
 
     } catch (error: any) {
       console.error('Error applying theme (Full details):', JSON.stringify(error, null, 2));

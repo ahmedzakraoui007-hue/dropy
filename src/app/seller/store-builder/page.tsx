@@ -158,6 +158,26 @@ export default function StoreBuilderDashboard() {
         </div>
       </div>
 
+      {(progress < 100 || !isOnline) && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-purple-600 to-teal-500 p-6 text-white shadow-xl shadow-purple-200">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-lg font-black">{t("store_builder.wizard.banner.title")}</p>
+              <p className="text-sm text-white/80">{t("store_builder.wizard.banner.desc")}</p>
+            </div>
+          </div>
+          <Button asChild className="rounded-xl bg-white text-purple-700 hover:bg-white/90 font-bold h-11 shrink-0">
+            <Link href="/seller/store-builder/start">
+              {t("store_builder.wizard.banner.cta")}
+              <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-1 border-none shadow-xl shadow-purple-900/5 rounded-3xl">
           <CardContent className="p-6 space-y-6">
