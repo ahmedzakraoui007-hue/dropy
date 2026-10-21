@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, RotateCcw, Filter, PackageX } from 'lucide-react';
+import { Search, RotateCcw, Filter, PackageX, Download } from 'lucide-react';
 import { getStatusLabel } from '@/hooks/useOrderRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -98,6 +98,22 @@ export default function SellerOrdersPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const params = new URLSearchParams();
+              if (filters.status !== 'all') params.set('status', filters.status);
+              if (filters.governorate) params.set('governorate', filters.governorate);
+              if (filters.search) params.set('search', filters.search);
+              if (filters.dateFrom) params.set('from', filters.dateFrom.toISOString());
+              if (filters.dateTo) params.set('to', filters.dateTo.toISOString());
+              window.location.href = `/api/seller/orders/export?${params.toString()}`;
+            }}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Exporter (Excel / Sheets)
+          </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={loading}>
             <RotateCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Actualiser

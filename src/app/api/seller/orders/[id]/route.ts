@@ -103,7 +103,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ success: true, status: "confirmed" });
   }
 
-  const reason = CANCEL_REASONS.includes(body?.reason) ? body.reason : "other";
+  const rawReason = typeof body?.reason === "string" ? body.reason.trim().slice(0, 200) : "";
+  const reason = CANCEL_REASONS.includes(rawReason as (typeof CANCEL_REASONS)[number]) ? rawReason : rawReason || "other";
   if (!["new", "confirmed", "preparing"].includes(order.status)) {
     return NextResponse.json({ error: "Cette commande ne peut plus être annulée" }, { status: 409 });
   }

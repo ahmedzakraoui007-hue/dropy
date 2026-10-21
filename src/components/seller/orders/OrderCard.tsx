@@ -25,11 +25,6 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
     }
   };
 
-  const handleSendToSupplier = async () => {
-    if (await actions.sendToSupplier(order.id)) {
-      onRefresh();
-    }
-  };
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
@@ -104,9 +99,9 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
 
         {order.status === 'confirmed' && (
           <>
-            <Button variant="default" size="sm" className="h-8 px-2 text-xs bg-indigo-600 hover:bg-indigo-700" onClick={handleSendToSupplier}>
-              <Truck className="w-3 h-3 mr-1" /> Envoyer au fournisseur
-            </Button>
+            <span className="inline-flex items-center text-xs font-medium text-indigo-700">
+              <Truck className="w-3 h-3 mr-1" /> Transmise au fournisseur
+            </span>
             <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 ml-auto" onClick={() => onCancel(order)}>
               <XCircle className="w-3 h-3 mr-1" /> Annuler
             </Button>
