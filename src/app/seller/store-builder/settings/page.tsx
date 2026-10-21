@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, ImageIcon, Loader2, Megaphone, Plus, Save, Search, Store, Trash2, Truck, Upload } from "lucide-react";
+import { BarChart3, Copy, Globe, ImageIcon, Loader2, Megaphone, Plus, Save, Search, Store, Trash2, Truck, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { slugError } from "@/lib/store-slug";
-import { isValidFacebookPixelId, isValidTiktokPixelId } from "@/lib/storefront-tracking";
+import { isValidFacebookPixelId, isValidGoogleAnalyticsId, isValidTiktokPixelId } from "@/lib/storefront-tracking";
+import { SITE_URL } from "@/lib/store-url";
 import { MAX_OFFERS, normalizeOffers } from "@/lib/store-pricing";
 import { storeDisplayUrl } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
@@ -29,10 +30,20 @@ type Form = {
   tiktok_pixel_id: string;
   delivery_fee: string;
   free_delivery_threshold: string;
+  google_analytics_id: string;
+  google_site_verification: string;
+  facebook_domain_verification: string;
   offers: { min_quantity: string; discount_percent: string }[];
 };
 
 const whatsappDigits = (value: string) => value.replace(/\D/g, "");
+
+const verificationToken = (value: string) => {
+  const trimmed = value.trim();
+  const fromTag = trimmed.match(/content\s*=\s*["']([^"']+)["']/i);
+  return (fromTag ? fromTag[1] : trimmed).trim();
+};
+const VALID_TOKEN = /^[A-Za-z0-9_-]{8,100}$/;
 
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
@@ -56,6 +67,9 @@ export default function StoreSettingsPage() {
       whatsapp_number: store.whatsapp_number || "",
       facebook_pixel_id: store.facebook_pixel_id || "",
       tiktok_pixel_id: store.tiktok_pixel_id || "",
+      google_analytics_id: store.google_analytics_id || "",
+      google_site_verification: store.google_site_verification || "",
+      facebook_domain_verification: store.facebook_domain_verification || "",
       delivery_fee: store.delivery_fee != null ? String(Number(store.delivery_fee)) : "0",
       free_delivery_threshold: store.free_delivery_threshold != null ? String(Number(store.free_delivery_threshold)) : "",
       offers: normalizeOffers(store.quantity_offers).map((o) => ({
@@ -130,6 +144,17 @@ export default function StoreSettingsPage() {
       toast.error(tr("marketing.errors.tiktok"));
       return;
     }
+    const gaId = form.google_analytics_id.trim().toUpperCase();
+    if (gaId && !isValidGoogleAnalyticsId(gaId)) {
+      toast.error(tr("integrations.errors.ga"));
+      return;
+    }
+    const gscToken = verificationToken(form.google_site_verification);
+    const metaToken = verificationToken(form.facebook_domain_verification);
+    if ((gscToken && !VALID_TOKEN.test(gscToken)) || (metaToken && !VALID_TOKEN.test(metaToken))) {
+      toast.error(tr("integrations.errors.token"));
+      return;
+    }
     const deliveryFee = Number(form.delivery_fee.replace(",", ".") || 0);
     if (!Number.isFinite(deliveryFee) || deliveryFee < 0 || deliveryFee > 100) {
       toast.error(tr("delivery.errors.fee"));
@@ -172,6 +197,9 @@ export default function StoreSettingsPage() {
       whatsapp_number: whatsapp || null,
       facebook_pixel_id: form.facebook_pixel_id.trim() || null,
       tiktok_pixel_id: form.tiktok_pixel_id.trim().toUpperCase() || null,
+      google_analytics_id: gaId || null,
+      google_site_verification: gscToken || null,
+      facebook_domain_verification: metaToken || null,
       delivery_fee: deliveryFee,
       free_delivery_threshold: threshold,
       quantity_offers: offers,
@@ -356,6 +384,49 @@ export default function StoreSettingsPage() {
             <Label htmlFor="tiktok_pixel_id">{tr("marketing.tiktok")}</Label>
             <Input id="tiktok_pixel_id" dir="ltr" value={form.tiktok_pixel_id} placeholder="C4A1B2C3D4E5F6G7H8I9" onChange={(e) => update("tiktok_pixel_id", e.target.value.trim())} />
             <p className="text-xs text-gray-400">{tr("marketing.tiktok_help")}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><BarChart3 className="w-5 h-5 text-purple-600" />{tr("integrations.title")}</CardTitle>
+          <CardDescription>{tr("integrations.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="google_analytics_id">{tr("integrations.ga")}</Label>
+            <Input id="google_analytics_id" dir="ltr" value={form.google_analytics_id} placeholder="G-XXXXXXXXXX" onChange={(e) => update("google_analytics_id", e.target.value.trim())} />
+            <p className="text-xs text-gray-400">{tr("integrations.ga_help")}</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="google_site_verification">{tr("integrations.gsc")}</Label>
+            <Input id="google_site_verification" dir="ltr" value={form.google_site_verification} placeholder='<meta name="google-site-verification" content="..." />' onChange={(e) => update("google_site_verification", e.target.value)} />
+            <p className="text-xs text-gray-400">{tr("integrations.gsc_help")}</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="facebook_domain_verification">{tr("integrations.meta")}</Label>
+            <Input id="facebook_domain_verification" dir="ltr" value={form.facebook_domain_verification} placeholder='<meta name="facebook-domain-verification" content="..." />' onChange={(e) => update("facebook_domain_verification", e.target.value)} />
+            <p className="text-xs text-gray-400">{tr("integrations.meta_help")}</p>
+          </div>
+          <div className="space-y-2">
+            <Label>{tr("integrations.feed")}</Label>
+            <div className="flex items-center gap-2">
+              <Input readOnly dir="ltr" value={`${SITE_URL}/api/feeds/${store.slug}/catalog.xml`} className="font-mono text-xs" />
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0 rounded-xl"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${SITE_URL}/api/feeds/${store.slug}/catalog.xml`);
+                  toast.success(tr("integrations.copied"));
+                }}
+              >
+                <Copy className="w-4 h-4 me-2" />
+                {tr("integrations.copy")}
+              </Button>
+            </div>
+            <p className="text-xs text-gray-400">{tr("integrations.feed_help")}</p>
           </div>
         </CardContent>
       </Card>

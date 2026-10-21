@@ -13,6 +13,17 @@ export function plainText(html: string | null | undefined, max = 160) {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text;
 }
 
+const TOKEN = /^[A-Za-z0-9_-]{8,100}$/;
+
+function storeVerification(store: { google_site_verification?: string | null; facebook_domain_verification?: string | null }): Metadata["verification"] {
+  const google = store.google_site_verification?.trim();
+  const facebook = store.facebook_domain_verification?.trim();
+  const result: NonNullable<Metadata["verification"]> = {};
+  if (google && TOKEN.test(google)) result.google = google;
+  if (facebook && TOKEN.test(facebook)) result.other = { "facebook-domain-verification": facebook };
+  return Object.keys(result).length ? result : undefined;
+}
+
 export async function loadStoreProduct(storeSlug: string, productId: string) {
   if (!/^[0-9a-f-]{36}$/i.test(productId)) return null;
   const supabase = anonClient();
@@ -36,12 +47,13 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
   const supabase = anonClient();
   const { data: store } = await supabase
     .from("stores")
-    .select("id, name, description, seo_title, seo_description, logo_url, is_active")
+    .select("id, name, description, seo_title, seo_description, logo_url, is_active, google_site_verification, facebook_domain_verification")
     .eq("slug", storeSlug)
     .maybeSingle();
   if (!store) return { title: { absolute: "Boutique introuvable" }, robots: { index: false, follow: false } };
 
   const offline = store.is_active === false;
+  const verification = storeVerification(store);
   const robots = offline ? { index: false, follow: false } : undefined;
   const [first, second] = path;
 
@@ -62,6 +74,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
         twitter: { card: "summary_large_image", title, description, images: image ? [image] : undefined },
         icons: store.logo_url ? { icon: store.logo_url } : undefined,
         robots,
+        verification,
       };
     }
   }
@@ -91,5 +104,6 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
     openGraph: { title, description, url, siteName: store.name, images: image ? [image] : undefined, type: "website" },
     robots: page?.no_index ? { index: false, follow: false } : robots,
     icons: store.logo_url ? { icon: store.logo_url } : undefined,
+    verification,
   };
 }

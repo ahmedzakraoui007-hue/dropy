@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Script from "next/script";
+import { DropyAnalytics } from "@/components/analytics/DropyAnalytics";
 import { Toaster } from "@/components/ui/sonner";
 import { LanguageProvider } from "@/context/LanguageContext";
 
@@ -69,20 +69,7 @@ export default function RootLayout({
       <html lang="fr" suppressHydrationWarning>
         <body className="antialiased" suppressHydrationWarning>
           <LanguageProvider>
-            <Script
-              id="gtag-base"
-              async
-              src="https://www.googletagmanager.com/gtag/js?id=G-E670RXNKLL"
-              strategy="afterInteractive"
-            />
-            <Script id="gtag-init" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', 'G-E670RXNKLL');
-              `}
-            </Script>
+            <DropyAnalytics />
             {children}
             <Toaster position="top-right" />
           </LanguageProvider>

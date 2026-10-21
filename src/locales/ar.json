@@ -278,6 +278,24 @@
                     "offer": "كل عرض: من 2 إلى 10 قطع، وتخفيض من 1 إلى 50٪."
                 }
             },
+            "integrations": {
+                "title": "Google وMeta",
+                "desc": "اربط متجرك بـ Google Analytics وSearch Console وكتالوج فيسبوك / إنستغرام.",
+                "ga": "معرّف Google Analytics 4",
+                "ga_help": "Analytics ← الإدارة ← مصادر البيانات ← معرّف القياس (G-XXXXXXX).",
+                "gsc": "التحقق في Google Search Console",
+                "gsc_help": "Search Console ← إضافة موقع (بادئة عنوان URL) ← علامة HTML: الصق العلامة أو رمزها.",
+                "meta": "التحقق من النطاق في Meta",
+                "meta_help": "Meta Business ← الإعدادات ← النطاقات ← إضافة ← علامة meta: الصق العلامة أو رمزها.",
+                "feed": "رابط كتالوج المنتجات",
+                "feed_help": "الصقه في Meta Commerce Manager (الكتالوج ← مصادر البيانات ← تغذية مجدولة) وفي Google Merchant Center. يتحدّث تلقائياً.",
+                "copy": "نسخ",
+                "copied": "تم نسخ الرابط",
+                "errors": {
+                    "ga": "يجب أن يكون معرّف Google Analytics بالشكل G-XXXXXXX.",
+                    "token": "رمز التحقق غير صالح."
+                }
+            },
             "marketing": {
                 "title": "الإعلانات وواتساب",
                 "desc": "قِس مبيعات إعلاناتك ودَع زبائنك يراسلونك.",

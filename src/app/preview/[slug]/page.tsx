@@ -2254,8 +2254,8 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
   useEffect(() => {
     if (!store) return;
-    loadStoreTracking({ facebook: store.facebook_pixel_id, tiktok: store.tiktok_pixel_id });
-  }, [store?.facebook_pixel_id, store?.tiktok_pixel_id]);
+    loadStoreTracking({ facebook: store.facebook_pixel_id, tiktok: store.tiktok_pixel_id, google: store.google_analytics_id });
+  }, [store?.facebook_pixel_id, store?.tiktok_pixel_id, store?.google_analytics_id]);
 
   useEffect(() => {
     if (!store?.id) return;

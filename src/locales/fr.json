@@ -278,6 +278,24 @@
                     "offer": "Chaque offre : de 2 à 10 pièces, remise de 1 à 50 %."
                 }
             },
+            "integrations": {
+                "title": "Google et Meta",
+                "desc": "Connectez votre boutique à Google Analytics, Search Console et au catalogue Facebook / Instagram.",
+                "ga": "ID Google Analytics 4",
+                "ga_help": "Analytics → Administration → Flux de données → ID de mesure (G-XXXXXXX).",
+                "gsc": "Vérification Google Search Console",
+                "gsc_help": "Search Console → Ajouter une propriété (préfixe d'URL) → Balise HTML : collez la balise ou son code.",
+                "meta": "Vérification de domaine Meta",
+                "meta_help": "Meta Business → Paramètres → Domaines → Ajouter → Balise meta : collez la balise ou son code.",
+                "feed": "Flux catalogue produits",
+                "feed_help": "À coller dans Meta Commerce Manager (Catalogue → Sources de données → Flux de données programmé) et dans Google Merchant Center. Mis à jour automatiquement.",
+                "copy": "Copier",
+                "copied": "Lien copié",
+                "errors": {
+                    "ga": "L'ID Google Analytics doit ressembler à G-XXXXXXX.",
+                    "token": "Code de vérification invalide."
+                }
+            },
             "marketing": {
                 "title": "Publicité et WhatsApp",
                 "desc": "Mesurez les ventes de vos publicités et laissez vos clients vous écrire.",

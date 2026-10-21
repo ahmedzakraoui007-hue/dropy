@@ -1,6 +1,6 @@
 "use client";
 
-type TrackingIds = { facebook?: string | null; tiktok?: string | null };
+type TrackingIds = { facebook?: string | null; tiktok?: string | null; google?: string | null };
 
 export type StoreEvent = "PageView" | "ViewContent" | "AddToCart" | "InitiateCheckout" | "Purchase";
 
@@ -28,7 +28,19 @@ export function isValidTiktokPixelId(id: string | null | undefined) {
   return Boolean(id && /^[A-Z0-9]{15,25}$/i.test(id.trim()));
 }
 
-const loaded: { facebook?: string; tiktok?: string } = {};
+const GA4_EVENTS: Record<StoreEvent, string> = {
+  PageView: "page_view",
+  ViewContent: "view_item",
+  AddToCart: "add_to_cart",
+  InitiateCheckout: "begin_checkout",
+  Purchase: "purchase",
+};
+
+export function isValidGoogleAnalyticsId(id: string | null | undefined) {
+  return Boolean(id && /^G-[A-Z0-9]{4,15}$/.test(id.trim()));
+}
+
+const loaded: { facebook?: string; tiktok?: string; google?: string } = {};
 
 function injectScript(id: string, code: string) {
   if (document.getElementById(id)) return;
@@ -42,6 +54,19 @@ export function loadStoreTracking(ids: TrackingIds) {
   if (typeof window === "undefined" || window.parent !== window) return;
   const facebook = ids.facebook?.trim();
   const tiktok = ids.tiktok?.trim();
+  const google = ids.google?.trim();
+
+  if (isValidGoogleAnalyticsId(google) && loaded.google !== google) {
+    const tag = document.createElement("script");
+    tag.async = true;
+    tag.src = `https://www.googletagmanager.com/gtag/js?id=${google}`;
+    document.head.appendChild(tag);
+    injectScript(
+      "dropy-store-ga4",
+      `window.dataLayer=window.dataLayer||[];window.storeGtag=function(){dataLayer.push(arguments);};storeGtag('js',new Date());storeGtag('config','${google}',{send_page_view:false});`
+    );
+    loaded.google = google;
+  }
 
   if (isValidFacebookPixelId(facebook) && loaded.facebook !== facebook) {
     injectScript(
@@ -75,6 +100,22 @@ export function trackStoreEvent(event: StoreEvent, data: StoreEventData = {}) {
     if (data.quantity) params.num_items = data.quantity;
     if (event === "PageView") w.fbq("track", "PageView");
     else w.fbq("track", event, params, data.orderId ? { eventID: data.orderId } : undefined);
+  }
+
+  if (w.storeGtag) {
+    if (event === "PageView") {
+      w.storeGtag("event", "page_view", { page_location: window.location.href, page_title: document.title });
+    } else {
+      const item = data.contentId
+        ? [{ item_id: data.contentId, item_name: data.contentName, price: data.value, quantity: data.quantity || 1 }]
+        : undefined;
+      w.storeGtag("event", GA4_EVENTS[event], {
+        currency: "TND",
+        value: data.value,
+        transaction_id: data.orderId,
+        items: item,
+      });
+    }
   }
 
   if (w.ttq) {
