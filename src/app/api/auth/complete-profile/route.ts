@@ -77,7 +77,7 @@ export async function POST(request: Request) {
         vendor_id: user.id,
         name: storeName,
         slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
-        is_active: true,
+        is_active: false,
       });
       if (error) {
         console.error("complete-profile store error:", error);

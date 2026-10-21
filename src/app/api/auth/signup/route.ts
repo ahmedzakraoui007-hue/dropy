@@ -165,7 +165,7 @@ export async function POST(req: Request) {
           vendor_id: userId,
           name: storeName,
           slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
-          is_active: true,
+          is_active: false,
         });
         if (error) console.error("Store creation error:", error);
       }

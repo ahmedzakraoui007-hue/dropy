@@ -39,7 +39,7 @@ export async function POST() {
 
   const { data: store, error } = await admin
     .from("stores")
-    .insert({ vendor_id: auth.user.id, name, slug, is_active: true })
+    .insert({ vendor_id: auth.user.id, name, slug, is_active: false })
     .select("id, slug")
     .single();
   if (error || !store) {

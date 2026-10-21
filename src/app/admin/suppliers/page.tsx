@@ -96,12 +96,13 @@ export default function SuppliersManagement() {
   }, [searchTerm]);
 
   const updateStatus = async (userId: string, newStatus: AccountStatusAction) => {
+    const toastId = toast.loading("Mise à jour en cours…");
     try {
       const result = await updateAccountStatus(userId, newStatus);
-      toast.success(STATUS_MESSAGES[newStatus] + (result.emailSent ? " & email envoyé" : ""));
+      toast.success(STATUS_MESSAGES[newStatus] + (result.emailSent ? " & email envoyé" : ""), { id: toastId });
       fetchSuppliers();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour du statut");
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour du statut", { id: toastId });
     }
   };
 
