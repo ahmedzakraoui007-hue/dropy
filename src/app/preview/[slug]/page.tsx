@@ -11,6 +11,7 @@ import { formatPrice, formatDate } from "@/lib/utils";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 import { storeBasePath } from "@/lib/store-url";
 import { loadStoreTracking, trackStoreEvent } from "@/lib/storefront-tracking";
+import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 
 // --- HELPERS ---
 
@@ -536,7 +537,7 @@ const ReviewsSection = ({ sectionId, config }: { sectionId: string, config: any 
   );
 };
 
-const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeId }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, selectedProduct?: any, storeId?: string }) => {
+const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeId, store }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, selectedProduct?: any, storeId?: string, store?: any }) => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [product, setProduct] = useState<any>(selectedProduct || null);
   const [loading, setLoading] = useState(false);
@@ -721,6 +722,8 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 preview={inBuilder || !displayProduct.id}
                 title={config.expressTitle}
                 buttonText={config.expressButtonText}
+                offers={normalizeOffers(store?.quantity_offers)}
+                delivery={{ delivery_fee: store?.delivery_fee, free_delivery_threshold: store?.free_delivery_threshold }}
                 beforeSubmit={() => {
                   if (variantOptions.length > 0 && !selectedVariant) {
                     setVariantError(true);
@@ -1210,9 +1213,9 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
   );
 };
 
-  const CartDrawer = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity }: { isOpen: boolean, onClose: () => void, cart: any[], onRemove: (id: string) => void, onUpdateQuantity: (id: string, delta: number) => void }) => {
+  const CartDrawer = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, offers = [] }: { isOpen: boolean, onClose: () => void, cart: any[], onRemove: (id: string) => void, onUpdateQuantity: (id: string, delta: number) => void, offers?: any[] }) => {
     if (!isOpen) return null;
-    const total = cart.reduce((acc, item) => acc + (parsePrice(item.price) * (item.quantity || 1)), 0);
+    const total = cart.reduce((acc, item) => acc + discountedUnitPrice(parsePrice(item.price), item.quantity || 1, offers) * (item.quantity || 1), 0);
     return (
       <div className="fixed inset-0 z-[100] flex justify-end">
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -1515,7 +1518,8 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
     const [appliedPromo, setAppliedPromo] = useState<any>(null);
     const [promoError, setPromoError] = useState("");
   
-    const subtotal = cart.reduce((acc, item) => acc + (parsePrice(item.price) * (item.quantity || 1)), 0);
+    const offers = normalizeOffers(store?.quantity_offers);
+    const subtotal = cart.reduce((acc, item) => acc + discountedUnitPrice(parsePrice(item.price), item.quantity || 1, offers) * (item.quantity || 1), 0);
   
     const handleValidatePromo = async () => {
       if (!promoCode) return;
@@ -1553,7 +1557,8 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
           : appliedPromo.value)
       : 0;
   
-    const total = Math.max(0, subtotal - discountAmount);
+    const shippingCost = deliveryFeeFor(Math.max(0, subtotal - discountAmount), store || {});
+    const total = Math.max(0, subtotal - discountAmount) + shippingCost;
   
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -1689,7 +1694,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                     </div>
                   )}
 
-                  <div className="flex justify-between text-sm"><span>Livraison</span><span className="font-bold text-emerald-600">GRATUIT</span></div>
+                  <div className="flex justify-between text-sm"><span>Livraison</span>{shippingCost > 0 ? <span className="font-bold">{formatPrice(shippingCost)}</span> : <span className="font-bold text-emerald-600">GRATUIT</span>}</div>
                   <div className="h-[1px] bg-border my-4" />
                   <div className="flex justify-between text-xl font-black"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
                 </div>
@@ -2058,7 +2063,7 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
       case "pricing": return <Pricing {...commonProps} />;
       case "stats": return <Stats {...commonProps} />;
       case "team": return <Team {...commonProps} />;
-      case "product_detail": return <ProductDetail {...commonProps} onAddToCart={onAddToCart} selectedProduct={selectedProduct} storeId={store?.id} />;
+      case "product_detail": return <ProductDetail {...commonProps} onAddToCart={onAddToCart} selectedProduct={selectedProduct} storeId={store?.id} store={store} />;
         case "products": return <Products {...commonProps} onAddToCart={onAddToCart} storeId={store?.id} onSelectProduct={onSelectProduct} />;
       case "features": return <Features {...commonProps} />;
       case "testimonials": return <Testimonials {...commonProps} />;
@@ -2371,6 +2376,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           );
         })()}
         <CartDrawer 
+          offers={normalizeOffers(store?.quantity_offers)}
           isOpen={isCartOpen} 
           onClose={() => setIsCartOpen(false)} 
           cart={cart} 

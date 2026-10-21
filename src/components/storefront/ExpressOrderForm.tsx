@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
+import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, round3, type QuantityOffer } from "@/lib/store-pricing";
 
 export const TUNISIAN_GOVERNORATES = [
   "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili",
@@ -20,6 +21,8 @@ type Props = {
   title?: string;
   buttonText?: string;
   preview?: boolean;
+  offers?: QuantityOffer[];
+  delivery?: { delivery_fee?: number | string | null; free_delivery_threshold?: number | string | null };
 };
 
 const formatTnd = (value: number) => `${value.toFixed(3).replace(".", ",")} DT`;
@@ -35,6 +38,8 @@ export function ExpressOrderForm({
   title,
   buttonText,
   preview,
+  offers = [],
+  delivery = {},
 }: Props) {
   const [form, setForm] = useState({ name: "", phone: "", governorate: "", city: "", address: "" });
   const [quantity, setQuantity] = useState(1);
@@ -86,13 +91,13 @@ export function ExpressOrderForm({
             phone: form.phone.replace(/\D/g, "").replace(/^216/, ""),
             governorate: form.governorate,
             city: form.city.trim() || null,
-            address: [form.address.trim(), form.city.trim(), form.governorate].filter(Boolean).join(", "),
+            address: form.address.trim(),
           },
           paymentMethod: "cod",
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (response.ok && data.success) onOrdered(data.orderId, unitPrice * quantity, quantity);
+      if (response.ok && data.success) onOrdered(data.orderId, Number(data.totalAmount ?? total), quantity);
       else setServerError(data.error || "La commande n'a pas pu être envoyée. Réessayez.");
     } catch {
       setServerError("Problème de connexion. Réessayez.");
@@ -102,7 +107,12 @@ export function ExpressOrderForm({
   };
 
   const field = "w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:ring-2 ring-primary";
-  const total = unitPrice * quantity;
+  const lineUnit = discountedUnitPrice(unitPrice, quantity, offers);
+  const merchandise = round3(lineUnit * quantity);
+  const shipping = deliveryFeeFor(merchandise, delivery);
+  const total = round3(merchandise + shipping);
+  const savedPercent = offerPercentFor(quantity, offers);
+  const quantityChoices = offers.length ? [1, ...offers.map((o) => o.min_quantity)] : [];
 
   return (
     <form onSubmit={submit} className="space-y-3 rounded-3xl border-2 border-primary/30 bg-card p-4 md:p-6 shadow-lg" noValidate>
@@ -141,6 +151,32 @@ export function ExpressOrderForm({
         {errors.address && <p className="mt-1 text-xs font-medium text-red-600">{errors.address}</p>}
       </div>
 
+      {quantityChoices.length > 0 && (
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${quantityChoices.length}, minmax(0, 1fr))` }}>
+          {quantityChoices.map((choice) => {
+            const percent = offerPercentFor(choice, offers);
+            const price = round3(discountedUnitPrice(unitPrice, choice, offers) * choice);
+            const active = quantity === choice;
+            return (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => setQuantity(choice)}
+                className={`relative rounded-xl border-2 px-2 py-3 text-center transition-colors ${active ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}`}
+              >
+                {percent > 0 && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-2 py-0.5 text-[10px] font-black text-primary-foreground">
+                    -{percent}%
+                  </span>
+                )}
+                <span className="block text-sm font-black">{choice} {choice > 1 ? "pièces" : "pièce"}</span>
+                <span className="block text-xs opacity-70">{formatTnd(price)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3">
         <div className="flex items-center gap-3">
           <button type="button" aria-label="Moins" className="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center disabled:opacity-40" disabled={quantity <= 1} onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
@@ -152,7 +188,10 @@ export function ExpressOrderForm({
           </button>
         </div>
         <div className="text-end">
-          <p className="text-xs opacity-60">Total</p>
+          <p className="text-xs opacity-60">
+            {shipping > 0 ? `Livraison ${formatTnd(shipping)}` : "Livraison gratuite"}
+            {savedPercent > 0 && ` · -${savedPercent}%`}
+          </p>
           <p className="text-xl font-black">{formatTnd(total)}</p>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { rateLimit } from "@/lib/rate-limit";
+import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -74,6 +75,7 @@ export async function POST(request: Request) {
 
     const { data: store } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
     if (!store || store.is_active === false) return fail("store_unavailable", "Boutique introuvable", 404);
+    const offers = normalizeOffers(store.quantity_offers);
 
     const productIds = [...new Set(lines.map((l) => l.productId))];
     const { data: products, error: productsError } = await supabase
@@ -155,7 +157,8 @@ export async function POST(request: Request) {
         });
       }
 
-      priced.push({ line, product, variant, unitPrice: round2(unitPrice), total: round2(unitPrice * line.quantity) });
+      const finalUnitPrice = discountedUnitPrice(unitPrice, line.quantity, offers);
+      priced.push({ line, product, variant, unitPrice: finalUnitPrice, total: round2(finalUnitPrice * line.quantity) });
     }
 
     const subtotal = round2(priced.reduce((sum, p) => sum + p.total, 0));
@@ -186,7 +189,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const totalAmount = round2(subtotal - discountAmount);
+    const shippingCost = deliveryFeeFor(subtotal - discountAmount, store);
+    const totalAmount = round2(subtotal - discountAmount + shippingCost);
     const number = orderNumber("DRP");
 
     const dropshipSourceIds = [
@@ -221,6 +225,7 @@ export async function POST(request: Request) {
         customer_governorate: customer.governorate ? String(customer.governorate) : null,
         subtotal,
         discount_amount: discountAmount,
+        shipping_cost: shippingCost,
         promo_code: promoCode,
         total_amount: totalAmount,
         payment_method: "cod",

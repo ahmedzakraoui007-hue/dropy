@@ -17,6 +17,9 @@ export interface SellerStore {
   whatsapp_number: string | null;
   facebook_pixel_id: string | null;
   tiktok_pixel_id: string | null;
+  delivery_fee: number | string | null;
+  free_delivery_threshold: number | string | null;
+  quantity_offers: unknown;
   created_at: string;
 }
 

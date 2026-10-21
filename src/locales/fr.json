@@ -75,6 +75,25 @@
                 "slug_chars": "Utilisez uniquement des lettres minuscules, des chiffres et des tirets.",
                 "slug_reserved": "Cette adresse est réservée par Dropy, choisissez-en une autre."
             },
+            "delivery": {
+                "title": "Livraison et offres",
+                "desc": "Ce que paie le client pour la livraison, et des remises pour acheter plusieurs pièces.",
+                "fee": "Frais de livraison (DT)",
+                "fee_help": "0 = livraison gratuite.",
+                "threshold": "Livraison gratuite à partir de (DT)",
+                "threshold_help": "Laissez vide pour ne jamais l'offrir.",
+                "offers": "Offres par quantité",
+                "offers_help": "Exemple : 2 pièces = -10 %, 3 pièces = -15 %. Le client choisit sur la page produit.",
+                "pieces": "pièces",
+                "percent": "% de remise",
+                "add": "Ajouter une offre",
+                "remove": "Retirer",
+                "errors": {
+                    "fee": "Les frais de livraison doivent être entre 0 et 100 DT.",
+                    "threshold": "Le seuil de livraison gratuite doit être un montant positif.",
+                    "offer": "Chaque offre : de 2 à 10 pièces, remise de 1 à 50 %."
+                }
+            },
             "marketing": {
                 "title": "Publicité et WhatsApp",
                 "desc": "Mesurez les ventes de vos publicités et laissez vos clients vous écrire.",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Globe, ImageIcon, Loader2, Megaphone, Save, Search, Store, Trash2, Upload } from "lucide-react";
+import { Globe, ImageIcon, Loader2, Megaphone, Plus, Save, Search, Store, Trash2, Truck, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { slugError } from "@/lib/store-slug";
 import { isValidFacebookPixelId, isValidTiktokPixelId } from "@/lib/storefront-tracking";
+import { MAX_OFFERS, normalizeOffers } from "@/lib/store-pricing";
 import { storeDisplayUrl } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
 import { useSellerStore } from "@/hooks/useSellerStore";
@@ -26,6 +27,9 @@ type Form = {
   whatsapp_number: string;
   facebook_pixel_id: string;
   tiktok_pixel_id: string;
+  delivery_fee: string;
+  free_delivery_threshold: string;
+  offers: { min_quantity: string; discount_percent: string }[];
 };
 
 const whatsappDigits = (value: string) => value.replace(/\D/g, "");
@@ -52,6 +56,12 @@ export default function StoreSettingsPage() {
       whatsapp_number: store.whatsapp_number || "",
       facebook_pixel_id: store.facebook_pixel_id || "",
       tiktok_pixel_id: store.tiktok_pixel_id || "",
+      delivery_fee: store.delivery_fee != null ? String(Number(store.delivery_fee)) : "0",
+      free_delivery_threshold: store.free_delivery_threshold != null ? String(Number(store.free_delivery_threshold)) : "",
+      offers: normalizeOffers(store.quantity_offers).map((o) => ({
+        min_quantity: String(o.min_quantity),
+        discount_percent: String(o.discount_percent),
+      })),
     });
   }, [store]);
 
@@ -66,7 +76,8 @@ export default function StoreSettingsPage() {
     return <div className="p-8 text-muted-foreground">{error || t("store_builder.hub.not_found")}</div>;
   }
 
-  const update = (field: keyof Form, value: string) => setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  const update = (field: Exclude<keyof Form, "offers">, value: string) => setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
+  const setOffers = (offers: Form["offers"]) => setForm((prev) => (prev ? { ...prev, offers } : prev));
   const slugCode = form.slug === store.slug ? null : slugError(form.slug);
   const slugProblem = slugCode ? tr(`errors.${slugCode}`) : null;
   const defaultDescription = tr("default_description").replace("{name}", form.name);
@@ -119,6 +130,25 @@ export default function StoreSettingsPage() {
       toast.error(tr("marketing.errors.tiktok"));
       return;
     }
+    const deliveryFee = Number(form.delivery_fee.replace(",", ".") || 0);
+    if (!Number.isFinite(deliveryFee) || deliveryFee < 0 || deliveryFee > 100) {
+      toast.error(tr("delivery.errors.fee"));
+      return;
+    }
+    const thresholdRaw = form.free_delivery_threshold.trim().replace(",", ".");
+    const threshold = thresholdRaw ? Number(thresholdRaw) : null;
+    if (threshold !== null && (!Number.isFinite(threshold) || threshold <= 0)) {
+      toast.error(tr("delivery.errors.threshold"));
+      return;
+    }
+    const filledOffers = form.offers.filter((o) => o.min_quantity.trim() || o.discount_percent.trim());
+    const offers = normalizeOffers(
+      filledOffers.map((o) => ({ min_quantity: Number(o.min_quantity), discount_percent: Number(o.discount_percent.replace(",", ".")) }))
+    );
+    if (offers.length !== filledOffers.length) {
+      toast.error(tr("delivery.errors.offer"));
+      return;
+    }
 
     setSaving(true);
     const supabase = createClient();
@@ -142,6 +172,9 @@ export default function StoreSettingsPage() {
       whatsapp_number: whatsapp || null,
       facebook_pixel_id: form.facebook_pixel_id.trim() || null,
       tiktok_pixel_id: form.tiktok_pixel_id.trim().toUpperCase() || null,
+      delivery_fee: deliveryFee,
+      free_delivery_threshold: threshold,
+      quantity_offers: offers,
     };
     const { error: saveError } = await supabase.from("stores").update(changes).eq("id", store.id);
     setSaving(false);
@@ -234,6 +267,72 @@ export default function StoreSettingsPage() {
         <CardContent className="space-y-2">
           <StoreAddressInput value={form.slug} onChange={(value) => update("slug", value)} />
           {slugProblem && <p className="text-sm text-red-600">{slugProblem}</p>}
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-3xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg"><Truck className="w-5 h-5 text-purple-600" />{tr("delivery.title")}</CardTitle>
+          <CardDescription>{tr("delivery.desc")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="delivery_fee">{tr("delivery.fee")}</Label>
+              <Input id="delivery_fee" dir="ltr" inputMode="decimal" value={form.delivery_fee} onChange={(e) => update("delivery_fee", e.target.value)} />
+              <p className="text-xs text-gray-400">{tr("delivery.fee_help")}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="free_delivery_threshold">{tr("delivery.threshold")}</Label>
+              <Input id="free_delivery_threshold" dir="ltr" inputMode="decimal" value={form.free_delivery_threshold} onChange={(e) => update("free_delivery_threshold", e.target.value)} />
+              <p className="text-xs text-gray-400">{tr("delivery.threshold_help")}</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <Label>{tr("delivery.offers")}</Label>
+              <p className="text-xs text-gray-400">{tr("delivery.offers_help")}</p>
+            </div>
+            {form.offers.map((offer, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <Input
+                  className="w-20"
+                  dir="ltr"
+                  inputMode="numeric"
+                  value={offer.min_quantity}
+                  onChange={(e) => setOffers(form.offers.map((o, i) => (i === index ? { ...o, min_quantity: e.target.value } : o)))}
+                />
+                <span className="text-sm text-gray-500">{tr("delivery.pieces")}</span>
+                <Input
+                  className="w-20"
+                  dir="ltr"
+                  inputMode="decimal"
+                  value={offer.discount_percent}
+                  onChange={(e) => setOffers(form.offers.map((o, i) => (i === index ? { ...o, discount_percent: e.target.value } : o)))}
+                />
+                <span className="text-sm text-gray-500">{tr("delivery.percent")}</span>
+                <Button type="button" variant="ghost" size="icon" className="ms-auto text-red-600" aria-label={tr("delivery.remove")} onClick={() => setOffers(form.offers.filter((_, i) => i !== index))}>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+            {form.offers.length < MAX_OFFERS && (
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl"
+                onClick={() =>
+                  setOffers([
+                    ...form.offers,
+                    { min_quantity: String((Number(form.offers[form.offers.length - 1]?.min_quantity) || 1) + 1), discount_percent: form.offers.length ? "15" : "10" },
+                  ])
+                }
+              >
+                <Plus className="w-4 h-4 me-2" />
+                {tr("delivery.add")}
+              </Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
