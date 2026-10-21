@@ -9,17 +9,19 @@ const RESERVED_SLUGS = new Set([
 export function slugify(value: string) {
   return value
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40);
 }
 
-export function slugError(slug: string): string | null {
-  if (slug.length < 3) return "L'adresse doit contenir au moins 3 caractères.";
-  if (slug.length > 40) return "L'adresse doit contenir au maximum 40 caractères.";
-  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) return "Utilisez uniquement des lettres minuscules, des chiffres et des tirets.";
-  if (RESERVED_SLUGS.has(slug)) return "Cette adresse est réservée par Dropy, choisissez-en une autre.";
+export type SlugErrorCode = "slug_short" | "slug_long" | "slug_chars" | "slug_reserved";
+
+export function slugError(slug: string): SlugErrorCode | null {
+  if (slug.length < 3) return "slug_short";
+  if (slug.length > 40) return "slug_long";
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) return "slug_chars";
+  if (RESERVED_SLUGS.has(slug)) return "slug_reserved";
   return null;
 }

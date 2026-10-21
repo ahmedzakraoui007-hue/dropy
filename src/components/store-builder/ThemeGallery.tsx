@@ -5,6 +5,7 @@ import { themes } from '@/lib/themes';
 import { ThemeCard } from './ThemeCard';
 import { ThemePreviewModal } from './ThemePreviewModal';
 import { useThemes } from '@/hooks/store-builder/useThemes';
+import { useTranslation } from '@/context/LanguageContext';
 import { Theme } from '@/types/themes';
 import { Loader2 } from 'lucide-react';
 import {
@@ -23,6 +24,8 @@ export function ThemeGallery() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pendingTheme, setPendingTheme] = useState<Theme | null>(null);
   const { applyTheme, isApplying, currentThemeId, isLoading } = useThemes();
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`store_builder.theme_dialog.${key}`);
 
   const handlePreview = (theme: Theme) => {
     setSelectedTheme(theme);
@@ -108,19 +111,18 @@ export function ThemeGallery() {
       <AlertDialog open={Boolean(pendingTheme)} onOpenChange={(open) => !open && setPendingTheme(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Appliquer le thème « {pendingTheme?.name} » ?</AlertDialogTitle>
+            <AlertDialogTitle>{tr('title').replace('{name}', pendingTheme?.name ?? '')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Les couleurs et les polices de votre boutique vont changer. Voulez-vous aussi remplacer le contenu
-              de votre page d'accueil par celui du thème ? Vos autres pages ne sont pas modifiées.
+              {tr('body')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel disabled={isApplying}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isApplying}>{tr('cancel')}</AlertDialogCancel>
             <AlertDialogAction disabled={isApplying} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" onClick={() => confirmApply(false)}>
-              Couleurs et polices uniquement
+              {tr('colors_only')}
             </AlertDialogAction>
             <AlertDialogAction disabled={isApplying} onClick={() => confirmApply(true)}>
-              Remplacer aussi l'accueil
+              {tr('replace_home')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

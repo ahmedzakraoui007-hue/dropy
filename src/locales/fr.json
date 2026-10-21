@@ -1,4 +1,91 @@
 {
+    "store_builder": {
+        "nav": {
+            "title": "Ma boutique",
+            "back": "Retour au tableau de bord",
+            "hub": "Ma boutique",
+            "editor": "Éditeur visuel",
+            "themes": "Thèmes",
+            "menus": "Menus",
+            "settings": "Paramètres",
+            "view_store": "Voir ma boutique"
+        },
+        "hub": {
+            "eyebrow": "Ma boutique",
+            "copy": "Copier le lien",
+            "copied": "Lien copié",
+            "online": "En ligne",
+            "offline": "Hors ligne",
+            "view": "Voir ma boutique",
+            "edit": "Modifier le site",
+            "open": "Ouvrir",
+            "not_found": "Boutique introuvable.",
+            "prepare": "Préparer votre boutique",
+            "recommended": "(conseillé)",
+            "offline_note": "Votre boutique est hors ligne : seuls vous et l'équipe Dropy pouvez la voir.",
+            "need_product": "Ajoutez au moins un produit avant de mettre votre boutique en ligne.",
+            "status_error": "Impossible de modifier le statut de la boutique.",
+            "now_online": "Votre boutique est en ligne",
+            "now_offline": "Votre boutique est hors ligne",
+            "steps": {
+                "theme": "Choisir un thème",
+                "theme_desc": "Le thème définit les couleurs, les polices et la mise en page.",
+                "logo": "Ajouter votre logo",
+                "logo_desc": "Il apparaît dans l'en-tête et dans l'onglet du navigateur.",
+                "products": "Ajouter des produits",
+                "products_desc": "Importez des produits du catalogue Dropy ou ajoutez les vôtres.",
+                "home": "Personnaliser la page d'accueil",
+                "home_desc": "Textes, images et sections de votre page principale."
+            },
+            "tools": {
+                "editor_desc": "Modifiez vos pages, sections, couleurs et polices avec un aperçu en direct.",
+                "themes_desc": "Changez l'apparence complète de votre boutique en un clic.",
+                "menus_desc": "Choisissez les liens affichés en haut et en bas de votre boutique.",
+                "settings_desc": "Nom, logo, adresse de la boutique et référencement Google."
+            }
+        },
+        "settings": {
+            "title": "Paramètres de la boutique",
+            "subtitle": "Ces informations apparaissent sur votre boutique et dans Google.",
+            "save": "Enregistrer",
+            "identity": "Identité",
+            "name": "Nom de la boutique",
+            "description": "Description courte",
+            "description_ph": "Ce que vous vendez, en une ou deux phrases.",
+            "logo": "Logo",
+            "upload": "Envoyer un logo",
+            "change": "Changer",
+            "remove": "Retirer",
+            "address": "Adresse de la boutique",
+            "address_note": "Si vous la changez, l'ancien lien ne fonctionnera plus.",
+            "seo": "Référencement Google",
+            "seo_note": "Laissez vide pour utiliser le nom et la description de la boutique.",
+            "seo_title": "Titre dans Google",
+            "seo_description": "Description dans Google",
+            "default_description": "Découvrez la boutique {name}.",
+            "errors": {
+                "image_type": "Choisissez une image (PNG, JPG, SVG ou WebP).",
+                "image_size": "Image trop lourde (2 Mo maximum).",
+                "upload": "Échec de l'envoi du logo.",
+                "name_required": "Le nom de la boutique est obligatoire.",
+                "slug_taken": "Cette adresse est déjà utilisée par une autre boutique.",
+                "save": "Erreur lors de l'enregistrement.",
+                "slug_short": "L'adresse doit contenir au moins 3 caractères.",
+                "slug_long": "L'adresse doit contenir au maximum 40 caractères.",
+                "slug_chars": "Utilisez uniquement des lettres minuscules, des chiffres et des tirets.",
+                "slug_reserved": "Cette adresse est réservée par Dropy, choisissez-en une autre."
+            },
+            "logo_ready": "Logo prêt, pensez à enregistrer.",
+            "saved": "Paramètres enregistrés"
+        },
+        "theme_dialog": {
+            "title": "Appliquer le thème « {name} » ?",
+            "body": "Les couleurs et les polices de votre boutique vont changer. Voulez-vous aussi remplacer le contenu de votre page d'accueil par celui du thème ? Vos autres pages ne sont pas modifiées.",
+            "cancel": "Annuler",
+            "colors_only": "Couleurs et polices uniquement",
+            "replace_home": "Remplacer aussi l'accueil"
+        }
+    },
     "launch": {
         "badge": "Lancement",
         "title": "Dropy est 100 % gratuit pendant le lancement",

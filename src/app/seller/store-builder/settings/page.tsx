@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { slugError, slugify } from "@/lib/store-slug";
 import { useSellerStore } from "@/hooks/useSellerStore";
+import { useTranslation } from "@/context/LanguageContext";
 
 type Form = {
   name: string;
@@ -25,6 +26,8 @@ const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 export default function StoreSettingsPage() {
   const { store, setStore, loading, error } = useSellerStore();
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`store_builder.settings.${key}`);
   const [form, setForm] = useState<Form | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -49,20 +52,22 @@ export default function StoreSettingsPage() {
     );
   }
   if (!store || !form) {
-    return <div className="p-8 text-muted-foreground">{error || "Boutique introuvable."}</div>;
+    return <div className="p-8 text-muted-foreground">{error || t("store_builder.hub.not_found")}</div>;
   }
 
   const update = (field: keyof Form, value: string) => setForm((prev) => (prev ? { ...prev, [field]: value } : prev));
-  const slugProblem = form.slug === store.slug ? null : slugError(form.slug);
+  const slugCode = form.slug === store.slug ? null : slugError(form.slug);
+  const slugProblem = slugCode ? tr(`errors.${slugCode}`) : null;
+  const defaultDescription = tr("default_description").replace("{name}", form.name);
   const origin = typeof window !== "undefined" ? window.location.host : "dropy.store";
 
   const uploadLogo = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("Choisissez une image (PNG, JPG, SVG ou WebP).");
+      toast.error(tr("errors.image_type"));
       return;
     }
     if (file.size > MAX_LOGO_BYTES) {
-      toast.error("Image trop lourde (2 Mo maximum).");
+      toast.error(tr("errors.image_size"));
       return;
     }
     setUploading(true);
@@ -72,19 +77,19 @@ export default function StoreSettingsPage() {
     const { error: uploadError } = await supabase.storage.from("store-assets").upload(path, file, { upsert: true });
     if (uploadError) {
       setUploading(false);
-      toast.error("Échec de l'envoi du logo.");
+      toast.error(tr("errors.upload"));
       return;
     }
     const { data } = supabase.storage.from("store-assets").getPublicUrl(path);
     update("logo_url", data.publicUrl);
     setUploading(false);
-    toast.success("Logo prêt, pensez à enregistrer.");
+    toast.success(tr("logo_ready"));
   };
 
   const save = async () => {
     const name = form.name.trim();
     if (!name) {
-      toast.error("Le nom de la boutique est obligatoire.");
+      toast.error(tr("errors.name_required"));
       return;
     }
     if (slugProblem) {
@@ -99,7 +104,7 @@ export default function StoreSettingsPage() {
       const { data: taken } = await supabase.from("stores").select("id").eq("slug", form.slug).neq("id", store.id).maybeSingle();
       if (taken) {
         setSaving(false);
-        toast.error("Cette adresse est déjà utilisée par une autre boutique.");
+        toast.error(tr("errors.slug_taken"));
         return;
       }
     }
@@ -116,48 +121,48 @@ export default function StoreSettingsPage() {
     setSaving(false);
 
     if (saveError) {
-      toast.error(saveError.code === "23505" ? "Cette adresse est déjà utilisée." : "Erreur lors de l'enregistrement.");
+      toast.error(saveError.code === "23505" ? tr("errors.slug_taken") : tr("errors.save"));
       return;
     }
     setStore({ ...store, ...changes });
-    toast.success("Paramètres enregistrés");
+    toast.success(tr("saved"));
   };
 
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Paramètres de la boutique</h1>
-          <p className="text-gray-500">Ces informations apparaissent sur votre boutique et dans Google.</p>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">{tr("title")}</h1>
+          <p className="text-gray-500">{tr("subtitle")}</p>
         </div>
         <Button onClick={save} disabled={saving || uploading} className="rounded-xl bg-purple-600 hover:bg-purple-700 shrink-0">
-          {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-          Enregistrer
+          {saving ? <Loader2 className="w-4 h-4 me-2 animate-spin" /> : <Save className="w-4 h-4 me-2" />}
+          {tr("save")}
         </Button>
       </div>
 
       <Card className="rounded-3xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><Store className="w-5 h-5 text-purple-600" />Identité</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg"><Store className="w-5 h-5 text-purple-600" />{tr("identity")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="name">Nom de la boutique</Label>
+            <Label htmlFor="name">{tr("name")}</Label>
             <Input id="name" value={form.name} maxLength={60} onChange={(e) => update("name", e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description courte</Label>
+            <Label htmlFor="description">{tr("description")}</Label>
             <Textarea
               id="description"
               rows={3}
               maxLength={300}
               value={form.description}
-              placeholder="Ce que vous vendez, en une ou deux phrases."
+              placeholder={tr("description_ph")}
               onChange={(e) => update("description", e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label>Logo</Label>
+            <Label>{tr("logo")}</Label>
             <div className="flex items-center gap-4">
               <div className="w-20 h-20 rounded-2xl border bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
                 {form.logo_url ? (
@@ -169,8 +174,8 @@ export default function StoreSettingsPage() {
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" className="rounded-xl" disabled={uploading} asChild>
                   <label className="cursor-pointer">
-                    {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
-                    {form.logo_url ? "Changer" : "Envoyer un logo"}
+                    {uploading ? <Loader2 className="w-4 h-4 me-2 animate-spin" /> : <Upload className="w-4 h-4 me-2" />}
+                    {form.logo_url ? tr("change") : tr("upload")}
                     <input
                       type="file"
                       accept="image/*"
@@ -185,8 +190,8 @@ export default function StoreSettingsPage() {
                 </Button>
                 {form.logo_url && (
                   <Button variant="ghost" className="rounded-xl text-red-600" onClick={() => update("logo_url", "")}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Retirer
+                    <Trash2 className="w-4 h-4 me-2" />
+                    {tr("remove")}
                   </Button>
                 )}
               </div>
@@ -197,11 +202,11 @@ export default function StoreSettingsPage() {
 
       <Card className="rounded-3xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><Globe className="w-5 h-5 text-purple-600" />Adresse de la boutique</CardTitle>
-          <CardDescription>Si vous la changez, l'ancien lien ne fonctionnera plus.</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-lg"><Globe className="w-5 h-5 text-purple-600" />{tr("address")}</CardTitle>
+          <CardDescription>{tr("address_note")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="flex items-center rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-purple-500">
+          <div dir="ltr" className="flex items-center rounded-xl border overflow-hidden focus-within:ring-2 focus-within:ring-purple-500">
             <span className="px-3 text-sm text-gray-500 bg-gray-50 border-r h-10 flex items-center shrink-0">{origin}/</span>
             <input
               className="flex-1 h-10 px-3 text-sm outline-none min-w-0"
@@ -216,23 +221,23 @@ export default function StoreSettingsPage() {
 
       <Card className="rounded-3xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg"><Search className="w-5 h-5 text-purple-600" />Référencement Google</CardTitle>
-          <CardDescription>Laissez vide pour utiliser le nom et la description de la boutique.</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-lg"><Search className="w-5 h-5 text-purple-600" />{tr("seo")}</CardTitle>
+          <CardDescription>{tr("seo_note")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="seo_title">Titre dans Google</Label>
+            <Label htmlFor="seo_title">{tr("seo_title")}</Label>
             <Input id="seo_title" value={form.seo_title} maxLength={60} placeholder={form.name} onChange={(e) => update("seo_title", e.target.value)} />
             <p className="text-xs text-gray-400">{form.seo_title.length}/60</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="seo_description">Description dans Google</Label>
+            <Label htmlFor="seo_description">{tr("seo_description")}</Label>
             <Textarea
               id="seo_description"
               rows={3}
               maxLength={160}
               value={form.seo_description}
-              placeholder={form.description || `Découvrez la boutique ${form.name}.`}
+              placeholder={form.description || defaultDescription}
               onChange={(e) => update("seo_description", e.target.value)}
             />
             <p className="text-xs text-gray-400">{form.seo_description.length}/160</p>
@@ -241,7 +246,7 @@ export default function StoreSettingsPage() {
             <p className="text-xs text-gray-500">{origin}/{form.slug}</p>
             <p className="text-blue-700 font-medium truncate">{form.seo_title || form.name}</p>
             <p className="text-sm text-gray-600 line-clamp-2">
-              {form.seo_description || form.description || `Découvrez la boutique ${form.name}.`}
+              {form.seo_description || form.description || defaultDescription}
             </p>
           </div>
         </CardContent>

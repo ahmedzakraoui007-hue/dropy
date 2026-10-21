@@ -24,36 +24,19 @@ import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useSellerStore } from "@/hooks/useSellerStore";
+import { useTranslation } from "@/context/LanguageContext";
 
 const TOOLS = [
-  {
-    title: "Éditeur visuel",
-    description: "Modifiez vos pages, sections, couleurs et polices avec un aperçu en direct.",
-    icon: LayoutTemplate,
-    href: "/seller/store-builder/builder",
-  },
-  {
-    title: "Thèmes",
-    description: "Changez l'apparence complète de votre boutique en un clic.",
-    icon: Sparkles,
-    href: "/seller/store-builder/themes",
-  },
-  {
-    title: "Menus",
-    description: "Choisissez les liens affichés en haut et en bas de votre boutique.",
-    icon: Navigation,
-    href: "/seller/store-builder/navigation",
-  },
-  {
-    title: "Paramètres",
-    description: "Nom, logo, adresse de la boutique et référencement Google.",
-    icon: Settings,
-    href: "/seller/store-builder/settings",
-  },
+  { key: "editor", icon: LayoutTemplate, href: "/seller/store-builder/builder" },
+  { key: "themes", icon: Sparkles, href: "/seller/store-builder/themes" },
+  { key: "menus", icon: Navigation, href: "/seller/store-builder/navigation" },
+  { key: "settings", icon: Settings, href: "/seller/store-builder/settings" },
 ];
 
 export default function StoreBuilderDashboard() {
   const { store, setStore, loading, error } = useSellerStore();
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`store_builder.${key}`);
   const [productCount, setProductCount] = useState<number | null>(null);
   const [publishing, setPublishing] = useState(false);
 
@@ -76,7 +59,7 @@ export default function StoreBuilderDashboard() {
   }
 
   if (!store) {
-    return <div className="p-8 text-muted-foreground">{error || "Boutique introuvable."}</div>;
+    return <div className="p-8 text-muted-foreground">{error || tr("hub.not_found")}</div>;
   }
 
   const isOnline = store.is_active !== false;
@@ -84,29 +67,29 @@ export default function StoreBuilderDashboard() {
 
   const steps = [
     {
-      title: "Choisir un thème",
-      description: "Le thème définit les couleurs, les polices et la mise en page.",
+      title: tr("hub.steps.theme"),
+      description: tr("hub.steps.theme_desc"),
       done: Boolean(store.theme_config?.theme_id),
       href: "/seller/store-builder/themes",
       icon: Palette,
     },
     {
-      title: "Ajouter votre logo",
-      description: "Il apparaît dans l'en-tête et dans l'onglet du navigateur.",
+      title: tr("hub.steps.logo"),
+      description: tr("hub.steps.logo_desc"),
       done: Boolean(store.logo_url),
       href: "/seller/store-builder/settings",
       icon: Settings,
     },
     {
-      title: "Ajouter des produits",
-      description: "Importez des produits du catalogue Dropy ou ajoutez les vôtres.",
+      title: tr("hub.steps.products"),
+      description: tr("hub.steps.products_desc"),
       done: (productCount ?? 0) > 0,
       href: "/seller/products/catalog",
       icon: Package,
     },
     {
-      title: "Personnaliser la page d'accueil",
-      description: "Textes, images et sections de votre page principale.",
+      title: tr("hub.steps.home"),
+      description: tr("hub.steps.home_desc"),
       done: false,
       optional: true,
       href: "/seller/store-builder/builder",
@@ -118,25 +101,25 @@ export default function StoreBuilderDashboard() {
 
   const togglePublished = async (next: boolean) => {
     if (next && (productCount ?? 0) === 0) {
-      toast.error("Ajoutez au moins un produit avant de mettre votre boutique en ligne.");
+      toast.error(tr("hub.need_product"));
       return;
     }
     setPublishing(true);
     const { error: updateError } = await createClient().from("stores").update({ is_active: next }).eq("id", store.id);
     setPublishing(false);
     if (updateError) {
-      toast.error("Impossible de modifier le statut de la boutique.");
+      toast.error(tr("hub.status_error"));
       return;
     }
     setStore({ ...store, is_active: next });
-    toast.success(next ? "Votre boutique est en ligne" : "Votre boutique est hors ligne");
+    toast.success(next ? tr("hub.now_online") : tr("hub.now_offline"));
   };
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="space-y-2 min-w-0">
-          <p className="text-sm font-medium text-muted-foreground">Ma boutique</p>
+          <p className="text-sm font-medium text-muted-foreground">{tr("hub.eyebrow")}</p>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight truncate">{store.name}</h1>
           <div className="flex items-center gap-2 text-sm">
             <span className="font-mono text-gray-600 truncate">{storeUrl.replace(/^https?:\/\//, "")}</span>
@@ -145,9 +128,9 @@ export default function StoreBuilderDashboard() {
               className="text-gray-400 hover:text-gray-700"
               onClick={() => {
                 navigator.clipboard.writeText(storeUrl);
-                toast.success("Lien copié");
+                toast.success(tr("hub.copied"));
               }}
-              aria-label="Copier le lien"
+              aria-label={tr("hub.copy")}
             >
               <Copy className="w-4 h-4" />
             </button>
@@ -157,19 +140,19 @@ export default function StoreBuilderDashboard() {
           <label className="flex items-center gap-3 rounded-xl border bg-white px-4 h-11 cursor-pointer">
             <Switch checked={isOnline} disabled={publishing} onCheckedChange={togglePublished} />
             <span className={cn("text-sm font-bold", isOnline ? "text-emerald-600" : "text-gray-500")}>
-              {isOnline ? "En ligne" : "Hors ligne"}
+              {isOnline ? tr("hub.online") : tr("hub.offline")}
             </span>
           </label>
           <Button variant="outline" asChild className="rounded-xl h-11">
             <a href={`/${store.slug}`} target="_blank" rel="noreferrer">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Voir ma boutique
+              <ExternalLink className="w-4 h-4 me-2" />
+              {tr("hub.view")}
             </a>
           </Button>
           <Button asChild className="rounded-xl h-11 bg-purple-600 hover:bg-purple-700">
             <Link href="/seller/store-builder/builder">
-              <LayoutTemplate className="w-4 h-4 mr-2" />
-              Modifier le site
+              <LayoutTemplate className="w-4 h-4 me-2" />
+              {tr("hub.edit")}
             </Link>
           </Button>
         </div>
@@ -180,7 +163,7 @@ export default function StoreBuilderDashboard() {
           <CardContent className="p-6 space-y-6">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-gray-900">Préparer votre boutique</h2>
+                <h2 className="font-bold text-gray-900">{tr("hub.prepare")}</h2>
                 <span className="text-sm font-bold text-purple-600">{progress}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -200,7 +183,7 @@ export default function StoreBuilderDashboard() {
                     <div className="min-w-0">
                       <p className={cn("text-sm font-bold", step.done ? "text-gray-400 line-through" : "text-gray-900")}>
                         {step.title}
-                        {step.optional && <span className="ml-2 text-xs font-medium text-gray-400">(conseillé)</span>}
+                        {step.optional && <span className="ms-2 text-xs font-medium text-gray-400">{tr("hub.recommended")}</span>}
                       </p>
                       <p className="text-xs text-gray-500">{step.description}</p>
                     </div>
@@ -210,7 +193,7 @@ export default function StoreBuilderDashboard() {
             </ol>
             {!isOnline && (
               <p className="text-xs text-gray-500">
-                Votre boutique est hors ligne : seuls vous et l'équipe Dropy pouvez la voir.
+                {tr("hub.offline_note")}
               </p>
             )}
           </CardContent>
@@ -223,12 +206,12 @@ export default function StoreBuilderDashboard() {
                 <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
                   <tool.icon className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">{tool.title}</h3>
-                <p className="text-sm text-gray-500 mb-6 leading-relaxed flex-1">{tool.description}</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{tr(`nav.${tool.key}`)}</h3>
+                <p className="text-sm text-gray-500 mb-6 leading-relaxed flex-1">{tr(`hub.tools.${tool.key}_desc`)}</p>
                 <Button asChild variant="outline" className="w-full rounded-xl font-bold h-11">
                   <Link href={tool.href}>
-                    Ouvrir
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    {tr("hub.open")}
+                    <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
                   </Link>
                 </Button>
               </CardContent>
