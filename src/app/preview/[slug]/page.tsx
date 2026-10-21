@@ -9,6 +9,7 @@ import { ReviewList } from "@/components/reviews/ReviewList";
 import { AddReviewForm } from "@/components/reviews/AddReviewForm";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
+import { SectionIcon } from "@/components/storefront/SectionIcon";
 import { storeBasePath } from "@/lib/store-url";
 import { loadStoreTracking, trackStoreEvent } from "@/lib/storefront-tracking";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
@@ -97,6 +98,16 @@ const EditableText = ({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
       />
+    );
+  }
+
+  if (!text && !isBuilder) return null;
+
+  if (!isBuilder) {
+    return (
+      <Tag className={className} style={style}>
+        {text}
+      </Tag>
     );
   }
 
@@ -348,7 +359,7 @@ const TrustBadges = ({ sectionId, config }: { sectionId: string, config: any }) 
         {(config.items || []).map((item: any, i: number) => (
           <div key={i} className={`flex ${config.layout === 'row' ? 'flex-row items-center gap-4' : 'flex-col items-center text-center'} p-6 bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow`}>
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-0 text-xl shrink-0">
-              {item.icon === 'Truck' ? '🚚' : item.icon === 'Shield' ? '🛡️' : item.icon === 'RefreshCw' ? '🔄' : item.icon === 'Headphones' ? '🎧' : item.icon === 'Star' ? '⭐' : item.icon === 'Zap' ? '⚡' : '🛡️'}
+              <SectionIcon name={item.icon} className="w-5 h-5" />
             </div>
             <div className={config.layout === 'row' ? 'text-left' : ''}>
               <EditableText tag="h3" sectionId={sectionId} field={`items.${i}.title`} text={item.title} className="text-sm font-bold mb-1 block" />
@@ -375,7 +386,7 @@ const LogoCarousel = ({ sectionId, config }: { sectionId: string, config: any })
 );
 
 const PromoBanner = ({ sectionId, config }: { sectionId: string, config: any }) => (
-  <div className="py-2.5 px-4 text-center text-sm font-bold relative z-[60] group" style={{ backgroundColor: config.backgroundColor || "#7c3aed", color: config.textColor || "#ffffff" }}>
+  <div className="py-2.5 px-4 text-center text-sm font-bold relative z-[60] group" style={{ backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
     <EditableText sectionId={sectionId} field="text" text={config.text || "Offre spéciale en cours !"} />
     {config.link && <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: config.link.replace('/', '') }, '*')} className="ml-2 underline hover:opacity-80 transition-opacity">En savoir plus →</button>}
   </div>
@@ -855,7 +866,9 @@ const Features = ({ sectionId, config }: { sectionId: string, config: any }) => 
       <div className={`grid gap-12 grid-cols-1 ${gridCols(config.columns, 4)}`}>
         {(config.features || []).map((f: any, i: number) => (
           <div key={i} className="flex flex-col items-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 text-2xl font-bold">!</div>
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 text-2xl">
+              <SectionIcon name={f.icon} className="w-7 h-7" />
+            </div>
             <EditableText tag="h3" sectionId={sectionId} field={`features.${i}.title`} text={f.title} className="text-xl font-bold mb-3 block" />
             <EditableText tag="p" sectionId={sectionId} field={`features.${i}.description`} text={f.description} className="text-muted-foreground block" />
           </div>
@@ -1320,7 +1333,7 @@ const FAQ = ({ sectionId, config }: { sectionId: string, config: any }) => {
 };
 
 const Newsletter = ({ sectionId, config }: { sectionId: string, config: any }) => (
-  <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "#7c3aed", color: config.textColor || "#ffffff" }}>
+  <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
     <div className="max-w-4xl mx-auto text-center space-y-8">
       <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto text-3xl">✉️</div>
       <div className="space-y-4">
@@ -1977,6 +1990,17 @@ const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, co
   );
 };
 
+const LIST_FIELDS: Record<string, string> = {
+  testimonials: "testimonials",
+  faq: "faqs",
+  features: "features",
+  stats: "stats",
+  process_steps: "steps",
+  logo_carousel: "logos",
+  team: "members",
+  collections: "items",
+};
+
 const SECTION_ALIASES: Record<string, string> = {
   featured_products: "products",
   product_grid: "products",
@@ -2043,6 +2067,11 @@ const normalizeSection = (section: any) => {
 const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
   if (section.is_visible === false) return null;
   section = normalizeSection(section);
+  const listField = LIST_FIELDS[section.type];
+  if (listField && typeof window !== "undefined" && window.parent === window) {
+    const items = section.config?.[listField];
+    if (!Array.isArray(items) || items.length === 0) return null;
+  }
   const commonProps = { sectionId: section.id, config: section.config };
   const handleAction = (type: string, id: string) => window.parent.postMessage({ type: 'SECTION_ACTION', actionType: type, sectionId: id }, '*');
   const renderSection = () => {
