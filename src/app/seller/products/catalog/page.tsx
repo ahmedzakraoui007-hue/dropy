@@ -42,6 +42,7 @@ import { useQuota } from "@/hooks/use-quota";
 import { QuotaAlert } from "@/components/ui/quota-alert";
 import { useCatalogProducts } from "@/hooks/useCatalogProducts";
 import { CatalogProduct, Filters, PaginationState } from "@/types/catalog";
+import { importCatalogProduct, CATALOG_IMPORT_MESSAGES } from "@/lib/catalog-import";
 import { createClient } from "@/lib/supabase/client";
 
 const PAGE_SIZE = 12;
@@ -83,39 +84,9 @@ export default function CatalogPage() {
       return;
     }
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const { data: store } = await supabase
-      .from("stores")
-      .select("id")
-      .eq("vendor_id", user?.id)
-      .order("created_at", { ascending: true }).limit(1).maybeSingle();
-
-    if (!store) {
-      toast.error("Veuillez d'abord créer une boutique");
-      return;
-    }
-
-    const { error: insertError } = await supabase
-      .from("store_products")
-      .insert({
-        store_id: store.id,
-        product_id: product.id,
-        name: product.name,
-        description: "", // Catalog items might not have full description in the view
-        images: product.images,
-        selling_price: Math.round(product.suggested_price),
-        is_dropship: true,
-        source: 'dropshipping',
-        is_active: true
-      });
-
-    if (insertError) {
-      toast.error("Erreur lors de l'ajout du produit");
-    } else {
-      toast.success("Produit ajouté à votre boutique !");
-    }
+    const result = await importCatalogProduct(createClient(), product.id);
+    if (result.ok) toast.success("Produit ajouté à votre boutique !");
+    else toast.error(CATALOG_IMPORT_MESSAGES[result.reason]);
   };
 
   const resetFilters = () => {
