@@ -278,6 +278,27 @@
                     "offer": "Chaque offre : de 2 à 10 pièces, remise de 1 à 50 %."
                 }
             },
+            "mcp": {
+                "title": "Connecter Claude (MCP)",
+                "desc": "Laissez Claude Desktop créer et modifier votre boutique pour vous : pages, thème, produits, livraison.",
+                "create": "Créer une clé de connexion",
+                "creating": "Création...",
+                "key_once": "Copiez cette clé maintenant : elle ne sera plus affichée.",
+                "copy": "Copier",
+                "copied": "Copié",
+                "connector_title": "Dans Claude Desktop",
+                "connector_steps": "Paramètres → Connecteurs → Ajouter un connecteur personnalisé → collez cette adresse :",
+                "config_title": "Ou dans le fichier claude_desktop_config.json",
+                "keys": "Clés actives",
+                "no_keys": "Aucune clé pour le moment.",
+                "last_used": "Dernière utilisation",
+                "never": "jamais",
+                "revoke": "Révoquer",
+                "revoked": "Clé révoquée",
+                "examples": "Exemples de demandes : « Applique le thème Glow et réécris ma page d'accueil pour une boutique de bijoux », « Importe 3 sacs du catalogue avec 35 % de marge », « Crée une page Livraison et retours ».",
+                "security": "Une clé donne accès à votre boutique : ne la partagez pas. Révoquez-la si vous ne l'utilisez plus.",
+                "error": "Action impossible"
+            },
             "integrations": {
                 "title": "Google et Meta",
                 "desc": "Connectez votre boutique à Google Analytics, Search Console et au catalogue Facebook / Instagram.",

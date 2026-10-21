@@ -15,6 +15,7 @@ import { SITE_URL } from "@/lib/store-url";
 import { MAX_OFFERS, normalizeOffers } from "@/lib/store-pricing";
 import { storeDisplayUrl } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
+import { McpConnectCard } from "@/components/store-builder/McpConnectCard";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -463,6 +464,8 @@ export default function StoreSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <McpConnectCard />
     </div>
   );
 }

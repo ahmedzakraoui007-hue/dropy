@@ -24,6 +24,16 @@ export async function importCatalogProduct(
     .limit(1)
     .maybeSingle();
   if (!store) return { ok: false, reason: "no_store" };
+  return importCatalogProductIntoStore(supabase, store.id, productId, sellingPrice);
+}
+
+export async function importCatalogProductIntoStore(
+  supabase: SupabaseClient,
+  storeId: string,
+  productId: string,
+  sellingPrice?: number
+): Promise<CatalogImportResult> {
+  const store = { id: storeId };
 
   const { data: product } = await supabase
     .from("products")
