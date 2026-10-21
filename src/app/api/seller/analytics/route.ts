@@ -52,6 +52,7 @@ export async function GET(req: Request) {
       .from("store_orders")
       .select("*")
       .eq("store_id", storeId)
+      .not("status", "in", "(cancelled,returned)")
       .gte("created_at", startDate.toISOString());
 
     if (ordersError) throw ordersError;

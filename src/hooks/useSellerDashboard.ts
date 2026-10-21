@@ -74,7 +74,7 @@ export function useSellerDashboard(sellerId: string) {
           // --- Calculate This Month Stats ---
           const thisMonthOrders = orders.filter(o => o.created_at >= startOfThisMonth);
           const thisMonthRevenue = thisMonthOrders
-            .filter(o => o.status === 'delivered' || o.status === 'shipped')
+            .filter(o => o.status === 'delivered')
             .reduce((sum, o) => sum + Number(o.total_amount), 0);
 
           const thisMonthVisits = visits.filter(v => v.created_at >= startOfThisMonth).length;
@@ -85,7 +85,7 @@ export function useSellerDashboard(sellerId: string) {
           // --- Calculate Last Month Stats (for change %) ---
           const lastMonthOrders = orders.filter(o => o.created_at >= startOfLastMonth && o.created_at <= endOfLastMonth);
           const lastMonthRevenue = lastMonthOrders
-            .filter(o => o.status === 'delivered' || o.status === 'shipped')
+            .filter(o => o.status === 'delivered')
             .reduce((sum, o) => sum + Number(o.total_amount), 0);
 
           // Calculate Changes
