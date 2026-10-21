@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     title: "Devenez Vendeur sur Dropy - E-commerce Sans Stock",
     description: "Accédez à un catalogue textile Made in Tunisia et vendez sans gérer de stock. Formation et accompagnement inclus.",
     url: "https://dropy.store/vendeurs",
-    images: [{ url: "https://dropy.store/og-image-vendeurs.jpg" }],
   },
 };
 

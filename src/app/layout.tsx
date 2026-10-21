@@ -17,9 +17,6 @@ export const metadata: Metadata = {
   },
   description: "Plateforme SaaS e-commerce tout-en-un pour le marché tunisien. Website Builder, Marketplace produits, et Créateurs de contenu.",
   keywords: ["e-commerce", "tunisie", "dropshipping", "SaaS", "website builder", "créateurs de contenu"],
-  alternates: {
-    canonical: "/",
-  },
   authors: [{ name: "Dropy Team" }],
   creator: "Dropy",
   publisher: "Dropy",
@@ -35,14 +32,6 @@ export const metadata: Metadata = {
     siteName: "DROPY",
     title: "DROPY - Lancez votre e-commerce en 30 minutes",
     description: "La plateforme e-commerce #1 en Tunisie pour lancer votre business en ligne sans stock.",
-    images: [
-      {
-        url: "https://dropy.store/og-image-home.jpg",
-        width: 1200,
-        height: 630,
-        alt: "DROPY Platform",
-      },
-    ],
   },
     icons: {
       icon: [
@@ -57,7 +46,6 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "DROPY - Lancez votre e-commerce en 30 minutes",
     description: "La plateforme e-commerce #1 en Tunisie pour lancer votre business en ligne sans stock.",
-    images: ["https://dropy.store/og-image.png"],
     creator: "@dropy_store",
   },
   robots: {

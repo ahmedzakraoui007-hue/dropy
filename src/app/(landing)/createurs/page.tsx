@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     title: "Créateurs UGC Tunisie - Rejoignez la Communauté Dropy",
     description: "Transformez vos vidéos en revenus. Collaborez avec les meilleures marques locales.",
     url: "https://dropy.store/createurs",
-    images: [{ url: "https://dropy.store/og-image-creators.jpg" }],
   },
 };
 

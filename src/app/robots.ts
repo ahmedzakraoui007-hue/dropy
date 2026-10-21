@@ -1,18 +1,41 @@
-import { MetadataRoute } from 'next'
+import type { MetadataRoute } from "next";
+import { headers } from "next/headers";
+import { SITE_URL, storeSlugFromHost, storeUrl } from "@/lib/store-url";
 
-export default function robots(): MetadataRoute.Robots {
+export const dynamic = "force-dynamic";
+
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const host = (await headers()).get("host");
+  const storeSlug = storeSlugFromHost(host);
+
+  if (storeSlug) {
+    return {
+      rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/checkout", "/merci/", "/track"] },
+      sitemap: storeUrl(storeSlug, "/sitemap.xml"),
+    };
+  }
+
   return {
     rules: {
-      userAgent: '*',
-      allow: '/',
+      userAgent: "*",
+      allow: "/",
       disallow: [
-        '/admin/',
-        '/seller/',
-        '/supplier/',
-        '/creator/',
-        '/api/',
+        "/admin/",
+        "/seller/",
+        "/supplier/",
+        "/creator/",
+        "/api/",
+        "/auth/",
+        "/preview/",
+        "/login",
+        "/inscription",
+        "/register",
+        "/forgot-password",
+        "/demande-en-attente",
+        "/*/checkout",
+        "/*/merci/",
       ],
     },
-    sitemap: 'https://dropy.store/sitemap.xml',
-  }
+    sitemap: `${SITE_URL}/sitemap.xml`,
+  };
 }
