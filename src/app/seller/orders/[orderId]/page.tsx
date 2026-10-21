@@ -51,6 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatPrice } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { format, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -527,21 +528,21 @@ export default function OrderDetailPage() {
             <div className="border-t pt-4 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Sous-total</span>
-                <span>{subtotal.toFixed(2)} TND</span>
+                <span>{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Livraison</span>
-                <span>{shipping} TND</span>
+                <span>{Number(shipping) > 0 ? formatPrice(shipping) : "Gratuite"}</span>
               </div>
-              {order.discount_amount && order.discount_amount > 0 && (
+              {Number(order.discount_amount) > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Réduction</span>
-                  <span>-{order.discount_amount} TND</span>
+                  <span>-{formatPrice(order.discount_amount ?? 0)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total</span>
-                <span className="text-primary">{order.total_amount} TND</span>
+                <span className="text-primary">{formatPrice(order.total_amount)}</span>
               </div>
             </div>
           </CardContent>
