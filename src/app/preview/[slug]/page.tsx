@@ -222,6 +222,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
   const ctaPosition = config.ctaPosition || config.textPosition || 'center';
   const ctaLayout = config.ctaLayout || 'row';
   const verticalPosition = config.verticalPosition || 'center';
+  const onImage = variant === 'video' || (Boolean(config.backgroundImage) && variant !== 'split');
   
   const getCtaButtonClass = () => {
     const size = config.ctaSize || 'lg';
@@ -255,7 +256,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
   const content = (
     <div className={`relative z-10 w-full max-w-5xl mx-auto px-4 ${config.textPosition === 'left' ? 'text-left' : config.textPosition === 'right' ? 'text-right' : 'text-center'}`}>
       {config.badge && (
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20 text-sm font-bold mb-8 animate-bounce`}>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${onImage ? 'bg-white/15 text-white border border-white/30 backdrop-blur' : 'bg-primary/10 text-primary border border-primary/20'} text-sm font-bold mb-8 animate-bounce`}>
           ✨ <EditableText sectionId={sectionId} field="badge" text={config.badge} />
         </div>
       )}
@@ -264,8 +265,8 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
         sectionId={sectionId}
         field="title"
         text={config.title || "Bienvenue"}
-        className={`${variant === 'bold' ? 'text-7xl md:text-9xl' : 'text-6xl md:text-8xl'} font-black mb-8 tracking-tighter leading-tight block`}
-        style={{ color: config.textColor || (config.backgroundImage || variant === 'video' ? "#ffffff" : "inherit") }}
+        className={`${variant === 'bold' ? 'text-5xl sm:text-7xl md:text-9xl' : variant === 'split' ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-5xl sm:text-6xl md:text-8xl'} font-black mb-8 tracking-tighter leading-tight block break-words`}
+        style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}
       />
       <EditableText 
         tag="p"
@@ -273,7 +274,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
         field="subtitle"
         text={config.subtitle || "Découvrez nos offres exceptionnelles"}
         className="text-xl md:text-3xl mb-12 max-w-3xl mx-auto opacity-90 leading-relaxed font-medium block"
-        style={{ color: config.textColor || (config.backgroundImage || variant === 'video' ? "#ffffff" : "inherit") }}
+        style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}
       />
       {config.ctaText && (
         <div className={`flex ${ctaLayout === 'column' ? 'flex-col' : 'flex-col sm:flex-row'} gap-6 ${ctaPosition === 'center' ? 'justify-center' : ctaPosition === 'right' ? 'justify-end' : 'justify-start'} items-center`}>
@@ -284,7 +285,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
             <EditableText sectionId={sectionId} field="ctaText" text={config.ctaText} />
           </PreviewButton>
           {config.secondaryCtaText && (
-            <button className="text-lg font-bold border-b-2 border-current hover:opacity-70 transition-opacity" style={{ color: config.textColor || (config.backgroundImage || variant === 'video' ? "#ffffff" : "inherit") }}>
+            <button className="text-lg font-bold border-b-2 border-current hover:opacity-70 transition-opacity" style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}>
               <EditableText sectionId={sectionId} field="secondaryCtaText" text={config.secondaryCtaText} />
             </button>
           )}
@@ -297,7 +298,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
     return (
       <section className={`relative overflow-hidden ${config.animation || 'fade-up'}`} style={{ ...sectionStyle, paddingTop: 0, paddingBottom: 0 }}>
         <div className={`flex flex-col ${config.imagePosition === 'left' ? 'md:flex-row-reverse' : 'md:flex-row'} w-full items-center`}>
-          <div className="flex-1 p-12 md:p-24">
+          <div className="flex-1 min-w-0 px-6 py-12 md:p-16 lg:p-24">
             {content}
           </div>
           <div className="flex-1 h-[400px] md:h-screen relative">
@@ -1332,21 +1333,51 @@ const FAQ = ({ sectionId, config }: { sectionId: string, config: any }) => {
   );
 };
 
-const Newsletter = ({ sectionId, config }: { sectionId: string, config: any }) => (
-  <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
-    <div className="max-w-4xl mx-auto text-center space-y-8">
-      <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto text-3xl">✉️</div>
-      <div className="space-y-4">
-        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Restez à la page"} className="text-4xl font-black block" />
-        <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Inscrivez-vous pour ne rien rater."} className="text-xl opacity-90 block" />
+const Newsletter = ({ sectionId, config, storeId }: { sectionId: string, config: any, storeId?: string }) => {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storeId || state === "sending") return;
+    setState("sending");
+    try {
+      const res = await fetch("/api/store/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeId, email }),
+      });
+      setState(res.ok ? "done" : "error");
+      if (res.ok) setEmail("");
+    } catch {
+      setState("error");
+    }
+  };
+
+  return (
+    <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
+      <div className="max-w-4xl mx-auto text-center space-y-8">
+        <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto text-3xl">✉️</div>
+        <div className="space-y-4">
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Restez à la page"} className="text-4xl font-black block" />
+          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Inscrivez-vous pour ne rien rater."} className="text-xl opacity-90 block" />
+        </div>
+        {state === "done" ? (
+          <p className="max-w-lg mx-auto bg-white/15 rounded-2xl px-6 py-4 font-bold" role="status">{config.successText || "Merci ! Vous êtes bien inscrit(e)."}</p>
+        ) : (
+          <form onSubmit={submit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto bg-white/10 p-2 rounded-2xl backdrop-blur-md">
+            <input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); if (state === "error") setState("idle"); }} placeholder={config.placeholder || "Votre email"} aria-label={config.placeholder || "Votre email"} className="flex-1 bg-transparent border-none text-white placeholder:text-white/50 px-4 py-3 focus:ring-0" />
+            <button type="submit" disabled={state === "sending"} className="bg-white text-primary px-8 py-3 rounded-xl font-black hover:scale-105 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              {state === "sending" && <Loader2 className="w-4 h-4 animate-spin" />}
+              {config.buttonText || "S'abonner"}
+            </button>
+          </form>
+        )}
+        {state === "error" && <p className="text-sm font-semibold opacity-90" role="alert">Inscription impossible pour le moment. Vérifiez l'adresse e-mail et réessayez.</p>}
       </div>
-      <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto bg-white/10 p-2 rounded-2xl backdrop-blur-md">
-        <input type="email" placeholder={config.placeholder || "Votre email"} className="flex-1 bg-transparent border-none text-white placeholder:text-white/50 px-4 py-3 focus:ring-0" />
-        <button className="bg-white text-primary px-8 py-3 rounded-xl font-black hover:scale-105 transition-all">{config.buttonText || "S'abonner"}</button>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const Collections = ({ sectionId, config }: { sectionId: string, config: any }) => (
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
@@ -2097,7 +2128,7 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
       case "features": return <Features {...commonProps} />;
       case "testimonials": return <Testimonials {...commonProps} />;
       case "faq": return <FAQ {...commonProps} />;
-        case "newsletter": return <Newsletter {...commonProps} />;
+        case "newsletter": return <Newsletter {...commonProps} storeId={store?.id} />;
         case "reviews": return <ReviewsSection {...commonProps} />;
         case "footer": return <Footer {...commonProps} store={store} links={(store?.footerLinks || []).filter((l: any) => l?.label)} />;
 
