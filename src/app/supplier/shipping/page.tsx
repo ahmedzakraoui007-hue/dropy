@@ -128,15 +128,7 @@ export default function SupplierShippingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<SupplierOrder | null>(null);
-  const [showShipDialog, setShowShipDialog] = useState(false);
   const [showBordereauDialog, setShowBordereauDialog] = useState(false);
-  const [shipmentData, setShipmentData] = useState({
-    shippingCompany: "",
-    trackingNumber: "",
-    estimatedDelivery: "",
-    notes: ""
-  });
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -164,7 +156,7 @@ export default function SupplierShippingPage() {
           )
         `)
         .eq("supplier_id", user.id)
-        .in("status", ["ready", "shipped", "delivered"])
+        .in("status", ["ready", "ready_for_pickup", "scheduled", "picked_up", "shipped", "delivered"])
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -175,102 +167,6 @@ export default function SupplierShippingPage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  async function handleShipOrder() {
-    if (!selectedOrder || !shipmentData.shippingCompany || !shipmentData.trackingNumber) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const supabase = createClient();
-
-      const { error: supplierError } = await supabase
-        .from("supplier_orders")
-        .update({
-          status: "shipped",
-          shipped_at: new Date().toISOString(),
-          shipping_company: shipmentData.shippingCompany,
-          tracking_number: shipmentData.trackingNumber,
-          estimated_delivery: shipmentData.estimatedDelivery || null,
-          delivery_address: selectedOrder.store_order ? {
-            name: selectedOrder.store_order.customer_name,
-            phone: selectedOrder.store_order.customer_phone,
-            address: selectedOrder.store_order.customer_address,
-            governorate: selectedOrder.store_order.customer_governorate
-          } : null,
-          supplier_notes: shipmentData.notes
-        })
-        .eq("id", selectedOrder.id);
-
-      if (supplierError) throw supplierError;
-
-      if (selectedOrder.order_id) {
-        const { error: storeError } = await supabase
-          .from("store_orders")
-          .update({
-            status: "shipped",
-            shipped_at: new Date().toISOString(),
-            shipping_company: shipmentData.shippingCompany,
-            tracking_number: shipmentData.trackingNumber,
-            estimated_delivery: shipmentData.estimatedDelivery || null,
-            supplier_order_id: selectedOrder.id
-          })
-          .eq("id", selectedOrder.order_id);
-
-        if (storeError) console.error("Store order update error:", storeError);
-      }
-
-      toast.success("Commande expédiée avec succès");
-      setShowShipDialog(false);
-      setShipmentData({ shippingCompany: "", trackingNumber: "", estimatedDelivery: "", notes: "" });
-      loadOrders();
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error("Erreur lors de l'expédition");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function markAsDelivered(order: SupplierOrder) {
-    try {
-      const supabase = createClient();
-
-      const { error } = await supabase
-        .from("supplier_orders")
-        .update({
-          status: "delivered",
-          delivered_at: new Date().toISOString()
-        })
-        .eq("id", order.id);
-
-      if (error) throw error;
-
-      if (order.order_id) {
-        await supabase
-          .from("store_orders")
-          .update({
-            status: "delivered",
-            delivered_at: new Date().toISOString()
-          })
-          .eq("id", order.order_id);
-      }
-
-      toast.success("Commande marquée comme livrée");
-      loadOrders();
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
-    }
-  }
-
-  function generateTrackingNumber() {
-    const prefix = shipmentData.shippingCompany?.toUpperCase().slice(0, 3) || "TRK";
-    const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-    const timestamp = Date.now().toString().slice(-4);
-    return `${prefix}-${random}${timestamp}`;
   }
 
   function copyTrackingNumber(trackingNumber: string) {
@@ -289,8 +185,8 @@ export default function SupplierShippingPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const readyOrders = orders.filter(o => o.status === "ready");
-  const shippedOrders = orders.filter(o => o.status === "shipped");
+  const readyOrders = orders.filter(o => ["ready", "ready_for_pickup", "scheduled"].includes(o.status));
+  const shippedOrders = orders.filter(o => ["picked_up", "shipped"].includes(o.status));
   const deliveredOrders = orders.filter(o => o.status === "delivered");
 
   if (loading) {
@@ -306,7 +202,7 @@ export default function SupplierShippingPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black">Expéditions</h1>
-          <p className="text-muted-foreground">Gérez vos expéditions et suivez les livraisons.</p>
+          <p className="text-muted-foreground">Suivez l&apos;enlèvement et la livraison de vos colis par Dropy Livraison.</p>
         </div>
       </div>
 
@@ -319,7 +215,7 @@ export default function SupplierShippingPage() {
               </div>
               <div>
                 <p className="text-3xl font-black text-purple-600">{readyOrders.length}</p>
-                <p className="text-sm text-purple-600/70 font-medium">Prêtes à expédier</p>
+                <p className="text-sm text-purple-600/70 font-medium">En attente d&apos;enlèvement</p>
               </div>
             </div>
           </CardContent>
@@ -471,19 +367,12 @@ export default function SupplierShippingPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {order.status === "ready" && (
-                        <Button
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setShowShipDialog(true);
-                          }}
-                          className="gap-2 bg-primary"
-                        >
-                          <Send className="w-4 h-4" />
-                          Expédier
-                        </Button>
+                      {["ready", "ready_for_pickup", "scheduled"].includes(order.status) && (
+                        <span className="text-xs font-bold text-purple-700 bg-purple-50 rounded-full px-3 py-1.5">
+                          Enlèvement par Dropy Livraison
+                        </span>
                       )}
-                      {order.status === "shipped" && (
+                      {["picked_up", "shipped"].includes(order.status) && (
                         <>
                           <Button
                             variant="outline"
@@ -495,13 +384,6 @@ export default function SupplierShippingPage() {
                           >
                             <FileText className="w-4 h-4" />
                             Bordereau
-                          </Button>
-                          <Button
-                            onClick={() => markAsDelivered(order)}
-                            className="gap-2 bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                            Marquer livrée
                           </Button>
                         </>
                       )}
@@ -550,112 +432,6 @@ export default function SupplierShippingPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={showShipDialog} onOpenChange={setShowShipDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Send className="w-5 h-5 text-primary" />
-              Expédier la commande
-            </DialogTitle>
-            <DialogDescription>
-              {selectedOrder?.supplier_order_number} - {selectedOrder?.store_order?.customer_name}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {selectedOrder?.store_order && (
-              <div className="p-4 bg-muted/50 rounded-xl">
-                <p className="text-sm font-bold mb-2">Adresse de livraison</p>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p className="font-medium text-foreground">{selectedOrder.store_order.customer_name}</p>
-                  <p>{selectedOrder.store_order.customer_address}</p>
-                  <p>{selectedOrder.store_order.customer_governorate}</p>
-                  {selectedOrder.store_order.customer_phone && (
-                    <p className="flex items-center gap-1">
-                      <Phone className="w-3 h-3" />
-                      {selectedOrder.store_order.customer_phone}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">Transporteur *</Label>
-              <Select
-                value={shipmentData.shippingCompany}
-                onValueChange={(v) => setShipmentData(prev => ({ ...prev, shippingCompany: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un transporteur" />
-                </SelectTrigger>
-                <SelectContent>
-                  {deliveryCompanies.map(company => (
-                    <SelectItem key={company.id} value={company.id}>
-                      <span className="flex items-center gap-2">
-                        <span>{company.logo}</span>
-                        {company.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">Numéro de suivi *</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={shipmentData.trackingNumber}
-                  onChange={(e) => setShipmentData(prev => ({ ...prev, trackingNumber: e.target.value }))}
-                  placeholder="Ex: TRK-XXXXX"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShipmentData(prev => ({ ...prev, trackingNumber: generateTrackingNumber() }))}
-                >
-                  Générer
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">Date de livraison estimée</Label>
-              <Input
-                type="date"
-                value={shipmentData.estimatedDelivery}
-                onChange={(e) => setShipmentData(prev => ({ ...prev, estimatedDelivery: e.target.value }))}
-                min={new Date().toISOString().split("T")[0]}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-bold">Notes (optionnel)</Label>
-              <Textarea
-                value={shipmentData.notes}
-                onChange={(e) => setShipmentData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="Instructions spéciales..."
-                rows={2}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowShipDialog(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleShipOrder} disabled={submitting} className="gap-2">
-              {submitting ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-              Confirmer l'expédition
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showBordereauDialog} onOpenChange={setShowBordereauDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">

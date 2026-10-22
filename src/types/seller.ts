@@ -22,7 +22,6 @@ export interface OnboardingChecklist {
   profile: boolean;
   store: boolean;
   products: boolean;
+  online: boolean;
   payment: boolean;
-  shipping: boolean;
-  domain: boolean;
 }

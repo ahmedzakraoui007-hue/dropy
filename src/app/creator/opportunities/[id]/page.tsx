@@ -1,5 +1,6 @@
 "use client";
 
+import { FREE_LAUNCH } from "@/lib/launch";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
@@ -259,11 +260,11 @@ export default function OpportunityDetailsPage() {
                 <p>Le paiement est sécurisé par Dropy dès que vous êtes embauché. Travaillez l&apos;esprit tranquille.</p>
                 <div className="flex items-center gap-2 text-foreground font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  85% pour le créateur
+                  {FREE_LAUNCH ? "100% pour le créateur" : "85% pour le créateur"}
                 </div>
                 <div className="flex items-center gap-2 text-foreground font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  15% frais plateforme
+                  {FREE_LAUNCH ? "0% frais plateforme pendant le lancement" : "15% frais plateforme"}
                 </div>
               </CardContent>
             </Card>

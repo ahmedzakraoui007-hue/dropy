@@ -8,6 +8,11 @@ import { StarRating } from "@/components/reviews/StarRating";
 import { ReviewList } from "@/components/reviews/ReviewList";
 import { AddReviewForm } from "@/components/reviews/AddReviewForm";
 import { formatPrice, formatDate } from "@/lib/utils";
+import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
+import { SectionIcon } from "@/components/storefront/SectionIcon";
+import { storeBasePath } from "@/lib/store-url";
+import { loadStoreTracking, trackStoreEvent } from "@/lib/storefront-tracking";
+import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 
 // --- HELPERS ---
 
@@ -93,6 +98,16 @@ const EditableText = ({
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
       />
+    );
+  }
+
+  if (!text && !isBuilder) return null;
+
+  if (!isBuilder) {
+    return (
+      <Tag className={className} style={style}>
+        {text}
+      </Tag>
     );
   }
 
@@ -207,6 +222,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
   const ctaPosition = config.ctaPosition || config.textPosition || 'center';
   const ctaLayout = config.ctaLayout || 'row';
   const verticalPosition = config.verticalPosition || 'center';
+  const onImage = variant === 'video' || (Boolean(config.backgroundImage) && variant !== 'split');
   
   const getCtaButtonClass = () => {
     const size = config.ctaSize || 'lg';
@@ -240,7 +256,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
   const content = (
     <div className={`relative z-10 w-full max-w-5xl mx-auto px-4 ${config.textPosition === 'left' ? 'text-left' : config.textPosition === 'right' ? 'text-right' : 'text-center'}`}>
       {config.badge && (
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20 text-sm font-bold mb-8 animate-bounce`}>
+        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${onImage ? 'bg-white/15 text-white border border-white/30 backdrop-blur' : 'bg-primary/10 text-primary border border-primary/20'} text-sm font-bold mb-8 animate-bounce`}>
           ✨ <EditableText sectionId={sectionId} field="badge" text={config.badge} />
         </div>
       )}
@@ -249,8 +265,8 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
         sectionId={sectionId}
         field="title"
         text={config.title || "Bienvenue"}
-        className={`${variant === 'bold' ? 'text-7xl md:text-9xl' : 'text-6xl md:text-8xl'} font-black mb-8 tracking-tighter leading-tight block`}
-        style={{ color: config.textColor || (config.backgroundImage || variant === 'video' ? "#ffffff" : "inherit") }}
+        className={`${variant === 'bold' ? 'text-5xl sm:text-7xl md:text-9xl' : variant === 'split' ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-5xl sm:text-6xl md:text-8xl'} font-black mb-8 tracking-tighter leading-tight block break-words`}
+        style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}
       />
       <EditableText 
         tag="p"
@@ -258,7 +274,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
         field="subtitle"
         text={config.subtitle || "Découvrez nos offres exceptionnelles"}
         className="text-xl md:text-3xl mb-12 max-w-3xl mx-auto opacity-90 leading-relaxed font-medium block"
-        style={{ color: config.textColor || (config.backgroundImage || variant === 'video' ? "#ffffff" : "inherit") }}
+        style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}
       />
       {config.ctaText && (
         <div className={`flex ${ctaLayout === 'column' ? 'flex-col' : 'flex-col sm:flex-row'} gap-6 ${ctaPosition === 'center' ? 'justify-center' : ctaPosition === 'right' ? 'justify-end' : 'justify-start'} items-center`}>
@@ -269,7 +285,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
             <EditableText sectionId={sectionId} field="ctaText" text={config.ctaText} />
           </PreviewButton>
           {config.secondaryCtaText && (
-            <button className="text-lg font-bold border-b-2 border-current hover:opacity-70 transition-opacity" style={{ color: config.textColor || (config.backgroundImage || variant === 'video' ? "#ffffff" : "inherit") }}>
+            <button className="text-lg font-bold border-b-2 border-current hover:opacity-70 transition-opacity" style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}>
               <EditableText sectionId={sectionId} field="secondaryCtaText" text={config.secondaryCtaText} />
             </button>
           )}
@@ -282,7 +298,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
     return (
       <section className={`relative overflow-hidden ${config.animation || 'fade-up'}`} style={{ ...sectionStyle, paddingTop: 0, paddingBottom: 0 }}>
         <div className={`flex flex-col ${config.imagePosition === 'left' ? 'md:flex-row-reverse' : 'md:flex-row'} w-full items-center`}>
-          <div className="flex-1 p-12 md:p-24">
+          <div className="flex-1 min-w-0 px-6 py-12 md:p-16 lg:p-24">
             {content}
           </div>
           <div className="flex-1 h-[400px] md:h-screen relative">
@@ -344,7 +360,7 @@ const TrustBadges = ({ sectionId, config }: { sectionId: string, config: any }) 
         {(config.items || []).map((item: any, i: number) => (
           <div key={i} className={`flex ${config.layout === 'row' ? 'flex-row items-center gap-4' : 'flex-col items-center text-center'} p-6 bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-shadow`}>
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-0 text-xl shrink-0">
-              {item.icon === 'Truck' ? '🚚' : item.icon === 'Shield' ? '🛡️' : item.icon === 'RefreshCw' ? '🔄' : item.icon === 'Headphones' ? '🎧' : item.icon === 'Star' ? '⭐' : item.icon === 'Zap' ? '⚡' : '🛡️'}
+              <SectionIcon name={item.icon} className="w-5 h-5" />
             </div>
             <div className={config.layout === 'row' ? 'text-left' : ''}>
               <EditableText tag="h3" sectionId={sectionId} field={`items.${i}.title`} text={item.title} className="text-sm font-bold mb-1 block" />
@@ -371,7 +387,7 @@ const LogoCarousel = ({ sectionId, config }: { sectionId: string, config: any })
 );
 
 const PromoBanner = ({ sectionId, config }: { sectionId: string, config: any }) => (
-  <div className="py-2.5 px-4 text-center text-sm font-bold relative z-[60] group" style={{ backgroundColor: config.backgroundColor || "#7c3aed", color: config.textColor || "#ffffff" }}>
+  <div className="py-2.5 px-4 text-center text-sm font-bold relative z-[60] group" style={{ backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
     <EditableText sectionId={sectionId} field="text" text={config.text || "Offre spéciale en cours !"} />
     {config.link && <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: config.link.replace('/', '') }, '*')} className="ml-2 underline hover:opacity-80 transition-opacity">En savoir plus →</button>}
   </div>
@@ -533,7 +549,7 @@ const ReviewsSection = ({ sectionId, config }: { sectionId: string, config: any 
   );
 };
 
-const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeId }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, selectedProduct?: any, storeId?: string }) => {
+const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeId, store }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, selectedProduct?: any, storeId?: string, store?: any }) => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [product, setProduct] = useState<any>(selectedProduct || null);
   const [loading, setLoading] = useState(false);
@@ -617,6 +633,11 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
         .catch(err => console.error(err));
     }
   }, [product?.id, config.productId]);
+
+  useEffect(() => {
+    if (!product?.id || !product?.title) return;
+    trackStoreEvent("ViewContent", { contentId: product.id, contentName: product.title, value: parsePrice(product.price) });
+  }, [product?.id, product?.title]);
 
   const averageRating = reviews.length > 0 
     ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length 
@@ -704,6 +725,31 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 {variantError && <p className="text-sm text-red-600 font-medium">Veuillez choisir une option.</p>}
               </div>
             )}
+            {config.expressOrder !== false && (
+              <ExpressOrderForm
+                storeId={storeId}
+                productId={displayProduct.id}
+                variantId={selectedVariant?.id}
+                unitPrice={parsePrice(selectedVariant?.price ?? displayProduct.price)}
+                preview={inBuilder || !displayProduct.id}
+                title={config.expressTitle}
+                buttonText={config.expressButtonText}
+                offers={normalizeOffers(store?.quantity_offers)}
+                delivery={{ delivery_fee: store?.delivery_fee, free_delivery_threshold: store?.free_delivery_threshold }}
+                beforeSubmit={() => {
+                  if (variantOptions.length > 0 && !selectedVariant) {
+                    setVariantError(true);
+                    return false;
+                  }
+                  return true;
+                }}
+                onStart={() => trackStoreEvent("InitiateCheckout", { contentId: displayProduct.id, value: parsePrice(selectedVariant?.price ?? displayProduct.price) })}
+                onOrdered={(orderId, total, quantity) => {
+                  trackStoreEvent("Purchase", { contentId: displayProduct.id, contentName: displayProduct.title, value: total, quantity, orderId });
+                  window.parent.postMessage({ type: "NAVIGATE", page: `merci/${orderId}` }, "*");
+                }}
+              />
+            )}
             <button onClick={() => {
               if (variantOptions.length > 0 && !selectedVariant) {
                 setVariantError(true);
@@ -717,7 +763,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 variantId: selectedVariant?.id,
                 variantLabel: selectedVariant?.label,
               });
-            }} className="w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Ajouter au panier</button>
+            }} className={config.expressOrder === false ? "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all" : "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors"}>Ajouter au panier</button>
           </div>
         </div>
       </div>
@@ -821,7 +867,9 @@ const Features = ({ sectionId, config }: { sectionId: string, config: any }) => 
       <div className={`grid gap-12 grid-cols-1 ${gridCols(config.columns, 4)}`}>
         {(config.features || []).map((f: any, i: number) => (
           <div key={i} className="flex flex-col items-center">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 text-2xl font-bold">!</div>
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-6 text-2xl">
+              <SectionIcon name={f.icon} className="w-7 h-7" />
+            </div>
             <EditableText tag="h3" sectionId={sectionId} field={`features.${i}.title`} text={f.title} className="text-xl font-bold mb-3 block" />
             <EditableText tag="p" sectionId={sectionId} field={`features.${i}.description`} text={f.description} className="text-muted-foreground block" />
           </div>
@@ -1179,9 +1227,9 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
   );
 };
 
-  const CartDrawer = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity }: { isOpen: boolean, onClose: () => void, cart: any[], onRemove: (id: string) => void, onUpdateQuantity: (id: string, delta: number) => void }) => {
+  const CartDrawer = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, offers = [] }: { isOpen: boolean, onClose: () => void, cart: any[], onRemove: (id: string) => void, onUpdateQuantity: (id: string, delta: number) => void, offers?: any[] }) => {
     if (!isOpen) return null;
-    const total = cart.reduce((acc, item) => acc + (parsePrice(item.price) * (item.quantity || 1)), 0);
+    const total = cart.reduce((acc, item) => acc + discountedUnitPrice(parsePrice(item.price), item.quantity || 1, offers) * (item.quantity || 1), 0);
     return (
       <div className="fixed inset-0 z-[100] flex justify-end">
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -1285,21 +1333,51 @@ const FAQ = ({ sectionId, config }: { sectionId: string, config: any }) => {
   );
 };
 
-const Newsletter = ({ sectionId, config }: { sectionId: string, config: any }) => (
-  <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "#7c3aed", color: config.textColor || "#ffffff" }}>
-    <div className="max-w-4xl mx-auto text-center space-y-8">
-      <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto text-3xl">✉️</div>
-      <div className="space-y-4">
-        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Restez à la page"} className="text-4xl font-black block" />
-        <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Inscrivez-vous pour ne rien rater."} className="text-xl opacity-90 block" />
+const Newsletter = ({ sectionId, config, storeId }: { sectionId: string, config: any, storeId?: string }) => {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storeId || state === "sending") return;
+    setState("sending");
+    try {
+      const res = await fetch("/api/store/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeId, email }),
+      });
+      setState(res.ok ? "done" : "error");
+      if (res.ok) setEmail("");
+    } catch {
+      setState("error");
+    }
+  };
+
+  return (
+    <section className={`px-4 ${config.animation || 'fade-up'}`} style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
+      <div className="max-w-4xl mx-auto text-center space-y-8">
+        <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto text-3xl">✉️</div>
+        <div className="space-y-4">
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Restez à la page"} className="text-4xl font-black block" />
+          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Inscrivez-vous pour ne rien rater."} className="text-xl opacity-90 block" />
+        </div>
+        {state === "done" ? (
+          <p className="max-w-lg mx-auto bg-white/15 rounded-2xl px-6 py-4 font-bold" role="status">{config.successText || "Merci ! Vous êtes bien inscrit(e)."}</p>
+        ) : (
+          <form onSubmit={submit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto bg-white/10 p-2 rounded-2xl backdrop-blur-md">
+            <input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); if (state === "error") setState("idle"); }} placeholder={config.placeholder || "Votre email"} aria-label={config.placeholder || "Votre email"} className="flex-1 bg-transparent border-none text-white placeholder:text-white/50 px-4 py-3 focus:ring-0" />
+            <button type="submit" disabled={state === "sending"} className="bg-white text-primary px-8 py-3 rounded-xl font-black hover:scale-105 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
+              {state === "sending" && <Loader2 className="w-4 h-4 animate-spin" />}
+              {config.buttonText || "S'abonner"}
+            </button>
+          </form>
+        )}
+        {state === "error" && <p className="text-sm font-semibold opacity-90" role="alert">Inscription impossible pour le moment. Vérifiez l'adresse e-mail et réessayez.</p>}
       </div>
-      <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto bg-white/10 p-2 rounded-2xl backdrop-blur-md">
-        <input type="email" placeholder={config.placeholder || "Votre email"} className="flex-1 bg-transparent border-none text-white placeholder:text-white/50 px-4 py-3 focus:ring-0" />
-        <button className="bg-white text-primary px-8 py-3 rounded-xl font-black hover:scale-105 transition-all">{config.buttonText || "S'abonner"}</button>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const Collections = ({ sectionId, config }: { sectionId: string, config: any }) => (
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
@@ -1484,7 +1562,8 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
     const [appliedPromo, setAppliedPromo] = useState<any>(null);
     const [promoError, setPromoError] = useState("");
   
-    const subtotal = cart.reduce((acc, item) => acc + (parsePrice(item.price) * (item.quantity || 1)), 0);
+    const offers = normalizeOffers(store?.quantity_offers);
+    const subtotal = cart.reduce((acc, item) => acc + discountedUnitPrice(parsePrice(item.price), item.quantity || 1, offers) * (item.quantity || 1), 0);
   
     const handleValidatePromo = async () => {
       if (!promoCode) return;
@@ -1522,7 +1601,8 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
           : appliedPromo.value)
       : 0;
   
-    const total = Math.max(0, subtotal - discountAmount);
+    const shippingCost = deliveryFeeFor(Math.max(0, subtotal - discountAmount), store || {});
+    const total = Math.max(0, subtotal - discountAmount) + shippingCost;
   
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -1545,6 +1625,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
         
         const data = await response.json();
         if (data.success) {
+          trackStoreEvent("Purchase", { value: total, quantity: cart.reduce((acc, item) => acc + (item.quantity || 1), 0), orderId: data.orderId });
           onClearCart();
           if (data.url) {
             window.parent.postMessage({ type: "OPEN_EXTERNAL_URL", data: { url: data.url } }, "*");
@@ -1657,7 +1738,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                     </div>
                   )}
 
-                  <div className="flex justify-between text-sm"><span>Livraison</span><span className="font-bold text-emerald-600">GRATUIT</span></div>
+                  <div className="flex justify-between text-sm"><span>Livraison</span>{shippingCost > 0 ? <span className="font-bold">{formatPrice(shippingCost)}</span> : <span className="font-bold text-emerald-600">GRATUIT</span>}</div>
                   <div className="h-[1px] bg-border my-4" />
                   <div className="flex justify-between text-xl font-black"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
                 </div>
@@ -1940,6 +2021,17 @@ const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, co
   );
 };
 
+const LIST_FIELDS: Record<string, string> = {
+  testimonials: "testimonials",
+  faq: "faqs",
+  features: "features",
+  stats: "stats",
+  process_steps: "steps",
+  logo_carousel: "logos",
+  team: "members",
+  collections: "items",
+};
+
 const SECTION_ALIASES: Record<string, string> = {
   featured_products: "products",
   product_grid: "products",
@@ -2006,6 +2098,11 @@ const normalizeSection = (section: any) => {
 const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
   if (section.is_visible === false) return null;
   section = normalizeSection(section);
+  const listField = LIST_FIELDS[section.type];
+  if (listField && typeof window !== "undefined" && window.parent === window) {
+    const items = section.config?.[listField];
+    if (!Array.isArray(items) || items.length === 0) return null;
+  }
   const commonProps = { sectionId: section.id, config: section.config };
   const handleAction = (type: string, id: string) => window.parent.postMessage({ type: 'SECTION_ACTION', actionType: type, sectionId: id }, '*');
   const renderSection = () => {
@@ -2026,12 +2123,12 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
       case "pricing": return <Pricing {...commonProps} />;
       case "stats": return <Stats {...commonProps} />;
       case "team": return <Team {...commonProps} />;
-      case "product_detail": return <ProductDetail {...commonProps} onAddToCart={onAddToCart} selectedProduct={selectedProduct} storeId={store?.id} />;
+      case "product_detail": return <ProductDetail {...commonProps} onAddToCart={onAddToCart} selectedProduct={selectedProduct} storeId={store?.id} store={store} />;
         case "products": return <Products {...commonProps} onAddToCart={onAddToCart} storeId={store?.id} onSelectProduct={onSelectProduct} />;
       case "features": return <Features {...commonProps} />;
       case "testimonials": return <Testimonials {...commonProps} />;
       case "faq": return <FAQ {...commonProps} />;
-        case "newsletter": return <Newsletter {...commonProps} />;
+        case "newsletter": return <Newsletter {...commonProps} storeId={store?.id} />;
         case "reviews": return <ReviewsSection {...commonProps} />;
         case "footer": return <Footer {...commonProps} store={store} links={(store?.footerLinks || []).filter((l: any) => l?.label)} />;
 
@@ -2056,6 +2153,23 @@ const BUILT_IN_PAGES: Record<string, any[]> = {
   checkout: [{ id: "builtin-checkout", type: "checkout", config: {} }],
   "product-detail": [{ id: "builtin-product-detail", type: "product_detail", config: {} }],
   shop: [{ id: "builtin-shop", type: "products", config: { title: "Nos produits", limit: 24, columns: 4 } }],
+  home: [
+    { id: "builtin-home-hero", type: "hero", is_visible: true, config: { title: "Bienvenue", subtitle: "Découvrez nos produits", variant: "bold" } },
+    { id: "builtin-home-products", type: "products", is_visible: true, config: { title: "Nos produits", limit: 8, columns: 4, source: "store" } },
+    {
+      id: "builtin-home-trust",
+      type: "trust_badges",
+      is_visible: true,
+      config: {
+        layout: "row",
+        items: [
+          { icon: "Truck", title: "Livraison partout en Tunisie", description: "24/48h" },
+          { icon: "Shield", title: "Paiement à la livraison", description: "100% sécurisé" },
+        ],
+      },
+    },
+    { id: "builtin-home-footer", type: "footer", is_visible: true, config: {} },
+  ],
 };
 
 const sectionsForPage = (pageSlug: string, pageList: any[]) => {
@@ -2068,6 +2182,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
   const { slug } = use(params);
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState<any>(null);
+  const [canSeeOffline, setCanSeeOffline] = useState(false);
   const [sections, setSections] = useState<any[]>([]);
   const [pages, setPages] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState("home");
@@ -2077,18 +2192,34 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
     useEffect(() => {
-      const parts = window.location.pathname.split("/").filter(Boolean).map(decodeURIComponent);
-      const index = parts.indexOf(slug);
-      const rest = index >= 0 ? parts.slice(index + 1).join("/") : "";
-      if (rest) setCurrentPage(rest);
+      const applyLocation = () => {
+        const base = storeBasePath(slug, window.location.pathname, window.location.hostname);
+        const rest = window.location.pathname.slice(base.length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
+        const productMatch = rest.match(/^p\/([^/]+)$/);
+        if (productMatch) {
+          setSelectedProduct((prev: any) => (prev?.id === productMatch[1] ? prev : { id: productMatch[1] }));
+          setCurrentPage("product-detail");
+        } else {
+          setCurrentPage(rest || "home");
+        }
+      };
+      applyLocation();
+      window.addEventListener("popstate", applyLocation);
+      return () => window.removeEventListener("popstate", applyLocation);
     }, [slug]);
 
     useEffect(() => {
-      if (window.parent !== window || currentPage === "product-detail") return;
-      const base = window.location.pathname.startsWith("/preview/") ? `/preview/${slug}` : `/${slug}`;
-      const target = currentPage && currentPage !== "home" ? `${base}/${currentPage}` : base;
-      if (window.location.pathname !== target) window.history.replaceState(null, "", target);
-    }, [currentPage, slug]);
+      if (window.parent !== window) return;
+      const base = storeBasePath(slug, window.location.pathname, window.location.hostname);
+      let target = base || "/";
+      if (currentPage === "product-detail") {
+        if (!selectedProduct?.id) return;
+        target = `${base}/p/${selectedProduct.id}`;
+      } else if (currentPage && currentPage !== "home") {
+        target = `${base}/${currentPage}`;
+      }
+      if (window.location.pathname !== target) window.history.pushState(null, "", target);
+    }, [currentPage, slug, selectedProduct?.id]);
 
       useEffect(() => {
         const savedCart = localStorage.getItem(`cart_${slug}`);
@@ -2101,6 +2232,10 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           const { data: storeData } = await supabase.from("stores").select("*").eq("slug", slug).single();
           if (storeData) {
             setStore(storeData);
+            if (storeData.is_active === false) {
+              const { data: { user } } = await supabase.auth.getUser();
+              setCanSeeOffline(isBuilder || user?.id === storeData.vendor_id);
+            }
             
             // Track visit (if not in builder)
             if (window.parent === window) {
@@ -2177,8 +2312,26 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
     return () => window.removeEventListener('message', handleMessage);
   }, [currentPage, slug]);
 
+  useEffect(() => {
+    if (!store) return;
+    loadStoreTracking({ facebook: store.facebook_pixel_id, tiktok: store.tiktok_pixel_id, google: store.google_analytics_id });
+  }, [store?.facebook_pixel_id, store?.tiktok_pixel_id, store?.google_analytics_id]);
+
+  useEffect(() => {
+    if (!store?.id) return;
+    trackStoreEvent("PageView");
+  }, [store?.id, currentPage, selectedProduct?.id]);
+
   if (loading) return <div className="flex h-screen items-center justify-center bg-white"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!store) return <div className="flex h-screen items-center justify-center bg-white"><p>Boutique non trouvée</p></div>;
+  if (store.is_active === false && !canSeeOffline) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-2 bg-white px-6 text-center">
+        <p className="text-xl font-bold text-gray-900">{store.name}</p>
+        <p className="text-gray-500">Cette boutique est momentanément indisponible. Revenez bientôt !</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white relative" style={{
@@ -2246,6 +2399,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
                     }
                     return [...prev, { ...p, id: key, productId, quantity: 1 }];
                   });
+                  trackStoreEvent("AddToCart", { contentId: productId, contentName: p.title, value: parsePrice(p.price), quantity: 1 });
                   setIsCartOpen(true); 
                 }} 
                   cart={cart} 
@@ -2261,7 +2415,28 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
           ))}
         </main>
+        {(() => {
+          const digits = String(store?.whatsapp_number || "").replace(/\D/g, "");
+          if (digits.length < 8 || currentPage === "checkout") return null;
+          const number = digits.length === 8 ? `216${digits}` : digits;
+          const subject = currentPage === "product-detail" && selectedProduct?.title ? ` au sujet de « ${selectedProduct.title} »` : "";
+          const text = encodeURIComponent(`Bonjour ${store?.name || ""}, j'ai une question${subject}.`);
+          return (
+            <a
+              href={`https://wa.me/${number}?text=${text}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="WhatsApp"
+              className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl transition-transform hover:scale-105"
+            >
+              <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
+                <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.43 9.43 0 1 1 7.99 4.42zm8.02-17.45A11.33 11.33 0 0 0 12.05.7C5.8.7.7 5.78.7 12.04c0 2 .52 3.95 1.52 5.67L.6 23.3l5.73-1.5a11.3 11.3 0 0 0 5.72 1.46h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.33-8.02z" />
+              </svg>
+            </a>
+          );
+        })()}
         <CartDrawer 
+          offers={normalizeOffers(store?.quantity_offers)}
           isOpen={isCartOpen} 
           onClose={() => setIsCartOpen(false)} 
           cart={cart} 

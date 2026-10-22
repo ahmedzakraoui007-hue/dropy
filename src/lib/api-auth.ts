@@ -25,7 +25,7 @@ export async function requireUser(roles?: string[]): Promise<AuthResult> {
     .maybeSingle();
 
   const role = profile?.role ?? "";
-  const active = Boolean(profile) && !["pending", "suspended", "rejected"].includes(profile?.status ?? "");
+  const active = Boolean(profile) && ["approved", "active"].includes(profile?.status ?? "");
 
   if (roles && (!active || !roles.includes(role))) {
     return { ok: false, response: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };

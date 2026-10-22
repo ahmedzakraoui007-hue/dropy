@@ -11,7 +11,6 @@ export const metadata: Metadata = {
     title: "Fournisseurs Textile - Rejoignez le Réseau Dropy",
     description: "Connectez votre production textile aux vendeurs e-commerce tunisiens. Gestion des commandes simplifiée.",
     url: "https://dropy.store/fournisseurs",
-    images: [{ url: "https://dropy.store/og-image-fournisseurs.jpg" }],
   },
 };
 

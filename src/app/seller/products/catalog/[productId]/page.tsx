@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { importCatalogProduct, suggestedSellingPrice, CATALOG_IMPORT_MESSAGES } from "@/lib/catalog-import";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -74,7 +75,7 @@ export default function ProductDetailPage() {
       }
 
       setProduct(data);
-      setSellingPrice(Math.round(data.base_price * 1.5));
+      setSellingPrice(suggestedSellingPrice(data.base_price));
       
       // 2. Fetch product variants and their values
       const { data: variantData } = await supabase
@@ -113,12 +114,6 @@ export default function ProductDetailPage() {
       
       setSupplierReviews(reviews || []);
 
-      // Mock other suppliers for comparison
-      setOtherSuppliers([
-        { id: '1', supplier: 'Tunis Trade', price: data.base_price - 2, rating: 4.5, delivery: '3 jours', city: 'Tunis' },
-        { id: '2', supplier: 'Sfax Grossiste', price: data.base_price + 3, rating: 4.9, delivery: '2 jours', city: 'Sfax' },
-        { id: '3', supplier: 'Sahel Distribution', price: data.base_price - 1, rating: 4.7, delivery: '4 jours', city: 'Monastir' },
-      ]);
       
       setLoading(false);
     }
@@ -159,71 +154,9 @@ export default function ProductDetailPage() {
   };
 
   const handleImport = async () => {
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    const { data: store } = await supabase
-      .from("stores")
-      .select("id")
-      .eq("vendor_id", user?.id)
-      .single();
-
-    if (!store) {
-      toast.error("Créez d'abord une boutique");
-      return;
-    }
-
-    // Import the product
-    const { data: importedProduct, error } = await supabase
-      .from("store_products")
-      .insert({
-        store_id: store.id,
-        product_id: product.id,
-        name: product.name,
-        description: product.description,
-        images: product.images,
-        selling_price: sellingPrice,
-        is_dropship: true,
-        source: 'dropshipping',
-        is_active: true
-      })
-      .select()
-      .single();
-
-    if (error) {
-      toast.error("Erreur lors de l'importation");
-      return;
-    }
-
-    // Import variants if they exist
-    if (variants.length > 0) {
-      for (const variant of variants) {
-        const { data: newVariant, error: varError } = await supabase
-          .from("store_product_variants")
-          .insert({
-            product_id: importedProduct.id,
-            sku: variant.sku,
-            price: sellingPrice + (variant.price_adjustment || 0),
-            stock: variant.stock_quantity,
-            is_active: true
-          })
-          .select()
-          .single();
-        
-        if (varError) continue;
-
-        // Import variant values mapping
-        const valuesToImport = variant.product_variant_values.map((vv: any) => ({
-          product_variant_id: newVariant.id,
-          variant_type_id: vv.variant_type_id,
-          variant_option_id: vv.variant_option_id
-        }));
-
-        await supabase.from("store_product_variant_values").insert(valuesToImport);
-      }
-    }
-
-    toast.success("Produit et variantes importés !");
+    const result = await importCatalogProduct(createClient(), product.id, sellingPrice);
+    if (result.ok) toast.success("Produit et variantes importés !");
+    else toast.error(CATALOG_IMPORT_MESSAGES[result.reason]);
   };
 
   if (loading) {
@@ -345,6 +278,7 @@ export default function ProductDetailPage() {
                   <p className="text-3xl font-black text-gray-900">{formatPrice(basePrice)}</p>
                 </div>
 
+                {otherSuppliers.length > 0 && (
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2 rounded-full font-bold border-gray-200 bg-white">
@@ -388,6 +322,7 @@ export default function ProductDetailPage() {
                     </div>
                   </DialogContent>
                 </Dialog>
+                )}
               </div>
 
               <div className="space-y-4 pt-6 border-t border-gray-200">

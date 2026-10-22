@@ -6,8 +6,7 @@ import {
   Users, 
   Store, 
   Package, 
-  CreditCard, 
-  TrendingUp, 
+  UserCheck,
   ShoppingBag,
   Camera
 } from "lucide-react";
@@ -31,8 +30,12 @@ interface Stats {
   totalSellers: number;
   totalSuppliers: number;
   totalCreators: number;
-  activeSubscriptions: number;
-  totalRevenue: number;
+  newUsersThisMonth: number;
+  pendingRequests: number;
+  approvedSellers: number;
+  onlineStores: number;
+  totalOrders: number;
+  ordersThisMonth: number;
   recentUsers: any[];
 }
 
@@ -44,19 +47,22 @@ export default function AdminOverview() {
     async function fetchStats() {
       const supabase = createClient();
       
-      const { data: users } = await supabase.from("profiles").select("role, subscription_plan");
+      const { data: users } = await supabase.from("profiles").select("role, status, created_at");
+      const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
       
       const totalUsers = users?.length || 0;
       const totalSellers = users?.filter(u => u.role === 'seller').length || 0;
       const totalSuppliers = users?.filter(u => u.role === 'supplier').length || 0;
       const totalCreators = users?.filter(u => u.role === 'creator').length || 0;
-      const activeSubscriptions = users?.filter(u => u.subscription_plan && u.subscription_plan !== 'starter').length || 0;
-      
-      const revenue = users?.reduce((acc, u) => {
-        if (u.subscription_plan === 'pro') return acc + 49;
-        if (u.subscription_plan === 'enterprise') return acc + 149;
-        return acc;
-      }, 0) || 0;
+      const newUsersThisMonth = users?.filter(u => u.created_at >= monthStart).length || 0;
+      const pendingRequests = users?.filter(u => u.role !== 'admin' && (!u.status || u.status === 'pending')).length || 0;
+      const approvedSellers = users?.filter(u => u.role === 'seller' && (u.status === 'approved' || u.status === 'active')).length || 0;
+
+      const [onlineStoresRes, ordersRes, monthOrdersRes] = await Promise.all([
+        supabase.from("stores").select("id", { count: "exact", head: true }).eq("is_active", true),
+        supabase.from("store_orders").select("id", { count: "exact", head: true }),
+        supabase.from("store_orders").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
+      ]);
 
       const { data: recentUsers } = await supabase
         .from("profiles")
@@ -69,8 +75,12 @@ export default function AdminOverview() {
         totalSellers,
         totalSuppliers,
         totalCreators,
-        activeSubscriptions,
-        totalRevenue: revenue,
+        newUsersThisMonth,
+        pendingRequests,
+        approvedSellers,
+        onlineStores: onlineStoresRes.count || 0,
+        totalOrders: ordersRes.count || 0,
+        ordersThisMonth: monthOrdersRes.count || 0,
         recentUsers: recentUsers || []
       });
       setLoading(false);
@@ -98,35 +108,39 @@ export default function AdminOverview() {
     {
       title: "Utilisateurs Totaux",
       value: stats?.totalUsers || 0,
-      description: "+12% ce mois",
+      description: `+${stats?.newUsersThisMonth || 0} ce mois`,
       icon: Users,
       color: "text-primary",
-      bg: "bg-primary/10"
+      bg: "bg-primary/10",
+      href: "/admin/users",
     },
     {
-      title: "Revenu Mensuel (Est.)",
-      value: `${stats?.totalRevenue || 0} TND`,
-      description: "+8% vs mois dernier",
-      icon: CreditCard,
-      color: "text-primary",
-      bg: "bg-primary/10"
+      title: "Demandes en attente",
+      value: stats?.pendingRequests || 0,
+      description: "Comptes à approuver",
+      icon: UserCheck,
+      color: (stats?.pendingRequests || 0) > 0 ? "text-amber-600" : "text-primary",
+      bg: (stats?.pendingRequests || 0) > 0 ? "bg-amber-500/10" : "bg-primary/10",
+      href: "/admin/users",
     },
     {
-      title: "Vendeurs Actifs",
-      value: stats?.totalSellers || 0,
-      description: "85% avec boutique",
+      title: "Vendeurs approuvés",
+      value: stats?.approvedSellers || 0,
+      description: `${stats?.onlineStores || 0} boutiques en ligne`,
       icon: Store,
       color: "text-primary",
-      bg: "bg-primary/10"
+      bg: "bg-primary/10",
+      href: "/admin/sellers",
     },
     {
-      title: "Abonnements Pro/Ent",
-      value: stats?.activeSubscriptions || 0,
-      description: "Taux de conv: 4.2%",
-      icon: TrendingUp,
+      title: "Commandes",
+      value: stats?.totalOrders || 0,
+      description: `${stats?.ordersThisMonth || 0} ce mois`,
+      icon: ShoppingBag,
       color: "text-primary",
-      bg: "bg-primary/10"
-    }
+      bg: "bg-primary/10",
+      href: "/admin/shipments",
+    },
   ];
 
   return (
@@ -138,7 +152,8 @@ export default function AdminOverview() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.title} className="border-border/50 bg-card shadow-sm group hover:border-primary/50 transition-colors">
+          <Link key={kpi.title} href={kpi.href} className="block">
+          <Card className="border-border/50 bg-card shadow-sm group hover:border-primary/50 transition-colors h-full">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-2 rounded-lg ${kpi.bg} group-hover:bg-primary group-hover:text-primary-foreground transition-colors`}>
@@ -154,6 +169,7 @@ export default function AdminOverview() {
               </div>
             </CardContent>
           </Card>
+          </Link>
         ))}
       </div>
 

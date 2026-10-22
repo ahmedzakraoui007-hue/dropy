@@ -1,36 +1,81 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { RESERVED_SLUGS } from '@/lib/store-slug';
+import { STORE_ROOT_DOMAIN, storeSlugFromHost, storeUrl } from '@/lib/store-url';
+
+const ROLE_AREAS = ['admin', 'seller', 'supplier', 'creator'];
+const ROLE_HOME: Record<string, string> = {
+  admin: '/admin',
+  seller: '/seller/dashboard',
+  supplier: '/supplier/dashboard',
+  creator: '/creator/dashboard',
+};
+const ACTIVE_STATUSES = ['approved', 'active'];
+
+function isProtectedPath(pathname: string) {
+  const firstSegment = pathname.split('/')[1];
+  const isPublicRolePage = /^\/(seller|supplier|creator)(\/signup)?\/?$/.test(pathname);
+  const roleArea = ROLE_AREAS.includes(firstSegment) && !isPublicRolePage ? firstSegment : null;
+  const isLoginOnlyRoute = ['dashboard', 'settings'].includes(firstSegment);
+  return { roleArea, isLoginOnlyRoute, isProtected: Boolean(roleArea || isLoginOnlyRoute) };
+}
+
+function denyProtected(request: NextRequest) {
+  const redirectUrl = request.nextUrl.clone();
+  redirectUrl.pathname = '/login';
+  redirectUrl.search = '';
+  redirectUrl.searchParams.set('error', 'auth_unavailable');
+  return NextResponse.redirect(redirectUrl);
+}
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const { roleArea, isLoginOnlyRoute, isProtected } = isProtectedPath(pathname);
+
   try {
-    const { pathname } = request.nextUrl;
     const hostname = request.headers.get('host') || '';
-    const firstSegment = pathname.split('/')[1];
 
-    // 1. Handle Subdomain Rewrites (e.g. seller.dropy.store -> /seller/signup)
-    // Only if on subdomain and path is root? Or general rewrite?
-    // Current approach:
-    const subdomains = {
-      'creator': '/creator/signup',
-      'seller': '/seller/signup',
-      'supplier': '/supplier/signup',
+    const storeSlug = storeSlugFromHost(hostname);
+    if (storeSlug) {
+      const isAsset =
+        pathname.startsWith('/_next') ||
+        pathname.startsWith('/api/') ||
+        pathname === '/sitemap.xml' ||
+        pathname === '/robots.txt' ||
+        /\.[a-z0-9]{2,5}$/i.test(pathname);
+      if (isAsset) return NextResponse.next();
+      const url = request.nextUrl.clone();
+      url.pathname = pathname === '/' ? `/${storeSlug}` : `/${storeSlug}${pathname}`;
+      return NextResponse.rewrite(url);
+    }
+
+    const host = hostname.split(':')[0].toLowerCase();
+    if (STORE_ROOT_DOMAIN && (host === STORE_ROOT_DOMAIN || host === `www.${STORE_ROOT_DOMAIN}`)) {
+      const first = pathname.split('/')[1] || '';
+      const isStorePath =
+        /^[a-z0-9]+(-[a-z0-9]+)*$/.test(first) &&
+        !RESERVED_SLUGS.has(first) &&
+        !/^(opengraph-image|twitter-image|icon|apple-icon|manifest)/.test(first);
+      if (isStorePath) {
+        return NextResponse.redirect(`${storeUrl(first, pathname.slice(first.length + 1))}${request.nextUrl.search}`, 301);
+      }
+    }
+
+    const signupSubdomains: Record<string, string> = {
+      creator: '/creator/signup',
+      seller: '/seller/signup',
+      supplier: '/supplier/signup',
     };
-    const subdomain = hostname.split('.')[0];
-    const isLocalhost = hostname.includes('localhost');
-    const isMainDomain = isLocalhost ||
-      hostname === 'dropy.store' ||
-      hostname === 'www.dropy.store' ||
-      hostname.endsWith('.vercel.app');
-
-    if (subdomain in subdomains && pathname === '/' && !isLocalhost) {
-      return NextResponse.rewrite(new URL(subdomains[subdomain as keyof typeof subdomains], request.url));
+    const subdomain = host.split('.')[0];
+    if (subdomain in signupSubdomains && pathname === '/' && !host.includes('localhost')) {
+      return NextResponse.rewrite(new URL(signupSubdomains[subdomain], request.url));
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-      return NextResponse.next({ request });
+      return isProtected ? denyProtected(request) : NextResponse.next({ request });
     }
 
     // 2. Handle Supabase Session & Protected Routes
@@ -52,18 +97,6 @@ export async function middleware(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    const ROLE_AREAS = ['admin', 'seller', 'supplier', 'creator'];
-    const ROLE_HOME: Record<string, string> = {
-      admin: '/admin',
-      seller: '/seller/dashboard',
-      supplier: '/supplier/dashboard',
-      creator: '/creator/dashboard',
-    };
-    const BLOCKED_STATUSES = ['pending', 'suspended', 'rejected'];
-
-    const isPublicRolePage = /^\/(seller|supplier|creator)(\/signup)?\/?$/.test(pathname);
-    const roleArea = ROLE_AREAS.includes(firstSegment) && !isPublicRolePage ? firstSegment : null;
-    const isLoginOnlyRoute = ['dashboard', 'settings'].includes(firstSegment);
     const isAuthPage = ['/login', '/inscription', '/register'].includes(pathname);
 
     if ((roleArea || isLoginOnlyRoute) && !user) {
@@ -81,7 +114,7 @@ export async function middleware(request: NextRequest) {
         .eq('id', user.id)
         .maybeSingle();
 
-      const isActive = Boolean(profile && !BLOCKED_STATUSES.includes(profile.status ?? ''));
+      const isActive = Boolean(profile && ACTIVE_STATUSES.includes(profile.status ?? ''));
 
       if (isAuthPage) {
         if (!isActive || !profile) return supabaseResponse;
@@ -91,7 +124,7 @@ export async function middleware(request: NextRequest) {
       if (!profile) {
         return NextResponse.redirect(new URL('/login?error=no_profile', request.url));
       }
-      if (profile.status === 'pending') {
+      if (!profile.status || profile.status === 'pending' || profile.status === 'email_verified') {
         return NextResponse.redirect(new URL('/demande-en-attente', request.url));
       }
       if (!isActive) {
@@ -106,7 +139,7 @@ export async function middleware(request: NextRequest) {
 
   } catch (error) {
     console.error('Middleware Error:', error);
-    return NextResponse.next({ request });
+    return isProtected ? denyProtected(request) : NextResponse.next({ request });
   }
 }
 

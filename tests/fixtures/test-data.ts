@@ -1,24 +1,24 @@
 export const TEST_USERS = {
     seller: {
-        email: 'test-seller@dropy.tn',
-        password: 'TestPassword123!',
+        email: process.env.E2E_SELLER_EMAIL || 'seller.test@dropy.store',
+        password: process.env.E2E_SELLER_PASSWORD || '',
         storeName: 'Test Boutique',
         storeSlug: 'test-boutique',
         phone: '12345678',
     },
     supplier: {
-        email: 'test-supplier@dropy.tn',
-        password: 'TestPassword123!',
+        email: process.env.E2E_SUPPLIER_EMAIL || 'supplier.test@dropy.store',
+        password: process.env.E2E_SUPPLIER_PASSWORD || '',
         companyName: 'Test Supplier Co',
     },
     creator: {
-        email: 'test-creator@dropy.tn',
-        password: 'TestPassword123!',
+        email: process.env.E2E_CREATOR_EMAIL || 'creator.test@dropy.store',
+        password: process.env.E2E_CREATOR_PASSWORD || '',
         displayName: 'Test Creator',
     },
     admin: {
-        email: 'test-admin@dropy.tn',
-        password: 'TestPassword123!',
+        email: process.env.E2E_ADMIN_EMAIL || 'admin@dropy.store',
+        password: process.env.E2E_ADMIN_PASSWORD || '',
     },
     customer: {
         name: 'Ahmed Ben Ali',

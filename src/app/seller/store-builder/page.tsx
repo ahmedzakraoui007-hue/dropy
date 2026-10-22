@@ -1,180 +1,245 @@
-// src/app/seller/store-builder/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Palette, 
-  FileText, 
-  Navigation, 
-  Settings, 
-  Eye, 
-  CheckCircle2, 
-  Circle,
-  ArrowRight,
-  Zap,
-  Sparkles
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Circle,
+  Copy,
+  ExternalLink,
+  LayoutTemplate,
+  Loader2,
+  Navigation,
+  Package,
+  Palette,
+  Settings,
+  Sparkles,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { useStoreBuilderChecklist } from "@/hooks/useStoreBuilderChecklist";
-import { SetupChecklist } from "@/components/store-builder/SetupChecklist";
+import { storeDisplayUrl, storeUrl, storeViewHref } from "@/lib/store-url";
+import { useSellerStore } from "@/hooks/useSellerStore";
+import { useTranslation } from "@/context/LanguageContext";
+
+const TOOLS = [
+  { key: "editor", icon: LayoutTemplate, href: "/seller/store-builder/builder" },
+  { key: "themes", icon: Sparkles, href: "/seller/store-builder/themes" },
+  { key: "menus", icon: Navigation, href: "/seller/store-builder/navigation" },
+  { key: "settings", icon: Settings, href: "/seller/store-builder/settings" },
+];
 
 export default function StoreBuilderDashboard() {
-  const [loading, setLoading] = useState(true);
-  const [sellerProfile, setSellerProfile] = useState<any>(null);
-  const [storeSlug, setStoreSlug] = useState<string | null>(null);
-  const supabase = createClient();
+  const { store, setStore, loading, error } = useSellerStore();
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`store_builder.${key}`);
+  const [productCount, setProductCount] = useState<number | null>(null);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
-    async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        let { data: profile } = await supabase
-          .from("seller_profiles")
-          .select("*")
-          .eq("user_id", user.id)
-          .single();
-        
-        if (!profile) {
-          // Create profile if missing
-          const { data: newProfile } = await supabase
-            .from("seller_profiles")
-            .insert({ user_id: user.id, store_name: "Ma Boutique" })
-            .select()
-            .single();
-          profile = newProfile;
-        }
-        setSellerProfile(profile);
+    if (!store) return;
+    createClient()
+      .from("store_products")
+      .select("id", { count: "exact", head: true })
+      .eq("store_id", store.id)
+      .eq("is_active", true)
+      .then(({ count }) => setProductCount(count ?? 0));
+  }, [store]);
 
-        const { data: store } = await supabase
-          .from("stores")
-          .select("slug")
-          .eq("vendor_id", user.id)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        setStoreSlug(store?.slug ?? profile?.store_slug ?? null);
-      }
-      setLoading(false);
-    }
-    loadProfile();
-  }, [supabase]);
-
-  const { checklist, loading: checklistLoading } = useStoreBuilderChecklist(sellerProfile?.id);
-
-  if (loading || checklistLoading) {
-    return <div className="p-8">Chargement...</div>;
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  return (
-    <div className="p-8 max-w-6xl mx-auto space-y-8 font-sans">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight uppercase">STORE BUILDER</h1>
-          <p className="text-gray-500 font-medium">Configurez et personnalisez votre boutique en ligne</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" asChild className="rounded-xl border-gray-200">
-            <Link href={storeSlug ? `/${storeSlug}` : "/seller/store/create"} target="_blank">
-              <Eye className="w-4 h-4 mr-2" />
-              Aperçu
-            </Link>
-          </Button>
-          <Button className="rounded-xl bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-100">
-            <Zap className="w-4 h-4 mr-2" />
-            Publier
-          </Button>
-        </div>
-      </div>
+  if (!store) {
+    return <div className="p-8 text-muted-foreground">{error || tr("hub.not_found")}</div>;
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
-          <Card className="border-none shadow-xl shadow-purple-900/5 bg-white rounded-3xl overflow-hidden">
-            <CardContent className="p-6">
-              {checklist && <SetupChecklist checklist={checklist} />}
-            </CardContent>
-          </Card>
-        </div>
+  const isOnline = store.is_active !== false;
+  const publicUrl = storeUrl(store.slug);
 
-        <div className="lg:col-span-2 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ActionCard 
-                title="Galerie des Thèmes"
-                description="Changez l'apparence complète de votre boutique en 1 clic."
-                icon={Sparkles}
-                href="/seller/store-builder/themes"
-                buttonText="Voir les thèmes"
-                status={checklist?.design.completed ? "Thème actif" : "À choisir"}
-                color="orange"
-              />
-              <ActionCard 
-                title="Branding & Styles"
-                description="Couleurs, polices et logos personnalisés."
-                icon={Palette}
-                href="/seller/store-builder/customize"
-                buttonText="Personnaliser"
-                status={checklist?.design.completed ? "Configuré" : "À faire"}
-                color="blue"
-              />
-              <ActionCard 
-                title="Pages & Contenu"
-                description="Modifiez vos pages via l'éditeur visuel."
-                icon={FileText}
-                href="/seller/store-builder/pages"
-                buttonText="Gérer les pages"
-                status={`${checklist?.pages.count || 0} pages`}
-                color="purple"
-              />
-              <ActionCard 
-                title="Domaine & SEO"
-                description="Connectez votre domaine et boostez votre SEO."
-                icon={Settings}
-                href="/seller/store-builder/settings"
-                buttonText="Paramètres"
-                status={checklist?.domain.completed ? "Vérifié" : "À faire"}
-                color="emerald"
-              />
-            </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+  const steps = [
+    {
+      title: tr("hub.steps.theme"),
+      description: tr("hub.steps.theme_desc"),
+      done: Boolean(store.theme_config?.theme_id),
+      href: "/seller/store-builder/themes",
+      icon: Palette,
+    },
+    {
+      title: tr("hub.steps.logo"),
+      description: tr("hub.steps.logo_desc"),
+      done: Boolean(store.logo_url),
+      href: "/seller/store-builder/settings",
+      icon: Settings,
+    },
+    {
+      title: tr("hub.steps.products"),
+      description: tr("hub.steps.products_desc"),
+      done: (productCount ?? 0) > 0,
+      href: "/seller/products/catalog",
+      icon: Package,
+    },
+    {
+      title: tr("hub.steps.home"),
+      description: tr("hub.steps.home_desc"),
+      done: false,
+      optional: true,
+      href: "/seller/store-builder/builder",
+      icon: LayoutTemplate,
+    },
+  ];
+  const required = steps.filter((s) => !s.optional);
+  const progress = Math.round((required.filter((s) => s.done).length / required.length) * 100);
 
-
-function ActionCard({ title, description, icon: Icon, href, buttonText, status, color }: any) {
-  const colorClasses: any = {
-    blue: "bg-blue-50 text-blue-600 border-blue-100",
-    purple: "bg-purple-50 text-purple-600 border-purple-100",
-    emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
-    orange: "bg-orange-50 text-orange-600 border-orange-100",
-    gray: "bg-gray-50 text-gray-600 border-gray-100",
+  const togglePublished = async (next: boolean) => {
+    if (next && (productCount ?? 0) === 0) {
+      toast.error(tr("hub.need_product"));
+      return;
+    }
+    setPublishing(true);
+    const { error: updateError } = await createClient().from("stores").update({ is_active: next }).eq("id", store.id);
+    setPublishing(false);
+    if (updateError) {
+      toast.error(tr("hub.status_error"));
+      return;
+    }
+    setStore({ ...store, is_active: next });
+    toast.success(next ? tr("hub.now_online") : tr("hub.now_offline"));
   };
 
   return (
-    <Card className="border-none shadow-xl shadow-gray-200/50 bg-white rounded-3xl overflow-hidden group hover:shadow-2xl transition-all duration-300">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between mb-4">
-          <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center border", colorClasses[color])}>
-            <Icon className="w-6 h-6" />
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-8">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="space-y-2 min-w-0">
+          <p className="text-sm font-medium text-muted-foreground">{tr("hub.eyebrow")}</p>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight truncate">{store.name}</h1>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-mono text-gray-600 truncate">{storeDisplayUrl(store.slug)}</span>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-700"
+              onClick={() => {
+                navigator.clipboard.writeText(publicUrl);
+                toast.success(tr("hub.copied"));
+              }}
+              aria-label={tr("hub.copy")}
+            >
+              <Copy className="w-4 h-4" />
+            </button>
           </div>
-          <span className={cn("text-[10px] font-bold px-2 py-1 rounded-full border uppercase tracking-wider", colorClasses[color])}>
-            {status}
-          </span>
         </div>
-        <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-500 mb-6 leading-relaxed">{description}</p>
-        <Button asChild variant="outline" className="w-full rounded-xl border-gray-100 hover:bg-gray-50 group-hover:border-gray-200 transition-colors font-bold h-11">
-          <Link href={href}>
-            {buttonText}
-            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-3 rounded-xl border bg-white px-4 h-11 cursor-pointer">
+            <Switch checked={isOnline} disabled={publishing} onCheckedChange={togglePublished} />
+            <span className={cn("text-sm font-bold", isOnline ? "text-emerald-600" : "text-gray-500")}>
+              {isOnline ? tr("hub.online") : tr("hub.offline")}
+            </span>
+          </label>
+          <Button variant="outline" asChild className="rounded-xl h-11">
+            <a href={storeViewHref(store.slug, store.is_active)} target="_blank" rel="noreferrer">
+              <ExternalLink className="w-4 h-4 me-2" />
+              {tr("hub.view")}
+            </a>
+          </Button>
+          <Button asChild className="rounded-xl h-11 bg-purple-600 hover:bg-purple-700">
+            <Link href="/seller/store-builder/builder">
+              <LayoutTemplate className="w-4 h-4 me-2" />
+              {tr("hub.edit")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {(progress < 100 || !isOnline) && (
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-3xl bg-gradient-to-r from-purple-600 to-teal-500 p-6 text-white shadow-xl shadow-purple-200">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-lg font-black">{t("store_builder.wizard.banner.title")}</p>
+              <p className="text-sm text-white/80">{t("store_builder.wizard.banner.desc")}</p>
+            </div>
+          </div>
+          <Button asChild className="rounded-xl bg-white text-purple-700 hover:bg-white/90 font-bold h-11 shrink-0">
+            <Link href="/seller/store-builder/start">
+              {t("store_builder.wizard.banner.cta")}
+              <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <Card className="lg:col-span-1 border-none shadow-xl shadow-purple-900/5 rounded-3xl">
+          <CardContent className="p-6 space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-gray-900">{tr("hub.prepare")}</h2>
+                <span className="text-sm font-bold text-purple-600">{progress}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
+            </div>
+            <ol className="space-y-2">
+              {steps.map((step) => (
+                <li key={step.title}>
+                  <Link
+                    href={step.href}
+                    className="flex items-start gap-3 rounded-2xl p-3 hover:bg-gray-50 transition-colors"
+                  >
+                    {step.done ? (
+                      <CheckCircle2 className="w-5 h-5 mt-0.5 text-emerald-500 shrink-0" />
+                    ) : (
+                      <Circle className="w-5 h-5 mt-0.5 text-gray-300 shrink-0" />
+                    )}
+                    <div className="min-w-0">
+                      <p className={cn("text-sm font-bold", step.done ? "text-gray-400 line-through" : "text-gray-900")}>
+                        {step.title}
+                        {step.optional && <span className="ms-2 text-xs font-medium text-gray-400">{tr("hub.recommended")}</span>}
+                      </p>
+                      <p className="text-xs text-gray-500">{step.description}</p>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+            {!isOnline && (
+              <p className="text-xs text-gray-500">
+                {tr("hub.offline_note")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {TOOLS.map((tool) => (
+            <Card key={tool.href} className="border-none shadow-xl shadow-gray-200/50 rounded-3xl group hover:shadow-2xl transition-all">
+              <CardContent className="p-6 flex flex-col h-full">
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+                  <tool.icon className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">{tr(`nav.${tool.key}`)}</h3>
+                <p className="text-sm text-gray-500 mb-6 leading-relaxed flex-1">{tr(`hub.tools.${tool.key}_desc`)}</p>
+                <Button asChild variant="outline" className="w-full rounded-xl font-bold h-11">
+                  <Link href={tool.href}>
+                    {tr("hub.open")}
+                    <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

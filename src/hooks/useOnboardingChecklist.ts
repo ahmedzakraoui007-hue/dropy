@@ -7,44 +7,38 @@ export function useOnboardingChecklist(sellerId: string) {
     profile: false,
     store: false,
     products: false,
+    online: false,
     payment: false,
-    shipping: false,
-    domain: false,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStatus() {
       if (!sellerId) return;
-      
       const supabase = createClient();
-      
+
       try {
         const [profile, storeData] = await Promise.all([
-          supabase.from('profiles').select('full_name, avatar_url, bank_rib').eq('id', sellerId).single(),
-          supabase.from('stores').select('id, pickup_address, custom_domain').eq('vendor_id', sellerId).order('created_at').limit(1).maybeSingle(),
+          supabase.from('profiles').select('full_name, phone, bank_rib, d17_number, flouci_number').eq('id', sellerId).single(),
+          supabase.from('stores').select('id, is_active, theme_config').eq('vendor_id', sellerId).order('created_at').limit(1).maybeSingle(),
         ]);
 
-        const storeId = storeData.data?.id;
-        let finalProductsCount = 0;
-        let finalPagesCount = 0;
-
-        if (storeId) {
-          const [storeProducts, storePages] = await Promise.all([
-            supabase.from('store_products').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
-            supabase.from('store_pages').select('id', { count: 'exact', head: true }).eq('store_id', storeId),
-          ]);
-          finalProductsCount = storeProducts.count ?? finalProductsCount;
-          finalPagesCount = storePages.count ?? finalPagesCount;
+        let productsCount = 0;
+        if (storeData.data?.id) {
+          const { count } = await supabase
+            .from('store_products')
+            .select('id', { count: 'exact', head: true })
+            .eq('store_id', storeData.data.id)
+            .eq('is_active', true);
+          productsCount = count ?? 0;
         }
 
         setChecklist({
-          profile: !!profile.data?.full_name && !!profile.data?.avatar_url,
-          store: finalPagesCount > 0,
-          products: finalProductsCount > 0,
-          payment: !!profile.data?.bank_rib,
-          shipping: !!storeData.data?.pickup_address,
-          domain: !!storeData.data?.custom_domain,
+          profile: Boolean(profile.data?.full_name && profile.data?.phone),
+          store: Boolean((storeData.data?.theme_config as any)?.theme_id),
+          products: productsCount > 0,
+          online: storeData.data?.is_active === true,
+          payment: Boolean(profile.data?.bank_rib || profile.data?.d17_number || profile.data?.flouci_number),
         });
       } catch (error) {
         console.error('Error fetching onboarding status:', error);

@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { AccountStatusBadge, AccountStatusMenuItems, updateAccountStatus, STATUS_MESSAGES, type AccountStatusAction } from "@/components/admin/AccountStatus";
 import { formatDate } from "@/lib/utils";
 
 interface SupplierProfile {
@@ -94,19 +95,14 @@ export default function SuppliersManagement() {
     fetchSuppliers();
   }, [searchTerm]);
 
-  const updateStatus = async (userId: string, newStatus: string) => {
-    const response = await fetch("/api/admin/users/status", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, status: newStatus, supplierStatus: newStatus === 'active' ? 'approved' : newStatus }),
-    });
-    const error = response.ok ? null : new Error((await response.json().catch(() => ({}))).error || "Erreur");
-    
-    if (error) {
-      toast.error("Erreur lors de la mise à jour du statut");
-    } else {
-      toast.success(newStatus === 'suspended' ? "Fournisseur suspendu" : "Fournisseur activé");
+  const updateStatus = async (userId: string, newStatus: AccountStatusAction) => {
+    const toastId = toast.loading("Mise à jour en cours…");
+    try {
+      const result = await updateAccountStatus(userId, newStatus);
+      toast.success(STATUS_MESSAGES[newStatus] + (result.emailSent ? " & email envoyé" : ""), { id: toastId });
       fetchSuppliers();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour du statut", { id: toastId });
     }
   };
 
@@ -152,8 +148,8 @@ export default function SuppliersManagement() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Note Moyenne</p>
-                <h3 className="text-2xl font-bold">4.8/5</h3>
+                <p className="text-sm font-medium text-muted-foreground">En attente</p>
+                <h3 className="text-2xl font-bold">{suppliers.filter((s) => !s.status || s.status === "pending").length}</h3>
               </div>
               <div className="w-12 h-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
                 <Star className="w-6 h-6 text-yellow-500" />
@@ -224,12 +220,7 @@ export default function SuppliersManagement() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={supplier.status === 'suspended' ? "destructive" : "default"}
-                          className={supplier.status === 'active' || !supplier.status ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20" : ""}
-                        >
-                          {supplier.status === 'suspended' ? 'Suspendu' : 'Actif'}
-                        </Badge>
+                        <AccountStatusBadge status={supplier.status} />
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatDate(supplier.created_at)}
@@ -252,18 +243,7 @@ export default function SuppliersManagement() {
                               <Package className="w-4 h-4 mr-2" />
                               Voir les produits
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {supplier.status === 'suspended' ? (
-                              <DropdownMenuItem onClick={() => updateStatus(supplier.id, 'active')} className="text-emerald-600">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Réactiver le compte
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem onClick={() => updateStatus(supplier.id, 'suspended')} className="text-red-600">
-                                <Ban className="w-4 h-4 mr-2" />
-                                Suspendre le compte
-                              </DropdownMenuItem>
-                            )}
+                            <AccountStatusMenuItems status={supplier.status} onChange={(s) => updateStatus(supplier.id, s)} />
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

@@ -31,6 +31,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useTranslation } from "@/context/LanguageContext";
 import { useSellerDashboard } from "@/hooks/useSellerDashboard";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
+import { formatPrice } from "@/lib/utils";
 import { RealtimeOrdersListener } from "@/components/seller/RealtimeOrdersListener";
 
 export default function SellerDashboard() {
@@ -47,14 +48,19 @@ export default function SellerDashboard() {
   const { stats, profile, loading: statsLoading, refetchStats } = useSellerDashboard(sellerId || "");
   const { checklist, loading: checklistLoading } = useOnboardingChecklist(sellerId || "");
 
-  const steps = [
-    { id: 1, title: "Compléter votre profil", description: "Ajoutez vos informations personnelles et de contact", status: checklist.profile ? "completed" : "pending", icon: Users },
-    { id: 2, title: "Créer votre boutique", description: "Configurez le nom et le logo de votre boutique", status: checklist.store ? "completed" : "pending", icon: Store },
-    { id: 3, title: "Ajouter vos premiers produits", description: "Importez des produits depuis le catalogue Dropy", status: checklist.products ? "completed" : "pending", icon: Package },
-    { id: 4, title: "Configurer les paiements", description: "Liez votre compte bancaire pour recevoir vos gains", status: checklist.payment ? "completed" : "pending", icon: CreditCard },
-    { id: 5, title: "Définir vos frais de livraison", description: "Configurez vos zones et tarifs de livraison", status: checklist.shipping ? "completed" : "pending", icon: Truck },
-    { id: 6, title: "Lier un nom de domaine", description: "Utilisez votre propre domaine pour plus de professionnalisme", status: checklist.domain ? "completed" : "pending", icon: Globe },
+  const stepDefs = [
+    { id: "store", done: checklist.store, icon: Store, href: "/seller/store-builder/start" },
+    { id: "products", done: checklist.products, icon: Package, href: "/seller/products/catalog" },
+    { id: "online", done: checklist.online, icon: Globe, href: "/seller/store-builder" },
+    { id: "payment", done: checklist.payment, icon: CreditCard, href: "/seller/settings" },
+    { id: "profile", done: checklist.profile, icon: Users, href: "/seller/settings" },
   ];
+  const steps = stepDefs.map((step) => ({
+    ...step,
+    title: t(`seller_app.dashboard.steps.${step.id}`),
+    description: t(`seller_app.dashboard.steps.${step.id}_desc`),
+    status: step.done ? "completed" : "pending",
+  }));
 
   const completedSteps = steps.filter(s => s.status === "completed").length;
 
@@ -74,85 +80,58 @@ export default function SellerDashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Bienvenue {profile?.store_name?.split(' ')[0]} sur votre tableau de bord
+            {profile?.store_name ? t("seller_app.dashboard.welcome_name").replace("{name}", profile.store_name.split(" ")[0]) : t("seller_app.dashboard.welcome")}
           </h1>
           <p className="text-gray-500 mt-1">
-            Configurez votre boutique en quelques étapes simples
+            {completedSteps < steps.length ? t("seller_app.dashboard.subtitle_setup") : t("seller_app.dashboard.subtitle_active")}
           </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="bg-white border-gray-200 text-gray-700 font-medium h-10 px-4">
-                Aujourd'hui
-                <ChevronDown className="ml-2 w-4 h-4 text-gray-400" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem>Aujourd'hui</DropdownMenuItem>
-              <DropdownMenuItem>Hier</DropdownMenuItem>
-              <DropdownMenuItem>7 derniers jours</DropdownMenuItem>
-              <DropdownMenuItem>30 derniers jours</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
       {/* Stats Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard 
-          title="CMD REÇUES" 
+          title={t("seller_app.dashboard.stats.orders")}
           value={stats.totalOrders.toString()} 
           icon={<ShoppingCart className="w-5 h-5 text-blue-600" />} 
           iconBg="bg-blue-50"
           change={stats.ordersChange}
         />
         <StatCard 
-          title="VENTES" 
-          value={`${stats.totalRevenue.toLocaleString()} TND`} 
+          title={t("seller_app.dashboard.stats.sales")}
+          value={formatPrice(stats.totalRevenue)}
           icon={<TrendingUp className="w-5 h-5 text-emerald-600" />} 
           iconBg="bg-emerald-50"
           change={stats.revenueChange}
         />
         <StatCard 
-          title="VISITEURS" 
+          title={t("seller_app.dashboard.stats.visitors")}
           value={stats.totalVisitors.toString()} 
           icon={<Users className="w-5 h-5 text-blue-600" />} 
           iconBg="bg-blue-50"
         />
         <StatCard 
-          title="TAUX CONVERSION" 
+          title={t("seller_app.dashboard.stats.conversion")}
           value={`${stats.conversionRate}%`} 
           icon={<Percent className="w-5 h-5 text-blue-600" />} 
           iconBg="bg-blue-50"
-          badge={stats.conversionRate < 1 ? { text: "Faible", color: "bg-red-50 text-red-600 border-red-100" } : undefined}
+          badge={stats.conversionRate < 1 ? { text: t("seller_app.dashboard.stats.low"), color: "bg-red-50 text-red-600 border-red-100" } : undefined}
         />
         <StatCard 
-          title="STATUT" 
-          value={profile?.is_verified ? "Vérifié" : "En attente"} 
+          title={t("seller_app.dashboard.stats.status")}
+          value={profile?.is_verified ? t("seller_app.dashboard.stats.verified") : t("seller_app.dashboard.stats.pending")}
           icon={<CheckCircle2 className={`w-5 h-5 ${profile?.is_verified ? "text-emerald-600" : "text-orange-600"}`} />} 
           iconBg={profile?.is_verified ? "bg-emerald-50" : "bg-orange-50"}
         />
       </div>
 
-      {/* Alert Section */}
-      {!checklist.domain && (
-        <div className="bg-orange-50/50 border border-orange-200 rounded-xl p-4 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" />
-          <div className="text-sm text-orange-800">
-            <p className="font-semibold">Action requise : Nom de domaine</p>
-            <p>Vous devez disposer d'un nom de domaine pour professionnaliser votre boutique et activer les paiements par carte.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Progress Section */}
+      {completedSteps < steps.length && (
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="p-6 border-b border-gray-100">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-            <h2 className="text-lg font-bold text-gray-900">Configuration de votre boutique</h2>
+            <h2 className="text-lg font-bold text-gray-900">{t("seller_app.dashboard.setup_title")}</h2>
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-gray-600">{completedSteps}/{steps.length} Étapes complétées</span>
+              <span className="text-sm font-semibold text-gray-600">{t("seller_app.dashboard.steps_done").replace("{done}", String(completedSteps)).replace("{total}", String(steps.length))}</span>
               <div className="w-32">
                 <Progress value={(completedSteps / steps.length) * 100} className="h-2 bg-gray-100" />
               </div>
@@ -186,19 +165,11 @@ export default function SellerDashboard() {
                     }`}
                   >
                     {step.status === 'completed' ? (
-                      <span>Terminé ✓</span>
+                      <span>{t("seller_app.dashboard.done")}</span>
                     ) : (
-                      <Link href={
-                        step.id === 1 ? "/seller/settings" :
-                        step.id === 2 ? "/seller/store-builder" :
-                        step.id === 3 ? "/seller/products/catalog" :
-                        step.id === 4 ? "/seller/settings?tab=payments" :
-                        step.id === 5 ? "/seller/shipping" :
-                        step.id === 6 ? "/seller/store-builder/settings" :
-                        "#"
-                      }>
-                        {step.id === 6 ? 'À valider' : 'À configurer'}
-                        <ArrowRight className="ml-1.5 w-3 h-3" />
+                      <Link href={step.href}>
+                        {step.id === "store" ? t("seller_app.dashboard.start") : t("seller_app.dashboard.configure")}
+                        <ArrowRight className="ml-1.5 w-3 h-3 rtl:rotate-180" />
                       </Link>
                     )}
                   </Button>
@@ -207,12 +178,8 @@ export default function SellerDashboard() {
             ))}
           </div>
         </div>
-        <div className="p-4 bg-gray-50 flex justify-center">
-          <Button variant="link" className="text-sm text-primary font-bold">
-            Voir toutes les étapes de configuration
-          </Button>
-        </div>
       </div>
+      )}
     </div>
   );
 }
@@ -232,6 +199,8 @@ function StatCard({
   badge?: { text: string; color: string };
   change?: number;
 }) {
+  const { t } = useTranslation();
+  const vsLabel = t("seller_app.dashboard.stats.vs_last_month");
   return (
     <Card className="border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
       <CardContent className="p-5">
@@ -246,7 +215,7 @@ function StatCard({
             <span className="text-xl font-black text-gray-900">{value}</span>
             {change !== undefined && (
               <span className={`text-[10px] font-bold ${change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {change >= 0 ? '+' : ''}{change}% vs mois dernier
+                {change >= 0 ? '+' : ''}{change}% {vsLabel}
               </span>
             )}
           </div>

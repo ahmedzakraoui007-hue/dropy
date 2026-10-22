@@ -21,27 +21,15 @@ export function useThemes() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data: sellerProfile } = await supabase
-          .from('seller_profiles')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        const { data: config } = await supabase
-          .from('store_configs')
-          .select('theme_id')
-          .in('seller_id', [user.id, sellerProfile?.id].filter(Boolean) as string[])
-          .limit(1)
-          .maybeSingle();
-
         const { data: storeRow } = await supabase
           .from('stores')
           .select('theme_config')
           .eq('vendor_id', user.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
           .maybeSingle();
         const storeThemeId = (storeRow?.theme_config as any)?.theme_id;
-        if (storeThemeId || config?.theme_id) {
-          setCurrentThemeId(storeThemeId || config?.theme_id);
-        }
+        if (storeThemeId) setCurrentThemeId(storeThemeId);
       } catch (error) {
         console.error('Error loading theme:', error);
       } finally {
@@ -53,7 +41,7 @@ export function useThemes() {
   }, [supabase]);
 
   // Appliquer un thème
-  const applyTheme = async (theme: Theme) => {
+  const applyTheme = async (theme: Theme, options: { replaceHome?: boolean; redirect?: boolean } = {}) => {
     setIsApplying(true);
 
     try {
@@ -69,45 +57,11 @@ export function useThemes() {
         .from('stores')
         .select('id, name, theme_config')
         .eq('vendor_id', user.id)
-        .single();
+        .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
       if (storeError || !store) {
         console.error('❌ Store not found:', storeError);
         throw new Error('Boutique introuvable');
-      }
-
-      // 1. Mettre à jour store_configs avec les valeurs du thème
-      const configData = {
-        seller_id: user.id,
-        theme_id: theme.id,
-        store_name: store.name,
-        colors: theme.colors,         // Ensure colors are passed
-        typography: theme.typography, // Ensure typography is passed
-        layout: theme.layout,         // Ensure layout is passed
-        updated_at: new Date().toISOString(),
-      };
-
-
-      const { data: sellerProfile } = await supabase
-        .from('seller_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      const ownerIds = [user.id, sellerProfile?.id].filter(Boolean) as string[];
-      const { data: existingConfig } = await supabase
-        .from('store_configs')
-        .select('id')
-        .in('seller_id', ownerIds)
-        .limit(1)
-        .maybeSingle();
-
-      const { error: configError } = existingConfig
-        ? await supabase.from('store_configs').update({ ...configData, seller_id: undefined }).eq('id', existingConfig.id)
-        : await supabase.from('store_configs').insert({ ...configData, seller_id: sellerProfile?.id ?? user.id });
-
-      if (configError) {
-        console.error('[applyTheme] Config Error:', configError);
-        throw new Error(`Erreur config: ${configError.message} (${configError.code})`);
       }
 
       const firstFont = (f?: string) => (f || '').replace(/['"]/g, '').split(',')[0].trim() || 'Inter';
@@ -139,56 +93,47 @@ export function useThemes() {
         .eq('id', store.id);
       if (storeThemeError) throw new Error(`Erreur thème boutique: ${storeThemeError.message}`);
 
-      // 2. Vérifier si des pages existent déjà pour ce store
-      const { data: existingPages, error: queryError } = await supabase
+      const homeSections = (theme.defaultSections || []).map((section) => ({
+        ...section,
+        id: crypto.randomUUID(),
+      }));
+
+      const { data: homePage, error: queryError } = await supabase
         .from('store_pages')
         .select('id')
-        .eq('store_id', store.id);
+        .eq('store_id', store.id)
+        .eq('is_homepage', true)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (queryError) throw new Error(`Erreur pages: ${queryError.message}`);
 
-      if (queryError) {
-        console.error('[applyTheme] Query Error:', queryError);
-        throw new Error(`Erreur query: ${queryError.message}`);
-      }
-
-
-      // 3. Si aucune page, créer les pages par défaut du thème
-      if (!existingPages || existingPages.length === 0) {
-        if (theme.defaultSections && theme.defaultSections.length > 0) {
-
-          // Map sections to ensure valid JSON structure if needed
-          const sectionsPayload = theme.defaultSections.map(s => ({
-            ...s,
-            id: s.id || crypto.randomUUID()
-          }));
-
-          const { error: pageError } = await supabase
-            .from('store_pages')
-            .insert({
-              store_id: store.id,
-              slug: 'home',
-              title: 'Accueil',
-              page_type: 'content',
-              sections: sectionsPayload,
-              is_published: true,
-              is_homepage: true,
-              show_in_navigation: true,
-              sort_order: 0
-            });
-
-          if (pageError) {
-            console.error('[applyTheme] Page Insert Error:', pageError);
-            throw new Error(`Erreur insertion pages: ${pageError.message}`);
-          }
-        } else {
-        }
-      } else {
+      if (!homePage && homeSections.length > 0) {
+        const { error: pageError } = await supabase.from('store_pages').insert({
+          store_id: store.id,
+          slug: 'home',
+          title: 'Accueil',
+          page_type: 'content',
+          sections: homeSections,
+          is_published: true,
+          is_homepage: true,
+          show_in_navigation: true,
+          sort_order: 0,
+        });
+        if (pageError) throw new Error(`Erreur page d'accueil: ${pageError.message}`);
+      } else if (homePage && options.replaceHome && homeSections.length > 0) {
+        const { error: pageError } = await supabase
+          .from('store_pages')
+          .update({ sections: homeSections })
+          .eq('id', homePage.id);
+        if (pageError) throw new Error(`Erreur page d'accueil: ${pageError.message}`);
       }
 
       setCurrentThemeId(theme.id);
       toast.success(`Thème "${theme.name}" appliqué avec succès !`);
 
-      router.push('/seller/store-builder/design');
-      router.refresh(); // Force reload to ensure /design gets new colors
+      if (options.redirect !== false) router.push('/seller/store-builder/builder');
+      return true;
 
     } catch (error: any) {
       console.error('Error applying theme (Full details):', JSON.stringify(error, null, 2));
@@ -196,14 +141,7 @@ export function useThemes() {
 
       const errorMessage = error?.message || 'Erreur inconnue lors de l\'application';
 
-      // Specific handling for UUID error (Migration missing)
-      if (error?.message?.includes('invalid input syntax for type uuid') || error?.code === '22P02') {
-        toast.error("⚠️ MIGRATION REQUISE: La base de données attend un UUID. Veuillez exécuter le script SQL 'urgent_fix_theme_id.sql'.", {
-          duration: 10000,
-        });
-      } else {
-        toast.error(`Erreur: ${errorMessage}`);
-      }
+      toast.error(`Erreur: ${errorMessage}`);
     } finally {
       setIsApplying(false);
     }

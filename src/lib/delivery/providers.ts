@@ -1,10 +1,11 @@
+import { randomBytes } from 'node:crypto';
 import { DeliveryProvider, CreateShipmentParams, ShipmentResult, TrackingInfo } from './types';
 
 export class DropyInternalProvider implements DeliveryProvider {
   name = 'dropy_internal';
   
   async createShipment(params: CreateShipmentParams): Promise<ShipmentResult> {
-    const trackingId = `DRP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const trackingId = `DRP-${randomBytes(6).toString('hex').toUpperCase()}`;
     
     const pickupDate = params.preferred_pickup_date || new Date(Date.now() + 24 * 60 * 60 * 1000);
     const estimatedDelivery = new Date(pickupDate.getTime() + (params.service_type === 'express' ? 1 : 3) * 24 * 60 * 60 * 1000);
@@ -45,8 +46,7 @@ export class TunisieLivraisonProvider implements DeliveryProvider {
   
   async createShipment(params: CreateShipmentParams): Promise<ShipmentResult> {
     if (!this.apiKey) {
-      console.log('Tunisie Livraison API not configured, using mock data');
-      return this.mockCreateShipment(params);
+      throw new Error('Tunisie Livraison API is not configured (TUNISIE_LIVRAISON_API_KEY)');
     }
     
     try {
@@ -101,22 +101,8 @@ export class TunisieLivraisonProvider implements DeliveryProvider {
       };
     } catch (error) {
       console.error('Tunisie Livraison API error:', error);
-      return this.mockCreateShipment(params);
+      throw error;
     }
-  }
-  
-  private mockCreateShipment(params: CreateShipmentParams): ShipmentResult {
-    const trackingId = `TL-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-    const pickupDate = params.preferred_pickup_date || new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const estimatedDelivery = new Date(pickupDate.getTime() + 3 * 24 * 60 * 60 * 1000);
-    
-    return {
-      tracking_id: trackingId,
-      tracking_url: `/track/${trackingId}`,
-      pickup_date: pickupDate,
-      estimated_delivery: estimatedDelivery,
-      cost: 8,
-    };
   }
   
   async cancelShipment(trackingId: string): Promise<boolean> {

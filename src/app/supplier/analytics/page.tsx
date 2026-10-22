@@ -81,6 +81,7 @@ export default function SupplierAnalyticsPage() {
         .from("supplier_orders")
         .select("id, status, created_at, items:supplier_order_items(product_id, product_name, product_image, unit_price, quantity)")
         .eq("supplier_id", user.id)
+        .neq("status", "awaiting_confirmation")
         .gte("created_at", previousStart.toISOString());
 
       const all = (supplierOrders || []).filter((o) => o.status !== "cancelled" && o.status !== "rejected");

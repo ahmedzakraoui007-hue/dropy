@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
+import { uniqueStoreSlug } from "@/lib/store-slug-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const ROLES = ["seller", "supplier", "creator"] as const;
@@ -71,13 +72,12 @@ export async function POST(request: Request) {
   } else {
     const { data: store } = await supabase.from("stores").select("id").eq("vendor_id", user.id).limit(1).maybeSingle();
     if (!store) {
-      const storeName = String(extra.storeName || "Ma Boutique").slice(0, 80);
-      const slug = storeName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "boutique";
+      const storeName = String(extra.storeName || "Ma Boutique").trim().slice(0, 80);
       const { error } = await supabase.from("stores").insert({
         vendor_id: user.id,
         name: storeName,
-        slug: `${slug}-${Math.floor(Math.random() * 100000)}`,
-        is_active: true,
+        slug: await uniqueStoreSlug(supabase, storeName),
+        is_active: false,
       });
       if (error) {
         console.error("complete-profile store error:", error);

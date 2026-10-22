@@ -95,7 +95,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  new: "Nouvelle",
+  new: "À confirmer",
   confirmed: "Confirmée",
   preparing: "En préparation",
   ready_to_ship: "Prêt à expédier",
@@ -128,7 +128,7 @@ export default function SellerShippingPage() {
       .from("stores")
       .select("id, name, logo_url")
       .eq("vendor_id", user.id)
-      .single();
+      .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
     if (!store) {
       setLoading(false);

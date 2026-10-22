@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -75,8 +76,6 @@ import SectionLibrary from "@/components/builder/SectionLibrary";
 import SectionEditor from "@/components/builder/SectionEditor";
 import SmartWarnings from "@/components/builder/SmartWarnings";
 import CommandPalette from "@/components/builder/CommandPalette";
-import PerformanceDashboard from "@/components/builder/PerformanceDashboard";
-import AIAssistant from "@/components/builder/AIAssistant";
 import TemplateMarketplace from "@/components/builder/TemplateMarketplace";
 import { premiumTemplates } from "@/lib/templates";
 import { BuilderTemplate } from "@/lib/builder-templates";
@@ -103,6 +102,7 @@ import {
   getPlaceholderConfig 
 } from "@/lib/builder-sections";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/context/LanguageContext";
 
 const SECTION_ICONS: Record<string, any> = {
   hero: ImageIcon,
@@ -385,6 +385,9 @@ function PageReorderItem({
 
 export default function BuilderPage() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const [customHeaderCount, setCustomHeaderCount] = useState(0);
+  const [productCount, setProductCount] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -402,8 +405,6 @@ export default function BuilderPage() {
   const [viewMode, setViewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isWarningsOpen, setIsWarningsOpen] = useState(false);
-  const [isPerformanceOpen, setIsPerformanceOpen] = useState(false);
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("sections");
   const [isBeginnerMode, setIsBeginnerMode] = useState(true);
@@ -552,23 +553,41 @@ export default function BuilderPage() {
         .from("stores")
         .select("*")
         .eq("vendor_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true })
+        .limit(1);
 
       const storeData = stores?.[0];
 
       if (!storeData) {
-        router.push("/seller/store/create");
+        router.push("/seller/store-builder");
         return;
       }
 
       setStore(storeData);
 
-      // Load pages
-      const { data: pagesData } = await supabase
-        .from("store_pages")
-        .select("*")
+      const { data: headerMenu } = await supabase
+        .from("store_navigation")
+        .select("items")
         .eq("store_id", storeData.id)
-        .order("sort_order", { ascending: true });
+        .eq("type", "header")
+        .limit(1)
+        .maybeSingle();
+      setCustomHeaderCount(((headerMenu?.items as any[]) || []).filter((item: any) => item?.label).length);
+
+      const { count: activeProducts } = await supabase
+        .from("store_products")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", storeData.id)
+        .eq("is_active", true);
+      setProductCount(activeProducts ?? 0);
+
+      const loadPages = () =>
+        supabase.from("store_pages").select("*").eq("store_id", storeData.id).order("sort_order", { ascending: true });
+      let { data: pagesData } = await loadPages();
+      if (!pagesData?.length) {
+        await fetch("/api/seller/store", { method: "POST" });
+        ({ data: pagesData } = await loadPages());
+      }
 
       if (pagesData && pagesData.length > 0) {
         setPages(
@@ -698,7 +717,7 @@ export default function BuilderPage() {
     }
   }, [pages]);
 
-  async function handleSave(silent = false) {
+  async function handleSave(silent = false, publish = false) {
     if (!store) return;
     if (!silent) setSaving(true);
     const supabase = createClient();
@@ -731,15 +750,25 @@ export default function BuilderPage() {
           : await supabase.from("store_pages").insert(row);
         if (pageError) throw pageError;
       }
-      
+
+      const keptSlugs = new Set(rows.map((row) => row.slug));
+      const removedIds = (existingPages || [])
+        .filter((p) => !keptSlugs.has(p.slug) && p.slug !== "home")
+        .map((p) => p.id);
+      if (removedIds.length > 0) {
+        const { error: deleteError } = await supabase.from("store_pages").delete().in("id", removedIds);
+        if (deleteError) throw deleteError;
+      }
+
       const { error: storeError } = await supabase
         .from("stores")
-        .update({ theme_config: store.theme_config })
+        .update({ theme_config: store.theme_config, ...(publish ? { is_active: true } : {}) })
         .eq("id", store.id);
 
       if (storeError) throw storeError;
+      if (publish) setStore((prev) => (prev ? { ...prev, is_active: true } : prev));
 
-      if (!silent) toast.success("Boutique enregistrée !");
+      if (!silent) toast.success(publish ? "Boutique publiée et en ligne !" : "Boutique enregistrée !");
     } catch (error: any) {
       console.error("Save error:", error);
       const message = error?.message || error?.details || JSON.stringify(error) || "Erreur inconnue";
@@ -1269,22 +1298,6 @@ export default function BuilderPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Performance Dialog */}
-        <Dialog open={isPerformanceOpen} onOpenChange={setIsPerformanceOpen}>
-          <DialogContent className="max-w-lg p-0 h-[70vh] overflow-hidden flex flex-col">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Performance</DialogTitle>
-            </DialogHeader>
-            <PerformanceDashboard
-              sections={sections}
-              store={store}
-              onOpenSettings={(tab) => {
-                setActiveTab(tab);
-                setIsPerformanceOpen(false);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
 
           <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
             <DialogContent className="max-w-[95vw] lg:max-w-7xl p-0 h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] border-none shadow-2xl">
@@ -1374,9 +1387,6 @@ export default function BuilderPage() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setIsAIAssistantOpen(true)}>
-                    <Sparkles className="w-4 h-4 mr-2 text-violet-500" /> Assistant AI
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsTemplatesOpen(true)}>
                     <Layout className="w-4 h-4 mr-2" /> Templates Premium
                   </DropdownMenuItem>
@@ -1396,9 +1406,6 @@ export default function BuilderPage() {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuItem onClick={() => setIsWarningsOpen(true)}>
                     <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" /> Vérifier les erreurs
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsPerformanceOpen(true)}>
-                    <Gauge className="w-4 h-4 mr-2 text-emerald-500" /> Score de Performance
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1562,6 +1569,38 @@ export default function BuilderPage() {
                         <h3 className="font-semibold text-sm">Menu de Navigation</h3>
                         <p className="text-xs text-muted-foreground">Réorganisez vos pages et choisissez celles qui apparaissent dans votre menu principal.</p>
                       </div>
+
+                      {customHeaderCount > 0 && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                          <p className="text-xs font-bold text-amber-900">{t("store_builder.editor_nav.custom_title")}</p>
+                          <p className="text-[11px] text-amber-800">{t("store_builder.editor_nav.custom_body")}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" className="h-7 text-[11px] bg-white" asChild>
+                              <Link href="/seller/store-builder/navigation">{t("store_builder.editor_nav.edit_custom")}</Link>
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-7 text-[11px]"
+                              onClick={async () => {
+                                if (!store) return;
+                                const { error } = await createClient()
+                                  .from("store_navigation")
+                                  .update({ items: [] })
+                                  .eq("store_id", store.id)
+                                  .eq("type", "header");
+                                if (error) {
+                                  toast.error(t("store_builder.editor_nav.auto_error"));
+                                  return;
+                                }
+                                setCustomHeaderCount(0);
+                                toast.success(t("store_builder.editor_nav.auto_done"));
+                              }}
+                            >
+                              {t("store_builder.editor_nav.use_auto")}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
 
                             <Reorder.Group 
                               axis="y" 
@@ -1782,7 +1821,11 @@ export default function BuilderPage() {
                                 variant="ghost" 
                                 size="icon" 
                                 className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => setPages(pages.filter(p => p.id !== page.id))}
+                                onClick={() => {
+                                  if (confirm(`Supprimer la page « ${page.title || page.name || page.slug} » ? Elle sera supprimée à l'enregistrement.`)) {
+                                    setPages(pages.filter(p => p.id !== page.id));
+                                  }
+                                }}
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
                               </Button>
@@ -1823,10 +1866,9 @@ export default function BuilderPage() {
 
                       <div className="space-y-3">
                         {[
-                          { title: "Choisir un template", done: sections.length > 0, action: () => setIsTemplatesOpen(true) },
-                          { title: "Personnaliser le design", done: !!store?.theme_config, action: () => setActiveTab("theme") },
-                          { title: "Ajouter vos produits", done: sections.some(s => s.type === 'products'), action: () => router.push('/seller/products/catalog') },
-                          { title: "Vérifier le score de vente", done: !isWarningsOpen, action: () => setIsWarningsOpen(true) },
+                          { title: t("store_builder.hub.steps.theme"), done: Boolean(store?.theme_config?.theme_id), action: () => router.push("/seller/store-builder/themes") },
+                          { title: t("store_builder.hub.steps.logo"), done: Boolean((store as any)?.logo_url), action: () => router.push("/seller/store-builder/settings") },
+                          { title: t("store_builder.hub.steps.products"), done: productCount > 0, action: () => router.push("/seller/products/catalog") },
                         ].map((item, i) => (
                           <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.done ? "bg-emerald-500/5 border-emerald-500/20" : "bg-muted/30 border-border"}`}>
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-emerald-500 text-white" : "border-2 border-border bg-background"}`}>
@@ -1843,7 +1885,13 @@ export default function BuilderPage() {
                       <div className="pt-4 border-t border-border">
                         <Button 
                           className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold shadow-lg shadow-purple-200"
-                          onClick={() => handleSave()}
+                          onClick={() => {
+                            if (productCount === 0) {
+                              toast.error(t("store_builder.hub.need_product"));
+                              return;
+                            }
+                            handleSave(false, true);
+                          }}
                           disabled={saving}
                         >
                           {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
@@ -1855,20 +1903,6 @@ export default function BuilderPage() {
                         </p>
                       </div>
 
-                      <div className="p-4 rounded-xl bg-violet-50 border border-violet-100 text-violet-900 space-y-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-violet-500 flex items-center justify-center text-white">
-                            <Sparkles className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-xs">Gagnez du temps</p>
-                            <p className="text-[10px] opacity-80">L&apos;IA peut construire la boutique pour vous.</p>
-                          </div>
-                        </div>
-                        <Button className="w-full bg-violet-600 text-white hover:bg-violet-700" size="sm" onClick={() => setIsAIAssistantOpen(true)}>
-                          Lancer l&apos;IA
-                        </Button>
-                      </div>
                     </div>
                   </ScrollArea>
                 </TabsContent>
@@ -1953,26 +1987,6 @@ export default function BuilderPage() {
           )}
 
         <AnimatePresence>
-          {isAIAssistantOpen && (
-            <AIAssistant 
-              onClose={() => setIsAIAssistantOpen(false)}
-              sections={sections}
-              onUpdateSections={setSections}
-              onAddSection={(type, data) => {
-                const newSection = {
-                  id: crypto.randomUUID(),
-                  type,
-                  config: data || getPlaceholderConfig(type),
-                  position: sections.length,
-                  is_visible: true
-                };
-                setSections([...sections, newSection]);
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {isTemplatesOpen && (
             <TemplateMarketplace 
               onClose={() => setIsTemplatesOpen(false)}
@@ -2003,7 +2017,7 @@ export default function BuilderPage() {
                 Lancez votre boutique e-commerce en moins de 30 minutes.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid md:grid-cols-2 gap-6 py-6">
+            <div className="grid gap-6 py-6">
               <div 
                 className="p-6 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group space-y-4"
                 onClick={() => {
@@ -2017,21 +2031,6 @@ export default function BuilderPage() {
                 <div className="space-y-1">
                   <h3 className="font-bold">Choisir un Template</h3>
                   <p className="text-sm text-muted-foreground">Partez d&apos;un design pro optimisé pour la conversion (Beauté, Fitness, Maison...)</p>
-                </div>
-              </div>
-              <div 
-                className="p-6 rounded-2xl border-2 border-border hover:border-violet-500 hover:bg-violet-50 transition-all cursor-pointer group space-y-4"
-                onClick={() => {
-                  setIsAIAssistantOpen(true);
-                  setShowOnboarding(false);
-                }}
-              >
-                <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-6 h-6 text-violet-600" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold">Assistant IA</h3>
-                  <p className="text-sm text-muted-foreground">Décrivez votre niche et laissez l&apos;IA générer vos textes, images et sections.</p>
                 </div>
               </div>
             </div>

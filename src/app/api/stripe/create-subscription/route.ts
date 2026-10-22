@@ -1,9 +1,13 @@
+import { FREE_LAUNCH } from "@/lib/launch";
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { stripe, PLANS, PlanType } from '@/lib/stripe';
 import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
+  if (FREE_LAUNCH) {
+    return NextResponse.json({ error: "Les paiements sont désactivés pendant le lancement gratuit" }, { status: 503 });
+  }
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

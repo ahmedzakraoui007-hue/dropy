@@ -102,6 +102,7 @@ export default function SupplierOrdersPage() {
         items:supplier_order_items(*)
       `)
       .eq("supplier_id", user.id)
+        .neq("status", "awaiting_confirmation")
       .order("created_at", { ascending: false });
 
     if (statusFilter !== "all") {

@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { AccountStatusBadge, AccountStatusMenuItems, updateAccountStatus, STATUS_MESSAGES, type AccountStatusAction } from "@/components/admin/AccountStatus";
 import { formatDate } from "@/lib/utils";
 
 interface SellerProfile {
@@ -93,19 +94,14 @@ export default function SellersManagement() {
     fetchSellers();
   }, [searchTerm]);
 
-  const updateStatus = async (userId: string, newStatus: string) => {
-    const response = await fetch("/api/admin/users/status", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, status: newStatus }),
-    });
-    const error = response.ok ? null : new Error((await response.json().catch(() => ({}))).error || "Erreur");
-    
-    if (error) {
-      toast.error("Erreur lors de la mise à jour du statut");
-    } else {
-      toast.success(newStatus === 'suspended' ? "Vendeur suspendu" : "Vendeur activé");
+  const updateStatus = async (userId: string, newStatus: AccountStatusAction) => {
+    const toastId = toast.loading("Mise à jour en cours…");
+    try {
+      const result = await updateAccountStatus(userId, newStatus);
+      toast.success(STATUS_MESSAGES[newStatus] + (result.emailSent ? " & email envoyé" : ""), { id: toastId });
       fetchSellers();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour du statut", { id: toastId });
     }
   };
 
@@ -232,12 +228,7 @@ export default function SellersManagement() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant={seller.status === 'suspended' ? "destructive" : "default"}
-                          className={seller.status === 'active' || !seller.status ? "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20" : ""}
-                        >
-                          {seller.status === 'suspended' ? 'Suspendu' : 'Actif'}
-                        </Badge>
+                        <AccountStatusBadge status={seller.status} />
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {formatDate(seller.created_at)}
@@ -262,18 +253,7 @@ export default function SellersManagement() {
                                 Voir la boutique principale
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuSeparator />
-                            {seller.status === 'suspended' ? (
-                              <DropdownMenuItem onClick={() => updateStatus(seller.id, 'active')} className="text-emerald-600">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Réactiver le compte
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem onClick={() => updateStatus(seller.id, 'suspended')} className="text-red-600">
-                                <Ban className="w-4 h-4 mr-2" />
-                                Suspendre le compte
-                              </DropdownMenuItem>
-                            )}
+                            <AccountStatusMenuItems status={seller.status} onChange={(s) => updateStatus(seller.id, s)} />
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

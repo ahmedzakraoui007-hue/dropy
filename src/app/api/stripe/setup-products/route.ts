@@ -1,3 +1,4 @@
+import { FREE_LAUNCH } from "@/lib/launch";
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { requireUser } from '@/lib/api-auth';
@@ -65,6 +66,9 @@ async function findOrCreateProduct(plan: 'pro' | 'enterprise') {
 }
 
 export async function POST() {
+  if (FREE_LAUNCH) {
+    return NextResponse.json({ error: "Les paiements sont désactivés pendant le lancement gratuit" }, { status: 503 });
+  }
   const auth = await requireUser(['admin']);
   if (!auth.ok) return auth.response;
 
@@ -88,6 +92,9 @@ export async function POST() {
 }
 
 export async function GET() {
+  if (FREE_LAUNCH) {
+    return NextResponse.json({ error: "Les paiements sont désactivés pendant le lancement gratuit" }, { status: 503 });
+  }
   const auth = await requireUser(['admin']);
   if (!auth.ok) return auth.response;
 

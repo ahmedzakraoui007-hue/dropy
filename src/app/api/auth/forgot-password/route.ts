@@ -1,9 +1,12 @@
+import { rateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/mail";
 import { confirmLink } from "@/lib/auth-links";
 
 export async function POST(req: Request) {
+  const limited = rateLimit(req, "forgot-password", 5, 3600);
+  if (limited) return limited;
   try {
     const body = await req.json().catch(() => null);
     const email = String(body?.email || "").trim().toLowerCase();

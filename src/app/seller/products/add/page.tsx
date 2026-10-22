@@ -25,6 +25,8 @@ import {
   Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/context/LanguageContext";
+import { formatPrice } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -108,6 +110,7 @@ const PREDEFINED_VOLUMES = ["30ml", "50ml", "75ml", "100ml", "150ml", "200ml", "
 const PREDEFINED_WEIGHTS = ["50g", "100g", "150g", "200g", "250g", "500g", "1kg", "2kg"];
 
 export default function MyProductsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { plan, usage, limits, loading: quotaLoading, check } = useQuota();
   const [loading, setLoading] = useState(true);
@@ -152,7 +155,7 @@ export default function MyProductsPage() {
       .from("stores")
       .select("id")
       .eq("vendor_id", user.id)
-      .single();
+      .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
     if (!store) {
       setLoading(false);
@@ -174,7 +177,7 @@ export default function MyProductsPage() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      toast.error("Erreur lors du chargement des produits");
+      toast.error(t("seller_app.products.load_error"));
     } else {
       setProducts(productsData || []);
     }
@@ -199,7 +202,7 @@ export default function MyProductsPage() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      toast.error("Vous devez être connecté");
+      toast.error(t("seller_app.products.must_login"));
       setUploadingImage(false);
       return;
     }
@@ -208,13 +211,13 @@ export default function MyProductsPage() {
 
     for (const file of Array.from(files)) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(`${file.name} est trop volumineux (max 5MB)`);
+        toast.error(t("seller_app.products.too_big").replace("{name}", file.name));
         continue;
       }
 
       const fileExt = file.name.split(".").pop()?.toLowerCase();
       if (!["jpg", "jpeg", "png", "webp", "gif"].includes(fileExt || "")) {
-        toast.error(`Format non supporté: ${fileExt}`);
+        toast.error(t("seller_app.products.bad_format").replace("{ext}", String(fileExt)));
         continue;
       }
 
@@ -229,7 +232,7 @@ export default function MyProductsPage() {
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        toast.error(`Erreur lors de l'upload: ${uploadError.message}`);
+        toast.error(t("seller_app.products.upload_error").replace("{message}", uploadError.message));
         continue;
       }
 
@@ -245,7 +248,7 @@ export default function MyProductsPage() {
         ...prev,
         images: [...prev.images, ...newImages],
       }));
-      toast.success(`${newImages.length} image(s) uploadée(s)`);
+      toast.success(t("seller_app.products.uploaded").replace("{count}", String(newImages.length)));
     }
     setUploadingImage(false);
   };
@@ -260,7 +263,7 @@ export default function MyProductsPage() {
   const addVariant = (type: "size" | "color" | "volume" | "weight", value: string, price?: number) => {
     const exists = productForm.variants.some(v => v.type === type && v.value === value);
     if (exists) {
-      toast.error("Cette variante existe déjà");
+      toast.error(t("seller_app.products.variant_exists"));
       return;
     }
     
@@ -302,6 +305,10 @@ export default function MyProductsPage() {
     setShowProductDialog(true);
   };
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("new") === "1") openCreateDialog();
+  }, []);
+
   const openEditDialog = (product: StoreProduct) => {
     setEditingProduct(product);
     setProductForm({
@@ -319,12 +326,12 @@ export default function MyProductsPage() {
 
   const handleSaveProduct = async () => {
     if (!productForm.name || !productForm.price) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+      toast.error(t("seller_app.products.required"));
       return;
     }
 
     if (!editingProduct && !check("maxProducts")) {
-      toast.error("Limite de produits atteinte");
+      toast.error(t("seller_app.products.limit"));
       return;
     }
 
@@ -332,7 +339,7 @@ export default function MyProductsPage() {
     const supabase = createClient();
 
     if (!storeId) {
-      toast.error("Boutique non trouvée");
+      toast.error(t("seller_app.products.store_not_found"));
       setProductLoading(false);
       return;
     }
@@ -355,9 +362,9 @@ export default function MyProductsPage() {
         .eq("id", editingProduct.id);
 
       if (error) {
-        toast.error("Erreur lors de la modification");
+        toast.error(t("seller_app.products.update_error"));
       } else {
-        toast.success("Produit modifié avec succès !");
+        toast.success(t("seller_app.products.updated"));
         fetchProducts();
       }
     } else {
@@ -370,9 +377,9 @@ export default function MyProductsPage() {
       });
 
       if (error) {
-        toast.error("Erreur lors de la création");
+        toast.error(t("seller_app.products.create_error"));
       } else {
-        toast.success("Produit créé avec succès !");
+        toast.success(t("seller_app.products.created"));
         fetchProducts();
       }
     }
@@ -389,9 +396,9 @@ export default function MyProductsPage() {
       .eq("id", product.id);
 
     if (error) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(t("seller_app.products.status_error"));
     } else {
-      toast.success(product.is_active ? "Produit désactivé" : "Produit activé");
+      toast.success(product.is_active ? t("seller_app.products.deactivated") : t("seller_app.products.activated"));
       fetchProducts();
     }
   };
@@ -404,9 +411,9 @@ export default function MyProductsPage() {
       .eq("id", product.id);
 
     if (error) {
-      toast.error("Erreur lors de la suppression");
+      toast.error(t("seller_app.products.delete_error"));
     } else {
-      toast.success("Produit supprimé");
+      toast.success(t("seller_app.products.deleted"));
       fetchProducts();
     }
   };
@@ -440,10 +447,10 @@ export default function MyProductsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <Store className="w-16 h-16 text-gray-300 mb-4" />
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Créez d&apos;abord votre boutique</h2>
-        <p className="text-gray-500 mb-6">Vous devez avoir une boutique pour gérer vos produits</p>
-        <Button onClick={() => router.push("/seller/store/create")}>
-          Créer ma boutique
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("seller_app.products.no_store_title")}</h2>
+        <p className="text-gray-500 mb-6">{t("seller_app.products.no_store_desc")}</p>
+        <Button onClick={() => router.push("/seller/store-builder")}>
+          {t("seller_app.products.create_store")}
         </Button>
       </div>
     );
@@ -453,17 +460,17 @@ export default function MyProductsPage() {
     <div className="space-y-6">
       {!quotaLoading && !check("maxProducts") && (
         <QuotaAlert
-          title="Limite de produits atteinte"
-          description={`Vous avez ${usage.products} produit(s). Votre plan ${plan} est limité à ${limits.maxProducts}.`}
+          title={t("seller_app.products.limit")}
+          description={t("seller_app.products.limit_desc").replace("{count}", String(usage.products)).replace("{max}", String(limits.maxProducts))}
           plan={plan}
         />
       )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Mes Produits</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t("seller_app.products.title")}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {products.length} produit(s) • {dropshippingProducts.length} importés • {ownProducts.length} propres
+            {t("seller_app.products.summary").replace("{total}", String(products.length)).replace("{imported}", String(dropshippingProducts.length)).replace("{own}", String(ownProducts.length))}
           </p>
         </div>
         <div className="flex gap-2">
@@ -473,14 +480,14 @@ export default function MyProductsPage() {
             className="gap-2"
           >
             <Truck className="w-4 h-4" />
-            Importer du catalogue
+            {t("seller_app.products.import_catalog")}
           </Button>
           <Button
-            onClick={() => router.push("/seller/products/new")}
+            onClick={openCreateDialog}
             className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white gap-2"
           >
             <Plus className="w-4 h-4" />
-            Nouveau produit
+            {t("seller_app.products.new_product")}
           </Button>
         </div>
       </div>
@@ -493,7 +500,7 @@ export default function MyProductsPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{products.length}</p>
-              <p className="text-sm text-gray-500">Total produits</p>
+              <p className="text-sm text-gray-500">{t("seller_app.products.total")}</p>
             </div>
           </CardContent>
         </Card>
@@ -504,7 +511,7 @@ export default function MyProductsPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{dropshippingProducts.length}</p>
-              <p className="text-sm text-gray-500">Dropshipping</p>
+              <p className="text-sm text-gray-500">{t("seller_app.products.dropshipping")}</p>
             </div>
           </CardContent>
         </Card>
@@ -515,7 +522,7 @@ export default function MyProductsPage() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{ownProducts.length}</p>
-              <p className="text-sm text-gray-500">Mes propres produits</p>
+              <p className="text-sm text-gray-500">{t("seller_app.products.own_products")}</p>
             </div>
           </CardContent>
         </Card>
@@ -525,7 +532,7 @@ export default function MyProductsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
-            placeholder="Rechercher un produit..."
+            placeholder={t("seller_app.products.search_ph")}
             className="pl-10 h-11 border-gray-200"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -533,12 +540,12 @@ export default function MyProductsPage() {
         </div>
         <Select value={filterSource} onValueChange={setFilterSource}>
           <SelectTrigger className="w-[180px] h-11 border-gray-200">
-            <SelectValue placeholder="Source" />
+            <SelectValue placeholder={t("seller_app.products.source")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les produits</SelectItem>
-            <SelectItem value="dropshipping">Dropshipping</SelectItem>
-            <SelectItem value="own">Mes produits</SelectItem>
+            <SelectItem value="all">{t("seller_app.products.all")}</SelectItem>
+            <SelectItem value="dropshipping">{t("seller_app.products.dropshipping")}</SelectItem>
+            <SelectItem value="own">{t("seller_app.products.own")}</SelectItem>
           </SelectContent>
         </Select>
         <div className="bg-gray-100 p-1 rounded-lg flex items-center">
@@ -564,28 +571,28 @@ export default function MyProductsPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-          <p className="text-gray-500">Chargement des produits...</p>
+          <p className="text-gray-500">{t("seller_app.products.loading")}</p>
         </div>
       ) : filteredProducts.length === 0 ? (
         <div className="text-center py-20 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
           <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
           <h3 className="text-xl font-semibold mb-2 text-gray-900">
-            {products.length === 0 ? "Aucun produit" : "Aucun résultat"}
+            {products.length === 0 ? t("seller_app.products.empty") : t("seller_app.products.no_results")}
           </h3>
           <p className="text-gray-500 mb-6">
             {products.length === 0
-              ? "Commencez par ajouter des produits à votre boutique"
-              : "Essayez de modifier vos critères de recherche"}
+              ? t("seller_app.products.empty_desc")
+              : t("seller_app.products.no_results_desc")}
           </p>
           {products.length === 0 && (
             <div className="flex justify-center gap-3">
               <Button variant="outline" onClick={() => router.push("/seller/products/catalog")}>
                 <Truck className="w-4 h-4 mr-2" />
-                Importer du catalogue
+                {t("seller_app.products.import_catalog")}
               </Button>
               <Button onClick={openCreateDialog}>
                 <Plus className="w-4 h-4 mr-2" />
-                Créer un produit
+                {t("seller_app.products.create_product")}
               </Button>
             </div>
           )}
@@ -607,11 +614,11 @@ export default function MyProductsPage() {
                 />
                 {!product.is_active && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <Badge className="bg-gray-800 text-white">Désactivé</Badge>
+                    <Badge className="bg-gray-800 text-white">{t("seller_app.products.inactive")}</Badge>
                   </div>
                 )}
                 <Badge className={`absolute top-2 left-2 ${product.source === "dropshipping" ? "bg-purple-500" : "bg-emerald-500"} text-white text-xs`}>
-                  {product.source === "dropshipping" ? "Dropshipping" : "Mon produit"}
+                  {product.source === "dropshipping" ? t("seller_app.products.dropshipping") : t("seller_app.products.mine")}
                 </Badge>
                 {product.has_variants && product.variants && product.variants.length > 0 && (
                   <Badge className="absolute top-2 left-24 bg-blue-500 text-white text-xs">
@@ -631,18 +638,18 @@ export default function MyProductsPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => openEditDialog(product)}>
                       <Edit className="w-4 h-4 mr-2" />
-                      Modifier
+                      {t("seller_app.products.edit")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleToggleActive(product)}>
                       {product.is_active ? (
                         <>
                           <EyeOff className="w-4 h-4 mr-2" />
-                          Désactiver
+                          {t("seller_app.products.deactivate")}
                         </>
                       ) : (
                         <>
                           <Eye className="w-4 h-4 mr-2" />
-                          Activer
+                          {t("seller_app.products.activate")}
                         </>
                       )}
                     </DropdownMenuItem>
@@ -651,7 +658,7 @@ export default function MyProductsPage() {
                       className="text-red-600 focus:text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Supprimer
+                      {t("seller_app.products.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -661,13 +668,13 @@ export default function MyProductsPage() {
                 <div className="flex items-center justify-between mt-2">
                   <p className="text-lg font-bold text-gray-900">
                     {product.has_variants && product.variants && product.variants.length > 0
-                      ? `${Math.min(...product.variants.map(v => v.price || product.selling_price))} - ${Math.max(...product.variants.map(v => v.price || product.selling_price))} TND`
-                      : `${product.selling_price} TND`
+                      ? `${formatPrice(Math.min(...product.variants.map(v => v.price || product.selling_price)))} - ${formatPrice(Math.max(...product.variants.map(v => v.price || product.selling_price)))}`
+                      : formatPrice(product.selling_price)
                     }
                   </p>
                   {product.source === "dropshipping" && product.products?.base_price && (
                     <p className="text-xs text-gray-500">
-                      Coût: {product.products.base_price} TND
+                      {t("seller_app.products.cost")} {formatPrice(product.products.base_price)}
                     </p>
                   )}
                 </div>
@@ -703,10 +710,10 @@ export default function MyProductsPage() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
                   <Badge className={`${product.source === "dropshipping" ? "bg-purple-100 text-purple-700" : "bg-emerald-100 text-emerald-700"} text-xs`}>
-                    {product.source === "dropshipping" ? "Dropshipping" : "Mon produit"}
+                    {product.source === "dropshipping" ? t("seller_app.products.dropshipping") : t("seller_app.products.mine")}
                   </Badge>
                   {!product.is_active && (
-                    <Badge variant="secondary" className="text-xs">Désactivé</Badge>
+                    <Badge variant="secondary" className="text-xs">{t("seller_app.products.inactive")}</Badge>
                   )}
                   {product.has_variants && product.variants && product.variants.length > 0 && (
                     <Badge className="bg-blue-100 text-blue-700 text-xs">
@@ -717,13 +724,13 @@ export default function MyProductsPage() {
                 <div className="flex items-center gap-4 mt-1">
                   <span className="text-lg font-bold text-gray-900">
                     {product.has_variants && product.variants && product.variants.length > 0
-                      ? `${Math.min(...product.variants.map(v => v.price || product.selling_price))} - ${Math.max(...product.variants.map(v => v.price || product.selling_price))} TND`
-                      : `${product.selling_price} TND`
+                      ? `${formatPrice(Math.min(...product.variants.map(v => v.price || product.selling_price)))} - ${formatPrice(Math.max(...product.variants.map(v => v.price || product.selling_price)))}`
+                      : formatPrice(product.selling_price)
                     }
                   </span>
                   {product.source === "dropshipping" && product.products?.base_price && (
                     <span className="text-sm text-gray-500">
-                      Coût: {product.products.base_price} TND • Marge: {Math.round(((product.selling_price - product.products.base_price) / product.selling_price) * 100)}%
+                      {t("seller_app.products.cost")} {formatPrice(product.products.base_price)} • {t("seller_app.products.margin")} {Math.round(((product.selling_price - product.products.base_price) / product.selling_price) * 100)}%
                     </span>
                   )}
                 </div>
@@ -743,12 +750,12 @@ export default function MyProductsPage() {
                       {product.is_active ? (
                         <>
                           <EyeOff className="w-4 h-4 mr-2" />
-                          Désactiver
+                          {t("seller_app.products.deactivate")}
                         </>
                       ) : (
                         <>
                           <Eye className="w-4 h-4 mr-2" />
-                          Activer
+                          {t("seller_app.products.activate")}
                         </>
                       )}
                     </DropdownMenuItem>
@@ -757,7 +764,7 @@ export default function MyProductsPage() {
                       className="text-red-600 focus:text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Supprimer
+                      {t("seller_app.products.delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -774,51 +781,51 @@ export default function MyProductsPage() {
               <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
                 {editingProduct ? <Edit className="w-4 h-4 text-emerald-600" /> : <Plus className="w-4 h-4 text-emerald-600" />}
               </div>
-              {editingProduct ? "Modifier le produit" : "Nouveau produit"}
+              {editingProduct ? t("seller_app.products.edit_product") : t("seller_app.products.new_product")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-5 mt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nom du produit *</Label>
+                <Label htmlFor="name">{t("seller_app.products.name")}</Label>
                 <Input
                   id="name"
-                  placeholder="Ex: Parfum Royal Oud"
+                  placeholder={t("seller_app.products.name_ph")}
                   value={productForm.name}
                   onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="category">Catégorie</Label>
+                <Label htmlFor="category">{t("seller_app.products.category")}</Label>
                 <Select 
                   value={productForm.category} 
                   onValueChange={(value) => setProductForm({ ...productForm, category: value, variants: [] })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Choisir une catégorie" />
+                    <SelectValue placeholder={t("seller_app.products.category_ph")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="vetements">Vêtements</SelectItem>
-                    <SelectItem value="chaussures">Chaussures</SelectItem>
-                    <SelectItem value="accessoires">Accessoires</SelectItem>
-                    <SelectItem value="electronique">Électronique</SelectItem>
-                    <SelectItem value="maison">Maison & Déco</SelectItem>
-                    <SelectItem value="beaute">Beauté & Cosmétiques</SelectItem>
-                    <SelectItem value="parfum">Parfums</SelectItem>
-                    <SelectItem value="alimentaire">Alimentaire</SelectItem>
-                    <SelectItem value="sport">Sport & Loisirs</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
+                    <SelectItem value="vetements">{t("seller_app.products.categories.clothing")}</SelectItem>
+                    <SelectItem value="chaussures">{t("seller_app.products.categories.shoes")}</SelectItem>
+                    <SelectItem value="accessoires">{t("seller_app.products.categories.accessories")}</SelectItem>
+                    <SelectItem value="electronique">{t("seller_app.products.categories.electronics")}</SelectItem>
+                    <SelectItem value="maison">{t("seller_app.products.categories.home")}</SelectItem>
+                    <SelectItem value="beaute">{t("seller_app.products.categories.beauty")}</SelectItem>
+                    <SelectItem value="parfum">{t("seller_app.products.categories.perfume")}</SelectItem>
+                    <SelectItem value="alimentaire">{t("seller_app.products.categories.food")}</SelectItem>
+                    <SelectItem value="sport">{t("seller_app.products.categories.sport")}</SelectItem>
+                    <SelectItem value="autre">{t("seller_app.products.categories.other")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t("seller_app.products.description")}</Label>
               <Textarea
                 id="description"
-                placeholder="Décrivez votre produit..."
+                placeholder={t("seller_app.products.description_ph")}
                 rows={3}
                 value={productForm.description}
                 onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
@@ -827,7 +834,7 @@ export default function MyProductsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="price">Prix de base (TND) *</Label>
+                <Label htmlFor="price">{t("seller_app.products.price")}</Label>
                 <Input
                   id="price"
                   type="number"
@@ -837,11 +844,11 @@ export default function MyProductsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="stock">Stock global</Label>
+                <Label htmlFor="stock">{t("seller_app.products.stock")}</Label>
                 <Input
                   id="stock"
                   type="number"
-                  placeholder="Illimité"
+                  placeholder={t("seller_app.products.unlimited")}
                   value={productForm.stock}
                   onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
                 />
@@ -849,7 +856,7 @@ export default function MyProductsPage() {
             </div>
 
             <div className="space-y-2">
-              <Label>Images</Label>
+              <Label>{t("seller_app.products.images")}</Label>
               <div className="grid grid-cols-5 gap-2">
                 {productForm.images.map((img, i) => (
                   <div key={i} className="aspect-square relative rounded-lg overflow-hidden border border-gray-200">
@@ -869,7 +876,7 @@ export default function MyProductsPage() {
                   ) : (
                     <>
                       <ImagePlus className="w-5 h-5" />
-                      <span className="text-xs mt-1">Ajouter</span>
+                      <span className="text-xs mt-1">{t("seller_app.products.add")}</span>
                     </>
                   )}
                   <input
@@ -882,18 +889,18 @@ export default function MyProductsPage() {
                   />
                 </label>
               </div>
-              <p className="text-xs text-gray-500">Formats: JPG, PNG, WebP, GIF. Max 5MB par image.</p>
+              <p className="text-xs text-gray-500">{t("seller_app.products.formats")}</p>
             </div>
 
             {productForm.category && (
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <Label className="text-base font-semibold">Variantes du produit</Label>
+                    <Label className="text-base font-semibold">{t("seller_app.products.variants")}</Label>
                     <p className="text-xs text-gray-500">
                       {needsVolume || needsWeight
-                        ? "Ajoutez des volumes/poids avec un prix différent pour chaque variante"
-                        : "Ajoutez des tailles et/ou des couleurs disponibles"
+                        ? t("seller_app.products.variants_volume")
+                        : t("seller_app.products.variants_size")
                       }
                     </p>
                   </div>
@@ -909,7 +916,7 @@ export default function MyProductsPage() {
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-sm">
                           <Ruler className="w-4 h-4" />
-                          Tailles disponibles
+                          {t("seller_app.products.sizes")}
                         </Label>
                         <div className="flex flex-wrap gap-2">
                           {PREDEFINED_SIZES.map((size) => {
@@ -937,7 +944,7 @@ export default function MyProductsPage() {
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-sm">
                           <Palette className="w-4 h-4" />
-                          Couleurs disponibles
+                          {t("seller_app.products.colors")}
                         </Label>
                         <div className="flex flex-wrap gap-2">
                           {PREDEFINED_COLORS.map((color) => {
@@ -992,7 +999,7 @@ export default function MyProductsPage() {
                         </div>
                         <div className="flex gap-2 mt-2">
                           <Input
-                            placeholder="Volume personnalisé (ex: 75ml)"
+                            placeholder={t("seller_app.products.custom_volume")}
                             value={customVolume}
                             onChange={(e) => setCustomVolume(e.target.value)}
                             className="h-9"
@@ -1041,7 +1048,7 @@ export default function MyProductsPage() {
                         </div>
                         <div className="flex gap-2 mt-2">
                           <Input
-                            placeholder="Poids personnalisé (ex: 750g)"
+                            placeholder={t("seller_app.products.custom_weight")}
                             value={customWeight}
                             onChange={(e) => setCustomWeight(e.target.value)}
                             className="h-9"
@@ -1065,8 +1072,8 @@ export default function MyProductsPage() {
 
                     {productForm.variants.length > 0 && (
                       <div className="space-y-3 pt-4 border-t border-gray-200">
-                        <Label className="text-sm font-semibold">Configuration des variantes</Label>
-                        <p className="text-xs text-gray-500">Définissez le prix et le stock pour chaque variante</p>
+                        <Label className="text-sm font-semibold">{t("seller_app.products.variant_config")}</Label>
+                        <p className="text-xs text-gray-500">{t("seller_app.products.variant_config_desc")}</p>
                         <div className="space-y-2">
                           {productForm.variants.map((variant) => (
                             <div key={variant.id} className="flex items-center gap-3 bg-white p-3 rounded-lg border">
@@ -1077,10 +1084,10 @@ export default function MyProductsPage() {
                               <div className="flex-1" />
                               <div className="flex items-center gap-2">
                                 <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-500">Prix:</span>
+                                  <span className="text-xs text-gray-500">{t("seller_app.products.price_label")}</span>
                                   <Input
                                     type="number"
-                                    placeholder="Prix"
+                                    placeholder={t("seller_app.products.price_ph")}
                                     className="h-8 w-24"
                                     value={variant.price || ""}
                                     onChange={(e) => updateVariant(variant.id, "price", parseFloat(e.target.value) || 0)}
@@ -1088,10 +1095,10 @@ export default function MyProductsPage() {
                                   <span className="text-xs text-gray-500">TND</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                  <span className="text-xs text-gray-500">Stock:</span>
+                                  <span className="text-xs text-gray-500">{t("seller_app.products.stock_label")}</span>
                                   <Input
                                     type="number"
-                                    placeholder="Stock"
+                                    placeholder={t("seller_app.products.stock_ph")}
                                     className="h-8 w-20"
                                     value={variant.stock || ""}
                                     onChange={(e) => updateVariant(variant.id, "stock", parseInt(e.target.value) || 0)}
@@ -1121,7 +1128,7 @@ export default function MyProductsPage() {
                 onClick={() => setShowProductDialog(false)}
                 className="flex-1"
               >
-                Annuler
+                {t("seller_app.products.cancel")}
               </Button>
               <Button
                 onClick={handleSaveProduct}
@@ -1131,9 +1138,9 @@ export default function MyProductsPage() {
                 {productLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : editingProduct ? (
-                  "Enregistrer"
+                  t("seller_app.products.save")
                 ) : (
-                  "Créer"
+                  t("seller_app.products.create")
                 )}
               </Button>
             </div>

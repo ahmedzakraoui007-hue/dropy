@@ -29,7 +29,7 @@ export function RealtimeOrdersListener({ sellerId, onNewOrder }: RealtimeOrdersL
             .from('stores')
             .select('id')
             .eq('vendor_id', sellerId)
-            .single();
+            .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
           if (store && payload.new.store_id === store.id) {
             // Play a notification sound (if available)

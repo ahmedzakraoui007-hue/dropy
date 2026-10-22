@@ -43,6 +43,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { FREE_LAUNCH } from "@/lib/launch";
 
 interface Profile {
   avatar_url?: string | null;
@@ -70,7 +71,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
       { name: t("dashboard.nav.analytics"), href: "/seller/analytics", icon: BarChart3, key: "analytics" },
       { name: t("dashboard.nav.ugc_creators"), href: "/seller/content/briefs", icon: Video, key: "ugc_creators" },
       { name: t("dashboard.nav.training"), href: "/seller/training", icon: GraduationCap, key: "training" },
-    { name: t("dashboard.nav.subscription"), href: "/seller/subscription", icon: CreditCard, key: "subscription" },
+    ...(FREE_LAUNCH ? [] : [{ name: t("dashboard.nav.subscription"), href: "/seller/subscription", icon: CreditCard, key: "subscription" }]),
   ];
 
   useEffect(() => {

@@ -34,7 +34,7 @@ export function useSellerDashboard(sellerId: string) {
           store_name: profileData.full_name || '',
           store_slug: '', // Will be updated if store found
           logo_url: profileData.avatar_url,
-          is_verified: profileData.status === 'verified',
+          is_verified: ['approved', 'active'].includes(profileData.status),
           subscription_tier: (profileData.subscription_plan as any) || 'free',
           created_at: profileData.created_at,
         });
@@ -45,7 +45,7 @@ export function useSellerDashboard(sellerId: string) {
         .from('stores')
         .select('id, slug')
         .eq('vendor_id', sellerId)
-        .single();
+        .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
       if (store) {
         setProfile(prev => prev ? { ...prev, store_slug: store.slug } : null);
@@ -72,9 +72,9 @@ export function useSellerDashboard(sellerId: string) {
 
         if (orders && visits) {
           // --- Calculate This Month Stats ---
-          const thisMonthOrders = orders.filter(o => o.created_at >= startOfThisMonth);
+          const thisMonthOrders = orders.filter(o => o.created_at >= startOfThisMonth && o.status !== 'cancelled');
           const thisMonthRevenue = thisMonthOrders
-            .filter(o => o.status === 'delivered' || o.status === 'shipped')
+            .filter(o => o.status === 'delivered')
             .reduce((sum, o) => sum + Number(o.total_amount), 0);
 
           const thisMonthVisits = visits.filter(v => v.created_at >= startOfThisMonth).length;
@@ -83,9 +83,9 @@ export function useSellerDashboard(sellerId: string) {
             : 0;
 
           // --- Calculate Last Month Stats (for change %) ---
-          const lastMonthOrders = orders.filter(o => o.created_at >= startOfLastMonth && o.created_at <= endOfLastMonth);
+          const lastMonthOrders = orders.filter(o => o.created_at >= startOfLastMonth && o.created_at <= endOfLastMonth && o.status !== 'cancelled');
           const lastMonthRevenue = lastMonthOrders
-            .filter(o => o.status === 'delivered' || o.status === 'shipped')
+            .filter(o => o.status === 'delivered')
             .reduce((sum, o) => sum + Number(o.total_amount), 0);
 
           // Calculate Changes
@@ -138,7 +138,7 @@ export function useSellerDashboard(sellerId: string) {
             .from('stores')
             .select('id')
             .eq('vendor_id', sellerId)
-            .single();
+            .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
           if (store && payload.new.store_id === store.id) {
             toast.success(`Nouvelle commande ! ${payload.new.total_amount} TND`);

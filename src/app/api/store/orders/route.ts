@@ -1,3 +1,5 @@
+import { rateLimit } from "@/lib/rate-limit";
+import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -43,6 +45,8 @@ function parseCart(raw: unknown): CartLine[] | null {
 }
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request, "checkout", 20, 3600);
+  if (limited) return limited;
   try {
     const body = await request.json().catch(() => null);
     if (!body) return fail("invalid_request", "Requête invalide");
@@ -71,6 +75,7 @@ export async function POST(request: Request) {
 
     const { data: store } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
     if (!store || store.is_active === false) return fail("store_unavailable", "Boutique introuvable", 404);
+    const offers = normalizeOffers(store.quantity_offers);
 
     const productIds = [...new Set(lines.map((l) => l.productId))];
     const { data: products, error: productsError } = await supabase
@@ -152,7 +157,8 @@ export async function POST(request: Request) {
         });
       }
 
-      priced.push({ line, product, variant, unitPrice: round2(unitPrice), total: round2(unitPrice * line.quantity) });
+      const finalUnitPrice = discountedUnitPrice(unitPrice, line.quantity, offers);
+      priced.push({ line, product, variant, unitPrice: finalUnitPrice, total: round2(finalUnitPrice * line.quantity) });
     }
 
     const subtotal = round2(priced.reduce((sum, p) => sum + p.total, 0));
@@ -183,7 +189,8 @@ export async function POST(request: Request) {
       }
     }
 
-    const totalAmount = round2(subtotal - discountAmount);
+    const shippingCost = deliveryFeeFor(subtotal - discountAmount, store);
+    const totalAmount = round2(subtotal - discountAmount + shippingCost);
     const number = orderNumber("DRP");
 
     const dropshipSourceIds = [
@@ -218,6 +225,7 @@ export async function POST(request: Request) {
         customer_governorate: customer.governorate ? String(customer.governorate) : null,
         subtotal,
         discount_amount: discountAmount,
+        shipping_cost: shippingCost,
         promo_code: promoCode,
         total_amount: totalAmount,
         payment_method: "cod",
@@ -240,6 +248,7 @@ export async function POST(request: Request) {
         total_price: l.total,
         product_image: l.product.images?.[0] ?? null,
         variant_info: l.variant?.info ?? null,
+        variant_id: l.variant?.id ?? null,
         fulfillment_type: l.supplierId ? "dropshipping" : "own",
         supplier_id: l.supplierId,
       }))
@@ -280,7 +289,7 @@ export async function POST(request: Request) {
         .insert({
           supplier_order_number: orderNumber("SUP"),
           supplier_id: supplierId,
-          status: "pending",
+          status: "awaiting_confirmation",
           delivery_address: {
             name: customerName,
             phone: customerPhone,
@@ -330,8 +339,8 @@ export async function POST(request: Request) {
       await supabase.from("notifications").insert({
         user_id: store.vendor_id,
         type: "new_order",
-        title: "🛍️ Nouvelle commande !",
-        message: `Vous avez reçu une nouvelle commande (${number}) de ${totalAmount.toFixed(2)} TND.`,
+        title: "🛍️ Nouvelle commande à confirmer",
+        message: `Commande ${number} de ${totalAmount.toFixed(3)} TND : appelez le client pour la confirmer.`,
         link: `/seller/orders/${order.id}`,
         is_read: false,
       });

@@ -53,3 +53,10 @@ supabase/migrations/check_schema.sql
 
 # local test credentials
 test-accounts.local.txt
+
+# test output
+/playwright-report/
+/test-results/
+*.log
+!.env.example
+

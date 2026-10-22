@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { FREE_LAUNCH } from "@/lib/launch";
 
 export const ESCROW_METHODS = {
   bank_transfer: "Virement bancaire",
@@ -18,6 +19,7 @@ export function escrowState(payment: { status: string; escrowed_at: string | nul
 }
 
 export async function platformFeePercent() {
+  if (FREE_LAUNCH) return 0;
   const admin = createAdminClient();
   const { data } = await admin.from("platform_settings").select("value").eq("key", "platform_fee_percent").maybeSingle();
   const value = Number(data?.value);
