@@ -16,6 +16,7 @@ import { MAX_OFFERS, normalizeOffers } from "@/lib/store-pricing";
 import { storeDisplayUrl } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
 import { McpConnectCard } from "@/components/store-builder/McpConnectCard";
+import { SubscribersCard } from "@/components/store-builder/SubscribersCard";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -464,6 +465,8 @@ export default function StoreSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <SubscribersCard storeId={store.id} />
 
       <McpConnectCard />
     </div>

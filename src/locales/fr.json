@@ -278,6 +278,12 @@
                     "offer": "Chaque offre : de 2 à 10 pièces, remise de 1 à 50 %."
                 }
             },
+            "subscribers": {
+                "title": "Abonnés newsletter",
+                "description": "Les e-mails laissés par vos visiteurs dans la section newsletter de votre boutique.",
+                "count": "abonnés",
+                "export": "Télécharger (Excel / CSV)"
+            },
             "mcp": {
                 "title": "Connecter Claude (MCP)",
                 "desc": "Laissez Claude Desktop créer et modifier votre boutique pour vous : pages, thème, produits, livraison.",
