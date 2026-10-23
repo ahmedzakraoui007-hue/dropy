@@ -96,3 +96,30 @@ export function SectionIcon({ name, className = "w-6 h-6" }: { name?: string | n
   const Icon = ICONS[raw.toLowerCase().replace(/[^a-z]/g, "")] || Sparkles;
   return <Icon className={className} aria-hidden="true" />;
 }
+
+export const PICKABLE_ICONS = [
+  "Truck",
+  "Banknote",
+  "Phone",
+  "Headphones",
+  "ShieldCheck",
+  "BadgeCheck",
+  "RotateCcw",
+  "Clock",
+  "Gift",
+  "Star",
+  "Heart",
+  "Sparkles",
+  "Gem",
+  "Leaf",
+  "Award",
+  "Zap",
+  "Package",
+  "MapPin",
+  "Smile",
+  "ThumbsUp",
+  "Wallet",
+  "Lock",
+  "Droplets",
+  "Sun",
+];

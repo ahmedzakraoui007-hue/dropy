@@ -272,3 +272,9 @@ export function getThemeById(id: string): Theme | undefined {
 export function getThemesByCategory(category: string): Theme[] {
     return themes.filter(theme => theme.category === category);
 }
+
+export function themeHeroImage(theme: Theme, width = 800) {
+    const hero = (theme.defaultSections || []).find((section: any) => section.type === 'hero') as any;
+    const url = hero?.config?.backgroundImage as string | undefined;
+    return url ? url.replace(/w=\d+/, `w=${width}`) : theme.thumbnail;
+}

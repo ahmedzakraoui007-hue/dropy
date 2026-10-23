@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
 import { cn, formatPrice } from "@/lib/utils";
 import { slugError, slugify } from "@/lib/store-slug";
-import { themes } from "@/lib/themes";
+import { themeHeroImage, themes } from "@/lib/themes";
 import { useThemes } from "@/hooks/store-builder/useThemes";
 import { storeDisplayUrl, storeViewHref } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
@@ -244,14 +244,12 @@ export default function StoreSetupWizard() {
                     )}
                   >
                     <div className="aspect-[4/3] bg-gray-50 overflow-hidden">
-                      {theme.thumbnail && (
-                        <img src={theme.thumbnail} alt={theme.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                      )}
+                      <img src={themeHeroImage(theme, 600)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     </div>
                     <div className="flex items-center justify-between gap-2 p-3">
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="w-4 h-4 rounded-full shrink-0" style={{ background: theme.colors.primary }} />
-                        <span className="font-bold text-sm truncate">{theme.name}</span>
+                        <span className="font-bold text-sm truncate">{t(`store_builder.themes.${theme.id}.name`)}</span>
                       </div>
                       <span className="text-[11px] font-bold text-purple-600 shrink-0">
                         {isCurrent ? tr("style.current") : isApplying ? tr("style.applying") : tr("style.choose")}

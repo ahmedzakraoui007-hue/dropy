@@ -184,29 +184,45 @@ const getSectionStyle = (config: any) => ({
 
 const SectionWrapper = ({ children, sectionId, onAction }: { children: React.ReactNode, sectionId: string, onAction: (type: string, id: string) => void }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [isSelected, setIsSelected] = useState(false);
   const [isBuilder, setIsBuilder] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setIsBuilder(window.parent !== window);
-  }, []);
+    if (window.parent === window) return;
+    setIsBuilder(true);
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.data?.type !== 'SELECT_SECTION') return;
+      const selected = event.data.sectionId === sectionId;
+      setIsSelected(selected);
+      if (selected) ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [sectionId]);
 
   if (!isBuilder) return <>{children}</>;
 
+  const act = (e: React.MouseEvent, type: string) => {
+    e.stopPropagation();
+    onAction(type, sectionId);
+  };
+
   return (
-    <div 
-      className={`relative group/section ${isHovered ? 'ring-2 ring-primary ring-inset' : ''}`}
+    <div
+      ref={ref}
+      data-section-id={sectionId}
+      className={`relative scroll-mt-20 ${isSelected ? 'ring-2 ring-primary ring-inset' : isHovered ? 'ring-2 ring-primary/40 ring-inset' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClickCapture={() => onAction('SELECT', sectionId)}
     >
-      {isHovered && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-[100] flex items-center gap-1 bg-primary text-white p-1 rounded-t-lg shadow-xl animate-in fade-in slide-in-from-bottom-2">
-          <button onClick={() => onAction('MOVE_UP', sectionId)} className="p-1.5 hover:bg-white/20 rounded" title="Déplacer vers le haut">↑</button>
-          <button onClick={() => onAction('MOVE_DOWN', sectionId)} className="p-1.5 hover:bg-white/20 rounded" title="Déplacer vers le bas">↓</button>
-          <div className="w-[1px] h-4 bg-white/20 mx-1" />
-          <button onClick={() => onAction('DUPLICATE', sectionId)} className="p-1.5 hover:bg-white/20 rounded" title="Dupliquer">＋</button>
-          <button onClick={() => onAction('SETTINGS', sectionId)} className="p-1.5 hover:bg-white/20 rounded" title="Paramètres">⚙</button>
-          <div className="w-[1px] h-4 bg-white/20 mx-1" />
-          <button onClick={() => onAction('DELETE', sectionId)} className="p-1.5 hover:bg-red-500 rounded" title="Supprimer">✕</button>
+      {(isHovered || isSelected) && (
+        <div className="absolute top-2 end-2 z-[60] flex items-center gap-0.5 rounded-lg bg-gray-900/90 p-1 text-white shadow-xl" dir="ltr">
+          <button onClick={(e) => act(e, 'MOVE_UP')} className="h-7 w-7 rounded hover:bg-white/20" aria-label="↑">↑</button>
+          <button onClick={(e) => act(e, 'MOVE_DOWN')} className="h-7 w-7 rounded hover:bg-white/20" aria-label="↓">↓</button>
+          <button onClick={(e) => act(e, 'DUPLICATE')} className="h-7 w-7 rounded hover:bg-white/20" aria-label="⧉">⧉</button>
+          <button onClick={(e) => act(e, 'DELETE')} className="h-7 w-7 rounded hover:bg-red-500" aria-label="✕">✕</button>
         </div>
       )}
       {children}
@@ -340,7 +356,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
       {config.backgroundImage && (
         <div 
           className="absolute inset-0 z-0 bg-gradient-to-b from-black/60 via-black/30 to-black/60" 
-          style={{ backgroundColor: `rgba(0,0,0,${config.overlay || 0.4})` }}
+          style={{ backgroundColor: `rgba(0,0,0,${typeof config.overlay === "number" ? config.overlay : 0.4})` }}
         />
       )}
       {!config.backgroundImage && <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 via-white to-cyan-500/10 z-0" />}
@@ -2234,7 +2250,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
             setStore(storeData);
             if (storeData.is_active === false) {
               const { data: { user } } = await supabase.auth.getUser();
-              setCanSeeOffline(isBuilder || user?.id === storeData.vendor_id);
+              setCanSeeOffline(user?.id === storeData.vendor_id);
             }
             
             // Track visit (if not in builder)
@@ -2284,7 +2300,8 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'STORE_UPDATE') {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'STORE_UPDATE') {
         const { sections: newSections, theme_config: newTheme, pages: newPages, page: newPage } = event.data;
         hasReceivedInitialUpdate.current = true;
         
@@ -2300,7 +2317,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           setSections([...newSections]);
         }
       }
-      if (event.data.type === 'NAVIGATE') {
+      if (event.data?.type === 'NAVIGATE') {
           if (event.data.productId) {
             setSelectedProduct(event.data.product || { id: event.data.productId });
           }
