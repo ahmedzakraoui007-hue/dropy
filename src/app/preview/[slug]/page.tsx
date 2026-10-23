@@ -11,6 +11,7 @@ import { StoreLanguageProvider, StoreLanguageSwitch, useStoreText } from "@/comp
 import { governorateLabel, normalizeStorefrontLanguage, orderErrorText, storeText, type StoreTextKey } from "@/lib/storefront-i18n";
 import { TUNISIAN_GOVERNORATES } from "@/components/storefront/ExpressOrderForm";
 import { discountPercent, normalizeSalesContent } from "@/lib/product-sales";
+import { customerConfirmationMessage, whatsappLink } from "@/lib/order-messages";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 import { SectionIcon } from "@/components/storefront/SectionIcon";
 import { storeBasePath } from "@/lib/store-url";
@@ -1595,7 +1596,7 @@ const ContentSection = ({ sectionId, config }: { sectionId: string, config: any 
 );
 
 const Merci = ({ orderId, store }: { orderId: string, store: any }) => {
-  const { t, money } = useStoreText();
+  const { t, money, lang } = useStoreText();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1636,6 +1637,19 @@ const Merci = ({ orderId, store }: { orderId: string, store: any }) => {
           </div>
         </div>
         <div className="space-y-4">
+          {String(store?.whatsapp_number || "").replace(/\D/g, "").length >= 8 && (
+            <div className="space-y-2">
+              <a
+                href={whatsappLink(store.whatsapp_number, customerConfirmationMessage(order, lang))}
+                target="_blank"
+                rel="noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-4 text-lg font-black text-white shadow-xl transition-all hover:scale-[1.02]"
+              >
+                {t("thanks.whatsapp")}
+              </a>
+              <p className="text-xs text-muted-foreground">{t("thanks.whatsapp_help")}</p>
+            </div>
+          )}
           <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: 'home' }, '*')} className="w-full bg-primary text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] transition-all">{t("thanks.continue")}</button>
           <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: `track/${order.order_number}` }, '*')} className="text-sm font-bold opacity-60 hover:opacity-100 transition-opacity">{t("thanks.track")}</button>
         </div>
@@ -2398,7 +2412,7 @@ const sectionsForPage = (pageSlug: string, pageList: any[]) => {
 const WhatsAppButton = ({ store, currentPage, productTitle }: { store: any; currentPage: string; productTitle?: string }) => {
   const { t } = useStoreText();
   const digits = String(store?.whatsapp_number || "").replace(/\D/g, "");
-  if (digits.length < 8 || currentPage === "checkout") return null;
+  if (digits.length < 8 || currentPage === "checkout" || currentPage.startsWith("merci")) return null;
   const number = digits.length === 8 ? `216${digits}` : digits;
   const subject = currentPage === "product-detail" && productTitle ? t("whatsapp.about", { title: productTitle }) : "";
   const text = encodeURIComponent(t("whatsapp.hello", { subject }));

@@ -1,4 +1,5 @@
 import { Order, OrderStatus } from '@/types/orders';
+import { sellerConfirmationMessage, whatsappLink, type MessageOrder } from '@/lib/order-messages';
 import { useOrderActions } from '@/hooks/useOrderActions';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -87,8 +88,8 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
             <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-blue-200 text-blue-700 hover:bg-blue-50" onClick={() => window.open(`tel:${order.customer_phone}`)}>
               <Phone className="w-3 h-3 me-1" /> {t('seller_app.orders.card.call')}
             </Button>
-            <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50" onClick={() => window.open(`https://wa.me/216${String(order.customer_phone || '').replace(/\D/g, '').replace(/^216/, '')}`)}>
-              <MessageCircle className="w-3 h-3 mr-1" /> WhatsApp
+            <Button variant="outline" size="sm" className="h-8 px-2 text-xs border-green-200 text-green-700 hover:bg-green-50" onClick={() => window.open(whatsappLink(order.customer_phone, sellerConfirmationMessage(order as MessageOrder, (order as any).store?.name || '', (order as any).store?.storefront_language === 'ar' ? 'ar' : 'fr')), '_blank', 'noopener,noreferrer')}>
+              <MessageCircle className="w-3 h-3 me-1" /> WhatsApp
             </Button>
             <Button variant="default" size="sm" className="h-8 px-2 text-xs bg-blue-600 hover:bg-blue-700" onClick={handleConfirm}>
               <CheckCircle className="w-3 h-3 me-1" /> {t('seller_app.orders.card.confirm')}
