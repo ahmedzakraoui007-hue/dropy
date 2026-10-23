@@ -402,6 +402,425 @@
                 "cta": "Commencer"
             }
         },
+        "editor": {
+            "back": "Ma boutique",
+            "view": "Voir la boutique",
+            "undo": "Annuler",
+            "redo": "Rétablir",
+            "save_now": "Enregistrer maintenant (Ctrl+S)",
+            "save_error": "L'enregistrement a échoué. Vérifiez votre connexion puis réessayez.",
+            "preview_title": "Aperçu de la boutique",
+            "status": {
+                "saving": "Enregistrement…",
+                "unsaved": "Modifications non enregistrées",
+                "error": "Non enregistré",
+                "saved": "Enregistré"
+            },
+            "tabs": {
+                "sections": "Sections",
+                "pages": "Pages",
+                "style": "Style"
+            },
+            "devices": {
+                "desktop": "Ordinateur",
+                "tablet": "Tablette",
+                "mobile": "Mobile"
+            },
+            "mobile": {
+                "panel": "Modifier",
+                "preview": "Aperçu"
+            },
+            "publish": {
+                "cta": "Mettre en ligne",
+                "address": "Adresse de votre boutique",
+                "unpublish": "Mettre hors ligne"
+            },
+            "sections": {
+                "page": "Page",
+                "add": "Ajouter",
+                "help": "Cliquez sur une section pour la modifier, glissez-la pour changer l'ordre. Vous pouvez aussi cliquer directement dans l'aperçu, et double-cliquer sur un texte pour le modifier.",
+                "empty_title": "Cette page est vide",
+                "empty_body": "Ajoutez une première section : une bannière, vos produits, une FAQ…",
+                "drag": "Déplacer",
+                "hide": "Masquer",
+                "show": "Afficher",
+                "more": "Plus d'actions",
+                "edit": "Modifier",
+                "duplicate": "Dupliquer",
+                "delete": "Supprimer",
+                "back": "Retour aux sections"
+            },
+            "pages": {
+                "title": "Pages de la boutique",
+                "add": "Nouvelle page",
+                "templates": "Pages prêtes à l'emploi",
+                "kinds": {
+                    "shop": "Boutique (tous les produits)",
+                    "about": "À propos",
+                    "contact": "Contact",
+                    "faq": "FAQ",
+                    "shipping_policy": "Livraison",
+                    "refund_policy": "Retours et échanges",
+                    "privacy_policy": "Confidentialité",
+                    "terms_conditions": "Conditions générales",
+                    "blank": "Page vide"
+                },
+                "name": "Nom de la page",
+                "edit": "Modifier",
+                "in_menu": "Dans le menu",
+                "visible": "Visible",
+                "delete": "Supprimer",
+                "menu_help": "Les pages cochées « Dans le menu » apparaissent en haut de votre boutique.",
+                "menu_link": "Personnaliser le menu",
+                "exists": "Cette page existe déjà : la voici.",
+                "new_title": "Nouvelle page",
+                "new_help": "Donnez un nom à votre page. Vous pourrez ensuite y ajouter des sections.",
+                "create": "Créer la page"
+            },
+            "confirm": {
+                "section_title": "Supprimer cette section ?",
+                "section_body": "Vous pourrez l'annuler avec le bouton Annuler (Ctrl+Z).",
+                "page_title": "Supprimer cette page ?",
+                "page_body": "La page et son contenu seront supprimés de votre boutique.",
+                "cancel": "Annuler",
+                "delete": "Supprimer"
+            },
+            "style": {
+                "themes": "Thème",
+                "themes_help": "Changez l'apparence de toute la boutique en un clic.",
+                "main_color": "Couleur principale",
+                "main_color_help": "Utilisée pour les boutons, les prix et les accents.",
+                "fonts": "Polices",
+                "font_heading": "Titres",
+                "font_body": "Textes",
+                "corners": "Coins",
+                "corners_none": "Droits",
+                "corners_md": "Arrondis",
+                "corners_full": "Ronds",
+                "text_size": "Taille du texte",
+                "theme_applied": "Thème « {name} » appliqué"
+            },
+            "links": {
+                "shop": "Tous les produits",
+                "track": "Suivi de commande"
+            },
+            "add_section": {
+                "title": "Ajouter une section",
+                "subtitle": "Elle sera ajoutée après la section sélectionnée.",
+                "search": "Rechercher une section…",
+                "empty": "Aucune section ne correspond.",
+                "categories": {
+                    "all": "Toutes",
+                    "essentials": "Essentielles",
+                    "products": "Produits",
+                    "content": "Contenu",
+                    "trust": "Confiance",
+                    "pages": "Infos et légal"
+                }
+            }
+        },
+        "sections": {
+            "hero": {
+                "name": "Bannière principale",
+                "desc": "Grande image avec titre et bouton, en haut de page."
+            },
+            "promo_banner": {
+                "name": "Bandeau d'annonce",
+                "desc": "Petite barre de texte : livraison, promo du moment…"
+            },
+            "cta_banner": {
+                "name": "Appel à l'action",
+                "desc": "Bande colorée avec un message et un bouton."
+            },
+            "countdown": {
+                "name": "Compte à rebours",
+                "desc": "Crée l'urgence pour une offre limitée."
+            },
+            "footer": {
+                "name": "Pied de page",
+                "desc": "Liens, coordonnées et réseaux sociaux en bas de page."
+            },
+            "products": {
+                "name": "Produits",
+                "desc": "Grille de vos produits avec prix et bouton d'achat."
+            },
+            "store_categories": {
+                "name": "Catégories",
+                "desc": "Les catégories de vos produits, créées automatiquement."
+            },
+            "collections": {
+                "name": "Collections",
+                "desc": "Tuiles avec image pour mettre en avant des collections."
+            },
+            "recommended_products": {
+                "name": "Produits recommandés",
+                "desc": "Suggestions d'autres produits de votre boutique."
+            },
+            "image_with_text": {
+                "name": "Image et texte",
+                "desc": "Une photo à côté d'un texte : votre histoire, un produit phare…"
+            },
+            "features": {
+                "name": "Points forts",
+                "desc": "Trois ou quatre avantages avec icônes."
+            },
+            "process_steps": {
+                "name": "Étapes",
+                "desc": "Expliquez comment commander en quelques étapes."
+            },
+            "video": {
+                "name": "Vidéo",
+                "desc": "Une vidéo YouTube, Vimeo ou MP4."
+            },
+            "newsletter": {
+                "name": "Newsletter",
+                "desc": "Collectez les e-mails de vos visiteurs."
+            },
+            "trust_badges": {
+                "name": "Badges de confiance",
+                "desc": "Livraison, paiement à la livraison, service client…"
+            },
+            "testimonials": {
+                "name": "Avis clients",
+                "desc": "Les avis de vos vrais clients."
+            },
+            "faq": {
+                "name": "FAQ",
+                "desc": "Questions fréquentes avec réponses dépliables."
+            },
+            "contact": {
+                "name": "Contact",
+                "desc": "Téléphone, WhatsApp, e-mail et formulaire."
+            },
+            "about": {
+                "name": "Texte (à propos)",
+                "desc": "Un bloc de texte libre avec titre."
+            },
+            "shipping_policy": {
+                "name": "Politique de livraison",
+                "desc": "Délais, zones et frais de livraison."
+            },
+            "refund_policy": {
+                "name": "Politique de retour",
+                "desc": "Conditions de retour et d'échange."
+            },
+            "privacy_policy": {
+                "name": "Confidentialité",
+                "desc": "Comment vous utilisez les données des clients."
+            },
+            "terms_conditions": {
+                "name": "Conditions générales",
+                "desc": "Vos conditions de vente."
+            },
+            "product_detail": {
+                "name": "Fiche produit",
+                "desc": "Photos, prix, variantes et formulaire de commande."
+            },
+            "checkout": {
+                "name": "Commande",
+                "desc": "Formulaire de validation du panier."
+            },
+            "reviews": {
+                "name": "Avis",
+                "desc": "Avis publiés sur la boutique."
+            },
+            "pricing": {
+                "name": "Tarifs",
+                "desc": "Tableau de prix."
+            },
+            "stats": {
+                "name": "Chiffres clés",
+                "desc": "Quelques chiffres mis en avant."
+            },
+            "team": {
+                "name": "Équipe",
+                "desc": "Les personnes derrière la boutique."
+            },
+            "logo_carousel": {
+                "name": "Logos",
+                "desc": "Une rangée de logos."
+            },
+            "mega_menu": {
+                "name": "Menu",
+                "desc": "Menu de navigation."
+            }
+        },
+        "themes": {
+            "minimal": {
+                "name": "Minimal",
+                "niche": "Tous produits"
+            },
+            "modern": {
+                "name": "Maison",
+                "niche": "Maison et déco"
+            },
+            "elegant": {
+                "name": "Élégance",
+                "niche": "Bijoux et accessoires"
+            },
+            "bold": {
+                "name": "Street",
+                "niche": "Mode et streetwear"
+            },
+            "dark": {
+                "name": "Nuit",
+                "niche": "High-tech et gaming"
+            },
+            "artisan": {
+                "name": "Artisan",
+                "niche": "Artisanat et terroir"
+            },
+            "electro": {
+                "name": "Électro",
+                "niche": "Électronique et téléphonie"
+            },
+            "glow": {
+                "name": "Éclat",
+                "niche": "Beauté et soins"
+            },
+            "pulse": {
+                "name": "Pulse",
+                "niche": "Sport et fitness"
+            }
+        },
+        "fields": {
+            "title": "Titre",
+            "subtitle": "Sous-titre",
+            "badge": "Petit texte au-dessus du titre",
+            "backgroundImage": "Image de fond",
+            "ctaText": "Texte du bouton",
+            "ctaLink": "Lien du bouton",
+            "variant": "Mise en page",
+            "textPosition": "Alignement du texte",
+            "height": "Hauteur (px)",
+            "overlay": "Assombrir l'image",
+            "text": "Texte",
+            "link": "Lien",
+            "backgroundColor": "Couleur de fond",
+            "textColor": "Couleur du texte",
+            "description": "Description",
+            "message": "Message",
+            "endDate": "Fin de l'offre",
+            "expiredText": "Texte une fois l'offre terminée",
+            "phone": "Téléphone",
+            "address": "Adresse",
+            "copyright": "Mention en bas de page",
+            "limit": "Nombre maximum",
+            "columns": "Colonnes",
+            "showProductCount": "Afficher le nombre de produits",
+            "items": "Éléments",
+            "image": "Image",
+            "imagePosition": "Position de l'image",
+            "features": "Points forts",
+            "icon": "Icône",
+            "steps": "Étapes",
+            "videoUrl": "Lien de la vidéo",
+            "autoplay": "Lecture automatique",
+            "placeholder": "Texte dans le champ e-mail",
+            "buttonText": "Texte du bouton",
+            "successText": "Message après inscription",
+            "layout": "Disposition",
+            "testimonials": "Avis",
+            "name": "Nom",
+            "location": "Ville",
+            "rating": "Note (sur 5)",
+            "avatar": "Photo",
+            "faqs": "Questions",
+            "question": "Question",
+            "answer": "Réponse",
+            "whatsapp": "WhatsApp",
+            "email": "E-mail",
+            "hours": "Horaires",
+            "content": "Contenu",
+            "expressOrder": "Formulaire de commande rapide",
+            "expressTitle": "Titre du formulaire",
+            "expressButtonText": "Texte du bouton de commande",
+            "spacing": "Espacement",
+            "options": {
+                "classic": "Image en fond",
+                "split": "Image à côté",
+                "bold": "Grand titre",
+                "left": "Gauche",
+                "center": "Centre",
+                "right": "Droite",
+                "row": "En ligne",
+                "grid": "En grille",
+                "compact": "Compact",
+                "normal": "Normal",
+                "large": "Aéré"
+            },
+            "link_custom": "Autre lien (adresse web)…",
+            "reset": "Par défaut",
+            "item": "Élément",
+            "move_up": "Monter",
+            "move_down": "Descendre",
+            "remove": "Supprimer",
+            "add_item": "Ajouter",
+            "tab_content": "Contenu",
+            "tab_style": "Apparence",
+            "limited": "Cette section ancienne n'a que quelques réglages. Vous pouvez la remplacer par une section de la bibliothèque.",
+            "style_help": "Laissez les couleurs vides pour garder celles du thème.",
+            "hints": {
+                "hero": {
+                    "overlay": "Rend le texte plus lisible sur une photo claire."
+                },
+                "products": {
+                    "limit": "Vos produits actifs s'affichent automatiquement."
+                },
+                "testimonials": {
+                    "testimonials": "Ajoutez uniquement de vrais avis de vos clients."
+                },
+                "video": {
+                    "videoUrl": "Lien YouTube, Vimeo ou fichier MP4."
+                },
+                "contact": {
+                    "whatsapp": "Format international, par exemple 21698123456."
+                },
+                "countdown": {
+                    "endDate": "Le compte à rebours disparaît une fois la date passée."
+                },
+                "about": {
+                    "content": "Séparez les paragraphes par une ligne vide."
+                },
+                "shipping_policy": {
+                    "content": "Séparez les paragraphes par une ligne vide."
+                },
+                "refund_policy": {
+                    "content": "Séparez les paragraphes par une ligne vide."
+                },
+                "privacy_policy": {
+                    "content": "Séparez les paragraphes par une ligne vide."
+                },
+                "terms_conditions": {
+                    "content": "Séparez les paragraphes par une ligne vide."
+                }
+            }
+        },
+        "media": {
+            "title": "Choisir une image",
+            "choose": "Choisir une image",
+            "change": "Changer l'image",
+            "remove": "Retirer l'image",
+            "tab_mine": "Mes images",
+            "tab_free": "Photos gratuites",
+            "upload": "Importer",
+            "upload_help": "JPG, PNG ou WebP, 5 Mo maximum.",
+            "empty": "Importez votre première image",
+            "bad_type": "Format non pris en charge. Utilisez JPG, PNG, WebP ou GIF.",
+            "too_big": "Image trop lourde (5 Mo maximum).",
+            "upload_error": "L'import de l'image a échoué. Réessayez.",
+            "search": "Rechercher (ex. : mode, bijoux, café)…",
+            "search_button": "Rechercher",
+            "search_unavailable": "La recherche n'est pas disponible : voici notre sélection de photos.",
+            "credit": "Photos gratuites fournies par Unsplash."
+        },
+        "theme_page": {
+            "title": "Thèmes",
+            "subtitle": "Chaque thème change les couleurs, les polices et peut remplir votre page d'accueil avec un modèle adapté à votre activité. Vous pourrez tout personnaliser ensuite dans l'éditeur.",
+            "current": "Thème actuel",
+            "use": "Utiliser ce thème",
+            "reapply": "Appliquer à nouveau"
+        },
         "theme_dialog": {
             "title": "Appliquer le thème « {name} » ?",
             "body": "Les couleurs et les polices de votre boutique vont changer. Voulez-vous aussi remplacer le contenu de votre page d'accueil par celui du thème ? Vos autres pages ne sont pas modifiées.",

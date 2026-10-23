@@ -1,384 +1,197 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Plus, 
-  Save, 
-  Eye, 
-  Settings, 
-  Layers, 
-  Palette, 
-  Code, 
-  History,
+import { Reorder, useDragControls } from "framer-motion";
+import {
+  AlertCircle,
+  Check,
   ChevronLeft,
-  ChevronRight as ChevronRightIcon,
-  Loader2,
-  Trash2,
+  CloudOff,
+  Copy,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  FileText,
   GripVertical,
+  Home,
+  Layers,
+  Loader2,
   Monitor,
+  MoreVertical,
+  Palette,
+  Plus,
+  Redo2,
+  Rocket,
+  Settings2,
   Smartphone,
   Tablet,
+  Trash2,
   Undo2,
-  Redo2,
-  Download,
-  Upload,
-  RefreshCw,
-  Copy,
-  Lock,
-  Unlock,
-  EyeOff,
-  MoreVertical,
-  Edit3,
-  Check,
-  Zap,
-  Image as ImageIcon,
-  ShoppingBag,
-  Star,
-  MessageSquare,
-  HelpCircle,
-  Clock,
-  Type,
-  Info,
-  Mail,
-  Video,
-  Layout,
-  LayoutGrid,
-  Columns,
-  Heart,
-  AlertTriangle,
-  Gauge,
-  Command,
-  Sparkles,
-  PanelLeftClose,
-  PanelLeft,
-  PanelRightClose,
-  PanelRight
+  X,
 } from "lucide-react";
-import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Reorder, AnimatePresence, useDragControls } from "framer-motion";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
-import SectionLibrary from "@/components/builder/SectionLibrary";
-import SectionEditor from "@/components/builder/SectionEditor";
-import SmartWarnings from "@/components/builder/SmartWarnings";
-import CommandPalette from "@/components/builder/CommandPalette";
-import TemplateMarketplace from "@/components/builder/TemplateMarketplace";
-import { premiumTemplates } from "@/lib/templates";
-import { BuilderTemplate } from "@/lib/builder-templates";
-
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue,
-  SelectSeparator 
-} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { 
-  SECTION_LIBRARY, 
-  getPlaceholderConfig 
-} from "@/lib/builder-sections";
-import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SectionSettings, type LinkTarget } from "@/components/store-builder/editor/SectionSettings";
+import { AddSectionDialog } from "@/components/store-builder/editor/AddSectionDialog";
+import { StylePanel, themeLook } from "@/components/store-builder/editor/StylePanel";
+import { sectionIcon } from "@/lib/builder-sections";
+import { PAGE_TEMPLATE_KINDS, buildPageTemplate, makeSection, type PageTemplateKind } from "@/lib/store-page-templates";
+import { slugify } from "@/lib/store-slug";
+import { storeDisplayUrl, storeViewHref } from "@/lib/store-url";
+import { createClient } from "@/lib/supabase/client";
 import { useTranslation } from "@/context/LanguageContext";
+import { cn } from "@/lib/utils";
+import type { Theme } from "@/types/themes";
 
-const SECTION_ICONS: Record<string, any> = {
-  hero: ImageIcon,
-  products: ShoppingBag,
-  features: Star,
-  testimonials: MessageSquare,
-  faq: HelpCircle,
-  countdown: Clock,
-  blog: Type,
-    about: Info,
-    contact: Mail,
-    collections: LayoutGrid,
-    newsletter: Mail,
-    video: Video,
-  product_detail: ShoppingBag,
-  footer: Layout,
-  product_compare: Columns,
-  wishlist: Heart,
-  checkout: ShoppingBag
-};
+type Section = { id: string; type: string; config: Record<string, any>; position: number; is_visible: boolean };
 
-interface Section {
-  id: string;
-  type: string;
-  config: any;
-  position: number;
-  is_visible: boolean;
-  is_locked?: boolean;
-}
-
-interface Page {
-  id: string;
-  name?: string;
-  title?: string;
+type EditorPage = {
   slug: string;
-  type: string;
+  title: string;
+  page_type: string;
   sections: Section[];
   is_published: boolean;
-  show_in_menu?: boolean;
+  show_in_navigation: boolean;
+  is_homepage: boolean;
+};
+
+type StoreInfo = { id: string; name: string; slug: string; is_active: boolean | null };
+type Snapshot = { pages: EditorPage[]; themeConfig: Record<string, any> };
+type SaveState = "saved" | "dirty" | "saving" | "error";
+type Tab = "sections" | "pages" | "style";
+
+const AUTOSAVE_MS = 2500;
+const RESERVED_PAGE_SLUGS = new Set(["home", "p", "checkout", "merci", "track", "product-detail", "api", "preview"]);
+
+function sectionSummary(section: Section) {
+  const c = section.config || {};
+  const text = c.title || c.text || c.badge || c.description || "";
+  return String(text).replace(/<[^>]+>/g, "").trim();
 }
 
-interface Store {
-  id: string;
-  name: string;
-  slug: string;
-  theme_config: any;
-  seller_id: string;
+function setPath(target: Record<string, any>, path: string, value: unknown) {
+  const parts = path.split(".");
+  const root: Record<string, any> = Array.isArray(target) ? [...target] : { ...target };
+  let node: any = root;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = parts[i];
+    const next = node[key];
+    node[key] = Array.isArray(next) ? [...next] : { ...(next || {}) };
+    node = node[key];
+  }
+  node[parts[parts.length - 1]] = value;
+  return root;
 }
 
-interface HistoryItem {
-  sections: Section[];
-  theme_config: any;
-}
-
-// --- Sub-components for Reordering with Drag Controls ---
-
-function SectionReorderItem({ 
-  section, 
-  activeSectionId, 
-  setActiveSectionId, 
-  toggleSectionVisibility, 
-  duplicateSection, 
-  toggleSectionLock, 
-  removeSection,
-  index,
-  isFirst,
-  isLast,
-  onMoveUp,
-  onMoveDown
-}: { 
+function SectionRow({
+  section,
+  active,
+  onSelect,
+  onToggle,
+  onDuplicate,
+  onDelete,
+}: {
   section: Section;
-  activeSectionId: string | null;
-  setActiveSectionId: (id: string | null) => void;
-  toggleSectionVisibility: (id: string) => void;
-  duplicateSection: (s: Section) => void;
-  toggleSectionLock: (id: string) => void;
-  removeSection: (id: string) => void;
-  index: number;
-  isFirst: boolean;
-  isLast: boolean;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
+  active: boolean;
+  onSelect: () => void;
+  onToggle: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const controls = useDragControls();
-  const Icon = SECTION_ICONS[section.type] || ImageIcon;
+  const Icon = sectionIcon(section.type);
+  const summary = sectionSummary(section);
 
   return (
-    <Reorder.Item 
+    <Reorder.Item
       value={section}
       dragListener={false}
       dragControls={controls}
       layout="position"
-      layoutId={section.id}
-      whileDrag={{ 
-        scale: 1.02, 
-        boxShadow: "0 8px 20px rgba(0,0,0,0.15)",
-        zIndex: 100,
-        cursor: "grabbing"
-      }}
-      className={`group p-2 rounded-lg border bg-card hover:border-primary/50 transition-colors cursor-pointer ${activeSectionId === section.id ? "border-primary ring-1 ring-primary/20 bg-primary/5" : "border-border"}`}
-      onClick={() => setActiveSectionId(section.id)}
+      whileDrag={{ scale: 1.02, boxShadow: "0 8px 20px rgba(0,0,0,0.12)", zIndex: 50 }}
+      className={cn(
+        "group flex items-center gap-2 rounded-xl border bg-card p-2 cursor-pointer transition-colors",
+        active ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border hover:border-primary/40",
+        !section.is_visible && "opacity-60"
+      )}
+      onClick={onSelect}
     >
-      <div className="flex items-center gap-2">
-        {!section.is_locked ? (
-          <div 
-            onPointerDown={(e) => controls.start(e)}
-            className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded shrink-0"
-          >
-            <GripVertical className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground transition-colors" />
-          </div>
-        ) : (
-          <div className="p-1 shrink-0">
-            <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-          </div>
-        )}
-        
-        <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${activeSectionId === section.id ? "bg-primary text-white" : "bg-muted"}`}>
-          <Icon className="w-4 h-4" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold capitalize truncate">{section.type.replace("_", " ")}</p>
-          <p className="text-[10px] text-muted-foreground truncate italic">
-            {section.config?.title || "Sans titre"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="flex flex-col gap-0.5 mr-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-5 w-5 hover:bg-primary/10" 
-              disabled={isFirst || section.is_locked}
-              onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-            >
-              <Plus className="w-2.5 h-2.5 rotate-0" />
-              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-5 w-5 hover:bg-primary/10"
-              disabled={isLast || section.is_locked}
-              onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-            >
-              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-            </Button>
-          </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-7 w-7"
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleSectionVisibility(section.id);
-            }}
-          >
-            {section.is_visible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5 text-muted-foreground" />}
+      <button
+        type="button"
+        aria-label={t("store_builder.editor.sections.drag")}
+        onPointerDown={(e) => controls.start(e)}
+        onClick={(e) => e.stopPropagation()}
+        className="touch-none cursor-grab rounded p-1 text-muted-foreground hover:bg-muted active:cursor-grabbing"
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", active ? "bg-primary text-primary-foreground" : "bg-muted")}>
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-semibold">{t(`store_builder.sections.${section.type}.name`)}</span>
+        {summary && <span className="block truncate text-[11px] text-muted-foreground">{summary}</span>}
+      </span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0"
+        aria-label={t(section.is_visible ? "store_builder.editor.sections.hide" : "store_builder.editor.sections.show")}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+      >
+        {section.is_visible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={(e) => e.stopPropagation()} aria-label={t("store_builder.editor.sections.more")}>
+            <MoreVertical className="h-3.5 w-3.5" />
           </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
-                <MoreVertical className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => setActiveSectionId(section.id)}>
-                <Edit3 className="w-4 h-4 mr-2" /> Modifier
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => duplicateSection(section)}>
-                <Copy className="w-4 h-4 mr-2" /> Dupliquer
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => toggleSectionLock(section.id)}>
-                {section.is_locked ? (
-                  <><Unlock className="w-4 h-4 mr-2" /> Déverrouiller</>
-                ) : (
-                  <><Lock className="w-4 h-4 mr-2" /> Verrouiller</>
-                )}
-              </DropdownMenuItem>
-              <SelectSeparator />
-              <DropdownMenuItem 
-                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                onClick={() => removeSection(section.id)}
-              >
-                <Trash2 className="w-4 h-4 mr-2" /> Supprimer
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-    </Reorder.Item>
-  );
-}
-
-function PageReorderItem({ 
-  page, 
-  index,
-  isFirst,
-  isLast,
-  onToggleVisibility,
-  onMoveUp,
-  onMoveDown
-}: { 
-  page: Page; 
-  index: number;
-  isFirst: boolean;
-  isLast: boolean;
-  onToggleVisibility: (id: string) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-}) {
-  const controls = useDragControls();
-
-  return (
-    <Reorder.Item 
-      value={page}
-      dragListener={false}
-      dragControls={controls}
-      className={`p-3 rounded-xl border bg-card flex items-center justify-between group transition-colors ${page.show_in_menu ? "border-primary/30 shadow-sm" : "border-border opacity-60"}`}
-      whileDrag={{ 
-        scale: 1.02, 
-        boxShadow: "0 10px 30px -10px rgba(0,0,0,0.1)",
-        borderColor: "var(--primary)",
-        zIndex: 50
-      }}
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div 
-          onPointerDown={(e) => controls.start(e)}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded shrink-0"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-        </div>
-        <div className="flex-1 truncate">
-          <p className="text-xs font-bold truncate">{page.title}</p>
-          <p className="text-[10px] text-muted-foreground">/{page.slug}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-1">
-        <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mr-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-5 w-5 hover:bg-primary/10" 
-            disabled={isFirst}
-            onClick={(e) => { e.stopPropagation(); onMoveUp(); }}
-          >
-            <Plus className="w-2.5 h-2.5 rotate-0" />
-            <span className="sr-only">Monter</span>
-            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 15l7-7 7 7" /></svg>
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-5 w-5 hover:bg-primary/10"
-            disabled={isLast}
-            onClick={(e) => { e.stopPropagation(); onMoveDown(); }}
-          >
-            <span className="sr-only">Descendre</span>
-            <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" /></svg>
-          </Button>
-        </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 hover:bg-primary/10"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleVisibility(page.id);
-          }}
-        >
-          {(page.show_in_menu ?? true) ? <Eye className="w-4 h-4 text-primary" /> : <EyeOff className="w-4 h-4 text-muted-foreground" />}
-        </Button>
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuItem onClick={onSelect}>
+            <Settings2 className="me-2 h-4 w-4" />
+            {t("store_builder.editor.sections.edit")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onDuplicate}>
+            <Copy className="me-2 h-4 w-4" />
+            {t("store_builder.editor.sections.duplicate")}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={onDelete}>
+            <Trash2 className="me-2 h-4 w-4" />
+            {t("store_builder.editor.sections.delete")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </Reorder.Item>
   );
 }
@@ -386,1666 +199,946 @@ function PageReorderItem({
 export default function BuilderPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const [customHeaderCount, setCustomHeaderCount] = useState(0);
-  const [productCount, setProductCount] = useState(0);
+  const tr = useCallback((key: string) => t(`store_builder.editor.${key}`), [t]);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [store, setStore] = useState<Store | null>(null);
-  const [pages, setPages] = useState<Page[]>([]);
-  const [currentPageSlug, setCurrentPageSlug] = useState("home");
-  const [sections, setSections] = useState<Section[]>([]);
+  const [store, setStore] = useState<StoreInfo | null>(null);
+  const [productCount, setProductCount] = useState(0);
+  const [pages, setPages] = useState<EditorPage[]>([]);
+  const [themeConfig, setThemeConfig] = useState<Record<string, any>>({});
+  const [currentSlug, setCurrentSlug] = useState("home");
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
-  
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [savedVersions, setSavedVersions] = useState<any[]>([]);
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+  const [tab, setTab] = useState<Tab>("sections");
   const [viewMode, setViewMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-  const [isWarningsOpen, setIsWarningsOpen] = useState(false);
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("sections");
-  const [isBeginnerMode, setIsBeginnerMode] = useState(true);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
+  const [mobilePane, setMobilePane] = useState<"panel" | "preview">("panel");
+  const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [publishing, setPublishing] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [pendingTheme, setPendingTheme] = useState<Theme | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ kind: "section"; id: string } | { kind: "page"; slug: string } | null>(null);
+  const [newPageOpen, setNewPageOpen] = useState(false);
+  const [newPageName, setNewPageName] = useState("");
+  const [, setHistoryVersion] = useState(0);
+
+  const pageIdsRef = useRef(new Map<string, string>());
+  const deletedIdsRef = useRef<string[]>([]);
+  const savedRef = useRef("");
+  const latestRef = useRef<Snapshot>({ pages: [], themeConfig: {} });
+  const savingRef = useRef(false);
+  const pendingSaveRef = useRef(false);
+  const committedRef = useRef<Snapshot | null>(null);
+  const pastRef = useRef<Snapshot[]>([]);
+  const futureRef = useRef<Snapshot[]>([]);
+  const skipRecordRef = useRef(false);
+
+  latestRef.current = { pages, themeConfig };
+
+  const currentPage = pages.find((p) => p.slug === currentSlug) || pages[0];
+  const sections = useMemo(() => currentPage?.sections || [], [currentPage]);
+  const activeSection = sections.find((s) => s.id === activeSectionId) || null;
 
   useEffect(() => {
-    if (!loading && sections.length === 0 && !isInitialLoad) {
-      setShowOnboarding(true);
-    }
-  }, [loading, sections.length, isInitialLoad]);
-
-  const currentPage = pages.find(p => p.slug === currentPageSlug);
-  const lastLoadedPageSlugRef = useRef<string | null>(null);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        setIsCommandPaletteOpen(true);
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/login?redirect=/seller/store-builder/builder");
+        return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+      const { data: storeRow } = await supabase
+        .from("stores")
+        .select("id, name, slug, is_active, theme_config")
+        .eq("vendor_id", user.id)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (!storeRow) {
+        router.push("/seller/store-builder/start");
+        return;
+      }
+      const loadPages = () => supabase.from("store_pages").select("*").eq("store_id", storeRow.id).order("sort_order", { ascending: true });
+      let { data: pageRows } = await loadPages();
+      if (!pageRows?.length) {
+        await fetch("/api/seller/store", { method: "POST" });
+        ({ data: pageRows } = await loadPages());
+      }
+      const { count } = await supabase
+        .from("store_products")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", storeRow.id)
+        .eq("is_active", true);
+      if (cancelled) return;
+
+      const ids = new Map<string, string>();
+      const loaded: EditorPage[] = (pageRows || []).map((row: any) => {
+        ids.set(row.slug, row.id);
+        return {
+          slug: row.slug,
+          title: row.title || row.slug,
+          page_type: row.page_type || "content",
+          sections: Array.isArray(row.sections) ? row.sections : [],
+          is_published: row.is_published !== false,
+          show_in_navigation: row.show_in_navigation !== false,
+          is_homepage: Boolean(row.is_homepage) || row.slug === "home",
+        };
+      });
+      loaded.sort((a, b) => Number(b.is_homepage) - Number(a.is_homepage));
+      const theme = (storeRow.theme_config as Record<string, any>) || {};
+      pageIdsRef.current = ids;
+      savedRef.current = JSON.stringify({ pages: loaded, themeConfig: theme });
+      committedRef.current = { pages: loaded, themeConfig: theme };
+      skipRecordRef.current = true;
+
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get("page");
+      const requestedTab = params.get("tab");
+      setStore({ id: storeRow.id, name: storeRow.name, slug: storeRow.slug, is_active: storeRow.is_active });
+      setProductCount(count ?? 0);
+      setPages(loaded);
+      setThemeConfig(theme);
+      setCurrentSlug(loaded.find((p) => p.slug === requested)?.slug || loaded.find((p) => p.is_homepage)?.slug || loaded[0]?.slug || "home");
+      if (requestedTab === "style" || requestedTab === "theme") setTab("style");
+      if (requestedTab === "pages") setTab("pages");
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (loading) return;
+    const current = { pages, themeConfig };
+    if (skipRecordRef.current) {
+      skipRecordRef.current = false;
+      committedRef.current = current;
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (committedRef.current) {
+        pastRef.current = [...pastRef.current.slice(-49), committedRef.current];
+        futureRef.current = [];
+      }
+      committedRef.current = current;
+      setHistoryVersion((v) => v + 1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [pages, themeConfig, loading]);
+
+  const save = useCallback(async (): Promise<boolean> => {
+    if (!store) return false;
+    if (savingRef.current) {
+      pendingSaveRef.current = true;
+      return true;
+    }
+    const snapshot = latestRef.current;
+    const serialized = JSON.stringify(snapshot);
+    if (serialized === savedRef.current && deletedIdsRef.current.length === 0) {
+      setSaveState("saved");
+      return true;
+    }
+    savingRef.current = true;
+    setSaveState("saving");
+    const supabase = createClient();
+    try {
+      if (deletedIdsRef.current.length) {
+        const ids = [...deletedIdsRef.current];
+        const { error } = await supabase.from("store_pages").delete().in("id", ids);
+        if (error) throw error;
+        deletedIdsRef.current = deletedIdsRef.current.filter((id) => !ids.includes(id));
+      }
+      for (const [index, page] of snapshot.pages.entries()) {
+        const row = {
+          store_id: store.id,
+          slug: page.slug,
+          title: page.title,
+          page_type: page.page_type,
+          sections: page.sections.map((s, position) => ({ ...s, position })),
+          is_published: page.is_homepage ? true : page.is_published,
+          is_homepage: page.is_homepage,
+          show_in_navigation: page.show_in_navigation,
+          sort_order: index,
+        };
+        const id = pageIdsRef.current.get(page.slug);
+        if (id) {
+          const { error } = await supabase.from("store_pages").update(row).eq("id", id);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase.from("store_pages").insert(row).select("id").single();
+          if (error) throw error;
+          pageIdsRef.current.set(page.slug, data.id);
+        }
+      }
+      const { error: storeError } = await supabase.from("stores").update({ theme_config: snapshot.themeConfig }).eq("id", store.id);
+      if (storeError) throw storeError;
+      savedRef.current = serialized;
+      setSaveState(JSON.stringify(latestRef.current) === serialized ? "saved" : "dirty");
+      return true;
+    } catch (error: any) {
+      console.error("Save error:", error);
+      setSaveState("error");
+      toast.error(tr("save_error"));
+      return false;
+    } finally {
+      savingRef.current = false;
+      if (pendingSaveRef.current) {
+        pendingSaveRef.current = false;
+        void save();
+      }
+    }
+  }, [store, tr]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (JSON.stringify({ pages, themeConfig }) === savedRef.current && deletedIdsRef.current.length === 0) return;
+    setSaveState((s) => (s === "saving" ? s : "dirty"));
+    const timer = setTimeout(() => void save(), AUTOSAVE_MS);
+    return () => clearTimeout(timer);
+  }, [pages, themeConfig, loading, save]);
+
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => {
+      if (saveState === "dirty" || saveState === "saving" || saveState === "error") {
         e.preventDefault();
-        handleSave();
+        e.returnValue = "";
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [saveState]);
+
+  const canUndo = pastRef.current.length > 0 || (committedRef.current !== null && (committedRef.current.pages !== pages || committedRef.current.themeConfig !== themeConfig));
+  const canRedo = futureRef.current.length > 0;
+
+  const undo = useCallback(() => {
+    const current = latestRef.current;
+    let target: Snapshot | undefined;
+    const committed = committedRef.current;
+    if (committed && (committed.pages !== current.pages || committed.themeConfig !== current.themeConfig)) {
+      target = committed;
+    } else {
+      target = pastRef.current[pastRef.current.length - 1];
+      if (!target) return;
+      pastRef.current = pastRef.current.slice(0, -1);
+    }
+    futureRef.current = [current, ...futureRef.current].slice(0, 50);
+    skipRecordRef.current = true;
+    setPages(target.pages);
+    setThemeConfig(target.themeConfig);
+    setHistoryVersion((v) => v + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    const [target, ...rest] = futureRef.current;
+    if (!target) return;
+    pastRef.current = [...pastRef.current, latestRef.current].slice(-50);
+    futureRef.current = rest;
+    skipRecordRef.current = true;
+    setPages(target.pages);
+    setThemeConfig(target.themeConfig);
+    setHistoryVersion((v) => v + 1);
   }, []);
 
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'SECTION_ACTION') {
-        const { actionType, sectionId } = event.data;
-        const index = sections.findIndex(s => s.id === sectionId);
-        
-        if (index === -1) return;
-
-        switch (actionType) {
-          case 'MOVE_UP':
-            if (index > 0) {
-              const newSections = [...sections];
-              [newSections[index - 1], newSections[index]] = [newSections[index], newSections[index - 1]];
-              setSections(newSections);
-            }
-            break;
-          case 'MOVE_DOWN':
-            if (index < sections.length - 1) {
-              const newSections = [...sections];
-              [newSections[index + 1], newSections[index]] = [newSections[index], newSections[index + 1]];
-              setSections(newSections);
-            }
-            break;
-          case 'DUPLICATE':
-            duplicateSection(sections[index]);
-            break;
-          case 'DELETE':
-            if (confirm("Supprimer cette section ?")) {
-              setSections(sections.filter(s => s.id !== sectionId));
-              if (activeSectionId === sectionId) setActiveSectionId(null);
-            }
-            break;
-          case 'SETTINGS':
-            setActiveSectionId(sectionId);
-            // Scroll to section in sidebar
-            document.querySelector(`[data-section-id="${sectionId}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            break;
-        }
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === "s") {
+        e.preventDefault();
+        void save();
+        return;
       }
-
-      if (event.data.type === 'NAVIGATE') {
-        const targetSlug = event.data.page.replace(/^\//, '') || 'home';
-        
-        // Find existing page
-        const existingPage = pages.find(p => p.slug === targetSlug);
-        if (existingPage) {
-          setCurrentPageSlug(targetSlug);
-          return;
-        }
-
-        // Proactive: If page doesn't exist but is a standard one, create it and navigate
-        const standardTemplates: Record<string, "about" | "contact" | "product" | "checkout"> = {
-          'about': 'about',
-          'contact': 'contact',
-          'product-detail': 'product',
-          'checkout': 'checkout'
-        };
-
-        if (standardTemplates[targetSlug]) {
-          addNewPage(standardTemplates[targetSlug]);
-        }
-      }
-
-      if (event.data.type === 'TEXT_UPDATE') {
-        const { sectionId, field, value } = event.data;
-        setSections(prev => {
-          const updated = prev.map(s => {
-            if (s.id === sectionId) {
-              const newConfig = { ...s.config };
-              
-              // Handle nested fields (e.g. "features.0.title")
-              const parts = field.split('.');
-              let current = newConfig;
-              for (let i = 0; i < parts.length - 1; i++) {
-                if (!current[parts[i]]) current[parts[i]] = {};
-                current[parts[i]] = { ...current[parts[i]] };
-                current = current[parts[i]];
-              }
-              current[parts[parts.length - 1]] = value;
-              
-              return { ...s, config: newConfig };
-            }
-            return s;
-          });
-          return updated;
-        });
-        toast.success("Texte mis à jour", { duration: 1000 });
+      const target = e.target as HTMLElement | null;
+      if (target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (key === "y" || (key === "z" && e.shiftKey)) {
+        e.preventDefault();
+        redo();
       }
     };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [pages]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [save, undo, redo]);
 
-  // When current page slug changes, update sections state
-  useEffect(() => {
-    if (currentPage && lastLoadedPageSlugRef.current !== currentPageSlug) {
-      setSections(currentPage.sections || []);
+  const updateSections = useCallback(
+    (slug: string, fn: (sections: Section[]) => Section[]) =>
+      setPages((prev) => prev.map((p) => (p.slug === slug ? { ...p, sections: fn(p.sections) } : p))),
+    []
+  );
+
+  const addSection = (type: string) => {
+    const section = makeSection(type);
+    updateSections(currentSlug, (list) => {
+      const activeIndex = list.findIndex((s) => s.id === activeSectionId);
+      const footerIndex = list.findIndex((s) => s.type === "footer");
+      const at = activeIndex >= 0 && list[activeIndex].type !== "footer" ? activeIndex + 1 : footerIndex >= 0 ? footerIndex : list.length;
+      return [...list.slice(0, at), section, ...list.slice(at)];
+    });
+    setActiveSectionId(section.id);
+    setMobilePane("panel");
+  };
+
+  const duplicateSection = (id: string) => {
+    const copyId = crypto.randomUUID();
+    updateSections(currentSlug, (list) => {
+      const index = list.findIndex((s) => s.id === id);
+      if (index < 0) return list;
+      const copy = { ...list[index], id: copyId, config: JSON.parse(JSON.stringify(list[index].config || {})) };
+      return [...list.slice(0, index + 1), copy, ...list.slice(index + 1)];
+    });
+    setActiveSectionId(copyId);
+  };
+
+  const moveSection = (id: string, delta: number) =>
+    updateSections(currentSlug, (list) => {
+      const index = list.findIndex((s) => s.id === id);
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= list.length) return list;
+      const next = [...list];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+
+  const toggleSection = (id: string) =>
+    updateSections(currentSlug, (list) => list.map((s) => (s.id === id ? { ...s, is_visible: !s.is_visible } : s)));
+
+  const deleteSection = (id: string) => {
+    updateSections(currentSlug, (list) => list.filter((s) => s.id !== id));
+    if (activeSectionId === id) setActiveSectionId(null);
+  };
+
+  const updatePage = (slug: string, patch: Partial<EditorPage>) => setPages((prev) => prev.map((p) => (p.slug === slug ? { ...p, ...patch } : p)));
+
+  const openPage = (slug: string) => {
+    setCurrentSlug(slug);
+    setActiveSectionId(null);
+    setTab("sections");
+  };
+
+  const addTemplatePage = (kind: PageTemplateKind) => {
+    if (kind === "blank") {
+      setNewPageName("");
+      setNewPageOpen(true);
+      return;
+    }
+    const template = buildPageTemplate(kind);
+    const existing = pages.find((p) => p.slug === template.slug);
+    if (existing) {
+      openPage(existing.slug);
+      toast.info(tr("pages.exists"));
+      return;
+    }
+    setPages((prev) => [
+      ...prev,
+      {
+        slug: template.slug,
+        title: template.title,
+        page_type: kind === "shop" ? "shop" : "content",
+        sections: template.sections,
+        is_published: true,
+        show_in_navigation: template.showInMenu,
+        is_homepage: false,
+      },
+    ]);
+    openPage(template.slug);
+  };
+
+  const createBlankPage = () => {
+    const title = newPageName.trim();
+    if (!title) return;
+    let base = slugify(title) || "page";
+    if (RESERVED_PAGE_SLUGS.has(base)) base = `${base}-page`;
+    let slug = base;
+    let n = 2;
+    while (pages.some((p) => p.slug === slug)) slug = `${base}-${n++}`;
+    setPages((prev) => [
+      ...prev,
+      { slug, title, page_type: "content", sections: [makeSection("image_with_text"), makeSection("footer")], is_published: true, show_in_navigation: true, is_homepage: false },
+    ]);
+    setNewPageOpen(false);
+    openPage(slug);
+  };
+
+  const deletePage = (slug: string) => {
+    const id = pageIdsRef.current.get(slug);
+    if (id) {
+      deletedIdsRef.current.push(id);
+      pageIdsRef.current.delete(slug);
+    }
+    setPages((prev) => prev.filter((p) => p.slug !== slug));
+    if (currentSlug === slug) {
+      setCurrentSlug(pages.find((p) => p.is_homepage)?.slug || "home");
       setActiveSectionId(null);
-      lastLoadedPageSlugRef.current = currentPageSlug;
     }
-  }, [currentPageSlug, currentPage]);
+  };
+
+  const applyTheme = (theme: Theme, replaceHome: boolean) => {
+    setThemeConfig((prev) => themeLook(theme, prev));
+    if (replaceHome) {
+      const home = pages.find((p) => p.is_homepage);
+      if (home) {
+        updateSections(home.slug, () => (theme.defaultSections || []).map((s: any, position: number) => ({ ...s, id: crypto.randomUUID(), position, is_visible: true })));
+        setCurrentSlug(home.slug);
+        setActiveSectionId(null);
+      }
+    }
+    toast.success(tr("style.theme_applied").replace("{name}", t(`store_builder.themes.${theme.id}.name`)));
+  };
+
+  const setStoreOnline = async (online: boolean) => {
+    if (!store) return;
+    if (online && productCount === 0) {
+      toast.error(t("store_builder.hub.need_product"));
+      return;
+    }
+    setPublishing(true);
+    const ok = await save();
+    if (!ok) {
+      setPublishing(false);
+      return;
+    }
+    const { error } = await createClient().from("stores").update({ is_active: online }).eq("id", store.id);
+    setPublishing(false);
+    if (error) {
+      toast.error(t("store_builder.hub.status_error"));
+      return;
+    }
+    setStore({ ...store, is_active: online });
+    toast.success(t(online ? "store_builder.hub.now_online" : "store_builder.hub.now_offline"));
+  };
+
+  const postToPreview = useCallback((message: Record<string, unknown>) => {
+    iframeRef.current?.contentWindow?.postMessage(message, window.location.origin);
+  }, []);
+
+  const syncPreview = useCallback(() => {
+    postToPreview({ type: "STORE_UPDATE", sections, theme_config: themeConfig, pages, page: currentSlug });
+  }, [postToPreview, sections, themeConfig, pages, currentSlug]);
 
   useEffect(() => {
-    async function loadStoreAndPages() {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+    if (!loading) syncPreview();
+  }, [loading, syncPreview]);
 
-      if (!user) {
-        router.push("/login");
-        return;
-      }
+  useEffect(() => {
+    postToPreview({ type: "SELECT_SECTION", sectionId: activeSectionId });
+  }, [activeSectionId, postToPreview]);
 
-      const { data: stores } = await supabase
-        .from("stores")
-        .select("*")
-        .eq("vendor_id", user.id)
-        .order("created_at", { ascending: true })
-        .limit(1);
+  const stateRef = useRef({ pages, currentSlug });
+  stateRef.current = { pages, currentSlug };
 
-      const storeData = stores?.[0];
-
-      if (!storeData) {
-        router.push("/seller/store-builder");
-        return;
-      }
-
-      setStore(storeData);
-
-      const { data: headerMenu } = await supabase
-        .from("store_navigation")
-        .select("items")
-        .eq("store_id", storeData.id)
-        .eq("type", "header")
-        .limit(1)
-        .maybeSingle();
-      setCustomHeaderCount(((headerMenu?.items as any[]) || []).filter((item: any) => item?.label).length);
-
-      const { count: activeProducts } = await supabase
-        .from("store_products")
-        .select("id", { count: "exact", head: true })
-        .eq("store_id", storeData.id)
-        .eq("is_active", true);
-      setProductCount(activeProducts ?? 0);
-
-      const loadPages = () =>
-        supabase.from("store_pages").select("*").eq("store_id", storeData.id).order("sort_order", { ascending: true });
-      let { data: pagesData } = await loadPages();
-      if (!pagesData?.length) {
-        await fetch("/api/seller/store", { method: "POST" });
-        ({ data: pagesData } = await loadPages());
-      }
-
-      if (pagesData && pagesData.length > 0) {
-        setPages(
-          pagesData.map((p: any) => ({
-            ...p,
-            name: p.title || p.slug,
-            type: p.page_type || "content",
-            show_in_menu: p.show_in_navigation ?? true,
-          }))
+  useEffect(() => {
+    const onMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin || event.source !== iframeRef.current?.contentWindow) return;
+      const data = event.data || {};
+      const { pages: currentPages, currentSlug: slug } = stateRef.current;
+      if (data.type === "SECTION_ACTION") {
+        const id = String(data.sectionId || "");
+        switch (data.actionType) {
+          case "MOVE_UP":
+            moveSectionRef.current(id, -1);
+            break;
+          case "MOVE_DOWN":
+            moveSectionRef.current(id, 1);
+            break;
+          case "DUPLICATE":
+            duplicateRef.current(id);
+            break;
+          case "DELETE":
+            setConfirmDelete({ kind: "section", id });
+            break;
+          case "SETTINGS":
+          case "SELECT":
+            setActiveSectionId(id);
+            setTab("sections");
+            setMobilePane("panel");
+            break;
+        }
+      } else if (data.type === "TEXT_UPDATE") {
+        const { sectionId, field, value } = data;
+        if (typeof field !== "string" || !field) return;
+        setPages((prev) =>
+          prev.map((p) =>
+            p.slug === slug ? { ...p, sections: p.sections.map((s) => (s.id === sectionId ? { ...s, config: setPath(s.config || {}, field, value) } : s)) } : p
+          )
         );
-        const params = new URLSearchParams(window.location.search);
-        const requested = params.get("page");
-        const homePage = pagesData.find(p => p.slug === requested) || pagesData.find(p => p.slug === "home") || pagesData[0];
-        setCurrentPageSlug(homePage.slug);
-        setSections(homePage.sections || []);
-        const requestedTab = params.get("tab");
-        if (requestedTab && ["sections", "theme", "pages", "navigation", "launch"].includes(requestedTab)) setActiveTab(requestedTab);
-      } else {
-        // Create default home page if none exists (should be handled by SQL migration but just in case)
-        const defaultPage: Page = {
-          id: crypto.randomUUID(),
-          name: "Accueil",
-          slug: "home",
-          type: "home",
-          sections: [],
-          is_published: true
-        };
-        setPages([defaultPage]);
-        setSections([]);
-      }
-      
-      setIsInitialLoad(false);
-      setLoading(false);
-
-      // Load saved versions
-      const { data: versions } = await supabase
-        .from("store_versions")
-        .select("*")
-        .eq("store_id", storeData.id)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      
-      setSavedVersions(versions || []);
-    }
-
-    loadStoreAndPages();
-  }, [router]);
-
-  // Consolidate pages sync and preview updates
-  useEffect(() => {
-    if (isInitialLoad || loading) return;
-
-    // Update pages array when sections change
-    if (currentPageSlug) {
-      setPages(prev => {
-        const pageIndex = prev.findIndex(p => p.slug === currentPageSlug);
-        if (pageIndex === -1) return prev;
-        
-        const currentPage = prev[pageIndex];
-        if (JSON.stringify(currentPage.sections) !== JSON.stringify(sections)) {
-          const newPages = [...prev];
-          newPages[pageIndex] = { ...currentPage, sections };
-          return newPages;
-        }
-        return prev;
-      });
-    }
-
-    // Send updates to iframe for live preview - IMMEDIATE for real-time feel
-    const sendUpdate = () => {
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage({
-          type: 'STORE_UPDATE',
-          sections,
-          theme_config: store?.theme_config,
-          pages,
-          page: currentPageSlug
-        }, '*');
-      }
-    };
-
-    // Send immediately for real-time preview
-    sendUpdate();
-
-    // Debounce history recording
-    const historyTimeoutId = setTimeout(() => {
-      const currentSnapshot = history[historyIndex];
-      const newSnapshot = { sections, theme_config: store?.theme_config };
-
-      if (JSON.stringify(currentSnapshot) !== JSON.stringify(newSnapshot)) {
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(newSnapshot);
-        if (newHistory.length > 50) newHistory.shift();
-        setHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
-      }
-    }, 500);
-
-    return () => {
-      clearTimeout(historyTimeoutId);
-    };
-  }, [sections, store?.theme_config, isInitialLoad, loading, currentPageSlug]);
-
-  // Auto-save logic
-  useEffect(() => {
-    if (isInitialLoad || loading || !store) return;
-    
-    const autoSaveTimeoutId = setTimeout(() => {
-      handleSave(true); // Call with silent=true
-    }, 5000); // Auto-save after 5 seconds of inactivity
-
-    return () => clearTimeout(autoSaveTimeoutId);
-  }, [pages, store?.theme_config]);
-
-  // Separate effect to handle external pages updates if they happen
-  useEffect(() => {
-    if (isInitialLoad || loading) return;
-    
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage({
-        type: 'STORE_UPDATE',
-        sections,
-        theme_config: store?.theme_config,
-        pages,
-        page: currentPageSlug
-      }, '*');
-    }
-  }, [pages]);
-
-  async function handleSave(silent = false, publish = false) {
-    if (!store) return;
-    if (!silent) setSaving(true);
-    const supabase = createClient();
-
-    try {
-      // First, get existing pages to include their IDs
-      const { data: existingPages } = await supabase
-        .from("store_pages")
-        .select("id, slug")
-        .eq("store_id", store.id);
-
-      const existingMap = new Map(existingPages?.map(p => [p.slug, p.id]) || []);
-
-      const rows = pages.map((page, index) => ({
-        store_id: store.id,
-        slug: page.slug,
-        title: page.title || page.name || page.slug,
-        page_type: page.type || "content",
-        sections: page.sections,
-        is_published: page.is_published ?? true,
-        is_homepage: page.slug === "home",
-        show_in_navigation: page.show_in_menu ?? true,
-        sort_order: index,
-      }));
-
-      for (const row of rows) {
-        const existingId = existingMap.get(row.slug);
-        const { error: pageError } = existingId
-          ? await supabase.from("store_pages").update(row).eq("id", existingId)
-          : await supabase.from("store_pages").insert(row);
-        if (pageError) throw pageError;
-      }
-
-      const keptSlugs = new Set(rows.map((row) => row.slug));
-      const removedIds = (existingPages || [])
-        .filter((p) => !keptSlugs.has(p.slug) && p.slug !== "home")
-        .map((p) => p.id);
-      if (removedIds.length > 0) {
-        const { error: deleteError } = await supabase.from("store_pages").delete().in("id", removedIds);
-        if (deleteError) throw deleteError;
-      }
-
-      const { error: storeError } = await supabase
-        .from("stores")
-        .update({ theme_config: store.theme_config, ...(publish ? { is_active: true } : {}) })
-        .eq("id", store.id);
-
-      if (storeError) throw storeError;
-      if (publish) setStore((prev) => (prev ? { ...prev, is_active: true } : prev));
-
-      if (!silent) toast.success(publish ? "Boutique publiée et en ligne !" : "Boutique enregistrée !");
-    } catch (error: any) {
-      console.error("Save error:", error);
-      const message = error?.message || error?.details || JSON.stringify(error) || "Erreur inconnue";
-      if (!silent) toast.error(`Erreur: ${message}`);
-    } finally {
-      if (!silent) setSaving(false);
-    }
-  }
-
-    const handleIframeLoad = () => {
-      if (iframeRef.current?.contentWindow) {
-        iframeRef.current.contentWindow.postMessage({
-          type: 'STORE_UPDATE',
-          sections,
-          theme_config: store?.theme_config,
-          pages,
-          page: currentPageSlug
-        }, '*');
-      }
-    };
-
-  function undo() {
-    if (historyIndex > 0) {
-      const prev = history[historyIndex - 1];
-      setSections(prev.sections);
-      if (store) setStore({ ...store, theme_config: prev.theme_config });
-      setHistoryIndex(historyIndex - 1);
-    }
-  }
-
-  function redo() {
-    if (historyIndex < history.length - 1) {
-      const next = history[historyIndex + 1];
-      setSections(next.sections);
-      if (store) setStore({ ...store, theme_config: next.theme_config });
-      setHistoryIndex(historyIndex + 1);
-    }
-  }
-
-  async function saveVersion() {
-    if (!store) return;
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    try {
-      const { data, error } = await supabase
-        .from("store_versions")
-        .insert({
-          store_id: store.id,
-          sections_snapshot: sections,
-          theme_config_snapshot: store.theme_config,
-          created_by: user?.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      setSavedVersions([data, ...savedVersions]);
-      toast.success("Version sauvegardée !");
-    } catch (error) {
-      toast.error("Erreur lors de la sauvegarde de la version");
-    }
-  }
-
-  async function restoreVersion(version: any) {
-    if (confirm("Restaurer cette version ? Les changements non enregistrés seront perdus.")) {
-      setSections(version.sections_snapshot);
-      if (store) setStore({ ...store, theme_config: version.theme_config_snapshot });
-      toast.success("Version restaurée !");
-    }
-  }
-
-  const exportTheme = () => {
-    const data = {
-      name: `${store?.name} Theme Export`,
-      pages,
-      theme_config: store?.theme_config,
-      exported_at: new Date().toISOString()
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `theme-${store?.slug || "export"}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const importTheme = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const data = JSON.parse(event.target?.result as string);
-        if (data.pages && data.theme_config) {
-          setPages(data.pages);
-          const homePage = data.pages.find((p: any) => p.slug === "home") || data.pages[0];
-          setCurrentPageSlug(homePage.slug);
-          setSections(homePage.sections || []);
-          if (store) setStore({ ...store, theme_config: data.theme_config });
-          toast.success("Thème importé avec succès !");
+      } else if (data.type === "NAVIGATE") {
+        const target = String(data.page || "").replace(/^\//, "") || "home";
+        const page = currentPages.find((p) => p.slug === target || (target === "home" && p.is_homepage));
+        if (page) {
+          setCurrentSlug(page.slug);
+          setActiveSectionId(null);
         } else {
-          throw new Error("Format de fichier invalide");
+          iframeRef.current?.contentWindow?.postMessage(data, window.location.origin);
         }
-      } catch (error) {
-        toast.error("Erreur lors de l'importation du thème");
       }
     };
-    reader.readAsText(file);
-  };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
 
-  function addSection(type: string) {
-    const newSection: Section = {
-      id: crypto.randomUUID(),
-      type,
-      config: getPlaceholderConfig(type),
-      position: sections.length,
-      is_visible: true
-    };
-    const updatedSections = [...sections, newSection];
-    setSections(updatedSections);
-    setPages(prev => prev.map(p => p.slug === currentPageSlug ? { ...p, sections: updatedSections } : p));
-    setActiveSectionId(newSection.id);
-  }
+  const moveSectionRef = useRef(moveSection);
+  moveSectionRef.current = moveSection;
+  const duplicateRef = useRef(duplicateSection);
+  duplicateRef.current = duplicateSection;
 
-  function duplicateSection(section: Section) {
-    const newSection: Section = {
-      ...section,
-      id: crypto.randomUUID(),
-      position: sections.length
-    };
-    const updatedSections = [...sections, newSection];
-    setSections(updatedSections);
-    setPages(prev => prev.map(p => p.slug === currentPageSlug ? { ...p, sections: updatedSections } : p));
-    setActiveSectionId(newSection.id);
-    toast.success("Section dupliquée !");
-  }
-
-  function toggleSectionVisibility(id: string) {
-    const updatedSections = sections.map(s => s.id === id ? { ...s, is_visible: !s.is_visible } : s);
-    setSections(updatedSections);
-    setPages(prev => prev.map(p => p.slug === currentPageSlug ? { ...p, sections: updatedSections } : p));
-  }
-
-  function toggleSectionLock(id: string) {
-    const updatedSections = sections.map(s => s.id === id ? { ...s, is_locked: !s.is_locked } : s);
-    setSections(updatedSections);
-    setPages(prev => prev.map(p => p.slug === currentPageSlug ? { ...p, sections: updatedSections } : p));
-  }
-
-  function togglePagePublish(slug: string, is_published: boolean) {
-    setPages(prev => prev.map(p => p.slug === slug ? { ...p, is_published } : p));
-  }
-
-  async function addNewPage(templateType?: "shop" | "about" | "contact" | "product" | "checkout" | "merci" | "shipping_policy" | "refund_policy" | "privacy_policy" | "terms_conditions" | "faq") {
-    let name = "";
-    let slug = "";
-    let type = "custom";
-    let templateSections: any[] = [];
-    let show_in_menu = true;
-
-      if (templateType === "shop") {
-        name = "Boutique";
-        slug = "shop";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Notre Boutique", subtitle: "Découvrez notre collection complète", variant: "classic", height: 300, badge: "SHOP" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "products", config: { ...getPlaceholderConfig("products"), title: "Tous nos produits", limit: 20, columns: 4 }, position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-        ];
-      } else if (templateType === "about") {
-        name = "À Propos";
-        slug = "about";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Notre Histoire", variant: "classic", height: 400, badge: "DÉCOUVREZ NOTRE MISSION" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "about", config: getPlaceholderConfig("about"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "stats", config: getPlaceholderConfig("stats"), position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "team", config: getPlaceholderConfig("team"), position: 3, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 4, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 5, is_visible: true }
-        ];
-      } else if (templateType === "contact") {
-        name = "Contact";
-        slug = "contact";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Contactez-Nous", variant: "classic", height: 300, badge: "DISPONIBLE 7J/7" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "contact", config: getPlaceholderConfig("contact"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "faq", config: getPlaceholderConfig("faq"), position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 3, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 4, is_visible: true }
-        ];
-      } else if (templateType === "product") {
-        name = "Détail Produit";
-        slug = "product-detail";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "product_detail", config: getPlaceholderConfig("product_detail"), position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "recommended_products", config: getPlaceholderConfig("recommended_products"), position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "faq", config: getPlaceholderConfig("faq"), position: 3, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 4, is_visible: true }
-        ];
-      } else if (templateType === "checkout") {
-        name = "Commande";
-        slug = "checkout";
-        show_in_menu = false;
-        templateSections = [
-          { id: crypto.randomUUID(), type: "checkout", config: getPlaceholderConfig("checkout"), position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), title: "Paiement 100% Sécurisé", layout: 'row' }, position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-        ];
-      } else if (templateType === "merci") {
-        name = "Merci";
-        slug = "merci";
-        show_in_menu = false;
-        templateSections = [
-          { 
-            id: crypto.randomUUID(), 
-            type: "hero", 
-            config: { 
-              ...getPlaceholderConfig("hero"), 
-              title: "Merci pour votre commande !", 
-              subtitle: "Votre commande a été enregistrée avec succès. Vous recevrez un SMS de confirmation sous peu.",
-              ctaText: "Retour à l'accueil",
-              ctaLink: "/",
-              variant: "classic",
-              height: 500,
-              badge: "COMMANDE CONFIRMÉE"
-            }, 
-            position: 0, 
-            is_visible: true 
-          },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-        ];
-      } else if (templateType === "shipping_policy") {
-        name = "Livraison";
-        slug = "shipping-policy";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Livraison & Délais", height: 250, badge: "INFOS LIVRAISON" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "shipping_policy", config: getPlaceholderConfig("shipping_policy"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-        ];
-      } else if (templateType === "refund_policy") {
-        name = "Retours & Remboursements";
-        slug = "refund-policy";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Retours", height: 250, badge: "GARANTIE SATISFAIT" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "refund_policy", config: getPlaceholderConfig("refund_policy"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-        ];
-      } else if (templateType === "privacy_policy") {
-        name = "Confidentialité";
-        slug = "privacy-policy";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Confidentialité", height: 250, badge: "VOS DONNÉES SONT SURES" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "privacy_policy", config: getPlaceholderConfig("privacy_policy"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-        ];
-      } else if (templateType === "terms_conditions") {
-        name = "Conditions Générales";
-        slug = "terms-conditions";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "CGV", height: 250, badge: "CADRE LÉGAL" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "terms_conditions", config: getPlaceholderConfig("terms_conditions"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-        ];
-      } else if (templateType === "faq") {
-        name = "FAQ";
-        slug = "faq";
-        templateSections = [
-          { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Questions Fréquentes", height: 250, badge: "AIDE & SUPPORT" }, position: 0, is_visible: true },
-          { id: crypto.randomUUID(), type: "faq", config: getPlaceholderConfig("faq"), position: 1, is_visible: true },
-          { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-          { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-        ];
-      }
-    
-    if (pages.some(p => p.slug === slug)) {
-      if (!templateType) toast.error("Une page avec ce slug existe déjà.");
-      return pages.find(p => p.slug === slug);
-    }
-
-    const newPage: Page = {
-      id: crypto.randomUUID(),
-      name,
-      slug,
-      type: templateType || "custom",
-      sections: templateSections,
-      is_published: true,
-      show_in_menu
-    };
-
-    setPages(prev => [...prev, newPage]);
-    setCurrentPageSlug(slug);
-    setSections(templateSections);
-    if (!templateType) toast.success(`Page ${name} ajoutée !`);
-    return newPage;
-  }
-
-    const generateAllEssentialPages = async () => {
-      const essentialTypes: ("shop" | "about" | "contact" | "product" | "checkout" | "merci" | "shipping_policy" | "refund_policy" | "privacy_policy" | "terms_conditions" | "faq")[] = [
-        "shop", "about", "contact", "product", "checkout", "merci", "shipping_policy", "refund_policy", "privacy_policy", "terms_conditions", "faq"
-      ];
-      
-      toast.info("Génération des pages essentielles...");
-      
-      setPages(prev => {
-        const newPages = [...prev];
-        
-        // Ensure Home exists
-        if (!newPages.find(p => p.slug === 'home')) {
-          const homeSections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: `Bienvenue chez ${store?.name}`, subtitle: "Les meilleurs produits en un seul clic.", variant: "bold" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "collections", config: getPlaceholderConfig("collections"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "products", config: { ...getPlaceholderConfig("products"), title: "Meilleures Ventes", limit: 4 }, position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 3, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 4, is_visible: true }
-          ];
-          newPages.push({
-            id: crypto.randomUUID(),
-            name: "Accueil",
-            slug: "home",
-            type: "home",
-            sections: homeSections,
-            is_published: true,
-            show_in_menu: true
-          });
-        }
-
-        // Add missing essential pages
-        for (const type of essentialTypes) {
-          const config = getPageTemplateConfig(type, store?.name || "Boutique");
-          if (!newPages.find(p => p.slug === config.slug)) {
-            newPages.push({
-              id: crypto.randomUUID(),
-              name: config.name,
-              slug: config.slug,
-              type: type,
-              sections: config.sections,
-              is_published: true,
-              show_in_menu: config.show_in_menu
-            });
-          }
-        }
-        
-        return newPages;
-      });
-      
-      setCurrentPageSlug("home");
-      toast.success("Toutes les pages essentielles ont été générées !");
-    };
-
-    // Helper to get page template config (extracted from addNewPage logic)
-    function getPageTemplateConfig(templateType: string, storeName: string) {
-      let name = "";
-      let slug = "";
-      let sections: any[] = [];
-      let show_in_menu = true;
-
-      switch(templateType) {
-        case "shop":
-          name = "Boutique";
-          slug = "shop";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Notre Boutique", subtitle: "Découvrez notre collection complète", variant: "classic", height: 300, badge: "SHOP" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "products", config: { ...getPlaceholderConfig("products"), title: "Tous nos produits", limit: 20, columns: 4 }, position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-          ];
-          break;
-        case "about":
-          name = "À Propos";
-          slug = "about";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Notre Histoire", variant: "classic", height: 400, badge: "DÉCOUVREZ NOTRE MISSION" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "about", config: getPlaceholderConfig("about"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "stats", config: getPlaceholderConfig("stats"), position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "team", config: getPlaceholderConfig("team"), position: 3, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 4, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 5, is_visible: true }
-          ];
-          break;
-        case "contact":
-          name = "Contact";
-          slug = "contact";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Contactez-Nous", variant: "classic", height: 300, badge: "DISPONIBLE 7J/7" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "contact", config: getPlaceholderConfig("contact"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "faq", config: getPlaceholderConfig("faq"), position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 3, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 4, is_visible: true }
-          ];
-          break;
-        case "product":
-          name = "Détail Produit";
-          slug = "product-detail";
-          sections = [
-            { id: crypto.randomUUID(), type: "product_detail", config: getPlaceholderConfig("product_detail"), position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "recommended_products", config: getPlaceholderConfig("recommended_products"), position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "faq", config: getPlaceholderConfig("faq"), position: 3, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 4, is_visible: true }
-          ];
-          break;
-        case "checkout":
-          name = "Commande";
-          slug = "checkout";
-          show_in_menu = false;
-          sections = [
-            { id: crypto.randomUUID(), type: "checkout", config: getPlaceholderConfig("checkout"), position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), title: "Paiement 100% Sécurisé", layout: 'row' }, position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-          ];
-          break;
-        case "merci":
-          name = "Merci";
-          slug = "merci";
-          show_in_menu = false;
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Merci pour votre commande !", subtitle: "Votre commande a été enregistrée avec succès. Vous recevrez un SMS de confirmation sous peu.", ctaText: "Retour à l'accueil", ctaLink: "/", variant: "classic", height: 500, badge: "COMMANDE CONFIRMÉE" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-          ];
-          break;
-        case "shipping_policy":
-          name = "Livraison";
-          slug = "shipping-policy";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Livraison & Délais", height: 250, badge: "INFOS LIVRAISON" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "shipping_policy", config: getPlaceholderConfig("shipping_policy"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-          ];
-          break;
-        case "refund_policy":
-          name = "Retours";
-          slug = "refund-policy";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Retours", height: 250, badge: "GARANTIE SATISFAIT" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "refund_policy", config: getPlaceholderConfig("refund_policy"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-          ];
-          break;
-        case "privacy_policy":
-          name = "Confidentialité";
-          slug = "privacy-policy";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Confidentialité", height: 250, badge: "VOS DONNÉES SONT SURES" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "privacy_policy", config: getPlaceholderConfig("privacy_policy"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-          ];
-          break;
-        case "terms_conditions":
-          name = "Conditions Générales";
-          slug = "terms-conditions";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "CGV", height: 250, badge: "CADRE LÉGAL" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "terms_conditions", config: getPlaceholderConfig("terms_conditions"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 2, is_visible: true }
-          ];
-          break;
-        case "faq":
-          name = "FAQ";
-          slug = "faq";
-          sections = [
-            { id: crypto.randomUUID(), type: "hero", config: { ...getPlaceholderConfig("hero"), title: "Questions Fréquentes", height: 250, badge: "AIDE & SUPPORT" }, position: 0, is_visible: true },
-            { id: crypto.randomUUID(), type: "faq", config: getPlaceholderConfig("faq"), position: 1, is_visible: true },
-            { id: crypto.randomUUID(), type: "trust_badges", config: { ...getPlaceholderConfig("trust_badges"), layout: 'row' }, position: 2, is_visible: true },
-            { id: crypto.randomUUID(), type: "footer", config: getPlaceholderConfig("footer"), position: 3, is_visible: true }
-          ];
-          break;
-        default:
-          name = "Nouvelle Page";
-          slug = "new-page-" + Math.random().toString(36).substr(2, 5);
-          sections = [];
-      }
-
-      return { name, slug, sections, show_in_menu };
-    }
-
-
-  if (loading) {
+  if (loading || !store || !currentPage) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  return (
-    <div className="flex flex-col h-screen overflow-hidden">
-        {/* Command Palette */}
-        <CommandPalette
-          isOpen={isCommandPaletteOpen}
-          onClose={() => setIsCommandPaletteOpen(false)}
-          pages={pages}
-          sections={sections}
-          onNavigateToPage={setCurrentPageSlug}
-          onNavigateToSection={(id) => setActiveSectionId(id)}
-          onAddSection={addSection}
-          onOpenSettings={(tab) => setActiveTab(tab)}
-          onSave={handleSave}
-          onPreview={() => window.open(`/preview/${store?.slug}`, '_blank')}
-        />
+  const isOnline = store.is_active !== false;
+  const viewHref = storeViewHref(store.slug, store.is_active);
+  const homePage = pages.find((p) => p.is_homepage);
+  const linkTargets: LinkTarget[] = [
+    ...pages.map((p) => ({ value: p.is_homepage ? "/" : `/${p.slug}`, label: p.title })),
+    ...(pages.some((p) => p.slug === "shop") ? [] : [{ value: "/shop", label: tr("links.shop") }]),
+    { value: "/track", label: tr("links.track") },
+  ];
 
-        {/* Warnings Dialog */}
-        <Dialog open={isWarningsOpen} onOpenChange={setIsWarningsOpen}>
-          <DialogContent className="max-w-lg p-0 h-[70vh] overflow-hidden flex flex-col">
-            <DialogHeader className="sr-only">
-              <DialogTitle>Avertissements</DialogTitle>
-            </DialogHeader>
-            <SmartWarnings
-              sections={sections}
-              pages={pages}
-              store={store}
-              onNavigateToSection={(id) => {
-                setActiveSectionId(id);
-                setIsWarningsOpen(false);
-              }}
-              onFixApplied={() => {}}
-            />
-          </DialogContent>
-        </Dialog>
+  const saveLabel =
+    saveState === "saving" ? tr("status.saving") : saveState === "dirty" ? tr("status.unsaved") : saveState === "error" ? tr("status.error") : tr("status.saved");
 
-
-          <Dialog open={isLibraryOpen} onOpenChange={setIsLibraryOpen}>
-            <DialogContent className="max-w-[95vw] lg:max-w-7xl p-0 h-[90vh] overflow-hidden flex flex-col rounded-[2.5rem] border-none shadow-2xl">
-              <DialogHeader className="sr-only">
-                <DialogTitle>Bibliothèque de Sections</DialogTitle>
-                <DialogDescription>
-                  Ajoutez de nouvelles sections à votre page de boutique.
-                </DialogDescription>
-              </DialogHeader>
-
-            <div className="flex-1 overflow-hidden">
-              <SectionLibrary 
-                onAdd={(type) => {
-                  addSection(type);
-                  setIsLibraryOpen(false);
-                }} 
-                onClose={() => setIsLibraryOpen(false)} 
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
-
-      <div className="h-16 border-b border-border bg-card px-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={() => router.back()}>
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Retour
-          </Button>
-          <div className="h-4 w-[1px] bg-border" />
-          <h1 className="font-bold">{store?.name}</h1>
-          <div className="flex items-center gap-2 bg-muted p-1 rounded-full ml-4">
-            <Button 
-              variant={isBeginnerMode ? "secondary" : "ghost"} 
-              size="sm" 
-              className="rounded-full text-[10px] h-6"
-              onClick={() => setIsBeginnerMode(true)}
-            >
-              Débutant
-            </Button>
-            <Button 
-              variant={!isBeginnerMode ? "secondary" : "ghost"} 
-              size="sm" 
-              className="rounded-full text-[10px] h-6"
-              onClick={() => setIsBeginnerMode(false)}
-            >
-              Avancé
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-          <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex <= 0}>
-            <Undo2 className="w-4 h-4" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1}>
-            <Redo2 className="w-4 h-4" />
-          </Button>
-          <div className="h-4 w-[1px] bg-border mx-1" />
-          <Button variant={viewMode === "desktop" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("desktop")}>
-            <Monitor className="w-4 h-4" />
-          </Button>
-          <Button variant={viewMode === "tablet" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("tablet")}>
-            <Tablet className="w-4 h-4" />
-          </Button>
-          <Button variant={viewMode === "mobile" ? "secondary" : "ghost"} size="sm" onClick={() => setViewMode("mobile")}>
-            <Smartphone className="w-4 h-4" />
-          </Button>
-        </div>
-
-            <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsCommandPaletteOpen(true)}
-                className="gap-2"
-              >
-                <Command className="w-4 h-4" />
-                <span className="hidden lg:inline">Recherche</span>
-                <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">⌘K</kbd>
-              </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2 border-violet-500/50 text-violet-600 hover:bg-violet-50">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="hidden lg:inline">Design & AI</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setIsTemplatesOpen(true)}>
-                    <Layout className="w-4 h-4 mr-2" /> Templates Premium
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsLibraryOpen(true)}>
-                    <Plus className="w-4 h-4 mr-2" /> Bibliothèque Sections
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Gauge className="w-4 h-4" />
-                    <span className="hidden lg:inline">Optimisation</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setIsWarningsOpen(true)}>
-                    <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" /> Vérifier les erreurs
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <div className="h-4 w-[1px] bg-border hidden lg:block" />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Eye className="w-4 h-4" />
-                    <span className="hidden lg:inline">Aperçu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => window.open(`/preview/${store?.slug}`, '_blank')}>
-                    <Eye className="w-4 h-4 mr-2" /> Ouvrir dans un onglet
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleIframeLoad}>
-                    <RefreshCw className="w-4 h-4 mr-2" /> Actualiser l'aperçu
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button size="sm" onClick={() => handleSave()} disabled={saving} className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                Enregistrer
-              </Button>
-            </div>
-
+  const panel = (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="grid grid-cols-3 border-b bg-card">
+        {(
+          [
+            ["sections", Layers],
+            ["pages", FileText],
+            ["style", Palette],
+          ] as const
+        ).map(([key, Icon]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => {
+              setTab(key);
+              if (key !== "sections") setActiveSectionId(null);
+            }}
+            className={cn(
+              "flex items-center justify-center gap-1.5 border-b-2 py-3 text-xs font-semibold transition-colors",
+              tab === key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Icon className="h-4 w-4" />
+            {tr(`tabs.${key}`)}
+          </button>
+        ))}
       </div>
 
-<div className="flex flex-1 overflow-hidden min-h-0">
-          {/* Left Sidebar - Collapsible */}
-          <div className={`border-r border-border bg-card flex flex-col shrink-0 min-h-0 transition-all duration-300 relative ${isSidebarCollapsed ? 'w-0 overflow-hidden' : 'w-80'}`}>
-            {/* Toggle button for left sidebar */}
-            <button
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-card border border-border rounded-r-lg flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
-              title={isSidebarCollapsed ? "Afficher le panneau" : "Masquer le panneau"}
-            >
-              {isSidebarCollapsed ? <PanelLeft className="w-3 h-3" /> : <PanelLeftClose className="w-3 h-3" />}
-            </button>
-            
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden min-h-0">
-                <TabsList className="grid grid-cols-5 rounded-none border-b border-border bg-card h-12">
-                  <TabsTrigger value="sections" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Layers className="w-4 h-4" />
-                      {isBeginnerMode && <span className="text-[8px] font-bold uppercase">Sections</span>}
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="pages" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Layout className="w-4 h-4" />
-                      {isBeginnerMode && <span className="text-[8px] font-bold uppercase">Pages</span>}
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="navigation" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <GripVertical className="w-4 h-4" />
-                      {isBeginnerMode && <span className="text-[8px] font-bold uppercase">Menu</span>}
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="theme" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Palette className="w-4 h-4" />
-                      {isBeginnerMode && <span className="text-[8px] font-bold uppercase">Style</span>}
-                    </div>
-                  </TabsTrigger>
-                  <TabsTrigger value="launch" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                    <div className="flex flex-col items-center gap-0.5">
-                      <Sparkles className="w-4 h-4" />
-                      {isBeginnerMode && <span className="text-[8px] font-bold uppercase">Lancer</span>}
-                    </div>
-                  </TabsTrigger>
-                </TabsList>
-
-              <TabsContent value="sections" className="flex-1 overflow-hidden flex flex-col m-0">
-                <div className="p-4 border-b border-border space-y-4 bg-muted/20">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Page en cours</Label>
-                    <Select value={currentPageSlug} onValueChange={setCurrentPageSlug}>
-                      <SelectTrigger className="w-full bg-background h-10">
-                        <SelectValue placeholder="Choisir une page" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {pages.map(page => (
-                          <SelectItem key={page.id} value={page.slug}>
-                            <div className="flex items-center gap-2">
-                              <span>{page.slug === 'home' ? '🏠' : page.slug === 'shop' ? '🛍️' : '📄'}</span>
-                              <span>{page.name}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <ScrollArea className="flex-1 h-full">
-                  <div className="p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-sm">Structure de la page</h3>
-                      <Button variant="outline" size="sm" onClick={() => setIsLibraryOpen(true)}>
-                        <Plus className="w-4 h-4 mr-1" />
-                        Ajouter
-                      </Button>
-                    </div>
-
-                        <Reorder.Group axis="y" values={sections} onReorder={setSections} className="space-y-2">
-                            {sections.map((section, index) => (
-                              <SectionReorderItem 
-                                key={section.id}
-                                section={section}
-                                activeSectionId={activeSectionId}
-                                setActiveSectionId={setActiveSectionId}
-                                toggleSectionVisibility={toggleSectionVisibility}
-                                duplicateSection={duplicateSection}
-                                toggleSectionLock={toggleSectionLock}
-                                removeSection={(id) => setSections(sections.filter(s => s.id !== id))}
-                                index={index}
-                                isFirst={index === 0}
-                                isLast={index === sections.length - 1}
-                                onMoveUp={() => {
-                                  if (index > 0) {
-                                    const newSections = [...sections];
-                                    [newSections[index-1], newSections[index]] = [newSections[index], newSections[index-1]];
-                                    setSections(newSections);
-                                  }
-                                }}
-                                onMoveDown={() => {
-                                  if (index < sections.length - 1) {
-                                    const newSections = [...sections];
-                                    [newSections[index], newSections[index+1]] = [newSections[index+1], newSections[index]];
-                                    setSections(newSections);
-                                  }
-                                }}
-                              />
-                            ))}
-                        </Reorder.Group>
-                  {sections.length === 0 && (
-                    <div className="text-center py-12 px-4 border-2 border-dashed border-border rounded-xl bg-muted/5">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                        <Plus className="w-6 h-6 text-muted-foreground" />
-                      </div>
-                      <h4 className="font-bold text-sm mb-1">Votre page est prête !</h4>
-                      <p className="text-xs text-muted-foreground mb-6">Commencez par ajouter une section &quot;Hero&quot; pour captiver vos visiteurs dès leur arrivée.</p>
-                      <Button variant="default" size="sm" className="w-full" onClick={() => setIsLibraryOpen(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Ajouter ma première section
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-
-                <TabsContent value="navigation" className="flex-1 overflow-hidden flex flex-col m-0">
-                  <ScrollArea className="flex-1 h-full">
-                    <div className="p-4 space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm">Menu de Navigation</h3>
-                        <p className="text-xs text-muted-foreground">Réorganisez vos pages et choisissez celles qui apparaissent dans votre menu principal.</p>
-                      </div>
-
-                      {customHeaderCount > 0 && (
-                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
-                          <p className="text-xs font-bold text-amber-900">{t("store_builder.editor_nav.custom_title")}</p>
-                          <p className="text-[11px] text-amber-800">{t("store_builder.editor_nav.custom_body")}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Button size="sm" variant="outline" className="h-7 text-[11px] bg-white" asChild>
-                              <Link href="/seller/store-builder/navigation">{t("store_builder.editor_nav.edit_custom")}</Link>
-                            </Button>
-                            <Button
-                              size="sm"
-                              className="h-7 text-[11px]"
-                              onClick={async () => {
-                                if (!store) return;
-                                const { error } = await createClient()
-                                  .from("store_navigation")
-                                  .update({ items: [] })
-                                  .eq("store_id", store.id)
-                                  .eq("type", "header");
-                                if (error) {
-                                  toast.error(t("store_builder.editor_nav.auto_error"));
-                                  return;
-                                }
-                                setCustomHeaderCount(0);
-                                toast.success(t("store_builder.editor_nav.auto_done"));
-                              }}
-                            >
-                              {t("store_builder.editor_nav.use_auto")}
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                            <Reorder.Group 
-                              axis="y" 
-                              values={pages} 
-                              onReorder={(newOrder) => {
-                                setPages(newOrder);
-                              }} 
-                              className="space-y-2" 
-                              layoutScroll
-                            >
-                              {pages.map((page, index) => (
-                                <PageReorderItem 
-                                  key={page.id}
-                                  page={page}
-                                  index={index}
-                                  isFirst={index === 0}
-                                  isLast={index === pages.length - 1}
-                                  onToggleVisibility={(id) => {
-                                    setPages(prev => prev.map(p => p.id === id ? { ...p, show_in_menu: !(p.show_in_menu ?? true) } : p));
-                                  }}
-                                  onMoveUp={() => {
-                                    if (index > 0) {
-                                      const newPages = [...pages];
-                                      [newPages[index-1], newPages[index]] = [newPages[index], newPages[index-1]];
-                                      setPages(newPages);
-                                    }
-                                  }}
-                                  onMoveDown={() => {
-                                    if (index < pages.length - 1) {
-                                      const newPages = [...pages];
-                                      [newPages[index], newPages[index+1]] = [newPages[index+1], newPages[index]];
-                                      setPages(newPages);
-                                    }
-                                  }}
-                                />
-                              ))}
-                            </Reorder.Group>
-
-                      <div className="p-4 rounded-xl bg-muted/30 border border-dashed border-border text-center">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-2">Structure Recommandée</p>
-                        <div className="flex flex-wrap justify-center gap-1">
-                          {["Accueil", "Boutique", "À Propos", "Contact", "FAQ"].map(item => (
-                            <Badge key={item} variant="outline" className="text-[9px] py-0">{item}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-
-                <TabsContent value="theme" className="flex-1 overflow-hidden flex flex-col m-0">
-                  <ScrollArea className="flex-1 h-full">
-                    <div className="p-4 space-y-8">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Couleurs Globales</h3>
-                        <Button variant="ghost" size="sm" className="h-7 text-[10px]" onClick={() => {
-                          if (store) setStore({ ...store, theme_config: { ...store.theme_config, colors: { primary: "#7c3aed", secondary: "#4f46e5", accent: "#06b6d4", background: "#ffffff", text: "#0f172a" } } });
-                        }}>Reset</Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label className="text-[10px]">Primaire</Label>
-                          <div className="flex gap-2">
-                            <Input type="color" className="w-8 h-8 p-1" value={store?.theme_config?.colors?.primary || "#7c3aed"} onChange={(e) => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, colors: { ...s.theme_config.colors, primary: e.target.value } } }) : null)} />
-                            <Input className="flex-1 h-8 text-[10px]" value={store?.theme_config?.colors?.primary || "#7c3aed"} onChange={(e) => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, colors: { ...s.theme_config.colors, primary: e.target.value } } }) : null)} />
-                          </div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px]">Secondaire</Label>
-                          <div className="flex gap-2">
-                            <Input type="color" className="w-8 h-8 p-1" value={store?.theme_config?.colors?.secondary || "#4f46e5"} onChange={(e) => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, colors: { ...s.theme_config.colors, secondary: e.target.value } } }) : null)} />
-                            <Input className="flex-1 h-8 text-[10px]" value={store?.theme_config?.colors?.secondary || "#4f46e5"} onChange={(e) => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, colors: { ...s.theme_config.colors, secondary: e.target.value } } }) : null)} />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Typographie</h3>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-[10px]">Police des Titres</Label>
-                          <Select value={store?.theme_config?.typography?.fontHeading || "Inter"} onValueChange={(val) => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, typography: { ...s.theme_config.typography, fontHeading: val } } }) : null)}>
-                            <SelectTrigger className="h-8 text-[10px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Inter">Inter (Moderne)</SelectItem>
-                              <SelectItem value="Playfair Display">Playfair (Élégant)</SelectItem>
-                              <SelectItem value="Montserrat">Montserrat (Bold)</SelectItem>
-                              <SelectItem value="Space Grotesk">Space Grotesk (Tech)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-[10px]">Taille du texte ({store?.theme_config?.typography?.scale || 100}%)</Label>
-                          <Slider 
-                            value={[store?.theme_config?.typography?.scale || 100]} 
-                            min={80} max={120} step={5}
-                            onValueChange={([val]) => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, typography: { ...s.theme_config.typography, scale: val } } }) : null)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                      {!isBeginnerMode && (
-                        <>
-                          <div className="space-y-4">
-                            <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Bordures & Arrondis</h3>
-                            <div className="grid grid-cols-3 gap-2">
-                              {['none', 'md', 'full'].map((r) => (
-                                <Button 
-                                  key={r} 
-                                  variant={store?.theme_config?.spacing?.borderRadius === r ? 'secondary' : 'outline'} 
-                                  size="sm" 
-                                  className="text-[10px] h-8 capitalize"
-                                  onClick={() => setStore(s => s ? ({ ...s, theme_config: { ...s.theme_config, spacing: { ...s.theme_config.spacing, borderRadius: r } } }) : null)}
-                                >
-                                  {r}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="pt-6 border-t border-border space-y-4">
-                            <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Actions Thème</h3>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Button variant="outline" size="sm" onClick={exportTheme} className="gap-2 h-8 text-[10px]">
-                                <Download className="w-3 h-3" /> Exporter
-                              </Button>
-                              <div className="relative">
-                                <input type="file" id="import-theme" className="hidden" accept=".json" onChange={importTheme} />
-                                <Button variant="outline" size="sm" className="w-full gap-2 h-8 text-[10px]" onClick={() => document.getElementById("import-theme")?.click()}>
-                                  <Upload className="w-3 h-3" /> Importer
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                    <div className="space-y-4">
-                      <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">Templates Pro</h3>
-                      <div className="grid gap-4">
-                        {premiumTemplates.map((template) => (
-                          <button
-                            key={template.id}
-                            onClick={async () => {
-                              if (confirm("Remplacer le contenu actuel par ce template ?")) {
-                                const newSections = template.sections.map((s, i) => ({
-                                  id: crypto.randomUUID(),
-                                  type: s.type,
-                                  config: s.config,
-                                  position: i,
-                                  is_visible: true
-                                }));
-                                setSections(newSections);
-                                if (store) setStore({ ...store, theme_config: template.theme_config });
-                                toast.success(`Template ${template.name} appliqué !`);
-                              }
-                            }}
-                            className="group relative rounded-xl overflow-hidden border border-border hover:border-primary transition-all text-left bg-card shadow-sm"
-                          >
-                            <div className="aspect-video bg-muted relative">
-                              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity z-10 text-white text-xs font-bold uppercase tracking-widest">
-                                Appliquer
-                              </div>
-                              <img src={template.thumbnail || `https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=225&fit=crop`} className="w-full h-full object-cover" alt={template.name} />
-                            </div>
-                            <div className="p-3">
-                              <p className="text-xs font-bold truncate">{template.name}</p>
-                              <p className="text-[10px] text-muted-foreground capitalize">{template.category}</p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-
-                <TabsContent value="pages" className="flex-1 overflow-hidden flex flex-col m-0">
-                  <ScrollArea className="flex-1 h-full">
-                    <div className="p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-sm">Vos Pages</h3>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" onClick={() => generateAllEssentialPages()} className="h-8 text-[10px] border-violet-500 text-violet-600 hover:bg-violet-50">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            Auto-générer
-                          </Button>
-                          <Button variant="outline" size="sm" onClick={() => addNewPage()} className="h-8 text-[10px]">
-                            <Plus className="w-3 h-3 mr-1" />
-                            Nouvelle
-                          </Button>
-                        </div>
-                      </div>
-
-                    <div className="space-y-2">
-                      {pages.map(page => (
-                        <div key={page.id} className={`p-3 rounded-lg border flex items-center justify-between group transition-all ${currentPageSlug === page.slug ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'}`}>
-                          <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => setCurrentPageSlug(page.slug)}>
-                            <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-                              {page.slug === 'home' ? '🏠' : page.slug === 'shop' ? '🛍️' : '📄'}
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold">{page.name}</p>
-                              <p className="text-[10px] text-muted-foreground italic">/{page.slug}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Switch 
-                              checked={page.is_published}
-                              onCheckedChange={(checked) => togglePagePublish(page.slug, checked)}
-                              className="scale-75"
-                            />
-                            {page.slug !== 'home' && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => {
-                                  if (confirm(`Supprimer la page « ${page.title || page.name || page.slug} » ? Elle sera supprimée à l'enregistrement.`)) {
-                                    setPages(pages.filter(p => p.id !== page.id));
-                                  }
-                                }}
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-4 space-y-3">
-                      <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Templates recommandés</h4>
-                      <div className="grid grid-cols-1 gap-2">
-                        <Button variant="outline" size="sm" className="justify-start gap-2 h-10" onClick={() => addNewPage("about")}>
-                          <Info className="w-4 h-4" /> À Propos
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-start gap-2 h-10" onClick={() => addNewPage("contact")}>
-                          <Mail className="w-4 h-4" /> Contact
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-start gap-2 h-10" onClick={() => addNewPage("product")}>
-                          <ShoppingBag className="w-4 h-4" /> Détail Produit
-                        </Button>
-                        <Button variant="outline" size="sm" className="justify-start gap-2 h-10" onClick={() => addNewPage("checkout")}>
-                          <Zap className="w-4 h-4" /> Checkout COD
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </TabsContent>
-
-                <TabsContent value="launch" className="flex-1 overflow-hidden flex flex-col m-0">
-                  <ScrollArea className="flex-1">
-                    <div className="p-4 space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-sm">Prêt à vendre ?</h3>
-                        <p className="text-xs text-muted-foreground">Suivez ces étapes pour lancer votre boutique professionnelle.</p>
-                      </div>
-
-                      <div className="space-y-3">
-                        {[
-                          { title: t("store_builder.hub.steps.theme"), done: Boolean(store?.theme_config?.theme_id), action: () => router.push("/seller/store-builder/themes") },
-                          { title: t("store_builder.hub.steps.logo"), done: Boolean((store as any)?.logo_url), action: () => router.push("/seller/store-builder/settings") },
-                          { title: t("store_builder.hub.steps.products"), done: productCount > 0, action: () => router.push("/seller/products/catalog") },
-                        ].map((item, i) => (
-                          <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${item.done ? "bg-emerald-500/5 border-emerald-500/20" : "bg-muted/30 border-border"}`}>
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${item.done ? "bg-emerald-500 text-white" : "border-2 border-border bg-background"}`}>
-                              {item.done ? <Check className="w-4 h-4" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
-                            </div>
-                            <span className={`text-xs flex-1 ${item.done ? "text-emerald-700 font-medium" : "font-medium"}`}>{item.title}</span>
-                            {!item.done && (
-                              <Button variant="ghost" size="sm" className="h-8 text-[10px] px-3 bg-background border" onClick={item.action}>Faire</Button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="pt-4 border-t border-border">
-                        <Button 
-                          className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-bold shadow-lg shadow-purple-200"
-                          onClick={() => {
-                            if (productCount === 0) {
-                              toast.error(t("store_builder.hub.need_product"));
-                              return;
-                            }
-                            handleSave(false, true);
-                          }}
-                          disabled={saving}
-                        >
-                          {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Zap className="w-5 h-5 mr-2" />}
-                          PUBLIER LA BOUTIQUE
-                        </Button>
-                        <p className="text-[10px] text-center text-muted-foreground mt-4 italic">
-                          En publiant, votre boutique sera accessible à l&apos;adresse :<br />
-                          <span className="font-bold text-primary">dropy.store/{store?.slug}</span>
-                        </p>
-                      </div>
-
-                    </div>
-                  </ScrollArea>
-                </TabsContent>
-
-      </Tabs>
-          </div>
-
-          {/* Center Preview Area */}
-          <div className="flex-1 bg-muted/50 overflow-hidden flex flex-col p-8 relative">
-            {/* Toggle button to show left sidebar when collapsed */}
-            {isSidebarCollapsed && (
-              <button
-                onClick={() => setIsSidebarCollapsed(false)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-50 w-8 h-14 bg-card border border-border rounded-lg flex items-center justify-center hover:bg-muted transition-colors shadow-md"
-                title="Afficher le panneau"
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {tab === "sections" && activeSection && (
+          <div className="flex min-h-full flex-col">
+            <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-card/95 px-3 py-2 backdrop-blur">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setActiveSectionId(null)} aria-label={tr("sections.back")}>
+                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+              </Button>
+              <span className="min-w-0 flex-1 truncate text-sm font-bold">{t(`store_builder.sections.${activeSection.type}.name`)}</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => toggleSection(activeSection.id)} aria-label={tr(activeSection.is_visible ? "sections.hide" : "sections.show")}>
+                {activeSection.is_visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => duplicateSection(activeSection.id)} aria-label={tr("sections.duplicate")}>
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive"
+                onClick={() => setConfirmDelete({ kind: "section", id: activeSection.id })}
+                aria-label={tr("sections.delete")}
               >
-                <PanelLeft className="w-4 h-4" />
-              </button>
-            )}
-            
-            <div className={`mx-auto bg-white shadow-2xl transition-all duration-300 overflow-hidden rounded-md flex flex-col h-full ${
-              viewMode === "desktop" ? "w-full" : viewMode === "tablet" ? "w-[768px]" : "w-[375px]"
-            }`}>
-              <div className="h-8 bg-muted/30 border-b border-border flex items-center gap-2 px-4 shrink-0">
-                <div className="w-2 h-2 rounded-full bg-red-500/50" />
-                <div className="w-2 h-2 rounded-full bg-yellow-500/50" />
-                <div className="w-2 h-2 rounded-full bg-green-500/50" />
-                <div className="ml-4 h-4 w-1/3 rounded bg-muted/50" />
-              </div>
-              <iframe 
-                ref={iframeRef}
-                src={`/preview/${store?.slug}`}
-                className="flex-1 w-full border-0"
-                title="Store Preview"
-                onLoad={handleIframeLoad}
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              <SectionSettings
+                key={activeSection.id}
+                section={activeSection}
+                targets={linkTargets}
+                onChange={(config) => updateSections(currentSlug, (list) => list.map((s) => (s.id === activeSection.id ? { ...s, config } : s)))}
               />
             </div>
           </div>
+        )}
 
-          {/* Right Panel - Section Editor */}
-          {activeSectionId && (
-            <div className={`border-l border-border bg-card shrink-0 flex flex-col overflow-hidden transition-all duration-300 relative ${isRightPanelCollapsed ? 'w-0' : 'w-80'}`}>
-              {/* Toggle button for right panel */}
-              <button
-                onClick={() => setIsRightPanelCollapsed(!isRightPanelCollapsed)}
-                className="absolute -left-3 top-1/2 -translate-y-1/2 z-50 w-6 h-12 bg-card border border-border rounded-l-lg flex items-center justify-center hover:bg-muted transition-colors shadow-sm"
-                title={isRightPanelCollapsed ? "Afficher les paramètres" : "Masquer les paramètres"}
-              >
-                {isRightPanelCollapsed ? <PanelRight className="w-3 h-3" /> : <PanelRightClose className="w-3 h-3" />}
-              </button>
-              
-              {!isRightPanelCollapsed && (
-                <>
-                  <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
-                    <h3 className="font-semibold">Paramètres Section</h3>
-                    <Button variant="ghost" size="icon" onClick={() => setActiveSectionId(null)}>
-                      <Plus className="w-4 h-4 rotate-45" />
+        {tab === "sections" && !activeSection && (
+          <div className="space-y-3 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{tr("sections.page")}</p>
+                <p className="truncate text-sm font-bold">{currentPage.title}</p>
+              </div>
+              <Button size="sm" onClick={() => setAddOpen(true)} className="shrink-0">
+                <Plus className="me-1 h-4 w-4" />
+                {tr("sections.add")}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">{tr("sections.help")}</p>
+            <Reorder.Group axis="y" values={sections} onReorder={(next) => updateSections(currentSlug, () => next)} className="space-y-2">
+              {sections.map((section) => (
+                <SectionRow
+                  key={section.id}
+                  section={section}
+                  active={section.id === activeSectionId}
+                  onSelect={() => setActiveSectionId(section.id)}
+                  onToggle={() => toggleSection(section.id)}
+                  onDuplicate={() => duplicateSection(section.id)}
+                  onDelete={() => setConfirmDelete({ kind: "section", id: section.id })}
+                />
+              ))}
+            </Reorder.Group>
+            {sections.length === 0 && (
+              <div className="rounded-xl border-2 border-dashed p-6 text-center">
+                <p className="text-sm font-semibold">{tr("sections.empty_title")}</p>
+                <p className="mb-4 mt-1 text-xs text-muted-foreground">{tr("sections.empty_body")}</p>
+                <Button size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus className="me-1 h-4 w-4" />
+                  {tr("sections.add")}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === "pages" && (
+          <div className="space-y-4 p-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-sm font-bold">{tr("pages.title")}</h3>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="me-1 h-4 w-4" />
+                    {tr("pages.add")}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="text-xs">{tr("pages.templates")}</DropdownMenuLabel>
+                  {PAGE_TEMPLATE_KINDS.map((kind) => (
+                    <DropdownMenuItem key={kind} onClick={() => addTemplatePage(kind)}>
+                      {tr(`pages.kinds.${kind}`)}
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => addTemplatePage("blank")}>
+                    <Plus className="me-2 h-4 w-4" />
+                    {tr("pages.kinds.blank")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="space-y-2">
+              {pages.map((page) => (
+                <div
+                  key={page.slug}
+                  className={cn("rounded-xl border p-3 space-y-3", page.slug === currentSlug ? "border-primary bg-primary/5" : "border-border")}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                      {page.is_homepage ? <Home className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+                    </span>
+                    <Input
+                      value={page.title}
+                      onChange={(e) => updatePage(page.slug, { title: e.target.value })}
+                      onBlur={(e) => !e.target.value.trim() && updatePage(page.slug, { title: page.slug })}
+                      className="h-8 flex-1 text-sm font-semibold"
+                      aria-label={tr("pages.name")}
+                    />
+                    <Button variant="outline" size="sm" className="h-8 shrink-0" onClick={() => openPage(page.slug)}>
+                      {tr("pages.edit")}
                     </Button>
                   </div>
-                  <ScrollArea className="flex-1 p-4">
-                    <SectionEditor 
-                      section={sections.find(s => s.id === activeSectionId)} 
-                      onChange={(config) => {
-                        setSections(sections.map(s => s.id === activeSectionId ? { ...s, config } : s));
-                      }}
-                    />
-                  </ScrollArea>
-                </>
-              )}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                    <span dir="ltr" className="text-muted-foreground">/{page.is_homepage ? "" : page.slug}</span>
+                    <label className="flex items-center gap-1.5">
+                      <Switch checked={page.show_in_navigation} onCheckedChange={(v) => updatePage(page.slug, { show_in_navigation: v })} className="scale-75" />
+                      {tr("pages.in_menu")}
+                    </label>
+                    {!page.is_homepage && (
+                      <label className="flex items-center gap-1.5">
+                        <Switch checked={page.is_published} onCheckedChange={(v) => updatePage(page.slug, { is_published: v })} className="scale-75" />
+                        {tr("pages.visible")}
+                      </label>
+                    )}
+                    {!page.is_homepage && (
+                      <button type="button" className="ms-auto text-destructive hover:underline" onClick={() => setConfirmDelete({ kind: "page", slug: page.slug })}>
+                        {tr("pages.delete")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-          
-          {/* Toggle button to show right panel when no section selected or collapsed */}
-          {activeSectionId && isRightPanelCollapsed && (
-            <button
-              onClick={() => setIsRightPanelCollapsed(false)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-50 w-8 h-14 bg-card border border-border rounded-lg flex items-center justify-center hover:bg-muted transition-colors shadow-md"
-              title="Afficher les paramètres"
-            >
-              <PanelRight className="w-4 h-4" />
-            </button>
-          )}
+            <p className="text-xs text-muted-foreground">
+              {tr("pages.menu_help")}{" "}
+              <Link href="/seller/store-builder/navigation" className="font-semibold text-primary hover:underline">
+                {tr("pages.menu_link")}
+              </Link>
+            </p>
+          </div>
+        )}
 
-        <AnimatePresence>
-          {isTemplatesOpen && (
-            <TemplateMarketplace 
-              onClose={() => setIsTemplatesOpen(false)}
-              onSelectTemplate={(template) => {
-                const newSections = template.sections.map((s, i) => ({
-                  id: crypto.randomUUID(),
-                  type: s.type,
-                  config: s.config,
-                  position: i,
-                  is_visible: true
-                }));
-                setSections(newSections);
-                if (store) setStore({ ...store, theme_config: template.theme_config });
-                setIsTemplatesOpen(false);
-              }}
-            />
-          )}
-        </AnimatePresence>
+        {tab === "style" && <StylePanel themeConfig={themeConfig} onChange={setThemeConfig} onPickTheme={setPendingTheme} />}
+      </div>
+    </div>
+  );
 
-        <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-violet-500" />
-                Bienvenue sur Dropy Builder
-              </DialogTitle>
-              <DialogDescription className="text-lg">
-                Lancez votre boutique e-commerce en moins de 30 minutes.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-6 py-6">
-              <div 
-                className="p-6 rounded-2xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group space-y-4"
-                onClick={() => {
-                  setIsTemplatesOpen(true);
-                  setShowOnboarding(false);
-                }}
+  return (
+    <div className="flex h-full flex-col overflow-hidden bg-muted/40">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card px-2 sm:px-3">
+        <Button variant="ghost" size="sm" asChild className="shrink-0 px-2">
+          <Link href="/seller/store-builder" aria-label={tr("back")}>
+            <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+            <span className="hidden sm:inline">{tr("back")}</span>
+          </Link>
+        </Button>
+        <div className="hidden min-w-0 md:block">
+          <p className="truncate text-sm font-bold leading-tight">{store.name}</p>
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <span className={cn("h-1.5 w-1.5 rounded-full", isOnline ? "bg-emerald-500" : "bg-amber-500")} />
+            {isOnline ? t("store_builder.hub.online") : t("store_builder.hub.offline")}
+          </p>
+        </div>
+
+        <div className="mx-auto flex min-w-0 items-center gap-1 sm:gap-2">
+          <Select value={currentSlug} onValueChange={openPage}>
+            <SelectTrigger className="h-9 w-[130px] sm:w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pages.map((p) => (
+                <SelectItem key={p.slug} value={p.slug}>
+                  {p.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="hidden items-center rounded-lg bg-muted p-0.5 lg:flex">
+            {(
+              [
+                ["desktop", Monitor],
+                ["tablet", Tablet],
+                ["mobile", Smartphone],
+              ] as const
+            ).map(([mode, Icon]) => (
+              <Button
+                key={mode}
+                variant={viewMode === mode ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setViewMode(mode)}
+                aria-label={tr(`devices.${mode}`)}
               >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Layout className="w-6 h-6 text-primary" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-bold">Choisir un Template</h3>
-                  <p className="text-sm text-muted-foreground">Partez d&apos;un design pro optimisé pour la conversion (Beauté, Fitness, Maison...)</p>
-                </div>
-              </div>
+                <Icon className="h-4 w-4" />
+              </Button>
+            ))}
+          </div>
+          <div className="hidden items-center sm:flex">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={!canUndo} aria-label={tr("undo")}>
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={!canRedo} aria-label={tr("redo")}>
+              <Redo2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => void save()}
+          className={cn(
+            "hidden shrink-0 items-center gap-1 rounded-md px-2 py-1 text-xs font-medium md:flex",
+            saveState === "error" ? "text-destructive" : "text-muted-foreground hover:text-foreground"
+          )}
+          title={tr("save_now")}
+        >
+          {saveState === "saving" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : saveState === "error" ? (
+            <CloudOff className="h-3.5 w-3.5" />
+          ) : saveState === "dirty" ? (
+            <AlertCircle className="h-3.5 w-3.5" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
+          {saveLabel}
+        </button>
+
+        <Button variant="outline" size="sm" asChild className="hidden shrink-0 sm:inline-flex">
+          <a href={viewHref} target="_blank" rel="noreferrer">
+            <ExternalLink className="h-4 w-4 sm:me-1" />
+            <span className="hidden xl:inline">{tr("view")}</span>
+          </a>
+        </Button>
+
+        {isOnline ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline" className="shrink-0 border-emerald-300 text-emerald-700">
+                <span className="me-1.5 h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="hidden sm:inline">{t("store_builder.hub.online")}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel className="font-normal">
+                <span className="block text-xs text-muted-foreground">{tr("publish.address")}</span>
+                <span dir="ltr" className="block truncate text-sm font-semibold">{storeDisplayUrl(store.slug)}</span>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href={viewHref} target="_blank" rel="noreferrer">
+                  <ExternalLink className="me-2 h-4 w-4" />
+                  {tr("view")}
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => void setStoreOnline(false)}>
+                <EyeOff className="me-2 h-4 w-4" />
+                {tr("publish.unpublish")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button size="sm" className="shrink-0 bg-gradient-to-r from-violet-600 to-teal-500 text-white hover:opacity-90" onClick={() => void setStoreOnline(true)} disabled={publishing}>
+            {publishing ? <Loader2 className="h-4 w-4 animate-spin sm:me-1" /> : <Rocket className="h-4 w-4 sm:me-1" />}
+            <span className="hidden sm:inline">{tr("publish.cta")}</span>
+          </Button>
+        )}
+      </header>
+
+      <div className="flex border-b bg-card p-1 lg:hidden">
+        {(["panel", "preview"] as const).map((pane) => (
+          <button
+            key={pane}
+            type="button"
+            onClick={() => setMobilePane(pane)}
+            className={cn(
+              "flex-1 rounded-md py-1.5 text-xs font-semibold",
+              mobilePane === pane ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            )}
+          >
+            {tr(`mobile.${pane}`)}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex min-h-0 flex-1">
+        <aside className={cn("min-h-0 w-full shrink-0 border-e bg-card lg:flex lg:w-[340px] lg:flex-col", mobilePane === "panel" ? "flex flex-col" : "hidden")}>
+          {panel}
+        </aside>
+
+        <main className={cn("min-h-0 min-w-0 flex-1 p-0 lg:flex lg:p-6", mobilePane === "preview" ? "flex" : "hidden")}>
+          <div
+            className={cn(
+              "mx-auto flex h-full w-full flex-col overflow-hidden bg-white shadow-xl transition-all duration-300 lg:rounded-xl lg:border",
+              viewMode === "tablet" && "lg:max-w-[768px]",
+              viewMode === "mobile" && "lg:max-w-[390px]"
+            )}
+          >
+            <div className="hidden h-8 shrink-0 items-center gap-1.5 border-b bg-muted/40 px-3 lg:flex">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
+              <span dir="ltr" className="mx-auto truncate rounded bg-background px-3 py-0.5 text-[11px] text-muted-foreground">
+                {storeDisplayUrl(store.slug)}
+                {currentPage.is_homepage ? "" : `/${currentPage.slug}`}
+              </span>
             </div>
-            <DialogFooter className="flex-col sm:flex-row gap-4 border-t pt-6">
-              <div className="flex-1 text-sm text-muted-foreground flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-500" />
-                30 minutes pour publier
-              </div>
-              <Button variant="ghost" onClick={() => setShowOnboarding(false)}>
-                Je connais déjà l&apos;outil
+            <iframe ref={iframeRef} src={`/preview/${store.slug}`} className="w-full flex-1 border-0" title={tr("preview_title")} onLoad={syncPreview} />
+          </div>
+        </main>
+      </div>
+
+      <AddSectionDialog open={addOpen} onOpenChange={setAddOpen} onAdd={addSection} />
+
+      <AlertDialog open={Boolean(pendingTheme)} onOpenChange={(open) => !open && setPendingTheme(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("store_builder.theme_dialog.title").replace("{name}", pendingTheme ? t(`store_builder.themes.${pendingTheme.id}.name`) : "")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("store_builder.theme_dialog.body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel>{t("store_builder.theme_dialog.cancel")}</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (pendingTheme) applyTheme(pendingTheme, false);
+                setPendingTheme(null);
+              }}
+            >
+              {t("store_builder.theme_dialog.colors_only")}
+            </Button>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingTheme) applyTheme(pendingTheme, Boolean(homePage));
+                setPendingTheme(null);
+              }}
+            >
+              {t("store_builder.theme_dialog.replace_home")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(confirmDelete)} onOpenChange={(open) => !open && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{tr(confirmDelete?.kind === "page" ? "confirm.page_title" : "confirm.section_title")}</AlertDialogTitle>
+            <AlertDialogDescription>{tr(confirmDelete?.kind === "page" ? "confirm.page_body" : "confirm.section_body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{tr("confirm.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmDelete?.kind === "section") deleteSection(confirmDelete.id);
+                if (confirmDelete?.kind === "page") deletePage(confirmDelete.slug);
+                setConfirmDelete(null);
+              }}
+            >
+              {tr("confirm.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={newPageOpen} onOpenChange={setNewPageOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{tr("pages.new_title")}</DialogTitle>
+            <DialogDescription>{tr("pages.new_help")}</DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              createBlankPage();
+            }}
+            className="space-y-4"
+          >
+            <div className="space-y-1.5">
+              <Label htmlFor="new-page-name">{tr("pages.name")}</Label>
+              <Input id="new-page-name" autoFocus value={newPageName} onChange={(e) => setNewPageName(e.target.value)} maxLength={60} />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setNewPageOpen(false)}>
+                <X className="me-1 h-4 w-4" />
+                {tr("confirm.cancel")}
+              </Button>
+              <Button type="submit" disabled={!newPageName.trim()}>
+                <Plus className="me-1 h-4 w-4" />
+                {tr("pages.create")}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
