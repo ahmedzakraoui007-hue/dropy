@@ -1357,6 +1357,14 @@ const headerLinks = (store: any, pages: any[], t: (key: StoreTextKey) => string)
   return visible.map((p) => ({ key: p.id || p.slug, label: p.title || p.name || p.slug, url: p.is_homepage ? "/home" : `/${p.slug}` }));
 };
 
+const footerLinks = (store: any, pages: any[]) => {
+  const custom = (store?.footerLinks || []).filter((l: any) => l?.label);
+  if (custom.length) return custom;
+  return pages
+    .filter((p) => p.slug && !p.is_homepage && p.is_published !== false && p.show_in_navigation === false)
+    .map((p) => ({ id: p.id || p.slug, label: p.title || p.slug, url: `/${p.slug}` }));
+};
+
 const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, pages?: any[], onOpenCart?: () => void, cartCount?: number }) => {
   const { t } = useStoreText();
   const [open, setOpen] = useState(false);
@@ -2295,7 +2303,7 @@ const normalizeSection = (section: any) => {
   return { ...section, type, config };
 };
 
-const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
+const SectionRenderer = ({ section, store, pages = [], onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, pages?: any[], onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
   const { t } = useStoreText();
   if (section.is_visible === false) return null;
   section = normalizeSection(section);
@@ -2332,7 +2340,7 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
       case "faq": return <FAQ {...commonProps} />;
         case "newsletter": return <Newsletter {...commonProps} storeId={store?.id} />;
         case "reviews": return <ReviewsSection {...commonProps} />;
-        case "footer": return <Footer {...commonProps} store={store} links={(store?.footerLinks || []).filter((l: any) => l?.label)} />;
+        case "footer": return <Footer {...commonProps} store={store} links={footerLinks(store, pages)} />;
 
         case "recommended_products": return <RecommendedProducts {...commonProps} onAddToCart={onAddToCart} storeId={store?.id} onSelectProduct={onSelectProduct} />;
         case "checkout": return <Checkout {...commonProps} store={store} cart={cart} slug={slug} onClearCart={onClearCart} />;
@@ -2616,6 +2624,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
                 key={s.id} 
                 section={s} 
                 store={store} 
+                pages={pages}
                 onAddToCart={(p) => { 
                   if (p.has_variants && !p.variantId) {
                     setSelectedProduct(p);
