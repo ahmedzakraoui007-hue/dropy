@@ -18,8 +18,9 @@ import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput"
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 import { importCatalogProduct } from "@/lib/catalog-import";
+import { STORE_NICHES, generateStore, nicheScore, nicheTheme } from "@/lib/store-generator";
 
-type CatalogItem = { id: string; name: string; image: string | null; base: number; price: number };
+type CatalogItem = { id: string; name: string; image: string | null; base: number; price: number; text: string };
 
 const STEPS = ["store", "style", "products", "launch"] as const;
 
@@ -34,6 +35,8 @@ export default function StoreSetupWizard() {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [language, setLanguage] = useState<"fr" | "ar" | "both">("fr");
+  const [niche, setNiche] = useState<string | null>(null);
+  const [replaceHome, setReplaceHome] = useState(false);
   const [saving, setSaving] = useState(false);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [imported, setImported] = useState<Set<string>>(new Set());
@@ -46,6 +49,8 @@ export default function StoreSetupWizard() {
     setName((prev) => prev || store.name);
     setSlug((prev) => prev || store.slug);
     setLanguage(normalizeStorefrontLanguage(store.storefront_language));
+    const currentTheme = (store.theme_config as Record<string, any> | null)?.theme_id;
+    setNiche((prev) => prev ?? STORE_NICHES.find((n) => n.themeId === currentTheme)?.id ?? null);
   }, [store]);
 
   useEffect(() => {
@@ -54,7 +59,7 @@ export default function StoreSetupWizard() {
     Promise.all([
       supabase
         .from("products")
-        .select("id, name, images, base_price, compare_price")
+        .select("id, name, description, sub_category, images, base_price, compare_price")
         .eq("is_active", true)
         .eq("status", "approved")
         .order("created_at", { ascending: false })
@@ -71,6 +76,7 @@ export default function StoreSetupWizard() {
             image: p.images?.[0] ?? null,
             base,
             price: compare > base ? compare : Math.round(base * 1.35 * 100) / 100,
+            text: `${p.name} ${p.sub_category || ""} ${p.description || ""}`,
           };
         })
       );
@@ -98,6 +104,11 @@ export default function StoreSetupWizard() {
       toast.error(t(`store_builder.settings.errors.${slugCode}`));
       return;
     }
+    const hasTheme = Boolean((store.theme_config as Record<string, any> | null)?.theme_id);
+    if (!niche && !hasTheme) {
+      toast.error(tr("store.niche_required"));
+      return;
+    }
     setSaving(true);
     const supabase = createClient();
     if (slug !== store.slug) {
@@ -109,13 +120,34 @@ export default function StoreSetupWizard() {
       }
     }
     const { error } = await supabase.from("stores").update({ name: name.trim(), slug, storefront_language: language }).eq("id", store.id);
-    setSaving(false);
     if (error) {
+      setSaving(false);
       toast.error(t("store_builder.settings.errors.save"));
       return;
     }
     setStore({ ...store, name: name.trim(), slug, storefront_language: language });
-    setStep(1);
+    if (!niche) {
+      setSaving(false);
+      setStep(1);
+      return;
+    }
+    try {
+      const currentTheme = (store.theme_config as Record<string, any> | null)?.theme_id;
+      const result = await generateStore(supabase, store, {
+        niche,
+        lang: language === "ar" ? "ar" : "fr",
+        replaceHome: !hasTheme || replaceHome,
+        applyLook: !hasTheme || replaceHome || nicheTheme(niche)?.id !== currentTheme,
+      });
+      toast.success(tr("store.generated").replace("{pages}", String(result.pagesCreated)));
+      await reload();
+      setStep(2);
+    } catch (error) {
+      console.error("Store generation failed:", error);
+      toast.error(t("store_builder.settings.errors.save"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const chooseTheme = async (themeId: string) => {
@@ -220,6 +252,43 @@ export default function StoreSetupWizard() {
               {slugCode && <p className="text-sm text-red-600">{t(`store_builder.settings.errors.${slugCode}`)}</p>}
             </div>
             <div className="space-y-2">
+              <Label>{tr("store.niche")}</Label>
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={tr("store.niche")}>
+                {STORE_NICHES.map((item) => {
+                  const theme = nicheTheme(item.id);
+                  const active = niche === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setNiche(item.id)}
+                      className={cn(
+                        "relative overflow-hidden rounded-xl border-2 text-start transition-all",
+                        active ? "border-purple-600 ring-2 ring-purple-200" : "border-gray-100 hover:border-purple-300"
+                      )}
+                    >
+                      {theme && <img src={themeHeroImage(theme, 300)} alt="" className="aspect-[4/3] w-full object-cover" loading="lazy" />}
+                      <span className="block px-2 py-1.5 text-[11px] font-bold leading-tight">{tr(`niches.${item.id}`)}</span>
+                      {active && (
+                        <span className="absolute top-1.5 end-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-white">
+                          <Check className="h-3 w-3" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-gray-500">{tr("store.niche_help")}</p>
+              {Boolean((store.theme_config as Record<string, any> | null)?.theme_id) && (
+                <label className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
+                  <input type="checkbox" className="mt-0.5" checked={replaceHome} onChange={(e) => setReplaceHome(e.target.checked)} />
+                  <span>{tr("store.replace_home")}</span>
+                </label>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label>{t("store_builder.settings.language.label")}</Label>
               <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("store_builder.settings.language.label")}>
                 {(["fr", "ar", "both"] as const).map((code) => (
@@ -241,7 +310,7 @@ export default function StoreSetupWizard() {
             </div>
             <Button onClick={saveStore} disabled={saving} className="w-full h-12 rounded-xl bg-purple-600 hover:bg-purple-700 font-bold">
               {saving && <Loader2 className="w-4 h-4 me-2 animate-spin" />}
-              {tr("next")}
+              {saving && niche ? tr("store.generating") : niche ? tr("store.generate") : tr("next")}
             </Button>
           </div>
         )}
@@ -299,7 +368,7 @@ export default function StoreSetupWizard() {
               <p className="rounded-2xl bg-gray-50 p-6 text-center text-sm text-gray-500">{tr("products.empty")}</p>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {catalog.map((item) => {
+                {[...catalog].sort((a, b) => (niche ? nicheScore(niche, b.text) - nicheScore(niche, a.text) : 0)).map((item) => {
                   const done = imported.has(item.id);
                   const checked = selected.has(item.id);
                   return (

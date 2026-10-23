@@ -388,6 +388,17 @@
             "auto_error": "Impossible de changer le menu."
         },
         "wizard": {
+            "niches": {
+                "fashion": "Mode",
+                "beauty": "Beauté",
+                "jewelry": "Bijoux",
+                "home": "Maison & déco",
+                "tech": "High-tech",
+                "electronics": "Audio & électronique",
+                "sport": "Sport",
+                "craft": "Artisanat",
+                "general": "Autre / tout"
+            },
             "title": "Créons votre boutique",
             "subtitle": "4 étapes, quelques minutes.",
             "back": "Retour",
@@ -400,6 +411,13 @@
                 "launch": "En ligne"
             },
             "store": {
+                "niche": "Que vendez-vous ?",
+                "niche_help": "Nous créons votre page d'accueil, vos couleurs et vos pages (livraison, retours, contact…) adaptées à votre activité. Tout reste modifiable.",
+                "niche_required": "Choisissez ce que vous vendez pour générer votre boutique.",
+                "replace_home": "Remplacer aussi ma page d'accueil actuelle par le modèle de cette activité.",
+                "generate": "Créer ma boutique",
+                "generating": "Création de votre boutique…",
+                "generated": "Votre boutique est prête : page d'accueil et {pages} pages créées.",
                 "heading": "Comment s'appelle votre boutique ?",
                 "name": "Nom de la boutique",
                 "name_ph": "Ex. Bijoux Yasmine",
