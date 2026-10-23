@@ -10,6 +10,7 @@ import { AddReviewForm } from "@/components/reviews/AddReviewForm";
 import { StoreLanguageProvider, StoreLanguageSwitch, useStoreText } from "@/components/storefront/StoreLanguage";
 import { governorateLabel, normalizeStorefrontLanguage, orderErrorText, storeText, type StoreTextKey } from "@/lib/storefront-i18n";
 import { TUNISIAN_GOVERNORATES } from "@/components/storefront/ExpressOrderForm";
+import { discountPercent, normalizeSalesContent } from "@/lib/product-sales";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 import { SectionIcon } from "@/components/storefront/SectionIcon";
 import { storeBasePath } from "@/lib/store-url";
@@ -571,6 +572,9 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
   const [product, setProduct] = useState<any>(selectedProduct || null);
   const [loading, setLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const [formVisible, setFormVisible] = useState(true);
   const [variantOptions, setVariantOptions] = useState<{ id: string; label: string; price: number | null; stock: number | null }[]>([]);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [variantError, setVariantError] = useState(false);
@@ -632,6 +636,8 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
               images: data.images || [],
               variants: data.variants,
               has_variants: data.has_variants,
+              compare_at_price: data.compare_at_price,
+              sales_content: data.sales_content,
             });
           }
           setLoading(false);
@@ -668,7 +674,26 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
     images: config.images || [config.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop"]
   };
 
-  const images = displayProduct.images?.length > 0 ? displayProduct.images : [displayProduct.image];
+  const images: string[] = (displayProduct.images?.length > 0 ? displayProduct.images : [displayProduct.image]).filter(Boolean);
+  const sales = normalizeSalesContent(displayProduct.sales_content);
+  const unitPrice = parsePrice(selectedVariant?.price ?? displayProduct.price);
+  const compareAt = selectedVariant?.price != null ? null : displayProduct.compare_at_price;
+  const percent = discountPercent(unitPrice, compareAt);
+  const showForm = config.expressOrder !== false;
+
+  useEffect(() => {
+    const node = formRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(([entry]) => setFormVisible(entry.isIntersecting || entry.boundingClientRect.top < 0), { threshold: 0.1 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [product?.id, loading]);
+
+  const showImage = (index: number) => {
+    setSelectedImage(index);
+    const gallery = galleryRef.current;
+    if (gallery) gallery.scrollTo({ left: (gallery.scrollWidth / images.length) * index * (document.documentElement.dir === "rtl" ? -1 : 1), behavior: "smooth" });
+  };
 
   if (!product && !loading && !inBuilder) return null;
 
@@ -682,44 +707,111 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
     );
   }
 
+  const addToCart = () => {
+    if (variantOptions.length > 0 && !selectedVariant) {
+      setVariantError(true);
+      return;
+    }
+    onAddToCart?.({
+      id: displayProduct.id,
+      title: displayProduct.title,
+      price: selectedVariant?.price ?? displayProduct.price,
+      image: images[0],
+      variantId: selectedVariant?.id,
+      variantLabel: selectedVariant?.label,
+    });
+  };
+
   return (
-    <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
-      <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-2 gap-16">
-          <div className="space-y-4">
-            <div className="aspect-square bg-muted rounded-3xl overflow-hidden shadow-xl border border-border group">
-              <img src={images[selectedImage]} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={displayProduct.title} />
+    <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle({ paddingY: 32, ...config })}>
+      <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-start">
+          <div className="space-y-3 md:sticky md:top-24">
+            <div className="relative overflow-hidden rounded-3xl bg-muted border border-border">
+              <div
+                ref={galleryRef}
+                className="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const index = Math.round(Math.abs(el.scrollLeft) / (el.clientWidth || 1));
+                  if (index !== selectedImage) setSelectedImage(Math.min(images.length - 1, index));
+                }}
+              >
+                {images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={idx === 0 ? displayProduct.title : ""}
+                    loading={idx === 0 ? "eager" : "lazy"}
+                    className="aspect-square w-full shrink-0 snap-center object-cover"
+                  />
+                ))}
+              </div>
+              {(sales.badge || percent > 0) && (
+                <div className="pointer-events-none absolute start-3 top-3 flex flex-col items-start gap-2">
+                  {percent > 0 && <span className="rounded-full bg-red-600 px-3 py-1 text-sm font-black text-white shadow">-{percent}%</span>}
+                  {sales.badge && <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-bold text-gray-900 shadow" dir="auto">{sales.badge}</span>}
+                </div>
+              )}
+              {images.length > 1 && (
+                <div className="absolute inset-x-0 bottom-3 flex justify-center gap-1.5 md:hidden">
+                  {images.map((_, idx) => (
+                    <span key={idx} className={`h-1.5 rounded-full transition-all ${idx === selectedImage ? "w-5 bg-white" : "w-1.5 bg-white/60"}`} />
+                  ))}
+                </div>
+              )}
             </div>
             {images.length > 1 && (
-              <div className="flex gap-3 overflow-x-auto pb-2">
-                {images.map((img: string, idx: number) => (
+              <div className="hidden gap-2 overflow-x-auto pb-1 md:flex">
+                {images.map((img, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`w-20 h-20 rounded-xl overflow-hidden border-2 shrink-0 transition-all ${selectedImage === idx ? 'border-primary' : 'border-border'}`}
+                    type="button"
+                    onClick={() => showImage(idx)}
+                    aria-label={`${idx + 1} / ${images.length}`}
+                    className={`h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all ${selectedImage === idx ? "border-primary" : "border-border opacity-70 hover:opacity-100"}`}
                   >
-                    <img src={img} className="w-full h-full object-cover" alt="" />
+                    <img src={img} className="h-full w-full object-cover" alt="" />
                   </button>
                 ))}
               </div>
             )}
           </div>
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-black mb-4" dir="auto">{displayProduct.title}</h1>
-              
-              <div className="flex items-center gap-2 mb-6">
-                <StarRating rating={Math.round(averageRating)} readonly size="sm" />
-                <span className="text-sm font-bold">{averageRating.toFixed(1)}</span>
-                <span className="text-xs text-muted-foreground">({t("reviews.count", { count: reviews.length })})</span>
-              </div>
 
-                <div className="flex items-center gap-4 mb-6">
-                  <span className="text-4xl font-black text-primary">{money(parsePrice(selectedVariant?.price ?? displayProduct.price))}</span>
+          <div className="space-y-5">
+            <div className="space-y-3">
+              <h1 className="text-2xl md:text-4xl font-black leading-tight" dir="auto">{displayProduct.title}</h1>
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <StarRating rating={Math.round(averageRating)} readonly size="sm" />
+                  <span className="text-sm font-bold">{averageRating.toFixed(1)}</span>
+                  <span className="text-xs text-muted-foreground">({t("reviews.count", { count: reviews.length })})</span>
                 </div>
-
-              <p className="text-lg text-muted-foreground whitespace-pre-line" dir="auto">{displayProduct.description}</p>
+              )}
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <span className="text-3xl md:text-4xl font-black text-primary">{money(unitPrice)}</span>
+                {percent > 0 && (
+                  <>
+                    <span className="text-lg text-muted-foreground line-through">{money(parsePrice(compareAt))}</span>
+                    <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-sm font-bold text-red-600">
+                      {t("products.save")} {money(parsePrice(compareAt) - unitPrice)}
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
+
+            {sales.highlights.length > 0 && (
+              <ul className="space-y-2">
+                {sales.highlights.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-black text-white">✓</span>
+                    <span className="font-medium" dir="auto">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
             {variantOptions.length > 0 && (
               <div className="space-y-3">
                 <p className="text-sm font-bold uppercase tracking-wider opacity-70">{t("products.choose_option")}</p>
@@ -742,48 +834,87 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 {variantError && <p className="text-sm text-red-600 font-medium">{t("products.option_required")}</p>}
               </div>
             )}
-            {config.expressOrder !== false && (
-              <ExpressOrderForm
-                storeId={storeId}
-                productId={displayProduct.id}
-                variantId={selectedVariant?.id}
-                unitPrice={parsePrice(selectedVariant?.price ?? displayProduct.price)}
-                preview={inBuilder || !displayProduct.id}
-                title={config.expressTitle}
-                buttonText={config.expressButtonText}
-                offers={normalizeOffers(store?.quantity_offers)}
-                delivery={{ delivery_fee: store?.delivery_fee, free_delivery_threshold: store?.free_delivery_threshold }}
-                beforeSubmit={() => {
-                  if (variantOptions.length > 0 && !selectedVariant) {
-                    setVariantError(true);
-                    return false;
-                  }
-                  return true;
-                }}
-                onStart={() => trackStoreEvent("InitiateCheckout", { contentId: displayProduct.id, value: parsePrice(selectedVariant?.price ?? displayProduct.price) })}
-                onOrdered={(orderId, total, quantity) => {
-                  trackStoreEvent("Purchase", { contentId: displayProduct.id, contentName: displayProduct.title, value: total, quantity, orderId });
-                  window.parent.postMessage({ type: "NAVIGATE", page: `merci/${orderId}` }, "*");
-                }}
-              />
+
+            {showForm && (
+              <div ref={formRef} id="order-form" className="scroll-mt-24">
+                <ExpressOrderForm
+                  storeId={storeId}
+                  productId={displayProduct.id}
+                  variantId={selectedVariant?.id}
+                  unitPrice={unitPrice}
+                  preview={inBuilder || !displayProduct.id}
+                  title={config.expressTitle}
+                  buttonText={config.expressButtonText}
+                  offers={normalizeOffers(store?.quantity_offers)}
+                  delivery={{ delivery_fee: store?.delivery_fee, free_delivery_threshold: store?.free_delivery_threshold }}
+                  beforeSubmit={() => {
+                    if (variantOptions.length > 0 && !selectedVariant) {
+                      setVariantError(true);
+                      return false;
+                    }
+                    return true;
+                  }}
+                  onStart={() => trackStoreEvent("InitiateCheckout", { contentId: displayProduct.id, value: unitPrice })}
+                  onOrdered={(orderId, total, quantity) => {
+                    trackStoreEvent("Purchase", { contentId: displayProduct.id, contentName: displayProduct.title, value: total, quantity, orderId });
+                    window.parent.postMessage({ type: "NAVIGATE", page: `merci/${orderId}` }, "*");
+                  }}
+                />
+              </div>
             )}
-            <button onClick={() => {
-              if (variantOptions.length > 0 && !selectedVariant) {
-                setVariantError(true);
-                return;
-              }
-              onAddToCart?.({
-                id: displayProduct.id,
-                title: displayProduct.title,
-                price: selectedVariant?.price ?? displayProduct.price,
-                image: images[0],
-                variantId: selectedVariant?.id,
-                variantLabel: selectedVariant?.label,
-              });
-            }} className={config.expressOrder === false ? "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all" : "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors"}>{t("cart.add")}</button>
+            <button
+              type="button"
+              onClick={addToCart}
+              className={showForm ? "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors" : "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"}
+            >
+              {t("cart.add")}
+            </button>
           </div>
         </div>
+
+        {(displayProduct.description || sales.faq.length > 0) && (
+          <div className="mx-auto mt-12 max-w-3xl space-y-10">
+            {displayProduct.description && (
+              <div className="space-y-3">
+                <h2 className="text-xl font-black">{t("products.description")}</h2>
+                <p className="text-base leading-relaxed text-muted-foreground whitespace-pre-line" dir="auto">{displayProduct.description}</p>
+              </div>
+            )}
+            {sales.faq.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-xl font-black">{t("products.faq")}</h2>
+                <div className="space-y-2">
+                  {sales.faq.map((item, idx) => (
+                    <details key={idx} className="group rounded-2xl border border-border bg-card px-5 py-4 open:shadow-sm" open={idx === 0}>
+                      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-bold [&::-webkit-details-marker]:hidden">
+                        <span dir="auto">{item.question}</span>
+                        <span className="text-xs transition-transform group-open:rotate-180">▼</span>
+                      </summary>
+                      <p className="mt-3 leading-relaxed text-muted-foreground whitespace-pre-line" dir="auto">{item.answer}</p>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+      {showForm && !formVisible && !inBuilder && (
+        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border bg-white/95 px-4 py-3 backdrop-blur md:hidden">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs text-muted-foreground" dir="auto">{displayProduct.title}</p>
+            <p className="text-lg font-black text-primary">{money(unitPrice)}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className="shrink-0 rounded-xl bg-primary px-6 py-3 font-black text-white shadow-lg"
+          >
+            {t("cart.order")}
+          </button>
+        </div>
+      )}
     </section>
   );
 };
@@ -816,6 +947,8 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: 
               description: p.description,
               variants: p.variants,
               has_variants: p.has_variants,
+              compare_at_price: p.compare_at_price,
+              sales_content: p.sales_content,
             })));
           }
           setLoadingProducts(false);
@@ -853,14 +986,29 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: 
               const data = typeof item === 'number' ? { title: `Produit ${item}`, price: "49.00", image: placeholders[i % 3] } : item;
               return (
                 <div key={data.id || i} className="group cursor-pointer" onClick={() => handleProductClick(data)}>
-                  <div className="aspect-[4/5] bg-muted rounded-3xl mb-6 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all">
-                    <img src={data.image || placeholders[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
+                  <div className="aspect-[4/5] bg-muted rounded-3xl mb-4 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all">
+                    <img src={data.image || placeholders[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" loading="lazy" />
+                    {(() => {
+                      const off = discountPercent(parsePrice(data.price), data.compare_at_price);
+                      const badge = normalizeSalesContent(data.sales_content).badge;
+                      return off > 0 || badge ? (
+                        <div className="pointer-events-none absolute start-3 top-3 flex flex-col items-start gap-1.5">
+                          {off > 0 && <span className="rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-black text-white">-{off}%</span>}
+                          {badge && <span className="rounded-full bg-white/95 px-2.5 py-0.5 text-[11px] font-bold text-gray-900" dir="auto">{badge}</span>}
+                        </div>
+                      ) : null;
+                    })()}
                     <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(data); }} className="absolute bottom-4 inset-x-4 bg-white text-black py-3 rounded-xl font-bold text-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">{t("cart.add")}</button>
                   </div>
                   {hasRealProducts ? (
                     <>
-                      <h3 className="font-bold text-lg" dir="auto">{data.title}</h3>
-                      <p className="text-primary font-black">{money(parsePrice(data.price))}</p>
+                      <h3 className="font-bold text-base md:text-lg leading-snug" dir="auto">{data.title}</h3>
+                      <p className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-primary font-black">{money(parsePrice(data.price))}</span>
+                        {discountPercent(parsePrice(data.price), data.compare_at_price) > 0 && (
+                          <span className="text-sm text-muted-foreground line-through">{money(parsePrice(data.compare_at_price))}</span>
+                        )}
+                      </p>
                     </>
                   ) : (
                     <>
@@ -2252,7 +2400,7 @@ const WhatsAppButton = ({ store, currentPage, productTitle }: { store: any; curr
       target="_blank"
       rel="noreferrer"
       aria-label="WhatsApp"
-      className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl transition-transform hover:scale-105"
+      className={`fixed ${currentPage === "product-detail" ? "bottom-24 md:bottom-5" : "bottom-5"} end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl transition-transform hover:scale-105`}
     >
       <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
         <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.43 9.43 0 1 1 7.99 4.42zm8.02-17.45A11.33 11.33 0 0 0 12.05.7C5.8.7.7 5.78.7 12.04c0 2 .52 3.95 1.52 5.67L.6 23.3l5.73-1.5a11.3 11.3 0 0 0 5.72 1.46h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.33-8.02z" />

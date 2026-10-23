@@ -40,6 +40,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -56,6 +66,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useQuota } from "@/hooks/use-quota";
 import { QuotaAlert } from "@/components/ui/quota-alert";
+import { ProductSalesFields } from "@/components/seller/ProductSalesFields";
+import { discountPercent, normalizeSalesContent, type SalesContent } from "@/lib/product-sales";
 
 interface Variant {
   id: string;
@@ -80,6 +92,8 @@ interface StoreProduct {
   category?: string;
   variants?: Variant[];
   has_variants?: boolean;
+  compare_at_price?: number | null;
+  sales_content?: unknown;
   products?: {
     base_price: number;
     profiles?: { full_name: string };
@@ -121,6 +135,7 @@ export default function MyProductsPage() {
   
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<StoreProduct | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<StoreProduct | null>(null);
   const [productLoading, setProductLoading] = useState(false);
   const [productForm, setProductForm] = useState({
     name: "",
@@ -131,6 +146,8 @@ export default function MyProductsPage() {
     category: "",
     hasVariants: false,
     variants: [] as Variant[],
+    compareAt: "",
+    sales: { badge: "", highlights: [], faq: [] } as SalesContent,
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [storeId, setStoreId] = useState<string | null>(null);
@@ -301,6 +318,8 @@ export default function MyProductsPage() {
       category: "",
       hasVariants: false,
       variants: [],
+      compareAt: "",
+      sales: { badge: "", highlights: [], faq: [] },
     });
     setShowProductDialog(true);
   };
@@ -320,6 +339,8 @@ export default function MyProductsPage() {
       category: product.category || "",
       hasVariants: product.has_variants || false,
       variants: product.variants || [],
+      compareAt: product.compare_at_price != null ? String(Number(product.compare_at_price)) : "",
+      sales: normalizeSalesContent(product.sales_content),
     });
     setShowProductDialog(true);
   };
@@ -327,6 +348,22 @@ export default function MyProductsPage() {
   const handleSaveProduct = async () => {
     if (!productForm.name || !productForm.price) {
       toast.error(t("seller_app.products.required"));
+      return;
+    }
+
+    const price = parseFloat(productForm.price.replace(",", "."));
+    const supplierPrice = Number(editingProduct?.products?.base_price || 0);
+    if (!Number.isFinite(price) || price <= 0) {
+      toast.error(t("seller_app.products.required"));
+      return;
+    }
+    if (editingProduct?.product_id && supplierPrice > 0 && price <= supplierPrice) {
+      toast.error(t("seller_app.products.below_cost").replace("{price}", formatPrice(supplierPrice)));
+      return;
+    }
+    const compareAt = parseFloat(productForm.compareAt.replace(",", "."));
+    if (productForm.compareAt.trim() && discountPercent(price, compareAt) === 0) {
+      toast.error(t("seller_app.products.sales.compare_invalid"));
       return;
     }
 
@@ -348,7 +385,9 @@ export default function MyProductsPage() {
       name: productForm.name,
       description: productForm.description,
       images: productForm.images.length > 0 ? productForm.images : ["/placeholder-product.jpg"],
-      selling_price: parseFloat(productForm.price),
+      selling_price: Math.round(price * 100) / 100,
+      compare_at_price: productForm.compareAt.trim() ? Math.round(compareAt * 100) / 100 : null,
+      sales_content: normalizeSalesContent(productForm.sales),
       stock_quantity: productForm.stock ? parseInt(productForm.stock) : null,
       category: productForm.category,
       has_variants: productForm.hasVariants,
@@ -492,37 +531,37 @@ export default function MyProductsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-2 md:gap-4">
         <Card className="border-gray-100">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
-              <Package className="w-6 h-6 text-indigo-600" />
+          <CardContent className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
+              <Package className="w-5 h-5 md:w-6 md:h-6 text-indigo-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{products.length}</p>
-              <p className="text-sm text-gray-500">{t("seller_app.products.total")}</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{products.length}</p>
+              <p className="text-xs md:text-sm text-gray-500 leading-tight">{t("seller_app.products.total")}</p>
             </div>
           </CardContent>
         </Card>
         <Card className="border-gray-100">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-              <Truck className="w-6 h-6 text-purple-600" />
+          <CardContent className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+              <Truck className="w-5 h-5 md:w-6 md:h-6 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{dropshippingProducts.length}</p>
-              <p className="text-sm text-gray-500">{t("seller_app.products.dropshipping")}</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{dropshippingProducts.length}</p>
+              <p className="text-xs md:text-sm text-gray-500 leading-tight">{t("seller_app.products.dropshipping")}</p>
             </div>
           </CardContent>
         </Card>
         <Card className="border-gray-100">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <Store className="w-6 h-6 text-emerald-600" />
+          <CardContent className="p-3 md:p-4 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4">
+            <div className="w-9 h-9 md:w-12 md:h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <Store className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{ownProducts.length}</p>
-              <p className="text-sm text-gray-500">{t("seller_app.products.own_products")}</p>
+              <p className="text-xl md:text-2xl font-bold text-gray-900">{ownProducts.length}</p>
+              <p className="text-xs md:text-sm text-gray-500 leading-tight">{t("seller_app.products.own_products")}</p>
             </div>
           </CardContent>
         </Card>
@@ -617,12 +656,12 @@ export default function MyProductsPage() {
                     <Badge className="bg-gray-800 text-white">{t("seller_app.products.inactive")}</Badge>
                   </div>
                 )}
-                <Badge className={`absolute top-2 left-2 ${product.source === "dropshipping" ? "bg-purple-500" : "bg-emerald-500"} text-white text-xs`}>
+                <Badge className={`absolute top-2 start-2 ${product.source === "dropshipping" ? "bg-purple-500" : "bg-emerald-500"} text-white text-xs`}>
                   {product.source === "dropshipping" ? t("seller_app.products.dropshipping") : t("seller_app.products.mine")}
                 </Badge>
                 {product.has_variants && product.variants && product.variants.length > 0 && (
-                  <Badge className="absolute top-2 left-24 bg-blue-500 text-white text-xs">
-                    {product.variants.length} variantes
+                  <Badge className="absolute bottom-2 start-2 bg-blue-500 text-white text-xs">
+                    {t("seller_app.products.variants_count").replace("{count}", String(product.variants.length))}
                   </Badge>
                 )}
                 <DropdownMenu>
@@ -630,7 +669,8 @@ export default function MyProductsPage() {
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 end-2 h-8 w-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                      aria-label={t("seller_app.products.edit")}
                     >
                       <MoreVertical className="w-4 h-4" />
                     </Button>
@@ -654,7 +694,7 @@ export default function MyProductsPage() {
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDeleteProduct(product)}
+                      onClick={() => setDeletingProduct(product)}
                       className="text-red-600 focus:text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -680,9 +720,13 @@ export default function MyProductsPage() {
                 </div>
                 {product.source === "dropshipping" && product.products?.profiles?.full_name && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Fournisseur: {product.products.profiles.full_name}
+                    {t("seller_app.products.supplier_label")} {product.products.profiles.full_name}
                   </p>
                 )}
+                <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => openEditDialog(product)}>
+                  <Edit className="w-4 h-4 me-2" />
+                  {t("seller_app.products.edit_page")}
+                </Button>
               </div>
             </motion.div>
           ))}
@@ -717,7 +761,7 @@ export default function MyProductsPage() {
                   )}
                   {product.has_variants && product.variants && product.variants.length > 0 && (
                     <Badge className="bg-blue-100 text-blue-700 text-xs">
-                      {product.variants.length} variantes
+                      {t("seller_app.products.variants_count").replace("{count}", String(product.variants.length))}
                     </Badge>
                   )}
                 </div>
@@ -760,7 +804,7 @@ export default function MyProductsPage() {
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDeleteProduct(product)}
+                      onClick={() => setDeletingProduct(product)}
                       className="text-red-600 focus:text-red-600"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
@@ -773,6 +817,27 @@ export default function MyProductsPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={Boolean(deletingProduct)} onOpenChange={(open) => !open && setDeletingProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("seller_app.products.delete_title").replace("{name}", deletingProduct?.name || "")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("seller_app.products.delete_body")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("seller_app.products.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => {
+                if (deletingProduct) void handleDeleteProduct(deletingProduct);
+                setDeletingProduct(null);
+              }}
+            >
+              {t("seller_app.products.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1121,6 +1186,14 @@ export default function MyProductsPage() {
                 )}
               </div>
             )}
+
+            <ProductSalesFields
+              price={productForm.price}
+              compareAt={productForm.compareAt}
+              onCompareAtChange={(value) => setProductForm({ ...productForm, compareAt: value })}
+              content={productForm.sales}
+              onChange={(sales) => setProductForm({ ...productForm, sales })}
+            />
 
             <div className="flex gap-3 pt-4">
               <Button
