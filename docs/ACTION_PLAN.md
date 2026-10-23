@@ -1,5 +1,33 @@
 # Dropy — Action plan to a functional platform
 
+## Roadmap 2026-10-23 — competing with Converty
+
+Live since the last status: subdomain per store (`<boutique>.dropy.store`), rebuilt visual editor (sections,
+pages, style, FR/AR, mobile), 9 themes with niche home pages, store generator ("Que vendez-vous ?"), Arabic and
+bilingual storefronts, product sales pages (old price, badge, benefits, product FAQ, sticky order bar),
+abandoned-order recovery, WhatsApp order confirmation, newsletter, Google/Meta/TikTok integrations, Claude (MCP).
+
+Benchmark: features seen in a live Converty account (read-only review). Priority = impact for Tunisian
+cash-on-delivery sellers ÷ effort.
+
+| Prio | Feature | What it means for Dropy | Size | Needs from you |
+|---|---|---|---|---|
+| **P1** | **Fake-order protection** | Block a phone / IP / customer from an order; max quantity and max amount per order; optional block of VPN/datacenter IPs and desktop orders; anti-bot check (Cloudflare Turnstile) on the order form; "suspicious" flag on orders | M | Turnstile keys (free) |
+| **P1** | **Custom domain** (`maboutique.tn`) in addition to the free subdomain | Seller enters a domain → added to the Vercel project through the Vercel API → DNS instructions shown (A `76.76.21.21` for the root, CNAME `cname.vercel-dns.com` for `www`) → status checked until verified → SSL automatic → middleware maps the host to the store (cached lookup), canonical URLs/sitemap use the custom domain, subdomain redirects to it | M | `VERCEL_API_TOKEN` + project/team id in Vercel env; decide if free or paid later |
+| **P1** | **Delivery companies** | Connect real carriers (create shipment, print the label/bordereau, automatic tracking and status sync, returns). One integration per carrier, starting with the 2–3 most used by sellers; generic "own delivery" + Excel export meanwhile | L (per carrier M) | Which carriers + their API docs/keys |
+| **P2** | **Confirmation team** | Team members with an "agent" role, manual or automatic order dispatch (rules), agent performance; statistics: confirmation rate, delivery rate, return rate, rejection reasons, average confirmation time | L | — |
+| **P2** | **Manual order entry** | Create an order from the dashboard (phone/WhatsApp orders), optionally by pasting a WhatsApp message | S–M | — |
+| **P2** | **Checkout options** | Express / cart / both; form position on the product page; custom fields (2nd phone, note…); sticky "shaking" order button | M | — |
+| **P2** | **Upsells, bundles, related products** | Offer a second product after the order or in the form ("add X for +15 DT"), product bundles, related products per product | M | — |
+| **P2** | **Ad statistics** | Capture UTM / `fbclid` / `ttclid` on each order → orders, confirmed, delivered and profit per campaign / ad set / ad; Meta Conversions API (server-side events) | M | Meta CAPI token per store (seller) |
+| **P3** | **Product video & reviews** | MP4 video in the gallery; product reviews (manual import + moderation) | S–M | — |
+| **P3** | **Automatic SMS per delivery status** | Confirmed / shipped / delivered / return SMS | M | SMS provider + budget |
+| **P3** | **AI tools** | AI sales-page generator from a product, AI chatbot on the store answering from products and FAQ (Claude API) | M | Anthropic API key + budget |
+| **P3** | **Operations** | Stock value, per-product shipping fee, weight-based delivery pricing, "landing page only" / "link only" products, Google Sheets sync, invoices, English storefront | M | — |
+
+Already ahead of Converty: free section-based builder and store generator, supplier catalog with dropshipping
+fulfilment, Claude Desktop (MCP), free launch, subdomain per store.
+
 ## Status 2026-10-20 (branch `fix/production-readiness`)
 
 Decision: **everything is free during launch** (`NEXT_PUBLIC_FREE_LAUNCH=true`). Paid plans come later through a
