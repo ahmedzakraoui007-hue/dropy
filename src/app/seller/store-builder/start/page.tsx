@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn, formatPrice } from "@/lib/utils";
 import { slugError, slugify } from "@/lib/store-slug";
 import { themeHeroImage, themes } from "@/lib/themes";
+import { normalizeStorefrontLanguage } from "@/lib/storefront-i18n";
 import { useThemes } from "@/hooks/store-builder/useThemes";
 import { storeDisplayUrl, storeViewHref } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
@@ -32,6 +33,7 @@ export default function StoreSetupWizard() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
+  const [language, setLanguage] = useState<"fr" | "ar" | "both">("fr");
   const [saving, setSaving] = useState(false);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [imported, setImported] = useState<Set<string>>(new Set());
@@ -43,6 +45,7 @@ export default function StoreSetupWizard() {
     if (!store) return;
     setName((prev) => prev || store.name);
     setSlug((prev) => prev || store.slug);
+    setLanguage(normalizeStorefrontLanguage(store.storefront_language));
   }, [store]);
 
   useEffect(() => {
@@ -105,13 +108,13 @@ export default function StoreSetupWizard() {
         return;
       }
     }
-    const { error } = await supabase.from("stores").update({ name: name.trim(), slug }).eq("id", store.id);
+    const { error } = await supabase.from("stores").update({ name: name.trim(), slug, storefront_language: language }).eq("id", store.id);
     setSaving(false);
     if (error) {
       toast.error(t("store_builder.settings.errors.save"));
       return;
     }
-    setStore({ ...store, name: name.trim(), slug });
+    setStore({ ...store, name: name.trim(), slug, storefront_language: language });
     setStep(1);
   };
 
@@ -215,6 +218,26 @@ export default function StoreSetupWizard() {
                 }}
               />
               {slugCode && <p className="text-sm text-red-600">{t(`store_builder.settings.errors.${slugCode}`)}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label>{t("store_builder.settings.language.label")}</Label>
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t("store_builder.settings.language.label")}>
+                {(["fr", "ar", "both"] as const).map((code) => (
+                  <button
+                    key={code}
+                    type="button"
+                    role="radio"
+                    aria-checked={language === code}
+                    onClick={() => setLanguage(code)}
+                    className={cn(
+                      "rounded-xl border-2 px-2 py-2.5 text-sm font-bold transition-colors",
+                      language === code ? "border-purple-600 bg-purple-50 text-purple-700" : "border-gray-100 hover:border-purple-200"
+                    )}
+                  >
+                    {t(`store_builder.settings.language.${code}`)}
+                  </button>
+                ))}
+              </div>
             </div>
             <Button onClick={saveStore} disabled={saving} className="w-full h-12 rounded-xl bg-purple-600 hover:bg-purple-700 font-bold">
               {saving && <Loader2 className="w-4 h-4 me-2 animate-spin" />}

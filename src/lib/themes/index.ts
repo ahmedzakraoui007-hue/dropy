@@ -1,5 +1,5 @@
 import { Theme } from '@/types/themes';
-import { buildHomeSections } from './home-sections';
+import { buildHomeSections, type HomeNiche } from './home-sections';
 
 export const themes: Theme[] = [
     {
@@ -277,4 +277,21 @@ export function themeHeroImage(theme: Theme, width = 800) {
     const hero = (theme.defaultSections || []).find((section: any) => section.type === 'hero') as any;
     const url = hero?.config?.backgroundImage as string | undefined;
     return url ? url.replace(/w=\d+/, `w=${width}`) : theme.thumbnail;
+}
+
+const THEME_NICHE: Record<string, HomeNiche> = {
+    minimal: 'general',
+    modern: 'home',
+    elegant: 'jewelry',
+    bold: 'streetwear',
+    dark: 'tech',
+    artisan: 'craft',
+    electro: 'electronics',
+    glow: 'beauty',
+    pulse: 'sport',
+};
+
+export function themeHomeSections(theme: Theme, lang: 'fr' | 'ar' = 'fr') {
+    const niche = THEME_NICHE[theme.id];
+    return niche ? buildHomeSections(niche, lang) : theme.defaultSections || [];
 }

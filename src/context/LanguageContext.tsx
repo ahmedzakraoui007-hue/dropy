@@ -64,8 +64,10 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+    if (!document.documentElement.hasAttribute('data-storefront')) {
+      document.documentElement.lang = locale;
+      document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
+    }
     localStorage.setItem('locale', locale);
   }, [locale]);
 

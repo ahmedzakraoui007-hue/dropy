@@ -15,6 +15,7 @@ export interface SellerStore {
   seo_title: string | null;
   seo_description: string | null;
   whatsapp_number: string | null;
+  storefront_language: string | null;
   facebook_pixel_id: string | null;
   tiktok_pixel_id: string | null;
   google_analytics_id: string | null;

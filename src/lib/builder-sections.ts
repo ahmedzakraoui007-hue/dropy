@@ -20,6 +20,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { PLACEHOLDERS_AR } from "@/lib/builder-sections-ar";
+
 export type SectionCategory = "essentials" | "products" | "content" | "trust" | "pages";
 
 export type SectionType = {
@@ -90,7 +92,18 @@ const POLICY_TEXT: Record<string, { title: string; content: string }> = {
   },
 };
 
-export const getPlaceholderConfig = (type: string): Record<string, any> => {
+export const getPlaceholderConfig = (type: string, lang: "fr" | "ar" = "fr"): Record<string, any> => {
+  const base = placeholderFr(type);
+  if (lang !== "ar" || !PLACEHOLDERS_AR[type]) return base;
+  const { itemTitles, ...ar } = PLACEHOLDERS_AR[type];
+  const merged = { ...base, ...ar };
+  if (Array.isArray(itemTitles) && Array.isArray(base.items)) {
+    merged.items = base.items.map((item: Record<string, any>, i: number) => ({ ...item, title: itemTitles[i] ?? item.title }));
+  }
+  return merged;
+};
+
+const placeholderFr = (type: string): Record<string, any> => {
   if (POLICY_TEXT[type]) return { ...POLICY_TEXT[type] };
   switch (type) {
     case "hero":

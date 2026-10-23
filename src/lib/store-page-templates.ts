@@ -1,4 +1,5 @@
 import { getPlaceholderConfig } from "@/lib/builder-sections";
+import { PAGE_TITLES_AR } from "@/lib/builder-sections-ar";
 
 export type PageTemplateKind =
   | "shop"
@@ -75,16 +76,18 @@ const TEMPLATES: Record<Exclude<PageTemplateKind, "blank">, TemplatePage> = {
   },
 };
 
-export function makeSection(type: string, config?: Record<string, any>) {
-  return { id: crypto.randomUUID(), type, config: { ...getPlaceholderConfig(type), ...(config || {}) }, position: 0, is_visible: true };
+export function makeSection(type: string, config?: Record<string, any>, lang: "fr" | "ar" = "fr") {
+  return { id: crypto.randomUUID(), type, config: { ...getPlaceholderConfig(type, lang), ...(config || {}) }, position: 0, is_visible: true };
 }
 
-export function buildPageTemplate(kind: Exclude<PageTemplateKind, "blank">) {
+export function buildPageTemplate(kind: Exclude<PageTemplateKind, "blank">, lang: "fr" | "ar" = "fr") {
   const template = TEMPLATES[kind];
+  const overrides = (s: { type: string; config?: Record<string, any> }) =>
+    lang === "ar" && kind === "shop" && s.type === "products" ? { ...s.config, title: PAGE_TITLES_AR.all_products } : s.config;
   return {
     slug: template.slug,
-    title: template.title,
+    title: lang === "ar" ? PAGE_TITLES_AR[kind] || template.title : template.title,
     showInMenu: template.showInMenu,
-    sections: template.sections.map((s, position) => ({ ...makeSection(s.type, s.config), position })),
+    sections: template.sections.map((s, position) => ({ ...makeSection(s.type, overrides(s), lang), position })),
   };
 }

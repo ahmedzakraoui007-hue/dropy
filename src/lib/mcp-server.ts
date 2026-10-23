@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashMcpToken } from "@/lib/mcp-tokens";
-import { themes } from "@/lib/themes";
+import { themeHomeSections, themes } from "@/lib/themes";
 import { importCatalogProductIntoStore, CATALOG_IMPORT_MESSAGES } from "@/lib/catalog-import";
 import { normalizeOffers } from "@/lib/store-pricing";
 import { storeUrl } from "@/lib/store-url";
@@ -201,8 +201,9 @@ const TOOLS: Record<string, { description: string; inputSchema: Record<string, u
       };
       const { error } = await ctx.admin.from("stores").update({ theme_config: themeConfig }).eq("id", ctx.store.id);
       if (error) throw new ToolError(error.message);
-      if (args.replace_home && theme.defaultSections?.length) {
-        const sections = theme.defaultSections.map((s, i) => ({ ...s, id: randomUUID(), position: i }));
+      const homeSections = themeHomeSections(theme, ctx.store.storefront_language === "ar" ? "ar" : "fr");
+      if (args.replace_home && homeSections.length) {
+        const sections = homeSections.map((s, i) => ({ ...s, id: randomUUID(), position: i }));
         const { data: home } = await ctx.admin.from("store_pages").select("id").eq("store_id", ctx.store.id).eq("is_homepage", true).limit(1).maybeSingle();
         if (home) await ctx.admin.from("store_pages").update({ sections }).eq("id", home.id);
       }

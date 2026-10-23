@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { themes, getThemeById } from '@/lib/themes';
+import { themes, getThemeById, themeHomeSections } from '@/lib/themes';
 import { Theme } from '@/types/themes';
 import { toast } from 'sonner';
 import { useTranslation } from '@/context/LanguageContext';
@@ -57,7 +57,7 @@ export function useThemes() {
       // 0. Récupérer le store_id et le nom
       const { data: store, error: storeError } = await supabase
         .from('stores')
-        .select('id, name, theme_config')
+        .select('id, name, theme_config, storefront_language')
         .eq('vendor_id', user.id)
         .order('created_at', { ascending: true }).limit(1).maybeSingle();
 
@@ -95,7 +95,7 @@ export function useThemes() {
         .eq('id', store.id);
       if (storeThemeError) throw new Error(`Erreur thème boutique: ${storeThemeError.message}`);
 
-      const homeSections = (theme.defaultSections || []).map((section) => ({
+      const homeSections = themeHomeSections(theme, store.storefront_language === 'ar' ? 'ar' : 'fr').map((section) => ({
         ...section,
         id: crypto.randomUUID(),
       }));
