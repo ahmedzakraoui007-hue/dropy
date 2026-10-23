@@ -973,7 +973,7 @@ export default function BuilderPage() {
         </button>
 
         <Button variant="outline" size="sm" asChild className="hidden shrink-0 sm:inline-flex">
-          <a href={viewHref} target="_blank" rel="noreferrer">
+          <a href={viewHref} target="_blank" rel="noreferrer" aria-label={tr("view")}>
             <ExternalLink className="h-4 w-4 sm:me-1" />
             <span className="hidden xl:inline">{tr("view")}</span>
           </a>
@@ -982,7 +982,7 @@ export default function BuilderPage() {
         {isOnline ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="outline" className="shrink-0 border-emerald-300 text-emerald-700">
+              <Button size="sm" variant="outline" className="shrink-0 border-emerald-300 text-emerald-700" aria-label={t("store_builder.hub.online")}>
                 <span className="me-1.5 h-2 w-2 rounded-full bg-emerald-500" />
                 <span className="hidden sm:inline">{t("store_builder.hub.online")}</span>
               </Button>
@@ -1006,7 +1006,7 @@ export default function BuilderPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button size="sm" className="shrink-0 bg-gradient-to-r from-violet-600 to-teal-500 text-white hover:opacity-90" onClick={() => void setStoreOnline(true)} disabled={publishing}>
+          <Button size="sm" className="shrink-0 bg-gradient-to-r from-violet-600 to-teal-500 text-white hover:opacity-90" onClick={() => void setStoreOnline(true)} disabled={publishing} aria-label={tr("publish.cta")}>
             {publishing ? <Loader2 className="h-4 w-4 animate-spin sm:me-1" /> : <Rocket className="h-4 w-4 sm:me-1" />}
             <span className="hidden sm:inline">{tr("publish.cta")}</span>
           </Button>

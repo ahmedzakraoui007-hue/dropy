@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type QuantityOffer } from "@/lib/store-pricing";
 import { governorateLabel, orderErrorText } from "@/lib/storefront-i18n";
@@ -48,6 +48,29 @@ export function ExpressOrderForm({
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
+  const leadIdRef = useRef<string | null>(null);
+  const submittedRef = useRef(false);
+
+  useEffect(() => {
+    if (preview || !storeId || !productId || submittedRef.current) return;
+    const phone = form.phone.replace(/\D/g, "").replace(/^216/, "");
+    if (!/^[2-9]\d{7}$/.test(phone)) return;
+    const timer = setTimeout(() => {
+      if (submittedRef.current) return;
+      fetch("/api/store/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storeId, productId, variantId: variantId || null, quantity, leadId: leadIdRef.current, ...form, phone }),
+        keepalive: true,
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.leadId) leadIdRef.current = data.leadId;
+        })
+        .catch(() => {});
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [form, quantity, variantId, preview, storeId, productId]);
 
   const update = (field: keyof typeof form, value: string) => {
     if (!started) {
@@ -80,6 +103,7 @@ export function ExpressOrderForm({
     }
 
     setSubmitting(true);
+    submittedRef.current = true;
     try {
       const response = await fetch("/api/store/orders", {
         method: "POST",
@@ -99,8 +123,12 @@ export function ExpressOrderForm({
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok && data.success) onOrdered(data.orderId, Number(data.totalAmount ?? total), quantity);
-      else setServerError(orderErrorText(data.code, t));
+      else {
+        submittedRef.current = false;
+        setServerError(orderErrorText(data.code, t));
+      }
     } catch {
+      submittedRef.current = false;
       setServerError(t("express.network"));
     } finally {
       setSubmitting(false);
@@ -135,6 +163,7 @@ export function ExpressOrderForm({
           onChange={(e) => update("phone", e.target.value)}
         />
         {errors.phone && <p className="mt-1 text-xs font-medium text-red-600">{errors.phone}</p>}
+        <p className="mt-1 text-[11px] opacity-60">{t("express.privacy")}</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>

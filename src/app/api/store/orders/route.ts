@@ -346,6 +346,13 @@ export async function POST(request: Request) {
       });
     }
 
+    await supabase
+      .from("store_order_leads")
+      .update({ status: "converted", order_id: order.id, updated_at: new Date().toISOString() })
+      .eq("store_id", storeId)
+      .eq("customer_phone", customerPhone.replace(/\D/g, "").replace(/^216/, ""))
+      .in("status", ["open", "contacted"]);
+
     return NextResponse.json({ success: true, orderId: order.id, orderNumber: number, totalAmount });
   } catch (error) {
     console.error("Order error:", error);

@@ -1,5 +1,32 @@
 {
     "seller_app": {
+        "leads": {
+            "title": "Commandes non finalisées",
+            "subtitle": "Ces visiteurs ont laissé leur numéro dans le formulaire de commande sans le valider. Un appel ou un message WhatsApp rapide permet souvent de récupérer la vente.",
+            "back": "Retour aux commandes",
+            "tabs": {
+                "open": "À rappeler",
+                "contacted": "Contactés",
+                "converted": "Ont commandé"
+            },
+            "empty": {
+                "open": "Personne à rappeler pour le moment.",
+                "contacted": "Aucun client contacté.",
+                "converted": "Aucune commande récupérée pour le moment."
+            },
+            "empty_help": "Dès qu'un visiteur saisit son numéro sans valider sa commande, il apparaîtra ici.",
+            "no_name": "Client sans nom",
+            "call": "Appeler",
+            "mark_contacted": "Contacté",
+            "dismiss": "Ignorer",
+            "load_error": "Impossible de charger la liste.",
+            "update_error": "Impossible de mettre à jour.",
+            "whatsapp_message": "Bonjour {name}, ici la boutique {store}. Vous avez commencé une commande pour « {product} ». Souhaitez-vous la confirmer ? Nous livrons partout en Tunisie, paiement à la livraison.",
+            "retention": "Les contacts sont conservés 30 jours. Ils passent automatiquement dans « Ont commandé » quand le client commande.",
+            "banner_count": "{count} client(s) à rappeler",
+            "banner_help": "Visiteurs qui ont laissé leur numéro sans valider la commande.",
+            "open_list": "Voir"
+        },
         "status": {
             "new": "À confirmer",
             "confirmed": "Confirmée",
