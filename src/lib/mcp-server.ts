@@ -1,3 +1,4 @@
+import { normalizeSalesContent } from "@/lib/product-sales";
 import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hashMcpToken } from "@/lib/mcp-tokens";
@@ -352,15 +353,31 @@ const TOOLS: Record<string, { description: string; inputSchema: Record<string, u
     },
   },
   update_product: {
-    description: "Modifie un produit de la boutique : nom, description (HTML simple), prix, catégorie, visible ou non.",
+    description: "Modifie un produit de la boutique : nom, description, prix, ancien prix barré (compare_at_price, null pour retirer), catégorie, visible ou non, et la page de vente (sales_content : badge court, highlights = 3 à 6 points forts concrets, faq = questions/réponses). Ne jamais inventer de faux avis, de fausses garanties ou de faux chiffres.",
     inputSchema: {
       type: "object",
-      properties: { product_id: { type: "string" }, name: { type: "string" }, description: { type: "string" }, selling_price: { type: "number" }, category: { type: "string" }, active: { type: "boolean" } },
+      properties: {
+        product_id: { type: "string" },
+        name: { type: "string" },
+        description: { type: "string" },
+        selling_price: { type: "number" },
+        compare_at_price: { type: ["number", "null"] },
+        category: { type: "string" },
+        active: { type: "boolean" },
+        sales_content: {
+          type: "object",
+          properties: {
+            badge: { type: "string" },
+            highlights: { type: "array", items: { type: "string" } },
+            faq: { type: "array", items: { type: "object", properties: { question: { type: "string" }, answer: { type: "string" } } } },
+          },
+        },
+      },
       required: ["product_id"],
     },
     run: async (ctx, args) => {
       const id = str(args.product_id, "product_id", 64, true)!;
-      const { data: product } = await ctx.admin.from("store_products").select("id, product_id, is_dropship").eq("id", id).eq("store_id", ctx.store.id).maybeSingle();
+      const { data: product } = await ctx.admin.from("store_products").select("id, product_id, is_dropship, selling_price").eq("id", id).eq("store_id", ctx.store.id).maybeSingle();
       if (!product) throw new ToolError("Produit introuvable dans cette boutique.");
       const changes: Record<string, unknown> = {};
       const name = str(args.name, "name", 150);
@@ -378,6 +395,14 @@ const TOOLS: Record<string, { description: string; inputSchema: Record<string, u
         }
         changes.selling_price = Math.round(price * 100) / 100;
       }
+      if (args.compare_at_price === null) changes.compare_at_price = null;
+      const compareAt = num(args.compare_at_price, "compare_at_price", 0.01, 100000);
+      if (compareAt !== undefined) {
+        const current = Number(changes.selling_price ?? product.selling_price);
+        if (compareAt <= current) throw new ToolError("compare_at_price doit être supérieur au prix de vente.");
+        changes.compare_at_price = Math.round(compareAt * 100) / 100;
+      }
+      if (args.sales_content !== undefined) changes.sales_content = normalizeSalesContent(args.sales_content);
       if (!Object.keys(changes).length) throw new ToolError("Aucun changement fourni.");
       const { error } = await ctx.admin.from("store_products").update(changes).eq("id", id);
       if (error) throw new ToolError(error.message);
