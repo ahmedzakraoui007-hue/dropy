@@ -27,7 +27,8 @@ export function useOrders(sellerId: string, filters: OrderFilters) {
         .from('store_orders')
         .select(`
           *,
-          items:store_order_items(*)
+          items:store_order_items(*),
+          store:stores(name, storefront_language)
         `)
         .in('store_id', storeIds)
         .order('created_at', { ascending: false });

@@ -27,9 +27,9 @@ export async function GET(request: Request) {
     .select(
       `id, order_number, status, tracking_number, shipping_company, estimated_delivery, created_at,
        shipped_at, delivered_at, total_amount, subtotal, discount_amount, shipping_cost, payment_method,
-       customer_name, customer_phone, customer_address, customer_governorate,
+       customer_name, customer_phone, customer_address, customer_governorate, customer_delegation,
        items:store_order_items(product_name, quantity, unit_price, total_price, product_image, variant_info),
-       store:stores(name, logo_url, slug)`
+       store:stores(name, logo_url, slug, whatsapp_number, storefront_language)`
     );
 
   const { data: order } = id
@@ -43,11 +43,11 @@ export async function GET(request: Request) {
   const verified =
     Boolean(id) || (Boolean(phone) && lastDigits(phone).length === 8 && lastDigits(phone) === lastDigits(order.customer_phone));
 
-  const { customer_name, customer_phone, customer_address, customer_governorate, ...publicOrder } = order;
+  const { customer_name, customer_phone, customer_address, customer_governorate, customer_delegation, ...publicOrder } = order;
 
   return NextResponse.json({
     order: verified
-      ? { ...publicOrder, customer_name, customer_phone, customer_address, customer_governorate }
+      ? { ...publicOrder, customer_name, customer_phone, customer_address, customer_governorate, customer_delegation }
       : publicOrder,
     verified,
   });

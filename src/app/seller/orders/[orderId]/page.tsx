@@ -1,5 +1,6 @@
 "use client";
 
+import { sellerConfirmationMessage, whatsappLink } from "@/lib/order-messages";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -100,6 +101,7 @@ interface Order {
   seller_notes?: string;
   cancel_reason?: string | null;
   items: OrderItem[];
+  store?: { name: string; storefront_language: string | null } | null;
 }
 
 interface DropshippingTimeline {
@@ -198,7 +200,8 @@ export default function OrderDetailPage() {
         .from("store_orders")
         .select(`
           *,
-          items:store_order_items(*)
+          items:store_order_items(*),
+          store:stores(name, storefront_language)
         `)
         .eq("id", orderId)
         .single();
@@ -461,7 +464,7 @@ export default function OrderDetailPage() {
                     <a href={`tel:${order.customer_phone}`}><Phone className="w-4 h-4" />Appeler</a>
                   </Button>
                   <Button asChild variant="outline" className="bg-white gap-2">
-                    <a href={`https://wa.me/216${phoneDigits(order.customer_phone)}`} target="_blank" rel="noreferrer"><MessageSquare className="w-4 h-4" />WhatsApp</a>
+                    <a href={whatsappLink(order.customer_phone, sellerConfirmationMessage(order, order.store?.name || "", order.store?.storefront_language === "ar" ? "ar" : "fr"))} target="_blank" rel="noreferrer"><MessageSquare className="w-4 h-4" />WhatsApp</a>
                   </Button>
                 </>
               )}
