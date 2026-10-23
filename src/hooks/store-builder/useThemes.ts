@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { themes, getThemeById } from '@/lib/themes';
 import { Theme } from '@/types/themes';
 import { toast } from 'sonner';
+import { useTranslation } from '@/context/LanguageContext';
 
 export function useThemes() {
   const [currentThemeId, setCurrentThemeId] = useState<string | null>(null);
@@ -13,6 +14,7 @@ export function useThemes() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useTranslation();
 
   // Charger le thème actuel
   useEffect(() => {
@@ -130,18 +132,14 @@ export function useThemes() {
       }
 
       setCurrentThemeId(theme.id);
-      toast.success(`Thème "${theme.name}" appliqué avec succès !`);
+      toast.success(t('store_builder.editor.style.theme_applied').replace('{name}', t(`store_builder.themes.${theme.id}.name`)));
 
       if (options.redirect !== false) router.push('/seller/store-builder/builder');
       return true;
 
     } catch (error: any) {
-      console.error('Error applying theme (Full details):', JSON.stringify(error, null, 2));
-      console.error('Error applying theme (Message):', error?.message);
-
-      const errorMessage = error?.message || 'Erreur inconnue lors de l\'application';
-
-      toast.error(`Erreur: ${errorMessage}`);
+      console.error("Error applying theme:", error?.message || error);
+      toast.error(t("store_builder.editor.save_error"));
     } finally {
       setIsApplying(false);
     }

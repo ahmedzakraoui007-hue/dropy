@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { themes } from '@/lib/themes';
-import { ThemeCard } from './ThemeCard';
-import { ThemePreviewModal } from './ThemePreviewModal';
+import { Check, Loader2 } from 'lucide-react';
+import { themeHeroImage, themes } from '@/lib/themes';
 import { useThemes } from '@/hooks/store-builder/useThemes';
 import { useTranslation } from '@/context/LanguageContext';
 import { Theme } from '@/types/themes';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { firstFont } from '@/components/store-builder/editor/StylePanel';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,22 +21,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function ThemeGallery() {
-  const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [pendingTheme, setPendingTheme] = useState<Theme | null>(null);
   const { applyTheme, isApplying, currentThemeId, isLoading } = useThemes();
   const { t } = useTranslation();
   const tr = (key: string) => t(`store_builder.theme_dialog.${key}`);
-
-  const handlePreview = (theme: Theme) => {
-    setSelectedTheme(theme);
-    setPreviewOpen(true);
-  };
-
-  const handleApply = (theme: Theme) => {
-    setPreviewOpen(false);
-    setPendingTheme(theme);
-  };
+  const name = (theme: Theme) => t(`store_builder.themes.${theme.id}.name`);
 
   const confirmApply = async (replaceHome: boolean) => {
     if (!pendingTheme) return;
@@ -46,81 +36,86 @@ export function ThemeGallery() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Chargement des thèmes...</p>
+      <div className="flex justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Grouper par catégorie
-  const categories = [
-    { id: 'modern', label: 'Moderne & Épuré' },
-    { id: 'luxury', label: 'Luxe & Élégance' },
-    { id: 'creative', label: 'Créatif & Audacieux' },
-    { id: 'dark', label: 'Mode Sombre' },
-    { id: 'traditional', label: 'Traditionnel & Artisanal' },
-  ];
-
   return (
-    <div className="space-y-12 pb-20">
-      <div className="text-center max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Choisissez l'apparence de votre boutique</h1>
-        <p className="text-muted-foreground text-lg">
-          Sélectionnez un thème professionnel conçu pour convertir. Vous pourrez ensuite personnaliser chaque détail (couleurs, polices, textes) dans l'éditeur visuel.
-        </p>
+    <div className="space-y-8 pb-16">
+      <div className="max-w-2xl">
+        <h1 className="text-2xl font-bold md:text-3xl">{t('store_builder.theme_page.title')}</h1>
+        <p className="mt-2 text-muted-foreground">{t('store_builder.theme_page.subtitle')}</p>
       </div>
 
-      <div className="space-y-16">
-        {categories.map(category => {
-          const categoryThemes = themes.filter(t => t.category === category.id);
-          if (categoryThemes.length === 0) return null;
-
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {themes.map((theme) => {
+          const active = currentThemeId === theme.id;
+          const heading = firstFont(theme.typography?.headingFont);
           return (
-            <section key={category.id} className="space-y-6">
-              <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-bold">{category.label}</h2>
-                <div className="h-px bg-border flex-1" />
+            <div
+              key={theme.id}
+              className={cn(
+                'group overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-xl',
+                active ? 'border-primary ring-2 ring-primary/30' : 'border-border'
+              )}
+            >
+              <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                <img
+                  src={themeHeroImage(theme, 900)}
+                  alt=""
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                <div className="absolute inset-x-4 bottom-4 text-white">
+                  <p className="text-2xl font-bold leading-tight" style={{ fontFamily: heading }}>
+                    {name(theme)}
+                  </p>
+                  <p className="text-sm opacity-90">{t(`store_builder.themes.${theme.id}.niche`)}</p>
+                </div>
+                {active && (
+                  <span className="absolute end-3 top-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary shadow">
+                    <Check className="h-3.5 w-3.5" />
+                    {t('store_builder.theme_page.current')}
+                  </span>
+                )}
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {categoryThemes.map(theme => (
-                  <ThemeCard
-                    key={theme.id}
-                    theme={theme}
-                    isActive={currentThemeId === theme.id}
-                    onPreview={() => handlePreview(theme)}
-                    onApply={() => handleApply(theme)}
-                    isApplying={isApplying}
-                  />
-                ))}
+              <div className="flex items-center justify-between gap-3 p-4">
+                <div className="flex items-center gap-1.5">
+                  {[theme.colors.primary, theme.colors.secondary, theme.colors.accent].map((color, i) => (
+                    <span key={i} className="h-5 w-5 rounded-full border border-black/10" style={{ backgroundColor: color }} />
+                  ))}
+                </div>
+                <Button size="sm" variant={active ? 'outline' : 'default'} disabled={isApplying} onClick={() => setPendingTheme(theme)}>
+                  {active ? t('store_builder.theme_page.reapply') : t('store_builder.theme_page.use')}
+                </Button>
               </div>
-            </section>
+            </div>
           );
         })}
       </div>
 
-      {/* Modal de Preview */}
-      <ThemePreviewModal
-        theme={selectedTheme}
-        open={previewOpen}
-        onClose={() => setPreviewOpen(false)}
-        onApply={() => selectedTheme && handleApply(selectedTheme)}
+      <link
+        rel="stylesheet"
+        href={`https://fonts.googleapis.com/css2?${[...new Set(themes.map((th) => firstFont(th.typography?.headingFont)))]
+          .filter((f) => f !== 'Inter')
+          .map((f) => `family=${f.replace(/ /g, '+')}:wght@700`)
+          .join('&')}&display=swap`}
       />
 
-      <AlertDialog open={Boolean(pendingTheme)} onOpenChange={(open) => !open && setPendingTheme(null)}>
+      <AlertDialog open={!!pendingTheme} onOpenChange={(open) => !open && setPendingTheme(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{tr('title').replace('{name}', pendingTheme?.name ?? '')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {tr('body')}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{tr('title').replace('{name}', pendingTheme ? name(pendingTheme) : '')}</AlertDialogTitle>
+            <AlertDialogDescription>{tr('body')}</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
+          <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel disabled={isApplying}>{tr('cancel')}</AlertDialogCancel>
-            <AlertDialogAction disabled={isApplying} className="bg-secondary text-secondary-foreground hover:bg-secondary/80" onClick={() => confirmApply(false)}>
+            <Button variant="outline" disabled={isApplying} onClick={() => confirmApply(false)}>
               {tr('colors_only')}
-            </AlertDialogAction>
+            </Button>
             <AlertDialogAction disabled={isApplying} onClick={() => confirmApply(true)}>
               {tr('replace_home')}
             </AlertDialogAction>
