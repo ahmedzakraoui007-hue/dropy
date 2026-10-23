@@ -8,6 +8,7 @@ import { OrderCard } from '@/components/seller/orders/OrderCard';
 import { OrderDetailsModal } from '@/components/seller/orders/OrderDetailsModal';
 import { CancelOrderModal } from '@/components/seller/orders/CancelOrderModal';
 import { RealtimeOrdersListener } from '@/components/seller/orders/RealtimeOrdersListener';
+import { AbandonedLeadsBanner } from '@/components/seller/orders/AbandonedLeadsBanner';
 import { Order, OrderStatus, OrderFilters } from '@/types/orders';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -114,6 +115,8 @@ export default function SellerOrdersPage() {
           </Button>
         </div>
       </div>
+
+      <AbandonedLeadsBanner />
 
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row gap-4 items-end">
