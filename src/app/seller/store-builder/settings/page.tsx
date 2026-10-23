@@ -19,6 +19,7 @@ import { McpConnectCard } from "@/components/store-builder/McpConnectCard";
 import { SubscribersCard } from "@/components/store-builder/SubscribersCard";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
+import { normalizeStorefrontLanguage } from "@/lib/storefront-i18n";
 
 type Form = {
   name: string;
@@ -28,6 +29,7 @@ type Form = {
   seo_title: string;
   seo_description: string;
   whatsapp_number: string;
+  storefront_language: "fr" | "ar" | "both";
   facebook_pixel_id: string;
   tiktok_pixel_id: string;
   delivery_fee: string;
@@ -67,6 +69,7 @@ export default function StoreSettingsPage() {
       seo_title: store.seo_title || "",
       seo_description: store.seo_description || "",
       whatsapp_number: store.whatsapp_number || "",
+      storefront_language: normalizeStorefrontLanguage(store.storefront_language),
       facebook_pixel_id: store.facebook_pixel_id || "",
       tiktok_pixel_id: store.tiktok_pixel_id || "",
       google_analytics_id: store.google_analytics_id || "",
@@ -197,6 +200,7 @@ export default function StoreSettingsPage() {
       seo_title: form.seo_title.trim() || null,
       seo_description: form.seo_description.trim() || null,
       whatsapp_number: whatsapp || null,
+      storefront_language: form.storefront_language,
       facebook_pixel_id: form.facebook_pixel_id.trim() || null,
       tiktok_pixel_id: form.tiktok_pixel_id.trim().toUpperCase() || null,
       google_analytics_id: gaId || null,
@@ -249,6 +253,25 @@ export default function StoreSettingsPage() {
               placeholder={tr("description_ph")}
               onChange={(e) => update("description", e.target.value)}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>{tr("language.label")}</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" role="radiogroup" aria-label={tr("language.label")}>
+              {(["fr", "ar", "both"] as const).map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  role="radio"
+                  aria-checked={form.storefront_language === code}
+                  onClick={() => setForm((prev) => (prev ? { ...prev, storefront_language: code } : prev))}
+                  className={`rounded-2xl border-2 p-3 text-start transition-colors ${form.storefront_language === code ? "border-purple-600 bg-purple-50" : "border-gray-100 hover:border-purple-200"}`}
+                >
+                  <span className="block text-sm font-bold">{tr(`language.${code}`)}</span>
+                  <span className="block text-xs text-gray-500">{tr(`language.${code}_desc`)}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500">{tr("language.note")}</p>
           </div>
           <div className="space-y-2">
             <Label>{tr("logo")}</Label>

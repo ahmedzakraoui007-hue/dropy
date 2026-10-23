@@ -7,7 +7,9 @@ import { Loader2 } from "lucide-react";
 import { StarRating } from "@/components/reviews/StarRating";
 import { ReviewList } from "@/components/reviews/ReviewList";
 import { AddReviewForm } from "@/components/reviews/AddReviewForm";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { StoreLanguageProvider, StoreLanguageSwitch, useStoreText } from "@/components/storefront/StoreLanguage";
+import { governorateLabel, normalizeStorefrontLanguage, orderErrorText, storeText, type StoreTextKey } from "@/lib/storefront-i18n";
+import { TUNISIAN_GOVERNORATES } from "@/components/storefront/ExpressOrderForm";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 import { SectionIcon } from "@/components/storefront/SectionIcon";
 import { storeBasePath } from "@/lib/store-url";
@@ -31,6 +33,7 @@ const EditableText = ({
   className?: string,
   style?: any
 }) => {
+  const { t } = useStoreText();
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(text);
   const [isBuilder, setIsBuilder] = useState(false);
@@ -105,7 +108,7 @@ const EditableText = ({
 
   if (!isBuilder) {
     return (
-      <Tag className={className} style={style}>
+      <Tag className={className} style={style} dir="auto">
         {text}
       </Tag>
     );
@@ -113,38 +116,30 @@ const EditableText = ({
 
   return (
     <Tag 
+      dir="auto"
       className={`cursor-text hover:outline hover:outline-1 hover:outline-primary/50 hover:outline-offset-2 transition-all ${className}`}
       onDoubleClick={handleDoubleClick}
       style={style}
     >
-      {text || "Double-cliquez pour éditer"}
+      {text || t("edit.hint")}
     </Tag>
   );
 };
 
 const PreviewButton = ({ config, className, children, onClick }: { config?: any, className?: string, children?: React.ReactNode, onClick?: () => void }) => {
+  const { t } = useStoreText();
   const handleClick = () => {
     if (onClick) {
       onClick();
       return;
     }
-    
-    const link = config?.ctaLink || config?.cta_link || config?.link;
-    if (link) {
-      const internalPages = ['home', 'shop', 'products', 'about', 'contact', 'cart', 'checkout'];
-      const slug = link.replace(/^\//, '').replace(/^shop\/(products|shop)$/, 'shop');
-      
-      if (link.startsWith('/product/') || link.startsWith('product/')) {
-        window.parent.postMessage({ type: 'NAVIGATE', page: 'product-detail' }, '*');
-        return;
-      }
-
-      if (internalPages.includes(slug) || internalPages.includes(link)) {
-        window.parent.postMessage({ type: 'NAVIGATE', page: slug || link }, '*');
-      } else if (link.startsWith('http')) {
-        window.open(link, '_blank');
-      }
+    const link = String(config?.ctaLink || config?.cta_link || config?.link || '').trim();
+    if (!link) return;
+    if (link.startsWith('/product/') || link.startsWith('product/')) {
+      window.parent.postMessage({ type: 'NAVIGATE', page: 'product-detail' }, '*');
+      return;
     }
+    navigateTo(link === '/' ? '/home' : link);
   };
 
   return (
@@ -152,7 +147,7 @@ const PreviewButton = ({ config, className, children, onClick }: { config?: any,
       onClick={handleClick}
       className={className || "bg-primary text-primary-foreground px-10 py-4 rounded-full font-bold text-lg hover:scale-105 transition-all shadow-xl active:scale-95"}
     >
-      {children || config?.ctaText || config?.cta_text || "En savoir plus"}
+      {children || config?.ctaText || config?.cta_text || t("common.learn_more")}
     </button>
   );
 };
@@ -233,6 +228,7 @@ const SectionWrapper = ({ children, sectionId, onAction }: { children: React.Rea
 // --- SECTIONS ---
 
 const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
   const variant = config.variant || 'classic';
   const sectionStyle = getSectionStyle(config);
   const ctaPosition = config.ctaPosition || config.textPosition || 'center';
@@ -270,7 +266,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
   };
   
   const content = (
-    <div className={`relative z-10 w-full max-w-5xl mx-auto px-4 ${config.textPosition === 'left' ? 'text-left' : config.textPosition === 'right' ? 'text-right' : 'text-center'}`}>
+    <div className={`relative z-10 w-full max-w-5xl mx-auto px-4 ${config.textPosition === 'left' ? 'text-start' : config.textPosition === 'right' ? 'text-end' : 'text-center'}`}>
       {config.badge && (
         <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${onImage ? 'bg-white/15 text-white border border-white/30 backdrop-blur' : 'bg-primary/10 text-primary border border-primary/20'} text-sm font-bold mb-8 animate-bounce`}>
           ✨ <EditableText sectionId={sectionId} field="badge" text={config.badge} />
@@ -280,7 +276,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
         tag="h1"
         sectionId={sectionId}
         field="title"
-        text={config.title || "Bienvenue"}
+        text={config.title || t("builtin.welcome")}
         className={`${variant === 'bold' ? 'text-5xl sm:text-7xl md:text-9xl' : variant === 'split' ? 'text-4xl sm:text-5xl lg:text-6xl' : 'text-5xl sm:text-6xl md:text-8xl'} font-black mb-8 tracking-tighter leading-tight block break-words`}
         style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}
       />
@@ -288,7 +284,7 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
         tag="p"
         sectionId={sectionId}
         field="subtitle"
-        text={config.subtitle || "Découvrez nos offres exceptionnelles"}
+        text={config.subtitle || t("builtin.discover")}
         className="text-xl md:text-3xl mb-12 max-w-3xl mx-auto opacity-90 leading-relaxed font-medium block"
         style={{ color: config.textColor || (onImage ? "#ffffff" : "inherit") }}
       />
@@ -378,7 +374,7 @@ const TrustBadges = ({ sectionId, config }: { sectionId: string, config: any }) 
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-0 text-xl shrink-0">
               <SectionIcon name={item.icon} className="w-5 h-5" />
             </div>
-            <div className={config.layout === 'row' ? 'text-left' : ''}>
+            <div className={config.layout === 'row' ? 'text-start' : ''}>
               <EditableText tag="h3" sectionId={sectionId} field={`items.${i}.title`} text={item.title} className="text-sm font-bold mb-1 block" />
               <EditableText tag="p" sectionId={sectionId} field={`items.${i}.description`} text={item.description} className="text-xs text-muted-foreground block" />
             </div>
@@ -402,12 +398,15 @@ const LogoCarousel = ({ sectionId, config }: { sectionId: string, config: any })
   </section>
 );
 
-const PromoBanner = ({ sectionId, config }: { sectionId: string, config: any }) => (
+const PromoBanner = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
+  return (
   <div className="py-2.5 px-4 text-center text-sm font-bold relative z-[60] group" style={{ backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
-    <EditableText sectionId={sectionId} field="text" text={config.text || "Offre spéciale en cours !"} />
-    {config.link && <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: config.link.replace('/', '') }, '*')} className="ml-2 underline hover:opacity-80 transition-opacity">En savoir plus →</button>}
+    <EditableText sectionId={sectionId} field="text" text={config.text || ""} />
+    {config.link && <button onClick={() => navigateTo(config.link)} className="ms-2 underline hover:opacity-80 transition-opacity">{t("common.learn_more")}</button>}
   </div>
-);
+  );
+};
 
 const ProcessSteps = ({ sectionId, config }: { sectionId: string, config: any }) => (
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
@@ -490,6 +489,7 @@ const Team = ({ sectionId, config }: { sectionId: string, config: any }) => (
 );
 
 const ReviewsSection = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -524,24 +524,24 @@ const ReviewsSection = ({ sectionId, config }: { sectionId: string, config: any 
       <div className="max-w-4xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Avis Clients"} className="text-3xl md:text-4xl font-black block mb-2" />
+            <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || t("reviews.title")} className="text-3xl md:text-4xl font-black block mb-2" />
             <div className="flex items-center gap-3">
               <StarRating rating={Math.round(averageRating)} readonly />
               <span className="text-lg font-bold">{averageRating.toFixed(1)}/5</span>
-              <span className="text-muted-foreground">({reviews.length} avis)</span>
+              <span className="text-muted-foreground">({t("reviews.count", { count: reviews.length })})</span>
             </div>
           </div>
           <button 
             onClick={() => setShowAddForm(!showAddForm)}
             className="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-all"
           >
-            {showAddForm ? "Annuler" : "Laisser un avis"}
+            {showAddForm ? t("common.cancel") : t("reviews.write")}
           </button>
         </div>
 
         {showAddForm && (
           <div className="mb-12 p-8 bg-card border border-border rounded-3xl shadow-xl animate-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-bold mb-6">Votre avis nous intéresse</h3>
+            <h3 className="text-xl font-bold mb-6">{t("reviews.form_title")}</h3>
             <AddReviewForm 
               type={config.type || "store"} 
               targetId={config.targetId} 
@@ -566,6 +566,7 @@ const ReviewsSection = ({ sectionId, config }: { sectionId: string, config: any 
 };
 
 const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeId, store }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, selectedProduct?: any, storeId?: string, store?: any }) => {
+  const { t, money } = useStoreText();
   const [reviews, setReviews] = useState<any[]>([]);
   const [product, setProduct] = useState<any>(selectedProduct || null);
   const [loading, setLoading] = useState(false);
@@ -660,9 +661,9 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
     : 0;
 
   const displayProduct = product || {
-    title: config.title || "Produit Premium",
+    title: config.title || t("builtin.products"),
     price: config.price || "149.00",
-    description: config.description || "Description du produit...",
+    description: config.description || "",
     image: config.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop",
     images: config.images || [config.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=800&fit=crop"]
   };
@@ -705,23 +706,23 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
           </div>
           <div className="space-y-8">
             <div>
-              <h1 className="text-4xl md:text-5xl font-black mb-4">{displayProduct.title}</h1>
+              <h1 className="text-4xl md:text-5xl font-black mb-4" dir="auto">{displayProduct.title}</h1>
               
               <div className="flex items-center gap-2 mb-6">
                 <StarRating rating={Math.round(averageRating)} readonly size="sm" />
                 <span className="text-sm font-bold">{averageRating.toFixed(1)}</span>
-                <span className="text-xs text-muted-foreground">({reviews.length} avis)</span>
+                <span className="text-xs text-muted-foreground">({t("reviews.count", { count: reviews.length })})</span>
               </div>
 
                 <div className="flex items-center gap-4 mb-6">
-                  <span className="text-4xl font-black text-primary">{formatPrice(parsePrice(selectedVariant?.price ?? displayProduct.price))}</span>
+                  <span className="text-4xl font-black text-primary">{money(parsePrice(selectedVariant?.price ?? displayProduct.price))}</span>
                 </div>
 
-              <p className="text-lg text-muted-foreground">{displayProduct.description}</p>
+              <p className="text-lg text-muted-foreground whitespace-pre-line" dir="auto">{displayProduct.description}</p>
             </div>
             {variantOptions.length > 0 && (
               <div className="space-y-3">
-                <p className="text-sm font-bold uppercase tracking-wider opacity-70">Choisissez une option</p>
+                <p className="text-sm font-bold uppercase tracking-wider opacity-70">{t("products.choose_option")}</p>
                 <div className="flex flex-wrap gap-2">
                   {variantOptions.map((option) => {
                     const soldOut = option.stock != null && option.stock <= 0;
@@ -733,12 +734,12 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                         onClick={() => { setSelectedVariantId(option.id); setVariantError(false); }}
                         className={`px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all disabled:opacity-40 disabled:line-through ${selectedVariantId === option.id ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:border-primary/50'}`}
                       >
-                        {option.label || "Option"}
+                        {option.label || t("common.option")}
                       </button>
                     );
                   })}
                 </div>
-                {variantError && <p className="text-sm text-red-600 font-medium">Veuillez choisir une option.</p>}
+                {variantError && <p className="text-sm text-red-600 font-medium">{t("products.option_required")}</p>}
               </div>
             )}
             {config.expressOrder !== false && (
@@ -779,7 +780,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                 variantId: selectedVariant?.id,
                 variantLabel: selectedVariant?.label,
               });
-            }} className={config.expressOrder === false ? "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all" : "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors"}>Ajouter au panier</button>
+            }} className={config.expressOrder === false ? "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all" : "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors"}>{t("cart.add")}</button>
           </div>
         </div>
       </div>
@@ -788,6 +789,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
 };
 
 const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, storeId?: string, onSelectProduct?: (product: any) => void }) => {
+  const { t, money } = useStoreText();
   const placeholders = ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600", "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600", "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600"];
   const [storeProducts, setStoreProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
@@ -842,8 +844,8 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: 
           </div>
         ) : displayItems.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
-            <p className="text-lg">Aucun produit disponible</p>
-            <p className="text-sm mt-2">Ajoutez des produits depuis votre espace vendeur</p>
+            <p className="text-lg">{t("products.empty")}</p>
+            <p className="text-sm mt-2">{t("products.empty_hint")}</p>
           </div>
         ) : (
           <div className={`grid gap-x-6 gap-y-12 grid-cols-2 ${gridCols(config.columns, 4)}`}>
@@ -853,17 +855,17 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: 
                 <div key={data.id || i} className="group cursor-pointer" onClick={() => handleProductClick(data)}>
                   <div className="aspect-[4/5] bg-muted rounded-3xl mb-6 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all">
                     <img src={data.image || placeholders[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />
-                    <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(data); }} className="absolute bottom-4 left-4 right-4 bg-white text-black py-3 rounded-xl font-bold text-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">Ajouter au panier</button>
+                    <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(data); }} className="absolute bottom-4 inset-x-4 bg-white text-black py-3 rounded-xl font-bold text-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">{t("cart.add")}</button>
                   </div>
                   {hasRealProducts ? (
                     <>
-                      <h3 className="font-bold text-lg">{data.title}</h3>
-                      <p className="text-primary font-black">{formatPrice(parsePrice(data.price))}</p>
+                      <h3 className="font-bold text-lg" dir="auto">{data.title}</h3>
+                      <p className="text-primary font-black">{money(parsePrice(data.price))}</p>
                     </>
                   ) : (
                     <>
                       <EditableText sectionId={sectionId} field={`items.${i}.title`} text={data.title} className="font-bold text-lg block" />
-                      <p className="text-primary font-black">{formatPrice(parsePrice(data.price))}</p>
+                      <p className="text-primary font-black">{money(parsePrice(data.price))}</p>
                     </>
                   )}
                 </div>
@@ -895,16 +897,18 @@ const Features = ({ sectionId, config }: { sectionId: string, config: any }) => 
   </section>
 );
 
-const Footer = ({ sectionId, config, links = [], store }: { sectionId: string, config: any, links?: any[], store?: any }) => (
+const Footer = ({ sectionId, config, links = [], store }: { sectionId: string, config: any, links?: any[], store?: any }) => {
+  const { t } = useStoreText();
+  return (
   <footer className="py-20 px-4 bg-slate-950 text-slate-300 border-t border-white/10">
     <div className="max-w-7xl mx-auto grid md:grid-cols-4 gap-12">
       <div className="space-y-6">
-        <div className="text-2xl font-black text-white tracking-tighter"><EditableText sectionId={sectionId} field="brandName" text={config.brandName || store?.name || "Boutique"} /></div>
-        <EditableText tag="p" sectionId={sectionId} field="description" text={config.description || "Votre destination premium."} className="text-slate-400 block" />
+        <div className="text-2xl font-black text-white tracking-tighter"><EditableText sectionId={sectionId} field="brandName" text={config.brandName || store?.name || t("common.store")} /></div>
+        <EditableText tag="p" sectionId={sectionId} field="description" text={config.description || ""} className="text-slate-400 block" />
       </div>
       {(config.address || config.phone || store?.contact_phone || store?.contact_email) ? (
       <div>
-        <h4 className="text-white font-bold mb-6">Contact</h4>
+        <h4 className="text-white font-bold mb-6">{t("footer.contact")}</h4>
         <ul className="space-y-4 text-sm">
           {config.address && <li>📍 <EditableText sectionId={sectionId} field="address" text={config.address} /></li>}
           {(config.phone || store?.contact_phone) && <li>📞 <a href={`tel:${config.phone || store?.contact_phone}`} className="hover:text-white">{config.phone || store?.contact_phone}</a></li>}
@@ -913,12 +917,12 @@ const Footer = ({ sectionId, config, links = [], store }: { sectionId: string, c
       </div>
       ) : <div className="hidden md:block" />}
       <div>
-        <h4 className="text-white font-bold mb-6">Suivi</h4>
+        <h4 className="text-white font-bold mb-6">{t("footer.follow")}</h4>
         <button 
           onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: 'track' }, '*')}
           className="flex items-center gap-2 bg-primary/20 hover:bg-primary/30 text-primary px-4 py-3 rounded-xl transition-colors text-sm font-bold"
         >
-          📦 Suivre ma commande
+          📦 {t("footer.track")}
         </button>
       </div>
     </div>
@@ -930,12 +934,14 @@ const Footer = ({ sectionId, config, links = [], store }: { sectionId: string, c
       </div>
     )}
     <div className="mt-16 pt-8 border-t border-white/5 text-center text-sm text-slate-500">
-      <EditableText sectionId={sectionId} field="copyright" text={config.copyright || `© ${new Date().getFullYear()} ${store?.name || ""}. Tous droits réservés.`} />
+      <EditableText sectionId={sectionId} field="copyright" text={config.copyright || `© ${new Date().getFullYear()} ${store?.name || ""}. ${t("footer.rights")}`} />
     </div>
   </footer>
-);
+  );
+};
 
 const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, storeId?: string, onSelectProduct?: (product: any) => void }) => {
+  const { t, money } = useStoreText();
   const placeholders = [
     "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
     "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600",
@@ -971,10 +977,10 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
   const displayItems = storeProducts.length > 0 ? storeProducts : (config.items || []);
 
   const algorithmLabels: Record<string, string> = {
-    bestsellers: "Meilleures Ventes",
-    recent: "Vus Récemment",
-    similar: "Vous aimerez aussi",
-    random: "Découvrez"
+    bestsellers: t("products.recommended.bestsellers"),
+    recent: t("products.recommended.recent"),
+    similar: t("products.recommended.similar"),
+    random: t("products.recommended.similar")
   };
 
   const handleProductClick = (item: any) => {
@@ -1003,7 +1009,7 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
               tag="h2" 
               sectionId={sectionId} 
               field="title" 
-              text={config.title || "Recommandé Pour Vous"} 
+              text={config.title || t("products.recommended.default")} 
               className="text-3xl font-black block" 
             />
           </div>
@@ -1011,13 +1017,13 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
             onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: 'shop' }, '*')}
             className="text-sm font-bold text-primary hover:underline"
           >
-            Voir tout →
+            {t("nav.products")} →
           </button>
         </div>
         
         {displayItems.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <p>Aucun produit disponible</p>
+            <p>{t("products.empty")}</p>
           </div>
         ) : (
           <div className={`grid gap-6 grid-cols-2 ${gridCols(config.columns, 4)}`}>
@@ -1036,19 +1042,19 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                     alt={item.title} 
                   />
-                  <div className="absolute top-3 left-3 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full">
+                  <div className="absolute top-3 start-3 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full">
                     {config.algorithm === "bestsellers" ? "TOP" : config.algorithm === "recent" ? "VU" : ""}
                   </div>
                   <button 
                     onClick={(e) => handleAddToCart(e, item)}
-                    className="absolute bottom-3 left-3 right-3 bg-primary text-white py-2.5 rounded-xl font-bold text-sm opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
+                    className="absolute bottom-3 inset-x-3 bg-primary text-white py-2.5 rounded-xl font-bold text-sm opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
                   >
-                    + Ajouter
+                    + {t("cart.add")}
                   </button>
                 </div>
                 <h3 className="font-bold text-sm mb-1">{item.title}</h3>
                 {config.showPrice !== false && (
-                  <p className="text-primary font-black">{formatPrice(parsePrice(item.price))}</p>
+                  <p className="text-primary font-black">{money(parsePrice(item.price))}</p>
                 )}
               </div>
             ))}
@@ -1195,17 +1201,18 @@ const navigateTo = (url: string) => {
   window.parent.postMessage({ type: 'NAVIGATE', page }, '*');
 };
 
-const headerLinks = (store: any, pages: any[]) => {
+const headerLinks = (store: any, pages: any[], t: (key: StoreTextKey) => string) => {
   const custom = (store?.headerLinks || []).filter((i: any) => i?.label);
   if (custom.length) return custom.map((i: any) => ({ key: i.id || i.label, label: i.label, url: i.url || "/" }));
   const visible = pages.filter((p) => p.is_published !== false && p.show_in_navigation !== false && p.show_in_menu !== false && p.slug);
-  if (!visible.length) return [{ key: "home", label: "Accueil", url: "/home" }, { key: "shop", label: "Produits", url: "/shop" }];
+  if (!visible.length) return [{ key: "home", label: t("nav.home"), url: "/home" }, { key: "shop", label: t("nav.products"), url: "/shop" }];
   return visible.map((p) => ({ key: p.id || p.slug, label: p.title || p.name || p.slug, url: p.is_homepage ? "/home" : `/${p.slug}` }));
 };
 
 const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, pages?: any[], onOpenCart?: () => void, cartCount?: number }) => {
+  const { t } = useStoreText();
   const [open, setOpen] = useState(false);
-  const links = headerLinks(store, pages);
+  const links = headerLinks(store, pages, t);
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-4 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -1215,7 +1222,7 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
           ) : (
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white text-sm shrink-0">{store?.name?.charAt(0) || "D"}</div>
           )}
-          <span className="truncate">{store?.name || "Boutique"}</span>
+          <span className="truncate">{store?.name || t("common.store")}</span>
         </button>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           {links.map((l: any) => (
@@ -1223,11 +1230,12 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
           ))}
         </nav>
         <div className="flex items-center gap-1">
-          <button onClick={onOpenCart} className="p-2 hover:bg-muted rounded-full relative" aria-label="Panier">
+          <StoreLanguageSwitch className="me-1" />
+          <button onClick={onOpenCart} className="p-2 hover:bg-muted rounded-full relative" aria-label={t("nav.cart")}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
-            <span className="absolute top-0 right-0 w-4 h-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full font-bold">{cartCount}</span>
+            <span className="absolute top-0 end-0 w-4 h-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full font-bold">{cartCount}</span>
           </button>
-          <button onClick={() => setOpen((v) => !v)} className="md:hidden p-2 hover:bg-muted rounded-full" aria-label="Menu">
+          <button onClick={() => setOpen((v) => !v)} className="md:hidden p-2 hover:bg-muted rounded-full" aria-label={t("nav.menu")}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={open ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
           </button>
         </div>
@@ -1235,7 +1243,7 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
       {open && (
         <nav className="md:hidden max-w-7xl mx-auto mt-4 flex flex-col border-t border-border pt-2">
           {links.map((l: any) => (
-            <button key={l.key} onClick={() => { setOpen(false); navigateTo(l.url); }} className="text-left py-3 text-sm font-medium hover:text-primary">{l.label}</button>
+            <button key={l.key} onClick={() => { setOpen(false); navigateTo(l.url); }} className="text-start py-3 text-sm font-medium hover:text-primary">{l.label}</button>
           ))}
         </nav>
       )}
@@ -1244,21 +1252,22 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
 };
 
   const CartDrawer = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, offers = [] }: { isOpen: boolean, onClose: () => void, cart: any[], onRemove: (id: string) => void, onUpdateQuantity: (id: string, delta: number) => void, offers?: any[] }) => {
+    const { t, money } = useStoreText();
     if (!isOpen) return null;
     const total = cart.reduce((acc, item) => acc + discountedUnitPrice(parsePrice(item.price), item.quantity || 1, offers) * (item.quantity || 1), 0);
     return (
       <div className="fixed inset-0 z-[100] flex justify-end">
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-        <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
-          <div className="p-6 border-b border-border flex items-center justify-between"><h2 className="text-2xl font-black">Votre Panier ({cart.reduce((acc, item) => acc + (item.quantity || 1), 0)})</h2><button onClick={onClose}>✕</button></div>
+        <div className="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col" dir="auto">
+          <div className="p-6 border-b border-border flex items-center justify-between"><h2 className="text-2xl font-black">{t("cart.title")} ({cart.reduce((acc, item) => acc + (item.quantity || 1), 0)})</h2><button onClick={onClose} aria-label={t("common.cancel")}>✕</button></div>
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-{cart.length === 0 ? <p className="text-center text-muted-foreground mt-20">Votre panier est vide</p> : cart.map((item, i) => (
+{cart.length === 0 ? <p className="text-center text-muted-foreground mt-20">{t("cart.empty")}</p> : cart.map((item, i) => (
                 <div key={`${item.id}-${i}`} className="flex gap-4">
                 <div className="w-20 h-20 bg-muted rounded-xl overflow-hidden"><img src={item.image} className="w-full h-full object-cover" alt="" /></div>
                 <div className="flex-1">
                   <h3 className="font-bold">{item.title}</h3>
                   {item.variantLabel && <p className="text-xs opacity-60">{item.variantLabel}</p>}
-                  <p className="text-primary font-black">{formatPrice(parsePrice(item.price))}</p>
+                  <p className="text-primary font-black">{money(parsePrice(item.price))}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center border border-border rounded-lg overflow-hidden bg-muted/50">
                       <button 
@@ -1276,7 +1285,7 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
                         +
                       </button>
                     </div>
-                    <button onClick={() => onRemove(item.id)} className="text-xs text-red-500 hover:underline">Supprimer</button>
+                    <button onClick={() => onRemove(item.id)} className="text-xs text-red-500 hover:underline">{t("common.remove")}</button>
                   </div>
                 </div>
               </div>
@@ -1284,8 +1293,8 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
           </div>
             {cart.length > 0 && (
               <div className="p-6 border-t border-border space-y-4 bg-muted/10">
-                <div className="flex items-center justify-between text-xl font-black"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
-                <button onClick={() => { window.parent.postMessage({ type: 'NAVIGATE', page: 'checkout' }, '*'); onClose(); }} className="w-full bg-primary text-white py-4 rounded-xl font-black text-lg">Passer la commande</button>
+                <div className="flex items-center justify-between text-xl font-black"><span>{t("common.total")}</span><span className="text-primary">{money(total)}</span></div>
+                <button onClick={() => { window.parent.postMessage({ type: 'NAVIGATE', page: 'checkout' }, '*'); onClose(); }} className="w-full bg-primary text-white py-4 rounded-xl font-black text-lg">{t("cart.checkout")}</button>
               </div>
             )}
 
@@ -1330,7 +1339,7 @@ const FAQ = ({ sectionId, config }: { sectionId: string, config: any }) => {
           {(config.faqs || []).map((faq: any, i: number) => (
             <div key={i} className="border border-border rounded-2xl overflow-hidden bg-card">
               <button 
-                className="w-full px-6 py-5 text-left font-bold flex items-center justify-between hover:bg-muted/50 transition-colors"
+                className="w-full px-6 py-5 text-start font-bold flex items-center justify-between hover:bg-muted/50 transition-colors"
                 onClick={() => setOpenIdx(openIdx === i ? null : i)}
               >
                 <EditableText sectionId={sectionId} field={`faqs.${i}.question`} text={faq.question} />
@@ -1350,6 +1359,7 @@ const FAQ = ({ sectionId, config }: { sectionId: string, config: any }) => {
 };
 
 const Newsletter = ({ sectionId, config, storeId }: { sectionId: string, config: any, storeId?: string }) => {
+  const { t } = useStoreText();
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "sending" | "done" | "error">("idle");
 
@@ -1375,21 +1385,21 @@ const Newsletter = ({ sectionId, config, storeId }: { sectionId: string, config:
       <div className="max-w-4xl mx-auto text-center space-y-8">
         <div className="w-20 h-20 bg-white/10 rounded-3xl flex items-center justify-center mx-auto text-3xl">✉️</div>
         <div className="space-y-4">
-          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Restez à la page"} className="text-4xl font-black block" />
-          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Inscrivez-vous pour ne rien rater."} className="text-xl opacity-90 block" />
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || t("newsletter.title")} className="text-4xl font-black block" />
+          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || t("newsletter.subtitle")} className="text-xl opacity-90 block" />
         </div>
         {state === "done" ? (
-          <p className="max-w-lg mx-auto bg-white/15 rounded-2xl px-6 py-4 font-bold" role="status">{config.successText || "Merci ! Vous êtes bien inscrit(e)."}</p>
+          <p className="max-w-lg mx-auto bg-white/15 rounded-2xl px-6 py-4 font-bold" role="status">{config.successText || t("newsletter.success")}</p>
         ) : (
           <form onSubmit={submit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto bg-white/10 p-2 rounded-2xl backdrop-blur-md">
-            <input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); if (state === "error") setState("idle"); }} placeholder={config.placeholder || "Votre email"} aria-label={config.placeholder || "Votre email"} className="flex-1 bg-transparent border-none text-white placeholder:text-white/50 px-4 py-3 focus:ring-0" />
+            <input type="email" required value={email} onChange={(e) => { setEmail(e.target.value); if (state === "error") setState("idle"); }} placeholder={config.placeholder || t("newsletter.placeholder")} aria-label={config.placeholder || t("newsletter.placeholder")} className="flex-1 bg-transparent border-none text-white placeholder:text-white/50 px-4 py-3 focus:ring-0" />
             <button type="submit" disabled={state === "sending"} className="bg-white text-primary px-8 py-3 rounded-xl font-black hover:scale-105 transition-all disabled:opacity-60 inline-flex items-center justify-center gap-2">
               {state === "sending" && <Loader2 className="w-4 h-4 animate-spin" />}
-              {config.buttonText || "S'abonner"}
+              {config.buttonText || t("newsletter.button")}
             </button>
           </form>
         )}
-        {state === "error" && <p className="text-sm font-semibold opacity-90" role="alert">Inscription impossible pour le moment. Vérifiez l'adresse e-mail et réessayez.</p>}
+        {state === "error" && <p className="text-sm font-semibold opacity-90" role="alert">{t("newsletter.error")}</p>}
       </div>
     </section>
   );
@@ -1401,7 +1411,7 @@ const Collections = ({ sectionId, config }: { sectionId: string, config: any }) 
       {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-4xl font-black mb-12 text-center block" />}
       <div className={`grid gap-6 grid-cols-1 sm:grid-cols-2 ${gridCols(config.columns, 3)}`}>
         {(config.items || []).map((item: any, i: number) => (
-          <div key={i} className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[16/9]" onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: item.link?.replace('/', '') || 'shop' }, '*')}>
+          <div key={i} className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[16/9]" onClick={() => navigateTo(item.link || '/shop')}>
             <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.title} />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <EditableText tag="h3" sectionId={sectionId} field={`items.${i}.title`} text={item.title} className="text-white text-2xl font-black block" />
@@ -1429,6 +1439,7 @@ const ContentSection = ({ sectionId, config }: { sectionId: string, config: any 
 );
 
 const Merci = ({ orderId, store }: { orderId: string, store: any }) => {
+  const { t, money } = useStoreText();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -1443,34 +1454,34 @@ const Merci = ({ orderId, store }: { orderId: string, store: any }) => {
   }, [orderId]);
 
   if (loading) return <div className="p-20 text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div>;
-  if (!order) return <div className="p-20 text-center">Commande non trouvée</div>;
+  if (!order) return <div className="p-20 text-center">{t("thanks.not_found")}</div>;
 
   return (
     <section className="px-4 py-20 text-center fade-in">
       <div className="max-w-2xl mx-auto space-y-8 bg-card p-12 rounded-[3rem] border border-border shadow-2xl">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto animate-bounce">🎉</div>
         <div className="space-y-4">
-          <h2 className="text-4xl font-black tracking-tight">Merci pour votre confiance !</h2>
-          <p className="text-xl text-muted-foreground">Votre commande <span className="font-bold text-primary">{order.order_number}</span> a bien été enregistrée.</p>
+          <h2 className="text-4xl font-black tracking-tight">{t("thanks.title")}</h2>
+          <p className="text-xl text-muted-foreground">{t("thanks.body", { number: order.order_number })}</p>
         </div>
-        <div className="p-6 bg-muted/50 rounded-2xl text-left space-y-4 border border-border">
+        <div className="p-6 bg-muted/50 rounded-2xl text-start space-y-4 border border-border">
           <div className="flex justify-between items-center pb-4 border-b border-border">
-            <span className="text-sm font-bold uppercase opacity-60">Statut</span>
-            <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-black uppercase">Confirmée</span>
+            <span className="text-sm font-bold uppercase opacity-60">{t("thanks.status")}</span>
+            <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-black uppercase">{t("thanks.received")}</span>
           </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm font-bold uppercase opacity-60">Total payé</span>
-              <span className="text-xl font-black">{formatPrice(order.total_amount)}</span>
+              <span className="text-sm font-bold uppercase opacity-60">{t("thanks.total")}</span>
+              <span className="text-xl font-black">{money(order.total_amount)}</span>
             </div>
 
           <div className="flex justify-between items-center text-xs opacity-60">
-            <span>Mode de paiement</span>
-            <span>{order.payment_method === 'cod' ? 'Paiement à la livraison' : 'Carte Bancaire'}</span>
+            <span>{t("thanks.payment")}</span>
+            <span>{t("checkout.cod")}</span>
           </div>
         </div>
         <div className="space-y-4">
-          <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: 'home' }, '*')} className="w-full bg-primary text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] transition-all">Continuer mes achats</button>
-          <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: `track/${order.order_number}` }, '*')} className="text-sm font-bold opacity-60 hover:opacity-100 transition-opacity">Suivre ma commande</button>
+          <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: 'home' }, '*')} className="w-full bg-primary text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:scale-[1.02] transition-all">{t("thanks.continue")}</button>
+          <button onClick={() => window.parent.postMessage({ type: 'NAVIGATE', page: `track/${order.order_number}` }, '*')} className="text-sm font-bold opacity-60 hover:opacity-100 transition-opacity">{t("thanks.track")}</button>
         </div>
       </div>
     </section>
@@ -1478,6 +1489,7 @@ const Merci = ({ orderId, store }: { orderId: string, store: any }) => {
 };
 
 const Track = ({ orderNumber }: { orderNumber: string }) => {
+  const { t, money, lang } = useStoreText();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [searchNum, setSearchNum] = useState(orderNumber || "");
@@ -1490,33 +1502,34 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
     const response = await fetch(`/api/store/orders/track?number=${encodeURIComponent(num)}`);
     const data = response.ok ? (await response.json()).order : null;
     if (data) setOrder(data);
-    else setError("Commande introuvable");
+    else setError(t("track.not_found"));
     setLoading(false);
   };
 
   useEffect(() => { if (orderNumber) handleSearch(orderNumber); }, [orderNumber]);
 
   const steps = [
-    { key: 'new', label: 'Reçue', icon: '📝' },
-    { key: 'confirmed', label: 'Confirmée', icon: '✅' },
-    { key: 'preparing', label: 'En préparation', icon: '📦' },
-    { key: 'shipped', label: 'Expédiée', icon: '🚚' },
-    { key: 'delivered', label: 'Livrée', icon: '🏠' }
+    { key: 'new', label: t('track.status.new'), icon: '📝' },
+    { key: 'confirmed', label: t('track.status.confirmed'), icon: '✅' },
+    { key: 'preparing', label: t('track.status.preparing'), icon: '📦' },
+    { key: 'shipped', label: t('track.status.shipped'), icon: '🚚' },
+    { key: 'delivered', label: t('track.status.delivered'), icon: '🏠' }
   ];
 
-  const currentStepIdx = steps.findIndex(s => s.key === order?.status) || 0;
+  const isCancelled = order?.status === 'cancelled';
+  const currentStepIdx = Math.max(0, steps.findIndex(s => s.key === order?.status));
 
   return (
     <section className="px-4 py-20 fade-in">
       <div className="max-w-2xl mx-auto space-y-8">
         <div className="text-center space-y-4">
-          <h2 className="text-4xl font-black">Suivi de commande</h2>
-          <p className="text-muted-foreground">Entrez votre numéro de commande pour voir où elle en est.</p>
+          <h2 className="text-4xl font-black">{t("track.title")}</h2>
+          <p className="text-muted-foreground">{t("track.subtitle")}</p>
         </div>
         <div className="flex gap-2 bg-card p-2 rounded-2xl border border-border shadow-xl">
-          <input value={searchNum} onChange={e => setSearchNum(e.target.value.toUpperCase())} className="flex-1 bg-transparent border-none px-4 py-3 font-bold focus:ring-0" placeholder="ORD-XXXXXX" />
+          <input value={searchNum} onChange={e => setSearchNum(e.target.value.toUpperCase())} className="flex-1 bg-transparent border-none px-4 py-3 font-bold focus:ring-0" placeholder={t("track.placeholder")} dir="ltr" aria-label={t("track.placeholder")} />
           <button onClick={() => handleSearch(searchNum)} disabled={loading} className="bg-primary text-white px-8 py-3 rounded-xl font-black disabled:opacity-50">
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Suivre"}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t("track.search")}
           </button>
         </div>
 
@@ -1526,18 +1539,21 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
           <div className="bg-card p-12 rounded-[3rem] border border-border shadow-2xl space-y-12">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-xs font-bold uppercase opacity-60 mb-1">Commande</p>
+                <p className="text-xs font-bold uppercase opacity-60 mb-1">{t("track.order")}</p>
                 <p className="text-2xl font-black">{order.order_number}</p>
               </div>
-              <div className="text-right">
-                <p className="text-xs font-bold uppercase opacity-60 mb-1">Passée le</p>
-                <p className="font-bold">{formatDate(order.created_at)}</p>
+              <div className="text-end">
+                <p className="text-xs font-bold uppercase opacity-60 mb-1">{t("track.date")}</p>
+                <p className="font-bold">{new Intl.DateTimeFormat(lang === "ar" ? "ar-TN" : "fr-TN", { day: "numeric", month: "long", year: "numeric" }).format(new Date(order.created_at))}</p>
               </div>
             </div>
 
+            {isCancelled ? (
+              <p className="rounded-2xl bg-red-50 px-4 py-3 text-center font-bold text-red-700">{t("track.status.cancelled")}</p>
+            ) : (
             <div className="relative">
-              <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-muted -translate-y-1/2" />
-              <div className="absolute top-1/2 left-0 h-[2px] bg-primary -translate-y-1/2 transition-all duration-1000" style={{ width: `${(currentStepIdx / (steps.length - 1)) * 100}%` }} />
+              <div className="absolute top-1/2 inset-x-0 h-[2px] bg-muted -translate-y-1/2" />
+              <div className="absolute top-1/2 start-0 h-[2px] bg-primary -translate-y-1/2 transition-all duration-1000" style={{ width: `${(currentStepIdx / (steps.length - 1)) * 100}%` }} />
               <div className="relative flex justify-between">
                 {steps.map((step, i) => (
                   <div key={step.key} className="flex flex-col items-center gap-4 relative z-10">
@@ -1549,16 +1565,17 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
                 ))}
               </div>
             </div>
+            )}
 
             <div className="grid grid-cols-2 gap-8 pt-8 border-t border-border">
               <div className="space-y-2">
-                <p className="text-xs font-bold uppercase opacity-60">Destinataire</p>
+                <p className="text-xs font-bold uppercase opacity-60">{t("track.recipient")}</p>
                 <p className="font-bold">{order.customer_name}</p>
                 <p className="text-sm text-muted-foreground">{order.customer_address}</p>
               </div>
-                <div className="space-y-2 text-right">
-                  <p className="text-xs font-bold uppercase opacity-60">Total</p>
-                  <p className="text-2xl font-black text-primary">{formatPrice(order.total_amount)}</p>
+                <div className="space-y-2 text-end">
+                  <p className="text-xs font-bold uppercase opacity-60">{t("common.total")}</p>
+                  <p className="text-2xl font-black text-primary">{money(order.total_amount)}</p>
                 </div>
             </div>
           </div>
@@ -1569,8 +1586,9 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
 };
 
 const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { sectionId: string, config: any, store: any, cart: any[], slug: string, onClearCart: () => void }) => {
-
-    const [formData, setFormData] = useState({ name: "", phone: "", address: "", email: "" });
+    const { t, money, lang } = useStoreText();
+    const [formData, setFormData] = useState({ name: "", phone: "", governorate: "", address: "", email: "" });
+    const [submitError, setSubmitError] = useState("");
     const paymentMethod = "cod";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [promoCode, setPromoCode] = useState("");
@@ -1602,10 +1620,10 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
           setAppliedPromo(data.promo);
           setPromoCode("");
         } else {
-          setPromoError(data.error || "Code invalide");
+          setPromoError(t("checkout.promo_invalid"));
         }
       } catch (error) {
-        setPromoError("Erreur de validation");
+        setPromoError(t("checkout.promo_error"));
       } finally {
         setIsValidatingPromo(false);
       }
@@ -1623,6 +1641,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       if (cart.length === 0) return;
+      setSubmitError("");
       setIsSubmitting(true);
       
       try {
@@ -1649,10 +1668,10 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
             window.parent.postMessage({ type: 'NAVIGATE', page: `merci/${data.orderId}` }, '*');
           }
         } else {
-          alert(data.error || "Une erreur est survenue lors de la commande");
+          setSubmitError(orderErrorText(data.code, t));
         }
       } catch (error) {
-        alert("Erreur réseau");
+        setSubmitError(t("express.network"));
       } finally {
         setIsSubmitting(false);
       }
@@ -1663,46 +1682,54 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12">
             <div className="space-y-8 bg-card p-5 md:p-8 rounded-3xl border border-border shadow-sm">
-              <h2 className="text-2xl font-black"><EditableText sectionId={sectionId} field="title" text={config.title || "Finalisez votre commande"} /></h2>
+              <h2 className="text-2xl font-black"><EditableText sectionId={sectionId} field="title" text={config.title || t("checkout.title")} /></h2>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider opacity-60">Nom Complet</label>
-                    <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="Votre nom" />
+                    <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.name")}</label>
+                    <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder={t("express.name")} autoComplete="name" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider opacity-60">Téléphone</label>
-                      <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="+216 -- --- ---" />
+                      <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.phone")}</label>
+                      <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="22 123 456" inputMode="tel" autoComplete="tel" dir="ltr" />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider opacity-60">Email (optionnel)</label>
-                      <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="votre@email.com" />
+                      <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.email")}</label>
+                      <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="email@exemple.com" dir="ltr" />
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider opacity-60">Adresse complète</label>
-                    <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary min-h-[100px]" placeholder="Rue, ville, code postal..." />
+                    <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("express.governorate")}</label>
+                    <select required value={formData.governorate} onChange={e => setFormData({...formData, governorate: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary">
+                      <option value="">{t("express.governorate")}</option>
+                      {TUNISIAN_GOVERNORATES.map((g) => <option key={g} value={g}>{governorateLabel(g, lang)}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.address")}</label>
+                    <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary min-h-[100px]" placeholder={t("express.address")} autoComplete="street-address" />
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <label className="text-xs font-bold uppercase tracking-wider opacity-60 block">Mode de paiement</label>
+                  <label className="text-xs font-bold uppercase tracking-wider opacity-60 block">{t("checkout.payment")}</label>
                   <div className="p-4 rounded-xl border-2 border-primary bg-primary/5 flex items-center gap-3">
                     <span className="text-2xl">🚚</span>
-                    <span className="font-bold text-sm">Paiement à la livraison</span>
+                    <span className="font-bold text-sm">{t("checkout.cod")}</span>
                   </div>
                 </div>
 
+                {submitError && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{submitError}</p>}
                 <button disabled={isSubmitting || cart.length === 0} className="w-full bg-primary text-white py-4 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>✅ {config.buttonText || "Confirmer la commande"}</>}
+                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>✅ {config.buttonText || t("checkout.confirm")}</>}
                 </button>
               </form>
             </div>
             <div className="space-y-6">
               <div className="bg-muted/30 p-5 md:p-8 rounded-3xl border border-border">
-                <h3 className="font-bold mb-6">Résumé de la commande ({cart.reduce((acc, item) => acc + (item.quantity || 1), 0)} articles)</h3>
-                <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pr-2">
+                <h3 className="font-bold mb-6">{t("cart.title")} ({cart.reduce((acc, item) => acc + (item.quantity || 1), 0)})</h3>
+                <div className="space-y-4 mb-6 max-h-[300px] overflow-y-auto pe-2">
                   {cart.map((item) => (
                     <div key={item.id} className="flex gap-4">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-white border border-border shrink-0">
@@ -1711,25 +1738,25 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm truncate">{item.title}</h4>
                         {item.variantLabel && <p className="text-xs opacity-60">{item.variantLabel}</p>}
-                        <p className="text-xs text-muted-foreground">Qté: {item.quantity || 1}</p>
+                        <p className="text-xs text-muted-foreground">× {item.quantity || 1}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm">{formatPrice(parsePrice(item.price) * (item.quantity || 1))}</p>
+                      <div className="text-end">
+                        <p className="font-bold text-sm">{money(parsePrice(item.price) * (item.quantity || 1))}</p>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="space-y-4 pt-4 border-t border-border">
-                  <div className="flex justify-between text-sm"><span>Sous-total</span><span className="font-bold">{formatPrice(subtotal)}</span></div>
+                  <div className="flex justify-between text-sm"><span>{t("common.subtotal")}</span><span className="font-bold">{money(subtotal)}</span></div>
                   
                   {appliedPromo && (
                     <div className="flex justify-between text-sm text-emerald-600 font-bold">
                       <span className="flex items-center gap-1">
-                        🏷️ Code {appliedPromo.code}
-                        <button onClick={() => setAppliedPromo(null)} className="ml-1 text-xs opacity-50 hover:opacity-100">✕</button>
+                        🏷️ {appliedPromo.code}
+                        <button onClick={() => setAppliedPromo(null)} aria-label={t("common.remove")} className="ms-1 text-xs opacity-50 hover:opacity-100">✕</button>
                       </span>
-                      <span>-{formatPrice(discountAmount)}</span>
+                      <span>-{money(discountAmount)}</span>
                     </div>
                   )}
 
@@ -1740,30 +1767,31 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                           value={promoCode}
                           onChange={e => setPromoCode(e.target.value.toUpperCase())}
                           className="flex-1 bg-white border border-border px-3 py-2 rounded-lg text-sm"
-                          placeholder="Code promo"
+                          placeholder={t("checkout.promo")}
+                          aria-label={t("checkout.promo")}
                         />
                         <button 
                           onClick={(e) => { e.preventDefault(); handleValidatePromo(); }}
                           disabled={isValidatingPromo || !promoCode}
                           className="bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold disabled:opacity-50"
                         >
-                          Appliquer
+                          {t("checkout.apply")}
                         </button>
                       </div>
                       {promoError && <p className="text-xs text-red-500">{promoError}</p>}
                     </div>
                   )}
 
-                  <div className="flex justify-between text-sm"><span>Livraison</span>{shippingCost > 0 ? <span className="font-bold">{formatPrice(shippingCost)}</span> : <span className="font-bold text-emerald-600">GRATUIT</span>}</div>
+                  <div className="flex justify-between text-sm"><span>{t("common.delivery")}</span>{shippingCost > 0 ? <span className="font-bold">{money(shippingCost)}</span> : <span className="font-bold text-emerald-600">{t("common.free")}</span>}</div>
                   <div className="h-[1px] bg-border my-4" />
-                  <div className="flex justify-between text-xl font-black"><span>Total</span><span className="text-primary">{formatPrice(total)}</span></div>
+                  <div className="flex justify-between text-xl font-black"><span>{t("common.total")}</span><span className="text-primary">{money(total)}</span></div>
                 </div>
 
               </div>
               <div className="p-6 bg-emerald-50 text-emerald-700 rounded-2xl border border-emerald-100 flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-xl">🚚</div>
                 <p className="text-xs font-medium">
-                  Paiement à la livraison. Vérifiez votre colis avant de payer.
+                  {t("checkout.cod")}
                 </p>
               </div>
             </div>
@@ -1818,7 +1846,7 @@ const sanitizeHtml = (html: string): string => {
 const SafeHtml = ({ html, className }: { html: string; className?: string }) => {
   const [clean, setClean] = useState(() => (typeof window === "undefined" ? "" : sanitizeHtml(html)));
   useEffect(() => setClean(sanitizeHtml(html)), [html]);
-  return <div className={className} dangerouslySetInnerHTML={{ __html: clean }} />;
+  return <div className={className} dir="auto" dangerouslySetInnerHTML={{ __html: clean }} />;
 };
 
 const GRID_COLS: Record<number, string> = {
@@ -1832,6 +1860,7 @@ const GRID_COLS: Record<number, string> = {
 const gridCols = (n: any, fallback = 4) => GRID_COLS[Number(n)] || GRID_COLS[fallback];
 
 const Countdown = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
   const target = config.endDate || config.targetDate || config.end_date;
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
@@ -1842,22 +1871,22 @@ const Countdown = ({ sectionId, config }: { sectionId: string, config: any }) =>
   const end = target ? new Date(target).getTime() : NaN;
   const left = now === null || isNaN(end) ? null : Math.max(0, end - now);
   const parts = left === null
-    ? [["--", "Jours"], ["--", "Heures"], ["--", "Min"], ["--", "Sec"]]
+    ? [["--", t("countdown.days")], ["--", t("countdown.hours")], ["--", t("countdown.minutes")], ["--", t("countdown.seconds")]]
     : [
-        [Math.floor(left / 86400000), "Jours"],
-        [Math.floor((left / 3600000) % 24), "Heures"],
-        [Math.floor((left / 60000) % 60), "Min"],
-        [Math.floor((left / 1000) % 60), "Sec"],
+        [Math.floor(left / 86400000), t("countdown.days")],
+        [Math.floor((left / 3600000) % 24), t("countdown.hours")],
+        [Math.floor((left / 60000) % 60), t("countdown.minutes")],
+        [Math.floor((left / 1000) % 60), t("countdown.seconds")],
       ].map(([v, l]) => [String(v).padStart(2, "0"), l]);
   return (
     <section className="px-4" style={{ ...getSectionStyle(config), backgroundColor: config.backgroundColor || "#0f172a", color: config.textColor || "#ffffff" }}>
       <div className="max-w-4xl mx-auto text-center space-y-8">
-        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Offre limitée"} className="text-3xl md:text-4xl font-black block" />
+        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || t("countdown.title")} className="text-3xl md:text-4xl font-black block" />
         {(config.subtitle || config.message) && <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || config.message} className="text-lg opacity-80 block" />}
         {left === 0 ? (
-          <p className="text-xl font-bold">{config.expiredText || "Cette offre est terminée"}</p>
+          <p className="text-xl font-bold">{config.expiredText || t("countdown.expired")}</p>
         ) : (
-          <div className="flex justify-center gap-3 md:gap-6">
+          <div className="flex justify-center gap-3 md:gap-6" dir="ltr">
             {parts.map(([value, label]) => (
               <div key={label} className="w-16 md:w-24 rounded-2xl bg-white/10 py-4">
                 <div className="text-2xl md:text-4xl font-black tabular-nums">{value}</div>
@@ -1882,6 +1911,7 @@ const videoEmbedUrl = (url: string): string | null => {
 };
 
 const VideoSection = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
   const url = config.videoUrl || config.url || "";
   const embed = videoEmbedUrl(url);
   const direct = !embed && /\.(mp4|webm|mov)(\?|$)/i.test(url);
@@ -1894,11 +1924,11 @@ const VideoSection = ({ sectionId, config }: { sectionId: string, config: any })
         {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-3xl md:text-4xl font-black text-center block" />}
         <div className="relative w-full overflow-hidden rounded-3xl bg-black shadow-2xl" style={{ aspectRatio: config.aspectRatio || "16/9" }}>
           {embed ? (
-            <iframe src={embed} className="absolute inset-0 w-full h-full" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={config.title || "Vidéo"} />
+            <iframe src={embed} className="absolute inset-0 w-full h-full" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title={config.title || "video"} />
           ) : direct ? (
             <video src={url} className="absolute inset-0 w-full h-full object-cover" controls playsInline autoPlay={Boolean(config.autoplay)} muted={Boolean(config.autoplay)} />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">Ajoutez un lien YouTube, Vimeo ou MP4</div>
+            <div className="absolute inset-0 flex items-center justify-center text-white/60 text-sm">{t("video.setup")}</div>
           )}
         </div>
       </div>
@@ -1907,40 +1937,41 @@ const VideoSection = ({ sectionId, config }: { sectionId: string, config: any })
 };
 
 const ContactSection = ({ sectionId, config, store }: { sectionId: string, config: any, store: any }) => {
+  const { t } = useStoreText();
   const phone = config.phone || store?.contact_phone || "";
   const email = config.email || store?.contact_email || "";
   const whatsapp = (config.whatsapp || store?.whatsapp_number || phone || "").replace(/[^\d]/g, "");
   const address = config.address || "";
   const [form, setForm] = useState({ name: "", message: "" });
   const send = () => {
-    const text = `Bonjour, je suis ${form.name}. ${form.message}`;
+    const text = `${form.name ? `${form.name}: ` : ""}${form.message}`;
     if (whatsapp) window.open(`https://wa.me/${whatsapp}?text=${encodeURIComponent(text)}`, "_blank");
-    else if (email) window.location.href = `mailto:${email}?subject=${encodeURIComponent("Contact boutique")}&body=${encodeURIComponent(text)}`;
+    else if (email) window.location.href = `mailto:${email}?subject=${encodeURIComponent(t("contact.subject"))}&body=${encodeURIComponent(text)}`;
   };
   return (
     <section className="px-4" style={getSectionStyle(config)}>
       <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
         <div className="space-y-6">
-          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Contactez-nous"} className="text-3xl md:text-4xl font-black block" />
-          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || "Une question sur une commande ou un produit ? Écrivez-nous."} className="text-muted-foreground block" />
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || t("contact.title")} className="text-3xl md:text-4xl font-black block" />
+          <EditableText tag="p" sectionId={sectionId} field="subtitle" text={config.subtitle || t("contact.subtitle")} className="text-muted-foreground block" />
           <div className="space-y-3 text-sm">
-            {phone && <p><span className="font-bold">Téléphone : </span><a href={`tel:${phone}`} className="hover:text-primary">{phone}</a></p>}
-            {email && <p><span className="font-bold">Email : </span><a href={`mailto:${email}`} className="hover:text-primary">{email}</a></p>}
-            {address && <p><span className="font-bold">Adresse : </span>{address}</p>}
-            {config.hours && <p><span className="font-bold">Horaires : </span>{config.hours}</p>}
+            {phone && <p><span className="font-bold">{t("contact.phone")} : </span><a href={`tel:${phone}`} dir="ltr" className="hover:text-primary">{phone}</a></p>}
+            {email && <p><span className="font-bold">{t("contact.email")} : </span><a href={`mailto:${email}`} className="hover:text-primary">{email}</a></p>}
+            {address && <p><span className="font-bold">{t("contact.address")} : </span>{address}</p>}
+            {config.hours && <p><span className="font-bold">{t("contact.hours")} : </span>{config.hours}</p>}
           </div>
         </div>
         <div className="space-y-4 rounded-3xl border border-border p-6 bg-card">
-          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Votre nom" className="w-full rounded-xl border border-border bg-background px-4 py-3" />
-          <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Votre message" rows={5} className="w-full rounded-xl border border-border bg-background px-4 py-3" />
+          <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("contact.your_name")} className="w-full rounded-xl border border-border bg-background px-4 py-3" />
+          <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder={t("contact.your_message")} rows={5} className="w-full rounded-xl border border-border bg-background px-4 py-3" />
           <button
             onClick={send}
             disabled={!form.message.trim() || (!whatsapp && !email)}
             className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold disabled:opacity-50"
           >
-            {whatsapp ? "Envoyer sur WhatsApp" : "Envoyer par email"}
+            {whatsapp ? t("contact.send_whatsapp") : t("contact.send_email")}
           </button>
-          {!whatsapp && !email && <p className="text-xs text-muted-foreground text-center">Ajoutez un téléphone ou un email dans les réglages de la section.</p>}
+          {!whatsapp && !email && <p className="text-xs text-muted-foreground text-center">{t("contact.setup")}</p>}
         </div>
       </div>
     </section>
@@ -1948,6 +1979,7 @@ const ContactSection = ({ sectionId, config, store }: { sectionId: string, confi
 };
 
 const ImageWithText = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
   const imageRight = (config.imagePosition || config.layout) === "right";
   return (
     <section className="px-4" style={getSectionStyle(config)}>
@@ -1956,11 +1988,11 @@ const ImageWithText = ({ sectionId, config }: { sectionId: string, config: any }
           {(config.image || config.imageUrl) && <img src={config.image || config.imageUrl} alt={config.title || ""} className="w-full h-full object-cover" />}
         </div>
         <div className="space-y-6">
-          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Notre histoire"} className="text-3xl md:text-4xl font-black block" />
+          <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || ""} className="text-3xl md:text-4xl font-black block" />
           {config.content ? (
             <SafeHtml html={config.content} className="text-muted-foreground leading-relaxed" />
           ) : (
-            <EditableText tag="p" sectionId={sectionId} field="text" text={config.text || config.description || "Racontez ce qui rend votre boutique unique."} className="text-muted-foreground leading-relaxed block" />
+            <EditableText tag="p" sectionId={sectionId} field="text" text={config.text || config.description || ""} className="text-muted-foreground leading-relaxed block" />
           )}
           {(config.ctaText || config.ctaLink) && <PreviewButton config={config} />}
         </div>
@@ -1969,21 +2001,25 @@ const ImageWithText = ({ sectionId, config }: { sectionId: string, config: any }
   );
 };
 
-const CtaBanner = ({ sectionId, config }: { sectionId: string, config: any }) => (
+const CtaBanner = ({ sectionId, config }: { sectionId: string, config: any }) => {
+  const { t } = useStoreText();
+  return (
   <section className="px-4" style={{ ...getSectionStyle({ paddingY: 64, ...config }), backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }}>
-    <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+    <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-start">
       <div className="space-y-2">
-        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || "Offre spéciale"} className="text-2xl md:text-4xl font-black block" />
+        <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title || ""} className="text-2xl md:text-4xl font-black block" />
         {(config.description || config.subtitle) && <EditableText tag="p" sectionId={sectionId} field="description" text={config.description || config.subtitle} className="opacity-90 block" />}
       </div>
       <PreviewButton config={config} className="bg-white text-black px-8 py-4 rounded-full font-bold hover:scale-105 transition-all shrink-0">
-        {config.ctaText || "J'en profite"}
+        {config.ctaText || t("common.learn_more")}
       </PreviewButton>
     </div>
   </section>
-);
+  );
+};
 
 const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, config: any, storeId?: string }) => {
+  const { t } = useStoreText();
   const [categories, setCategories] = useState<{ name: string; image: string | null; count: number }[]>([]);
   useEffect(() => {
     if (!storeId) return;
@@ -2009,7 +2045,7 @@ const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, co
 
   if (!categories.length) {
     return typeof window !== "undefined" && window.parent !== window ? (
-      <div className="p-10 text-center text-sm text-muted-foreground border-2 border-dashed">Les catégories de vos produits apparaîtront ici.</div>
+      <div className="p-10 text-center text-sm text-muted-foreground border-2 border-dashed">{t("categories.setup")}</div>
     ) : null;
   }
 
@@ -2022,12 +2058,12 @@ const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, co
             <button
               key={c.name}
               onClick={() => window.parent.postMessage({ type: "NAVIGATE", page: "shop", category: c.name }, "*")}
-              className="group relative overflow-hidden rounded-2xl aspect-square bg-muted text-left"
+              className="group relative overflow-hidden rounded-2xl aspect-square bg-muted text-start"
             >
               {c.image && <img src={c.image} alt={c.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />}
               <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white">
                 <span className="text-xl font-black">{c.name}</span>
-                {config.showProductCount !== false && <span className="text-xs opacity-80 mt-1">{c.count} produit{c.count > 1 ? "s" : ""}</span>}
+                {config.showProductCount !== false && <span className="text-xs opacity-80 mt-1">{t("categories.count", { count: c.count })}</span>}
               </div>
             </button>
           ))}
@@ -2112,8 +2148,10 @@ const normalizeSection = (section: any) => {
 };
 
 const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart, selectedProduct, onSelectProduct }: { section: any, store: any, onAddToCart?: (item: any) => void, cart: any[], slug: string, onClearCart: () => void, selectedProduct?: any, onSelectProduct?: (product: any) => void }) => {
+  const { t } = useStoreText();
   if (section.is_visible === false) return null;
   section = normalizeSection(section);
+  if (String(section.id || "").startsWith("builtin-")) section = { ...section, config: resolveBuiltin(section.config, t) };
   const listField = LIST_FIELDS[section.type];
   if (listField && typeof window !== "undefined" && window.parent === window) {
     const items = section.config?.[listField];
@@ -2168,10 +2206,10 @@ const SectionRenderer = ({ section, store, onAddToCart, cart, slug, onClearCart,
 const BUILT_IN_PAGES: Record<string, any[]> = {
   checkout: [{ id: "builtin-checkout", type: "checkout", config: {} }],
   "product-detail": [{ id: "builtin-product-detail", type: "product_detail", config: {} }],
-  shop: [{ id: "builtin-shop", type: "products", config: { title: "Nos produits", limit: 24, columns: 4 } }],
+  shop: [{ id: "builtin-shop", type: "products", config: { title: "@builtin.products", limit: 24, columns: 4 } }],
   home: [
-    { id: "builtin-home-hero", type: "hero", is_visible: true, config: { title: "Bienvenue", subtitle: "Découvrez nos produits", variant: "bold" } },
-    { id: "builtin-home-products", type: "products", is_visible: true, config: { title: "Nos produits", limit: 8, columns: 4, source: "store" } },
+    { id: "builtin-home-hero", type: "hero", is_visible: true, config: { title: "@builtin.welcome", subtitle: "@builtin.discover", variant: "bold" } },
+    { id: "builtin-home-products", type: "products", is_visible: true, config: { title: "@builtin.products", limit: 8, columns: 4, source: "store" } },
     {
       id: "builtin-home-trust",
       type: "trust_badges",
@@ -2179,8 +2217,8 @@ const BUILT_IN_PAGES: Record<string, any[]> = {
       config: {
         layout: "row",
         items: [
-          { icon: "Truck", title: "Livraison partout en Tunisie", description: "24/48h" },
-          { icon: "Shield", title: "Paiement à la livraison", description: "100% sécurisé" },
+          { icon: "Truck", title: "@trust.delivery", description: "@builtin.fast" },
+          { icon: "Shield", title: "@trust.cod", description: "@builtin.secure" },
         ],
       },
     },
@@ -2188,10 +2226,39 @@ const BUILT_IN_PAGES: Record<string, any[]> = {
   ],
 };
 
+const resolveBuiltin = (value: any, t: (key: StoreTextKey) => string): any => {
+  if (typeof value === "string") return value.startsWith("@") ? t(value.slice(1) as StoreTextKey) : value;
+  if (Array.isArray(value)) return value.map((v) => resolveBuiltin(v, t));
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, resolveBuiltin(v, t)]));
+  return value;
+};
+
 const sectionsForPage = (pageSlug: string, pageList: any[]) => {
   const page = pageList.find((p) => p.slug === pageSlug);
   if (page) return page.sections || [];
   return BUILT_IN_PAGES[pageSlug] ?? null;
+};
+
+const WhatsAppButton = ({ store, currentPage, productTitle }: { store: any; currentPage: string; productTitle?: string }) => {
+  const { t } = useStoreText();
+  const digits = String(store?.whatsapp_number || "").replace(/\D/g, "");
+  if (digits.length < 8 || currentPage === "checkout") return null;
+  const number = digits.length === 8 ? `216${digits}` : digits;
+  const subject = currentPage === "product-detail" && productTitle ? t("whatsapp.about", { title: productTitle }) : "";
+  const text = encodeURIComponent(t("whatsapp.hello", { subject }));
+  return (
+    <a
+      href={`https://wa.me/${number}?text=${text}`}
+      target="_blank"
+      rel="noreferrer"
+      aria-label="WhatsApp"
+      className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl transition-transform hover:scale-105"
+    >
+      <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
+        <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.43 9.43 0 1 1 7.99 4.42zm8.02-17.45A11.33 11.33 0 0 0 12.05.7C5.8.7.7 5.78.7 12.04c0 2 .52 3.95 1.52 5.67L.6 23.3l5.73-1.5a11.3 11.3 0 0 0 5.72 1.46h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.33-8.02z" />
+      </svg>
+    </a>
+  );
 };
 
 export default function StorePreview({ params }: { params: Promise<{ slug: string }> }) {
@@ -2340,17 +2407,18 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
   }, [store?.id, currentPage, selectedProduct?.id]);
 
   if (loading) return <div className="flex h-screen items-center justify-center bg-white"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  if (!store) return <div className="flex h-screen items-center justify-center bg-white"><p>Boutique non trouvée</p></div>;
+  if (!store) return <div className="flex h-screen items-center justify-center bg-white"><p>{storeText("fr")("common.not_found")}</p></div>;
   if (store.is_active === false && !canSeeOffline) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-2 bg-white px-6 text-center">
         <p className="text-xl font-bold text-gray-900">{store.name}</p>
-        <p className="text-gray-500">Cette boutique est momentanément indisponible. Revenez bientôt !</p>
+        <p className="text-gray-500">{storeText(normalizeStorefrontLanguage(store.storefront_language) === "ar" ? "ar" : "fr")("common.unavailable")}</p>
       </div>
     );
   }
 
   return (
+    <StoreLanguageProvider setting={store.storefront_language} slug={slug}>
     <div className="min-h-screen flex flex-col bg-white relative" style={{
       '--primary': store?.theme_config?.colors?.primary || '#7c3aed',
       '--secondary': store?.theme_config?.colors?.secondary || '#4f46e5',
@@ -2364,10 +2432,10 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           --primary-foreground: #ffffff;
         }
         h1, h2, h3, h4, h5, h6 {
-          font-family: var(--font-heading), system-ui, sans-serif !important;
+          font-family: var(--font-heading), 'Cairo', system-ui, sans-serif !important;
         }
         body {
-          font-family: var(--font-body), system-ui, sans-serif !important;
+          font-family: var(--font-body), 'Cairo', system-ui, sans-serif !important;
           font-size: ${store?.theme_config?.typography?.scale || 100}%;
         }
         section .grid > *, section .flex > * { min-width: 0; }
@@ -2384,7 +2452,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
           const families = [store?.theme_config?.fonts?.heading || store?.theme_config?.typography?.fontHeading, store?.theme_config?.fonts?.body || store?.theme_config?.typography?.fontBody]
             .map((f: any) => String(f || "").replace(/['"]/g, "").split(",")[0].trim())
             .filter((f: string) => f && !/^(inter|system-ui|sans-serif|serif)$/i.test(f));
-          const unique = [...new Set(families)];
+          const unique = [...new Set([...families, ...(normalizeStorefrontLanguage(store?.storefront_language) === "fr" ? [] : ["Cairo"])])];
           return unique.length ? (
             <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?${unique.map((f) => `family=${encodeURIComponent(f).replace(/%20/g, "+")}:wght@400;700`).join("&")}&display=swap`} />
           ) : null;
@@ -2432,26 +2500,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
 
           ))}
         </main>
-        {(() => {
-          const digits = String(store?.whatsapp_number || "").replace(/\D/g, "");
-          if (digits.length < 8 || currentPage === "checkout") return null;
-          const number = digits.length === 8 ? `216${digits}` : digits;
-          const subject = currentPage === "product-detail" && selectedProduct?.title ? ` au sujet de « ${selectedProduct.title} »` : "";
-          const text = encodeURIComponent(`Bonjour ${store?.name || ""}, j'ai une question${subject}.`);
-          return (
-            <a
-              href={`https://wa.me/${number}?text=${text}`}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="WhatsApp"
-              className="fixed bottom-5 end-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-xl transition-transform hover:scale-105"
-            >
-              <svg viewBox="0 0 24 24" className="h-7 w-7 fill-current" aria-hidden="true">
-                <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.48.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35zM12.05 21.5h-.01a9.4 9.4 0 0 1-4.8-1.32l-.34-.2-3.57.94.95-3.48-.22-.36a9.43 9.43 0 1 1 7.99 4.42zm8.02-17.45A11.33 11.33 0 0 0 12.05.7C5.8.7.7 5.78.7 12.04c0 2 .52 3.95 1.52 5.67L.6 23.3l5.73-1.5a11.3 11.3 0 0 0 5.72 1.46h.01c6.25 0 11.34-5.09 11.34-11.34 0-3.03-1.18-5.88-3.33-8.02z" />
-              </svg>
-            </a>
-          );
-        })()}
+        <WhatsAppButton store={store} currentPage={currentPage} productTitle={selectedProduct?.title} />
         <CartDrawer 
           offers={normalizeOffers(store?.quantity_offers)}
           isOpen={isCartOpen} 
@@ -2466,5 +2515,6 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
         />
 
     </div>
+    </StoreLanguageProvider>
   );
 }

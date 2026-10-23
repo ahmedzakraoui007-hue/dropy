@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type QuantityOffer } from "@/lib/store-pricing";
+import { governorateLabel, orderErrorText } from "@/lib/storefront-i18n";
+import { useStoreText } from "@/components/storefront/StoreLanguage";
 
 export const TUNISIAN_GOVERNORATES = [
   "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili",
@@ -25,8 +27,6 @@ type Props = {
   delivery?: { delivery_fee?: number | string | null; free_delivery_threshold?: number | string | null };
 };
 
-const formatTnd = (value: number) => `${value.toFixed(3).replace(".", ",")} DT`;
-
 export function ExpressOrderForm({
   storeId,
   productId,
@@ -41,6 +41,7 @@ export function ExpressOrderForm({
   offers = [],
   delivery = {},
 }: Props) {
+  const { t, money: formatTnd, lang } = useStoreText();
   const [form, setForm] = useState({ name: "", phone: "", governorate: "", city: "", address: "" });
   const [quantity, setQuantity] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,11 +60,11 @@ export function ExpressOrderForm({
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (form.name.trim().length < 2) next.name = "Indiquez votre nom.";
+    if (form.name.trim().length < 2) next.name = t("express.err_name");
     const digits = form.phone.replace(/\D/g, "").replace(/^216/, "");
-    if (!/^[2-9]\d{7}$/.test(digits)) next.phone = "Numéro tunisien à 8 chiffres.";
-    if (!form.governorate) next.governorate = "Choisissez votre gouvernorat.";
-    if (form.address.trim().length < 5) next.address = "Indiquez votre adresse.";
+    if (!/^[2-9]\d{7}$/.test(digits)) next.phone = t("express.err_phone");
+    if (!form.governorate) next.governorate = t("express.err_governorate");
+    if (form.address.trim().length < 5) next.address = t("express.err_address");
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -74,7 +75,7 @@ export function ExpressOrderForm({
     if (beforeSubmit && !beforeSubmit()) return;
     if (!validate()) return;
     if (preview || !storeId || !productId) {
-      setServerError("Aperçu : la commande n'est pas envoyée depuis l'éditeur.");
+      setServerError(t("express.preview"));
       return;
     }
 
@@ -98,9 +99,9 @@ export function ExpressOrderForm({
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok && data.success) onOrdered(data.orderId, Number(data.totalAmount ?? total), quantity);
-      else setServerError(data.error || "La commande n'a pas pu être envoyée. Réessayez.");
+      else setServerError(orderErrorText(data.code, t));
     } catch {
-      setServerError("Problème de connexion. Réessayez.");
+      setServerError(t("express.network"));
     } finally {
       setSubmitting(false);
     }
@@ -116,16 +117,17 @@ export function ExpressOrderForm({
 
   return (
     <form onSubmit={submit} className="space-y-3 rounded-3xl border-2 border-primary/30 bg-card p-4 md:p-6 shadow-lg" noValidate>
-      <p className="text-lg font-black text-center">{title || "Commandez maintenant, payez à la livraison"}</p>
+      <p className="text-lg font-black text-center">{title || t("express.title")}</p>
 
       <div>
-        <input className={field} placeholder="Nom et prénom" autoComplete="name" value={form.name} onChange={(e) => update("name", e.target.value)} />
+        <input className={field} placeholder={t("express.name")} aria-label={t("express.name")} autoComplete="name" value={form.name} onChange={(e) => update("name", e.target.value)} />
         {errors.name && <p className="mt-1 text-xs font-medium text-red-600">{errors.name}</p>}
       </div>
       <div>
         <input
           className={field}
-          placeholder="Téléphone (ex. 22 123 456)"
+          placeholder={t("express.phone")}
+          aria-label={t("express.phone")}
           inputMode="tel"
           autoComplete="tel"
           dir="ltr"
@@ -136,18 +138,18 @@ export function ExpressOrderForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <select className={field} value={form.governorate} onChange={(e) => update("governorate", e.target.value)}>
-            <option value="">Gouvernorat</option>
+          <select className={field} aria-label={t("express.governorate")} value={form.governorate} onChange={(e) => update("governorate", e.target.value)}>
+            <option value="">{t("express.governorate")}</option>
             {TUNISIAN_GOVERNORATES.map((g) => (
-              <option key={g} value={g}>{g}</option>
+              <option key={g} value={g}>{governorateLabel(g, lang)}</option>
             ))}
           </select>
           {errors.governorate && <p className="mt-1 text-xs font-medium text-red-600">{errors.governorate}</p>}
         </div>
-        <input className={field} placeholder="Ville / délégation" value={form.city} onChange={(e) => update("city", e.target.value)} />
+        <input className={field} placeholder={t("express.city")} aria-label={t("express.city")} value={form.city} onChange={(e) => update("city", e.target.value)} />
       </div>
       <div>
-        <input className={field} placeholder="Adresse (rue, numéro, repère)" autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} />
+        <input className={field} placeholder={t("express.address")} aria-label={t("express.address")} autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} />
         {errors.address && <p className="mt-1 text-xs font-medium text-red-600">{errors.address}</p>}
       </div>
 
@@ -169,7 +171,7 @@ export function ExpressOrderForm({
                     -{percent}%
                   </span>
                 )}
-                <span className="block text-sm font-black">{choice} {choice > 1 ? "pièces" : "pièce"}</span>
+                <span className="block text-sm font-black">{choice} {choice > 1 ? t("pieces") : t("piece")}</span>
                 <span className="block text-xs opacity-70">{formatTnd(price)}</span>
               </button>
             );
@@ -179,17 +181,17 @@ export function ExpressOrderForm({
 
       <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3">
         <div className="flex items-center gap-3">
-          <button type="button" aria-label="Moins" className="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center disabled:opacity-40" disabled={quantity <= 1} onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+          <button type="button" aria-label={t("express.less")} className="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center disabled:opacity-40" disabled={quantity <= 1} onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
             <Minus className="h-4 w-4" />
           </button>
           <span className="w-6 text-center font-black">{quantity}</span>
-          <button type="button" aria-label="Plus" className="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center disabled:opacity-40" disabled={quantity >= 10} onClick={() => setQuantity((q) => Math.min(10, q + 1))}>
+          <button type="button" aria-label={t("express.more")} className="h-9 w-9 rounded-lg bg-background border border-border flex items-center justify-center disabled:opacity-40" disabled={quantity >= 10} onClick={() => setQuantity((q) => Math.min(10, q + 1))}>
             <Plus className="h-4 w-4" />
           </button>
         </div>
         <div className="text-end">
           <p className="text-xs opacity-60">
-            {shipping > 0 ? `Livraison ${formatTnd(shipping)}` : "Livraison gratuite"}
+            {shipping > 0 ? t("express.delivery", { amount: formatTnd(shipping) }) : t("express.free_delivery")}
             {savedPercent > 0 && ` · -${savedPercent}%`}
           </p>
           <p className="text-xl font-black">{formatTnd(total)}</p>
@@ -203,12 +205,12 @@ export function ExpressOrderForm({
         disabled={submitting}
         className="w-full rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground shadow-xl transition-transform hover:scale-[1.01] active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
       >
-        {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : buttonText || "Commander maintenant"}
+        {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : buttonText || t("express.button")}
       </button>
 
       <div className="flex items-center justify-center gap-4 text-xs opacity-70">
-        <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />Livraison partout en Tunisie</span>
-        <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />Paiement à la livraison</span>
+        <span className="flex items-center gap-1"><Truck className="h-3.5 w-3.5" />{t("trust.delivery")}</span>
+        <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />{t("trust.cod")}</span>
       </div>
     </form>
   );

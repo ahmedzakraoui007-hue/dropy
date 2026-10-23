@@ -1,3 +1,5 @@
+import { COMMON_FAQ_AR, NICHES_AR, SECTION_TITLES_AR, TRUST_AR } from "./home-sections-ar";
+
 type Section = { id: string; type: string; config: Record<string, unknown>; position: number; is_visible: boolean };
 
 const photo = (id: string, width = 1600) => `https://images.unsplash.com/photo-${id}?w=${width}&q=80&auto=format&fit=crop`;
@@ -243,8 +245,34 @@ const NICHES: Record<string, Niche> = {
 
 export type HomeNiche = keyof typeof NICHES;
 
-export function buildHomeSections(niche: HomeNiche): Section[] {
+function localized(niche: HomeNiche, lang: "fr" | "ar") {
   const n = NICHES[niche];
+  if (lang !== "ar") {
+    return {
+      ...n,
+      trust: TRUST.config.items,
+      featuresTitle: "Pourquoi nous choisir",
+      faqTitle: "Questions fréquentes",
+      emailPlaceholder: "Votre e-mail",
+      subscribe: "Je m'inscris",
+    };
+  }
+  const ar = NICHES_AR[niche];
+  return {
+    ...n,
+    ...ar,
+    features: n.features.map((f, i) => ({ ...f, ...(ar.features[i] || {}) })),
+    faq: ar.extraFaq ? [...COMMON_FAQ_AR, ar.extraFaq] : COMMON_FAQ_AR,
+    trust: TRUST.config.items.map((item, i) => ({ ...item, ...(TRUST_AR[i] || {}) })),
+    featuresTitle: SECTION_TITLES_AR.features,
+    faqTitle: SECTION_TITLES_AR.faq,
+    emailPlaceholder: SECTION_TITLES_AR.emailPlaceholder,
+    subscribe: SECTION_TITLES_AR.subscribe,
+  };
+}
+
+export function buildHomeSections(niche: HomeNiche, lang: "fr" | "ar" = "fr"): Section[] {
+  const n = localized(niche, lang);
   const sections: Omit<Section, "id" | "position" | "is_visible">[] = [
     { type: "promo_banner", config: { text: n.promo } },
     {
@@ -257,16 +285,16 @@ export function buildHomeSections(niche: HomeNiche): Section[] {
         ctaText: n.cta,
         ctaLink: "/shop",
         backgroundImage: n.heroImage,
-        overlay: true,
+        overlay: 0.4,
         height: 640,
       },
     },
-    TRUST,
+    { type: "trust_badges", config: { layout: "row", items: n.trust } },
     { type: "products", config: { title: n.productsTitle, limit: 8, columns: 4, source: "store" } },
-    { type: "features", config: { title: "Pourquoi nous choisir", columns: 3, features: n.features } },
+    { type: "features", config: { title: n.featuresTitle, columns: 3, features: n.features } },
     { type: "image_with_text", config: { title: n.storyTitle, text: n.storyText, image: n.storyImage, imagePosition: "left", ctaText: n.cta, ctaLink: "/shop" } },
-    { type: "faq", config: { title: "Questions fréquentes", faqs: n.faq } },
-    { type: "newsletter", config: { title: n.newsletterTitle, subtitle: n.newsletterSubtitle, placeholder: "Votre e-mail", buttonText: "Je m'inscris" } },
+    { type: "faq", config: { title: n.faqTitle, faqs: n.faq } },
+    { type: "newsletter", config: { title: n.newsletterTitle, subtitle: n.newsletterSubtitle, placeholder: n.emailPlaceholder, buttonText: n.subscribe } },
     { type: "footer", config: { description: n.footer } },
   ];
   return sections.map((section, position) => ({ ...section, id: `${niche}-${section.type}-${position}`, position, is_visible: true }));

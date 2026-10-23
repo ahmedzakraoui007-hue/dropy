@@ -59,6 +59,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { SectionSettings, type LinkTarget } from "@/components/store-builder/editor/SectionSettings";
 import { AddSectionDialog } from "@/components/store-builder/editor/AddSectionDialog";
 import { StylePanel, themeLook } from "@/components/store-builder/editor/StylePanel";
+import { themeHomeSections } from "@/lib/themes";
 import { sectionIcon } from "@/lib/builder-sections";
 import { PAGE_TEMPLATE_KINDS, buildPageTemplate, makeSection, type PageTemplateKind } from "@/lib/store-page-templates";
 import { slugify } from "@/lib/store-slug";
@@ -80,7 +81,7 @@ type EditorPage = {
   is_homepage: boolean;
 };
 
-type StoreInfo = { id: string; name: string; slug: string; is_active: boolean | null };
+type StoreInfo = { id: string; name: string; slug: string; is_active: boolean | null; storefront_language: string | null };
 type Snapshot = { pages: EditorPage[]; themeConfig: Record<string, any> };
 type SaveState = "saved" | "dirty" | "saving" | "error";
 type Tab = "sections" | "pages" | "style";
@@ -234,6 +235,7 @@ export default function BuilderPage() {
 
   latestRef.current = { pages, themeConfig };
 
+  const contentLang: "fr" | "ar" = store?.storefront_language === "ar" ? "ar" : "fr";
   const currentPage = pages.find((p) => p.slug === currentSlug) || pages[0];
   const sections = useMemo(() => currentPage?.sections || [], [currentPage]);
   const activeSection = sections.find((s) => s.id === activeSectionId) || null;
@@ -249,7 +251,7 @@ export default function BuilderPage() {
       }
       const { data: storeRow } = await supabase
         .from("stores")
-        .select("id, name, slug, is_active, theme_config")
+        .select("id, name, slug, is_active, theme_config, storefront_language")
         .eq("vendor_id", user.id)
         .order("created_at", { ascending: true })
         .limit(1)
@@ -294,7 +296,7 @@ export default function BuilderPage() {
       const params = new URLSearchParams(window.location.search);
       const requested = params.get("page");
       const requestedTab = params.get("tab");
-      setStore({ id: storeRow.id, name: storeRow.name, slug: storeRow.slug, is_active: storeRow.is_active });
+      setStore({ id: storeRow.id, name: storeRow.name, slug: storeRow.slug, is_active: storeRow.is_active, storefront_language: storeRow.storefront_language });
       setProductCount(count ?? 0);
       setPages(loaded);
       setThemeConfig(theme);
@@ -471,7 +473,7 @@ export default function BuilderPage() {
   );
 
   const addSection = (type: string) => {
-    const section = makeSection(type);
+    const section = makeSection(type, undefined, contentLang);
     updateSections(currentSlug, (list) => {
       const activeIndex = list.findIndex((s) => s.id === activeSectionId);
       const footerIndex = list.findIndex((s) => s.type === "footer");
@@ -525,7 +527,7 @@ export default function BuilderPage() {
       setNewPageOpen(true);
       return;
     }
-    const template = buildPageTemplate(kind);
+    const template = buildPageTemplate(kind, contentLang);
     const existing = pages.find((p) => p.slug === template.slug);
     if (existing) {
       openPage(existing.slug);
@@ -557,7 +559,7 @@ export default function BuilderPage() {
     while (pages.some((p) => p.slug === slug)) slug = `${base}-${n++}`;
     setPages((prev) => [
       ...prev,
-      { slug, title, page_type: "content", sections: [makeSection("image_with_text"), makeSection("footer")], is_published: true, show_in_navigation: true, is_homepage: false },
+      { slug, title, page_type: "content", sections: [makeSection("image_with_text", undefined, contentLang), makeSection("footer", undefined, contentLang)], is_published: true, show_in_navigation: true, is_homepage: false },
     ]);
     setNewPageOpen(false);
     openPage(slug);
@@ -581,7 +583,7 @@ export default function BuilderPage() {
     if (replaceHome) {
       const home = pages.find((p) => p.is_homepage);
       if (home) {
-        updateSections(home.slug, () => (theme.defaultSections || []).map((s: any, position: number) => ({ ...s, id: crypto.randomUUID(), position, is_visible: true })));
+        updateSections(home.slug, () => themeHomeSections(theme, store?.storefront_language === "ar" ? "ar" : "fr").map((s: any, position: number) => ({ ...s, id: crypto.randomUUID(), position, is_visible: true })));
         setCurrentSlug(home.slug);
         setActiveSectionId(null);
       }

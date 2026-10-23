@@ -47,12 +47,14 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
   const supabase = anonClient();
   const { data: store } = await supabase
     .from("stores")
-    .select("id, name, description, seo_title, seo_description, logo_url, is_active, google_site_verification, facebook_domain_verification")
+    .select("id, name, description, seo_title, seo_description, logo_url, is_active, google_site_verification, facebook_domain_verification, storefront_language")
     .eq("slug", storeSlug)
     .maybeSingle();
   if (!store) return { title: { absolute: "Boutique introuvable" }, robots: { index: false, follow: false } };
 
   const offline = store.is_active === false;
+  const arabic = store.storefront_language === "ar";
+  const locale = arabic ? "ar_TN" : "fr_TN";
   const verification = storeVerification(store);
   const robots = offline ? { index: false, follow: false } : undefined;
   const [first, second] = path;
@@ -63,14 +65,18 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
       const { product } = result;
       const title = `${product.name} | ${store.name}`;
       const price = Number(product.selling_price || 0).toFixed(3).replace(".", ",");
-      const description = plainText(product.description) || `${product.name} à ${price} DT chez ${store.name}. Paiement à la livraison partout en Tunisie.`;
+      const description =
+        plainText(product.description) ||
+        (arabic
+          ? `${product.name} بسعر ${price} د.ت لدى ${store.name}. الدفع عند الاستلام في كل ولايات تونس.`
+          : `${product.name} à ${price} DT chez ${store.name}. Paiement à la livraison partout en Tunisie.`);
       const image = product.images?.[0] || store.logo_url || undefined;
       const url = storeUrl(storeSlug, `/p/${product.id}`);
       return {
         title: { absolute: title },
         description,
         alternates: { canonical: url },
-        openGraph: { title, description, url, siteName: store.name, images: image ? [image] : undefined, type: "website" },
+        openGraph: { title, description, url, siteName: store.name, images: image ? [image] : undefined, type: "website", locale },
         twitter: { card: "summary_large_image", title, description, images: image ? [image] : undefined },
         icons: store.logo_url ? { icon: store.logo_url } : undefined,
         robots,
@@ -93,7 +99,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
 
   const storeTitle = store.seo_title || store.name;
   const title = page ? page.seo_title || `${page.title} | ${store.name}` : storeTitle;
-  const description = page?.seo_description || store.seo_description || plainText(store.description) || `Découvrez la boutique ${store.name}. Paiement à la livraison partout en Tunisie.`;
+  const description = page?.seo_description || store.seo_description || plainText(store.description) || (arabic ? `اكتشف متجر ${store.name}. الدفع عند الاستلام في كل ولايات تونس.` : `Découvrez la boutique ${store.name}. Paiement à la livraison partout en Tunisie.`);
   const image = page?.seo_image || store.logo_url || undefined;
   const url = storeUrl(storeSlug, page && first !== "home" ? `/${first}` : "");
 
@@ -101,7 +107,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
     title: { absolute: title },
     description,
     alternates: { canonical: url },
-    openGraph: { title, description, url, siteName: store.name, images: image ? [image] : undefined, type: "website" },
+    openGraph: { title, description, url, siteName: store.name, images: image ? [image] : undefined, type: "website", locale },
     robots: page?.no_index ? { index: false, follow: false } : robots,
     icons: store.logo_url ? { icon: store.logo_url } : undefined,
     verification,

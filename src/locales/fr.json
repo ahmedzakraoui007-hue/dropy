@@ -229,6 +229,16 @@
             }
         },
         "settings": {
+            "language": {
+                "label": "Langue de la boutique",
+                "fr": "Français",
+                "fr_desc": "Textes de la boutique en français.",
+                "ar": "العربية",
+                "ar_desc": "Boutique en arabe, de droite à gauche.",
+                "both": "Français + العربية",
+                "both_desc": "Les boutons et pages de commande s'affichent dans la langue choisie par le client ; vos textes restent tels que vous les écrivez.",
+                "note": "Les textes que vous avez écrits ne sont pas traduits automatiquement. Pour un accueil dans la nouvelle langue, réappliquez votre thème avec « Remplacer aussi l'accueil »."
+            },
             "title": "Paramètres de la boutique",
             "subtitle": "Ces informations apparaissent sur votre boutique et dans Google.",
             "save": "Enregistrer",
