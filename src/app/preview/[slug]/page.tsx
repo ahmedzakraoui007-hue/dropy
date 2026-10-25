@@ -12,6 +12,7 @@ import { governorateLabel, normalizeStorefrontLanguage, orderErrorText, storeTex
 import { TUNISIAN_GOVERNORATES } from "@/components/storefront/ExpressOrderForm";
 import { discountPercent, normalizeSalesContent } from "@/lib/product-sales";
 import { customerConfirmationMessage, whatsappLink } from "@/lib/order-messages";
+import { TurnstileWidget } from "@/components/storefront/TurnstileWidget";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 import { SectionIcon } from "@/components/storefront/SectionIcon";
 import { storeBasePath } from "@/lib/store-url";
@@ -1759,6 +1760,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
     const { t, money, lang } = useStoreText();
     const [formData, setFormData] = useState({ name: "", phone: "", governorate: "", address: "", email: "" });
     const [submitError, setSubmitError] = useState("");
+    const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const paymentMethod = "cod";
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [promoCode, setPromoCode] = useState("");
@@ -1824,7 +1826,8 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
             customer: formData,
             appliedPromo,
             paymentMethod,
-            slug
+            slug,
+            turnstileToken
           })
         });
         
@@ -1890,6 +1893,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                   </div>
                 </div>
 
+                <TurnstileWidget onToken={setTurnstileToken} lang={lang} />
                 {submitError && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{submitError}</p>}
                 <button disabled={isSubmitting || cart.length === 0} className="w-full bg-primary text-white py-4 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
                   {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>✅ {config.buttonText || t("checkout.confirm")}</>}

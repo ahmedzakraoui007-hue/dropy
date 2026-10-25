@@ -3,6 +3,7 @@ import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/stor
 import { NextResponse } from "next/server";
 import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isMobileUserAgent, normalizeProtection, phoneKey, requestIp, verifyTurnstile, type RiskFlag } from "@/lib/order-protection";
 
 const MAX_LINES = 50;
 const MAX_QUANTITY = 100;
@@ -75,6 +76,26 @@ export async function POST(request: Request) {
 
     const { data: store } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
     if (!store || store.is_active === false) return fail("store_unavailable", "Boutique introuvable", 404);
+
+    const ip = requestIp(request);
+    const userAgent = (request.headers.get("user-agent") || "").slice(0, 300);
+    const customerPhoneKey = phoneKey(customerPhone);
+    const protection = normalizeProtection(store.order_protection);
+
+    if (!(await verifyTurnstile(body.turnstileToken, ip))) return fail("bot_check", "Vérification anti-robot échouée", 403);
+
+    const blockedValues = [`phone:${customerPhoneKey}`, ...(ip ? [`ip:${ip}`] : [])];
+    const { data: blocked } = await supabase
+      .from("store_blocklist")
+      .select("kind, value")
+      .eq("store_id", storeId)
+      .in("value", [customerPhoneKey, ...(ip ? [ip] : [])]);
+    if ((blocked || []).some((b) => blockedValues.includes(`${b.kind}:${b.value}`))) {
+      return fail("blocked", "Commande refusée par la boutique", 403);
+    }
+    if (protection.blockDesktop && userAgent && !isMobileUserAgent(userAgent)) {
+      return fail("desktop_blocked", "Commandes depuis un ordinateur désactivées", 403);
+    }
     const offers = normalizeOffers(store.quantity_offers);
 
     const productIds = [...new Set(lines.map((l) => l.productId))];
@@ -162,6 +183,12 @@ export async function POST(request: Request) {
     }
 
     const subtotal = round2(priced.reduce((sum, p) => sum + p.total, 0));
+    if (protection.maxQuantity && lines.some((l) => l.quantity > protection.maxQuantity!)) {
+      return fail("order_limit", "Quantité maximale dépassée", 422);
+    }
+    if (protection.maxAmount && subtotal > protection.maxAmount) {
+      return fail("order_limit", "Montant maximal dépassé", 422);
+    }
 
     let discountAmount = 0;
     let promoId: string | null = null;
@@ -192,6 +219,28 @@ export async function POST(request: Request) {
     const shippingCost = deliveryFeeFor(subtotal - discountAmount, store);
     const totalAmount = round2(subtotal - discountAmount + shippingCost);
     const number = orderNumber("DRP");
+
+    const riskFlags: RiskFlag[] = [];
+    const dayAgo = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+    const hourAgo = new Date(Date.now() - 3600 * 1000).toISOString();
+    const { data: samePhone } = await supabase
+      .from("store_orders")
+      .select("status, cancel_reason, created_at")
+      .eq("store_id", storeId)
+      .in("customer_phone", [customerPhone, customerPhoneKey])
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if ((samePhone || []).some((o) => o.created_at >= dayAgo && o.status === "new")) riskFlags.push("repeat_phone");
+    if ((samePhone || []).some((o) => o.cancel_reason === "fake_order")) riskFlags.push("previous_fake");
+    if (ip) {
+      const { count: ipCount } = await supabase
+        .from("store_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", storeId)
+        .eq("customer_ip", ip)
+        .gte("created_at", hourAgo);
+      if ((ipCount ?? 0) >= 3) riskFlags.push("ip_burst");
+    }
 
     const dropshipSourceIds = [
       ...new Set(priced.filter((p) => p.product.is_dropship && p.product.product_id).map((p) => p.product.product_id)),
@@ -233,6 +282,9 @@ export async function POST(request: Request) {
         payment_status: "pending",
         has_own_products: hasOwn,
         has_dropshipping_products: hasDropship,
+        customer_ip: ip,
+        user_agent: userAgent || null,
+        risk_flags: riskFlags,
       })
       .select()
       .single();

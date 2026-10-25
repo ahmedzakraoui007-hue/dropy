@@ -5,6 +5,7 @@ import { Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type QuantityOffer } from "@/lib/store-pricing";
 import { governorateLabel, orderErrorText } from "@/lib/storefront-i18n";
 import { useStoreText } from "@/components/storefront/StoreLanguage";
+import { TurnstileWidget } from "@/components/storefront/TurnstileWidget";
 
 export const TUNISIAN_GOVERNORATES = [
   "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili",
@@ -49,6 +50,7 @@ export function ExpressOrderForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
   const leadIdRef = useRef<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
   useEffect(() => {
@@ -119,6 +121,7 @@ export function ExpressOrderForm({
             address: form.address.trim(),
           },
           paymentMethod: "cod",
+          turnstileToken,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -226,6 +229,8 @@ export function ExpressOrderForm({
           <p className="text-xl font-black">{formatTnd(total)}</p>
         </div>
       </div>
+
+      <TurnstileWidget onToken={setTurnstileToken} lang={lang} />
 
       {serverError && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{serverError}</p>}
 
