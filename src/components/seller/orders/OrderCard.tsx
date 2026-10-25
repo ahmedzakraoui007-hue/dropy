@@ -51,9 +51,16 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
             {format(new Date(order.created_at), 'dd MMM yyyy, HH:mm', { locale: locale === 'ar' ? ar : fr })}
           </div>
         </div>
-        <Badge className={getStatusColor(order.status)} variant="outline">
-          {t(`seller_app.status.${order.status}`)}
-        </Badge>
+        <div className="flex flex-col items-end gap-1">
+          <Badge className={getStatusColor(order.status)} variant="outline">
+            {t(`seller_app.status.${order.status}`)}
+          </Badge>
+          {(order.risk_flags?.length ?? 0) > 0 && (
+            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800" title={(order.risk_flags || []).map((f) => t(`seller_app.protection.flags.${f}`)).join(" · ")}>
+              ⚠ {t("seller_app.protection.suspicious")}
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="py-4">
         <div className="space-y-3">

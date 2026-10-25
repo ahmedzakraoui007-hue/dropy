@@ -108,6 +108,10 @@ const FR = {
   "errors.variant_required": "Veuillez choisir une option.",
   "errors.store_unavailable": "Cette boutique n'accepte pas de commandes pour le moment.",
   "errors.generic": "La commande n'a pas pu être envoyée. Réessayez.",
+  "errors.blocked": "Cette commande ne peut pas être passée en ligne. Contactez la boutique par téléphone ou WhatsApp.",
+  "errors.desktop_blocked": "Les commandes se passent depuis un téléphone. Ouvrez cette page sur votre mobile ou contactez la boutique.",
+  "errors.order_limit": "Cette commande dépasse la quantité ou le montant autorisé en ligne. Contactez la boutique pour une grosse commande.",
+  "errors.bot_check": "La vérification anti-robot a échoué. Rechargez la page et réessayez.",
   "thanks.title": "Merci pour votre confiance !",
   "thanks.body": "Votre commande {number} a bien été enregistrée. Nous vous appelons pour la confirmer.",
   "thanks.status": "Statut",
@@ -268,6 +272,10 @@ const AR: Record<StoreTextKey, string> = {
   "errors.variant_required": "يرجى اختيار خيار.",
   "errors.store_unavailable": "هذا المتجر لا يقبل الطلبات حاليًا.",
   "errors.generic": "تعذّر إرسال الطلب. أعد المحاولة.",
+  "errors.blocked": "لا يمكن إتمام هذا الطلب عبر الإنترنت. اتصل بالمتجر هاتفيًا أو عبر واتساب.",
+  "errors.desktop_blocked": "الطلبات تتم من الهاتف. افتح هذه الصفحة على هاتفك أو اتصل بالمتجر.",
+  "errors.order_limit": "هذا الطلب يتجاوز الكمية أو المبلغ المسموح به عبر الإنترنت. اتصل بالمتجر للطلبات الكبيرة.",
+  "errors.bot_check": "فشل التحقق من أنك لست روبوتًا. أعد تحميل الصفحة وحاول مجددًا.",
   "thanks.title": "شكرًا على ثقتك!",
   "thanks.body": "تم تسجيل طلبك {number} بنجاح. سنتصل بك لتأكيده.",
   "thanks.status": "الحالة",
@@ -388,6 +396,10 @@ export function orderErrorText(code: unknown, t: ReturnType<typeof storeText>) {
     out_of_stock: "errors.out_of_stock",
     variant_required: "errors.variant_required",
     store_unavailable: "errors.store_unavailable",
+    blocked: "errors.blocked",
+    desktop_blocked: "errors.desktop_blocked",
+    order_limit: "errors.order_limit",
+    bot_check: "errors.bot_check",
   };
   return t(known[String(code)] || "errors.generic");
 }

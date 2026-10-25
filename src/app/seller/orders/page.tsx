@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { useOrders } from '@/hooks/useOrders';
 import { useOrderActions } from '@/hooks/useOrderActions';
 import { useTranslation } from "@/context/LanguageContext";
@@ -14,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, RotateCcw, Filter, PackageX, Download } from 'lucide-react';
+import { Search, RotateCcw, Filter, PackageX, Download, ShieldCheck } from 'lucide-react';
 import { getStatusLabel } from '@/hooks/useOrderRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -92,7 +93,7 @@ export default function SellerOrdersPage() {
             {t("seller_app.orders.subtitle")}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -108,6 +109,12 @@ export default function SellerOrdersPage() {
           >
             <Download className="w-4 h-4 mr-2" />
             {t("seller_app.orders.export")}
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/seller/orders/protection">
+              <ShieldCheck className="w-4 h-4 me-2" />
+              {t("seller_app.protection.open")}
+            </Link>
           </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={loading}>
             <RotateCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />

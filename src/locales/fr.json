@@ -1,5 +1,43 @@
 {
     "seller_app": {
+        "protection": {
+            "title": "Protection contre les fausses commandes",
+            "subtitle": "Limitez les commandes à risque, bloquez les numéros et adresses IP abusifs, et repérez les commandes suspectes avant de les confirmer.",
+            "limits": "Limites de commande",
+            "limits_help": "Les commandes qui dépassent ces limites sont refusées automatiquement. Laissez vide pour aucune limite.",
+            "max_quantity": "Quantité maximale par article",
+            "max_amount": "Montant maximal d'une commande (DT)",
+            "no_limit": "Aucune limite",
+            "block_desktop": "Refuser les commandes depuis un ordinateur",
+            "block_desktop_help": "Vos publicités sont vues surtout sur téléphone : beaucoup de fausses commandes viennent d'ordinateurs. Le client verra un message lui demandant de commander depuis son mobile.",
+            "save": "Enregistrer",
+            "saved": "Protection enregistrée",
+            "save_error": "Impossible d'enregistrer. Réessayez.",
+            "blocklist": "Numéros et adresses IP bloqués",
+            "blocklist_help": "Les commandes venant de ces numéros ou adresses IP sont refusées.",
+            "kind": "Type",
+            "kind_phone": "Téléphone",
+            "kind_ip": "Adresse IP",
+            "value": "Valeur",
+            "note_ph": "Note (facultatif), ex. : fausse commande du 12/10",
+            "add": "Bloquer",
+            "remove": "Débloquer",
+            "empty": "Aucun numéro ni adresse IP bloqué.",
+            "invalid_phone": "Numéro tunisien à 8 chiffres.",
+            "invalid_ip": "Adresse IP invalide.",
+            "blocklist_tip": "Astuce : sur une commande suspecte, utilisez « Bloquer ce client » pour bloquer son numéro et son adresse IP en un clic.",
+            "flags_title": "Commandes signalées automatiquement",
+            "flags_help": "Ces commandes ne sont pas bloquées : elles portent un badge « Suspecte » pour que vous vérifiiez avant de confirmer.",
+            "flags": {
+                "repeat_phone": "Le même numéro a déjà une commande à confirmer aujourd'hui.",
+                "previous_fake": "Ce numéro a déjà eu une commande annulée comme fausse commande.",
+                "ip_burst": "3 commandes ou plus depuis la même adresse IP en moins d'une heure."
+            },
+            "suspicious": "Suspecte",
+            "block_customer": "Bloquer ce client",
+            "blocked_done": "Client bloqué : ses prochaines commandes seront refusées.",
+            "open": "Protection"
+        },
         "leads": {
             "title": "Commandes non finalisées",
             "subtitle": "Ces visiteurs ont laissé leur numéro dans le formulaire de commande sans le valider. Un appel ou un message WhatsApp rapide permet souvent de récupérer la vente.",

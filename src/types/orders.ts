@@ -2,6 +2,8 @@ export type OrderStatus = 'new' | 'confirmed' | 'preparing' | 'shipped' | 'deliv
 
 export interface Order {
   id: string;
+  risk_flags?: string[] | null;
+  customer_ip?: string | null;
   order_number: string;
   store_id: string;
   customer_name: string;

@@ -1,6 +1,9 @@
 "use client";
 
 import { sellerConfirmationMessage, whatsappLink } from "@/lib/order-messages";
+import { useTranslation } from "@/context/LanguageContext";
+import { phoneKey } from "@/lib/order-protection";
+import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -28,7 +31,9 @@ import {
   MessageSquare,
   XCircle,
   ChevronRight,
-  Box
+  Box,
+  ShieldAlert,
+  Ban
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,7 +79,10 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  store_id: string;
   order_number: string;
+  risk_flags?: string[] | null;
+  customer_ip?: string | null;
   customer_name: string;
   customer_email?: string;
   customer_phone?: string;
@@ -175,6 +183,23 @@ export default function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isPrepared, setIsPrepared] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const { t } = useTranslation();
+  const [blocking, setBlocking] = useState(false);
+
+  async function blockCustomer() {
+    if (!order) return;
+    setBlocking(true);
+    const rows = [
+      ...(order.customer_phone ? [{ store_id: order.store_id, kind: "phone", value: phoneKey(order.customer_phone), note: order.order_number }] : []),
+      ...(order.customer_ip ? [{ store_id: order.store_id, kind: "ip", value: order.customer_ip, note: order.order_number }] : []),
+    ].filter((row) => row.value);
+    const { error } = rows.length
+      ? await createBrowserClient().from("store_blocklist").upsert(rows, { onConflict: "store_id,kind,value" })
+      : { error: null };
+    setBlocking(false);
+    if (error) toast.error(t("seller_app.protection.save_error"));
+    else toast.success(t("seller_app.protection.blocked_done"));
+  }
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("unreachable");
   const [sellerNote, setSellerNote] = useState("");
@@ -444,6 +469,28 @@ export default function OrderDetailPage() {
           </Button>
         </div>
       </div>
+
+      {(order.risk_flags?.length ?? 0) > 0 && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-red-700 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-bold text-red-900">⚠ {t("seller_app.protection.suspicious")}</p>
+                <ul className="text-sm text-red-800 list-disc ps-5">
+                  {(order.risk_flags || []).map((flag) => (
+                    <li key={flag}>{t(`seller_app.protection.flags.${flag}`)}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <Button variant="outline" className="bg-white gap-2 text-red-700 border-red-200 shrink-0" disabled={blocking} onClick={blockCustomer}>
+              <Ban className="w-4 h-4" />
+              {t("seller_app.protection.block_customer")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {order.status === "new" && (
         <Card className="border-amber-300 bg-amber-50">
