@@ -1,5 +1,6 @@
 "use client";
 
+import { autoFooterLinks, autoHeaderLinks, customLinks } from "@/lib/store-menus";
 import { useEffect, useState, useRef, use } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -1348,23 +1349,23 @@ const navigateTo = (url: string) => {
     return;
   }
   const page = link.replace(/^\//, "").replace(/^shop\/(products|shop)$/, "shop") || "home";
+  const product = page.match(/^p\/([^/]+)$/);
+  if (product) {
+    window.parent.postMessage({ type: 'NAVIGATE', page: 'product-detail', productId: product[1] }, '*');
+    return;
+  }
   window.parent.postMessage({ type: 'NAVIGATE', page }, '*');
 };
 
 const headerLinks = (store: any, pages: any[], t: (key: StoreTextKey) => string) => {
-  const custom = (store?.headerLinks || []).filter((i: any) => i?.label);
-  if (custom.length) return custom.map((i: any) => ({ key: i.id || i.label, label: i.label, url: i.url || "/" }));
-  const visible = pages.filter((p) => p.is_published !== false && p.show_in_navigation !== false && p.show_in_menu !== false && p.slug);
-  if (!visible.length) return [{ key: "home", label: t("nav.home"), url: "/home" }, { key: "shop", label: t("nav.products"), url: "/shop" }];
-  return visible.map((p) => ({ key: p.id || p.slug, label: p.title || p.name || p.slug, url: p.is_homepage ? "/home" : `/${p.slug}` }));
+  const custom = customLinks(store?.headerLinks);
+  const links = custom.length ? custom : autoHeaderLinks(pages, { home: t("nav.home"), products: t("nav.products") });
+  return links.map((l) => ({ key: l.id, label: l.label, url: l.url }));
 };
 
 const footerLinks = (store: any, pages: any[]) => {
-  const custom = (store?.footerLinks || []).filter((l: any) => l?.label);
-  if (custom.length) return custom;
-  return pages
-    .filter((p) => p.slug && !p.is_homepage && p.is_published !== false && p.show_in_navigation === false)
-    .map((p) => ({ id: p.id || p.slug, label: p.title || p.slug, url: `/${p.slug}` }));
+  const custom = customLinks(store?.footerLinks);
+  return custom.length ? custom : autoFooterLinks(pages);
 };
 
 const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, pages?: any[], onOpenCart?: () => void, cartCount?: number }) => {
