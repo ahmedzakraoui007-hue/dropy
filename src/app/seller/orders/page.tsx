@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, RotateCcw, Filter, PackageX, Download, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Search, RotateCcw, Filter, PackageX, Download, ShieldCheck, BarChart3, Users } from 'lucide-react';
 import { getStatusLabel } from '@/hooks/useOrderRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -109,6 +109,12 @@ export default function SellerOrdersPage() {
           >
             <Download className="w-4 h-4 mr-2" />
             {t("seller_app.orders.export")}
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/seller/orders/team">
+              <Users className="w-4 h-4 me-2" />
+              {t("seller_app.team.open")}
+            </Link>
           </Button>
           <Button variant="outline" size="sm" asChild>
             <Link href="/seller/orders/stats">
