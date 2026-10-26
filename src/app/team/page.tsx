@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Languages, Loader2, LogOut, MapPin, MessageCircle, Phone, RefreshCw, ShieldAlert, XCircle } from "lucide-react";
@@ -163,7 +164,7 @@ export default function TeamWorkspace() {
                     <p className="text-sm font-semibold" dir="ltr">{order.customer_phone}</p>
                   </div>
                   <p className="shrink-0 text-lg font-black text-purple-700">
-                    {(Number(order.total_amount) || 0).toFixed(3).replace(".", ",")} DT
+                    {formatPrice(Number(order.total_amount) || 0)}
                   </p>
                 </div>
                 <p className="flex items-start gap-1.5 text-sm text-gray-600" dir="auto">

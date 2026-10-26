@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Monitor, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
+import { Loader2, Monitor, Plus, Save, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,10 +116,6 @@ export default function OrderProtectionPage() {
   return (
     <div className="container mx-auto max-w-3xl space-y-6 py-6">
       <div className="space-y-2">
-        <Link href="/seller/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-          {t("seller_app.leads.back")}
-        </Link>
         <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
           <ShieldCheck className="h-6 w-6 text-emerald-600" />
           {tr("title")}

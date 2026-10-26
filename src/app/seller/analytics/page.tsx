@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { 
   BarChart3, 
@@ -105,7 +106,7 @@ export default function AnalyticsPage() {
   const stats = [
     { 
       title: "Chiffre d'affaires", 
-      value: `${data?.summary.revenue.toLocaleString()} TND`, 
+      value: formatPrice(data?.summary.revenue ?? 0), 
       icon: TrendingUp,
       color: "text-violet-500",
       bg: "bg-violet-500/10"
@@ -218,7 +219,7 @@ export default function AnalyticsPage() {
                   axisLine={false} 
                   tickLine={false} 
                   tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                  tickFormatter={(value) => `${value} TND`}
+                  tickFormatter={(value) => `${value} DT`}
                 />
                 <Tooltip 
                   contentStyle={{ 
@@ -264,7 +265,7 @@ export default function AnalyticsPage() {
                     <span className="text-xs text-muted-foreground">{product.quantity} ventes</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-bold text-sm">{product.revenue.toLocaleString()} TND</span>
+                    <span className="font-bold text-sm">{formatPrice(product.revenue)}</span>
                   </div>
                 </div>
               ))

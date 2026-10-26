@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import CreatorLayout from "./CreatorLayoutClient";
 
 export const metadata: Metadata = {
-  title: "Tableau de bord Créateur | DROPY",
+  title: "Tableau de bord Créateur",
   description: "Gérez vos missions UGC, votre portfolio et vos paiements sur Dropy.",
   robots: { index: false, follow: false },
 };

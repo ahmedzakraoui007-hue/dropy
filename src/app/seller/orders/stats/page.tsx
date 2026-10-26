@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Clock, Loader2, PackageCheck, PhoneCall, ShieldAlert, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, PackageCheck, PhoneCall, ShieldAlert, XCircle } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "@/context/LanguageContext";
@@ -72,10 +71,6 @@ export default function ConfirmationStatsPage() {
     <div className="container mx-auto max-w-6xl space-y-6 py-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
-          <Link href="/seller/orders" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-            {t("seller_app.leads.back")}
-          </Link>
           <h1 className="text-2xl font-bold tracking-tight">{tr("title")}</h1>
           <p className="text-sm text-muted-foreground">{tr("subtitle")}</p>
         </div>

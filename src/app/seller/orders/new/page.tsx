@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { formatPrice } from "@/lib/utils";
 import { useTranslation } from "@/context/LanguageContext";
 import { TUNISIAN_GOVERNORATES } from "@/components/storefront/ExpressOrderForm";
 import { governorateLabel } from "@/lib/storefront-i18n";
@@ -32,7 +33,7 @@ type Line = { key: string; product: Product; variant: VariantOption | null; quan
 const ERROR_KEYS = ["missing_fields", "invalid_phone", "invalid_email", "invalid_cart", "product_unavailable", "variant_required", "out_of_stock", "store_unavailable"];
 
 function money(value: number) {
-  return `${value.toFixed(3).replace(/\.?0+$/, "")} TND`;
+  return formatPrice(value);
 }
 
 export default function NewManualOrderPage() {

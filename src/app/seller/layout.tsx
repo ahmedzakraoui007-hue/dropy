@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import SellerLayout from "./SellerLayoutClient";
 
 export const metadata: Metadata = {
-  title: "Tableau de bord Vendeur | DROPY",
+  title: "Tableau de bord Vendeur",
   description: "Gérez votre boutique, vos produits et vos commandes sur Dropy.",
   robots: { index: false, follow: false },
 };

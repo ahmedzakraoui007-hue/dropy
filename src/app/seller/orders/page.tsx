@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, RotateCcw, Filter, PackageX, Download, ShieldCheck, BarChart3, Users, Plus } from 'lucide-react';
+import { Search, RotateCcw, Filter, PackageX, Download, Plus } from 'lucide-react';
 import { getStatusLabel } from '@/hooks/useOrderRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -116,24 +116,6 @@ export default function SellerOrdersPage() {
             <Download className="w-4 h-4 mr-2" />
             {t("seller_app.orders.export")}
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/seller/orders/team">
-              <Users className="w-4 h-4 me-2" />
-              {t("seller_app.team.open")}
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/seller/orders/stats">
-              <BarChart3 className="w-4 h-4 me-2" />
-              {t("seller_app.stats.open")}
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/seller/orders/protection">
-              <ShieldCheck className="w-4 h-4 me-2" />
-              {t("seller_app.protection.open")}
-            </Link>
-          </Button>
           <Button variant="outline" size="sm" onClick={() => refetch()} disabled={loading}>
             <RotateCcw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             {t("seller_app.orders.refresh")}
@@ -172,7 +154,7 @@ export default function SellerOrdersPage() {
         </div>
 
         <Tabs value={filters.status} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full justify-start overflow-x-auto h-auto p-1 bg-muted/50">
+          <TabsList className="w-full justify-start overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden h-auto p-1 bg-muted/50">
             {ORDER_TABS.map(tab => (
               <TabsTrigger key={tab} value={tab} className="px-4 py-2 text-xs md:text-sm">
                 {t(`seller_app.orders.tabs.${tab}`)}
