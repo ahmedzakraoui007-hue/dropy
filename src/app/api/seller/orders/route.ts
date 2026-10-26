@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     if (!result.ok) {
       return NextResponse.json({ code: result.code, error: result.error, ...(result.extra || {}) }, { status: result.status });
     }
-    const confirmed = body.confirmed === true ? await confirmStoreOrder(createAdminClient(), result.orderId) : false;
+    const confirmed = body.confirmed === true ? await confirmStoreOrder(createAdminClient(), result.orderId, auth.user.id) : false;
     return NextResponse.json({ success: true, orderId: result.orderId, orderNumber: result.orderNumber, totalAmount: result.totalAmount, confirmed });
   } catch (error) {
     console.error("Manual order error:", error);

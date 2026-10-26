@@ -2,11 +2,11 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-export async function confirmStoreOrder(admin: Admin, orderId: string) {
+export async function confirmStoreOrder(admin: Admin, orderId: string, handledBy: string | null = null) {
   const now = new Date().toISOString();
   const { data: updated, error } = await admin
     .from("store_orders")
-    .update({ status: "confirmed", confirmed_at: now })
+    .update({ status: "confirmed", confirmed_at: now, ...(handledBy ? { handled_by: handledBy } : {}) })
     .eq("id", orderId)
     .eq("status", "new")
     .select("id");
