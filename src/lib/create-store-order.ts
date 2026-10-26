@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
+import { checkExtras, extrasFromInput, normalizeCheckout, orderNotes } from "@/lib/checkout-settings";
 import { isMobileUserAgent, normalizeProtection, phoneKey, verifyTurnstile, type RiskFlag } from "@/lib/order-protection";
 
 const MAX_LINES = 50;
@@ -21,6 +22,7 @@ export type OrderInput = {
   userAgent: string | null;
   manual?: boolean;
   notes?: string | null;
+  extras?: { note?: unknown; answers?: unknown };
 };
 
 export type OrderResult =
@@ -86,6 +88,13 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
 
   const { data: store } = await supabase.from("stores").select("*").eq("id", storeId).maybeSingle();
   if (!store || (!input.manual && store.is_active === false)) return fail("store_unavailable", "Boutique introuvable", 404);
+
+  const checkout = normalizeCheckout(store.checkout_settings);
+  const extras = extrasFromInput({ city: customerCity, email: customerEmail, note: input.extras?.note, answers: input.extras?.answers });
+  if (!input.manual && checkExtras(checkout, extras).length) {
+    return fail("missing_fields", "Champs obligatoires manquants");
+  }
+  const customerNotes = input.manual ? null : orderNotes(checkout, extras);
 
   const ip = input.ip;
   const userAgent = (input.userAgent || "").slice(0, 300);
@@ -296,6 +305,7 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
       user_agent: userAgent || null,
       risk_flags: input.manual ? [] : riskFlags,
       seller_notes: input.notes ? String(input.notes).slice(0, 1000) : null,
+      notes: customerNotes,
     })
     .select()
     .single();

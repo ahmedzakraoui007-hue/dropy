@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Store,
   ExternalLink,
+  ShoppingCart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ const navItems = [
   { key: "editor", href: "/seller/store-builder/builder", icon: LayoutTemplate },
   { key: "themes", href: "/seller/store-builder/themes", icon: Palette },
   { key: "menus", href: "/seller/store-builder/navigation", icon: Navigation },
+  { key: "checkout", href: "/seller/store-builder/checkout", icon: ShoppingCart },
   { key: "settings", href: "/seller/store-builder/settings", icon: Settings },
 ];
 

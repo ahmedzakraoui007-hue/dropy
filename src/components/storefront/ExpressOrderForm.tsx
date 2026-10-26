@@ -6,6 +6,8 @@ import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type 
 import { governorateLabel, orderErrorText } from "@/lib/storefront-i18n";
 import { useStoreText } from "@/components/storefront/StoreLanguage";
 import { TurnstileWidget } from "@/components/storefront/TurnstileWidget";
+import { CheckoutExtraFields } from "@/components/storefront/CheckoutExtraFields";
+import { checkExtras, emptyExtras, normalizeCheckout, type CheckoutSettings, type ExtrasError } from "@/lib/checkout-settings";
 
 export const TUNISIAN_GOVERNORATES = [
   "Ariana", "Béja", "Ben Arous", "Bizerte", "Gabès", "Gafsa", "Jendouba", "Kairouan", "Kasserine", "Kébili",
@@ -26,6 +28,7 @@ type Props = {
   preview?: boolean;
   offers?: QuantityOffer[];
   delivery?: { delivery_fee?: number | string | null; free_delivery_threshold?: number | string | null };
+  checkout?: CheckoutSettings;
 };
 
 export function ExpressOrderForm({
@@ -41,6 +44,7 @@ export function ExpressOrderForm({
   preview,
   offers = [],
   delivery = {},
+  checkout = normalizeCheckout({}),
 }: Props) {
   const { t, money: formatTnd, lang } = useStoreText();
   const [form, setForm] = useState({ name: "", phone: "", governorate: "", city: "", address: "" });
@@ -52,6 +56,8 @@ export function ExpressOrderForm({
   const leadIdRef = useRef<string | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const submittedRef = useRef(false);
+  const [extras, setExtras] = useState(emptyExtras);
+  const [extraErrors, setExtraErrors] = useState<ExtrasError[]>([]);
 
   useEffect(() => {
     if (preview || !storeId || !productId || submittedRef.current) return;
@@ -90,8 +96,10 @@ export function ExpressOrderForm({
     if (!/^[2-9]\d{7}$/.test(digits)) next.phone = t("express.err_phone");
     if (!form.governorate) next.governorate = t("express.err_governorate");
     if (form.address.trim().length < 5) next.address = t("express.err_address");
+    const extraIssues = checkExtras(checkout, { ...extras, city: form.city });
     setErrors(next);
-    return Object.keys(next).length === 0;
+    setExtraErrors(extraIssues);
+    return Object.keys(next).length === 0 && extraIssues.length === 0;
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -117,9 +125,11 @@ export function ExpressOrderForm({
             name: form.name.trim(),
             phone: form.phone.replace(/\D/g, "").replace(/^216/, ""),
             governorate: form.governorate,
-            city: form.city.trim() || null,
+            city: checkout.city === "hidden" ? null : form.city.trim() || null,
             address: form.address.trim(),
+            email: checkout.email === "hidden" ? null : extras.email.trim() || null,
           },
+          extras: { note: extras.note, answers: extras.answers },
           paymentMethod: "cod",
           turnstileToken,
         }),
@@ -168,7 +178,7 @@ export function ExpressOrderForm({
         {errors.phone && <p className="mt-1 text-xs font-medium text-red-600">{errors.phone}</p>}
         <p className="mt-1 text-[11px] opacity-60">{t("express.privacy")}</p>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className={checkout.city === "hidden" ? "" : "grid grid-cols-2 gap-3"}>
         <div>
           <select className={field} aria-label={t("express.governorate")} value={form.governorate} onChange={(e) => update("governorate", e.target.value)}>
             <option value="">{t("express.governorate")}</option>
@@ -178,12 +188,34 @@ export function ExpressOrderForm({
           </select>
           {errors.governorate && <p className="mt-1 text-xs font-medium text-red-600">{errors.governorate}</p>}
         </div>
-        <input className={field} placeholder={t("express.city")} aria-label={t("express.city")} value={form.city} onChange={(e) => update("city", e.target.value)} />
+        {checkout.city !== "hidden" && (
+          <div>
+            <input
+              className={field}
+              placeholder={checkout.city === "optional" ? `${t("express.city")} (${t("form.optional")})` : t("express.city")}
+              aria-label={t("express.city")}
+              value={form.city}
+              onChange={(e) => update("city", e.target.value)}
+            />
+            {extraErrors.includes("city") && <p className="mt-1 text-xs font-medium text-red-600">{t("form.required")}</p>}
+          </div>
+        )}
       </div>
       <div>
         <input className={field} placeholder={t("express.address")} aria-label={t("express.address")} autoComplete="street-address" value={form.address} onChange={(e) => update("address", e.target.value)} />
         {errors.address && <p className="mt-1 text-xs font-medium text-red-600">{errors.address}</p>}
       </div>
+      <CheckoutExtraFields
+        settings={checkout}
+        value={extras}
+        onChange={(next) => {
+          setExtras(next);
+          setExtraErrors([]);
+        }}
+        errors={extraErrors}
+        fieldClass={field}
+        showCity={false}
+      />
 
       {quantityChoices.length > 0 && (
         <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${quantityChoices.length}, minmax(0, 1fr))` }}>
@@ -239,7 +271,7 @@ export function ExpressOrderForm({
         disabled={submitting}
         className="w-full rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground shadow-xl transition-transform hover:scale-[1.01] active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
       >
-        {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : buttonText || t("express.button")}
+        {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : buttonText || checkout.buttonText || t("express.button")}
       </button>
 
       <div className="flex items-center justify-center gap-4 text-xs opacity-70">

@@ -14,6 +14,7 @@ import {
   Package,
   Palette,
   Settings,
+  ShoppingCart,
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ const TOOLS = [
   { key: "editor", icon: LayoutTemplate, href: "/seller/store-builder/builder" },
   { key: "themes", icon: Sparkles, href: "/seller/store-builder/themes" },
   { key: "menus", icon: Navigation, href: "/seller/store-builder/navigation" },
+  { key: "checkout", icon: ShoppingCart, href: "/seller/store-builder/checkout" },
   { key: "settings", icon: Settings, href: "/seller/store-builder/settings" },
 ];
 

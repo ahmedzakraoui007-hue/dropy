@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeCheckout, emptyExtras, checkExtras, type ExtrasError } from "@/lib/checkout-settings";
+import { CheckoutExtraFields } from "@/components/storefront/CheckoutExtraFields";
 import { autoFooterLinks, autoHeaderLinks, customLinks } from "@/lib/store-menus";
 import { useEffect, useState, useRef, use } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -682,7 +684,10 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
   const unitPrice = parsePrice(selectedVariant?.price ?? displayProduct.price);
   const compareAt = selectedVariant?.price != null ? null : displayProduct.compare_at_price;
   const percent = discountPercent(unitPrice, compareAt);
-  const showForm = config.expressOrder !== false;
+  const checkout = normalizeCheckout(store?.checkout_settings);
+  const showForm = config.expressOrder !== false && checkout.mode !== "cart";
+  const showCartButtons = checkout.mode !== "express" || !showForm;
+  const shake = checkout.shakeButton && !inBuilder ? " dropy-shake" : "";
 
   useEffect(() => {
     const node = formRef.current;
@@ -710,12 +715,15 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
     );
   }
 
-  const addToCart = () => {
+  const addToCart = (buyNow = false) => {
     if (variantOptions.length > 0 && !selectedVariant) {
       setVariantError(true);
       return;
     }
+    if (buyNow) trackStoreEvent("InitiateCheckout", { contentId: displayProduct.id, value: unitPrice });
     onAddToCart?.({
+      buyNow,
+      fromDetail: true,
       id: displayProduct.id,
       title: displayProduct.title,
       price: selectedVariant?.price ?? displayProduct.price,
@@ -838,8 +846,8 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
               </div>
             )}
 
+            <div ref={formRef} id="order-form" className="scroll-mt-24 space-y-3">
             {showForm && (
-              <div ref={formRef} id="order-form" className="scroll-mt-24">
                 <ExpressOrderForm
                   storeId={storeId}
                   productId={displayProduct.id}
@@ -850,6 +858,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                   buttonText={config.expressButtonText}
                   offers={normalizeOffers(store?.quantity_offers)}
                   delivery={{ delivery_fee: store?.delivery_fee, free_delivery_threshold: store?.free_delivery_threshold }}
+                  checkout={checkout}
                   beforeSubmit={() => {
                     if (variantOptions.length > 0 && !selectedVariant) {
                       setVariantError(true);
@@ -863,15 +872,26 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                     window.parent.postMessage({ type: "NAVIGATE", page: `merci/${orderId}` }, "*");
                   }}
                 />
-              </div>
             )}
-            <button
-              type="button"
-              onClick={addToCart}
-              className={showForm ? "w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors" : "w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"}
-            >
-              {t("cart.add")}
-            </button>
+            {showCartButtons && !showForm && (
+              <button
+                type="button"
+                onClick={() => addToCart(true)}
+                className={`w-full bg-primary text-primary-foreground py-5 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all${shake}`}
+              >
+                {checkout.buttonText || t("cart.buy_now")}
+              </button>
+            )}
+            {showCartButtons && (
+              <button
+                type="button"
+                onClick={() => addToCart()}
+                className="w-full border-2 border-border py-3 rounded-2xl font-bold hover:bg-muted transition-colors"
+              >
+                {t("cart.add")}
+              </button>
+            )}
+            </div>
           </div>
         </div>
 
@@ -903,26 +923,28 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
         )}
       </div>
 
-      {showForm && !formVisible && !inBuilder && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex items-center gap-3 border-t border-border bg-white/95 px-4 py-3 backdrop-blur md:hidden">
+      {checkout.stickyButton && !formVisible && !inBuilder && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 px-4 py-3 backdrop-blur">
+          <div className="mx-auto flex max-w-6xl items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs text-muted-foreground" dir="auto">{displayProduct.title}</p>
             <p className="text-lg font-black text-primary">{money(unitPrice)}</p>
           </div>
           <button
             type="button"
-            onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            className="shrink-0 rounded-xl bg-primary px-6 py-3 font-black text-white shadow-lg"
+            onClick={() => (showForm ? formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) : addToCart(true))}
+            className={`shrink-0 rounded-xl bg-primary px-6 py-3 font-black text-white shadow-lg${shake}`}
           >
-            {t("cart.order")}
+            {showForm ? t("cart.order") : checkout.buttonText || t("cart.buy_now")}
           </button>
+          </div>
         </div>
       )}
     </section>
   );
 };
 
-const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, storeId?: string, onSelectProduct?: (product: any) => void }) => {
+const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct, expressOnly = false }: { sectionId: string, config: any, onAddToCart?: (item: any) => void, storeId?: string, onSelectProduct?: (product: any) => void, expressOnly?: boolean }) => {
   const { t, money } = useStoreText();
   const placeholders = ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600", "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600", "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=600"];
   const [storeProducts, setStoreProducts] = useState<any[]>([]);
@@ -1001,7 +1023,7 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct }: 
                         </div>
                       ) : null;
                     })()}
-                    <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(data); }} className="absolute bottom-4 inset-x-4 bg-white text-black py-3 rounded-xl font-bold text-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">{t("cart.add")}</button>
+                    <button onClick={(e) => { e.stopPropagation(); onAddToCart?.(data); }} className="absolute bottom-4 inset-x-4 bg-white text-black py-3 rounded-xl font-bold text-sm shadow-xl opacity-0 group-hover:opacity-100 transition-opacity">{expressOnly ? t("cart.order") : t("cart.add")}</button>
                   </div>
                   {hasRealProducts ? (
                     <>
@@ -1390,10 +1412,10 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
         </nav>
         <div className="flex items-center gap-1">
           <StoreLanguageSwitch className="me-1" />
-          <button onClick={onOpenCart} className="p-2 hover:bg-muted rounded-full relative" aria-label={t("nav.cart")}>
+          {(normalizeCheckout(store?.checkout_settings).mode !== "express" || cartCount > 0) && <button onClick={onOpenCart} className="p-2 hover:bg-muted rounded-full relative" aria-label={t("nav.cart")}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
             <span className="absolute top-0 end-0 w-4 h-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full font-bold">{cartCount}</span>
-          </button>
+          </button>}
           <button onClick={() => setOpen((v) => !v)} className="md:hidden p-2 hover:bg-muted rounded-full" aria-label={t("nav.menu")}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={open ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
           </button>
@@ -1760,6 +1782,9 @@ const Track = ({ orderNumber }: { orderNumber: string }) => {
 const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { sectionId: string, config: any, store: any, cart: any[], slug: string, onClearCart: () => void }) => {
     const { t, money, lang } = useStoreText();
     const [formData, setFormData] = useState({ name: "", phone: "", governorate: "", address: "", email: "" });
+    const checkoutSettings = normalizeCheckout(store?.checkout_settings);
+    const [extras, setExtras] = useState(emptyExtras);
+    const [extraErrors, setExtraErrors] = useState<ExtrasError[]>([]);
     const [submitError, setSubmitError] = useState("");
     const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
     const paymentMethod = "cod";
@@ -1815,6 +1840,9 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
       e.preventDefault();
       if (cart.length === 0) return;
       setSubmitError("");
+      const issues = checkExtras(checkoutSettings, extras);
+      setExtraErrors(issues);
+      if (issues.length) return;
       setIsSubmitting(true);
       
       try {
@@ -1824,7 +1852,12 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
           body: JSON.stringify({
             storeId: store.id,
             cart: cart.map(item => ({ productId: item.productId ?? item.id, variantId: item.variantId || null, quantity: item.quantity || 1 })),
-            customer: formData,
+            customer: {
+              ...formData,
+              city: checkoutSettings.city === "hidden" ? null : extras.city.trim() || null,
+              email: checkoutSettings.email === "hidden" ? null : extras.email.trim() || null,
+            },
+            extras: { note: extras.note, answers: extras.answers },
             appliedPromo,
             paymentMethod,
             slug,
@@ -1863,15 +1896,9 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                     <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.name")}</label>
                     <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder={t("express.name")} autoComplete="name" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.phone")}</label>
-                      <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="22 123 456" inputMode="tel" autoComplete="tel" dir="ltr" />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.email")}</label>
-                      <input type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="email@exemple.com" dir="ltr" />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.phone")}</label>
+                    <input required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary" placeholder="22 123 456" inputMode="tel" autoComplete="tel" dir="ltr" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("express.governorate")}</label>
@@ -1884,6 +1911,13 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                     <label className="text-xs font-bold uppercase tracking-wider opacity-60">{t("checkout.address")}</label>
                     <textarea required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary min-h-[100px]" placeholder={t("express.address")} autoComplete="street-address" />
                   </div>
+                  <CheckoutExtraFields
+                    settings={checkoutSettings}
+                    value={extras}
+                    onChange={(next) => { setExtras(next); setExtraErrors([]); }}
+                    errors={extraErrors}
+                    fieldClass="w-full bg-muted border-none p-4 rounded-xl focus:ring-2 ring-primary"
+                  />
                 </div>
 
                 <div className="space-y-4">
@@ -1897,7 +1931,7 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
                 <TurnstileWidget onToken={setTurnstileToken} lang={lang} />
                 {submitError && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{submitError}</p>}
                 <button disabled={isSubmitting || cart.length === 0} className="w-full bg-primary text-white py-4 rounded-2xl font-black text-xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>✅ {config.buttonText || t("checkout.confirm")}</>}
+                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>✅ {config.buttonText || checkoutSettings.buttonText || t("checkout.confirm")}</>}
                 </button>
               </form>
             </div>
@@ -2353,7 +2387,7 @@ const SectionRenderer = ({ section, store, pages = [], onAddToCart, cart, slug, 
       case "stats": return <Stats {...commonProps} />;
       case "team": return <Team {...commonProps} />;
       case "product_detail": return <ProductDetail {...commonProps} onAddToCart={onAddToCart} selectedProduct={selectedProduct} storeId={store?.id} store={store} />;
-        case "products": return <Products {...commonProps} onAddToCart={onAddToCart} storeId={store?.id} onSelectProduct={onSelectProduct} />;
+        case "products": return <Products {...commonProps} onAddToCart={onAddToCart} storeId={store?.id} onSelectProduct={onSelectProduct} expressOnly={normalizeCheckout(store?.checkout_settings).mode === "express"} />;
       case "features": return <Features {...commonProps} />;
       case "testimonials": return <Testimonials {...commonProps} />;
       case "faq": return <FAQ {...commonProps} />;
@@ -2644,8 +2678,9 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
                 section={s} 
                 store={store} 
                 pages={pages}
-                onAddToCart={(p) => { 
-                  if (p.has_variants && !p.variantId) {
+                onAddToCart={(raw) => { 
+                  const { buyNow, fromDetail, ...p } = raw;
+                  if ((p.has_variants && !p.variantId) || (!fromDetail && normalizeCheckout(store?.checkout_settings).mode === "express")) {
                     setSelectedProduct(p);
                     setCurrentPage("product-detail");
                     window.scrollTo({ top: 0, behavior: "instant" });
@@ -2661,7 +2696,12 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
                     return [...prev, { ...p, id: key, productId, quantity: 1 }];
                   });
                   trackStoreEvent("AddToCart", { contentId: productId, contentName: p.title, value: parsePrice(p.price), quantity: 1 });
-                  setIsCartOpen(true); 
+                  if (buyNow) {
+                    setCurrentPage("checkout");
+                    window.scrollTo({ top: 0, behavior: "instant" });
+                  } else {
+                    setIsCartOpen(true);
+                  }
                 }} 
                   cart={cart} 
                   slug={slug}

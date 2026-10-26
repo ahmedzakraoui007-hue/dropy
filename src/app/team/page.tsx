@@ -19,6 +19,7 @@ type Order = {
   customer_name: string | null;
   customer_phone: string | null;
   customer_address: string | null;
+  notes: string | null;
   customer_governorate: string | null;
   total_amount: number | null;
   risk_flags: string[] | null;
@@ -60,7 +61,7 @@ export default function TeamWorkspace() {
     const [{ data: pending }, { count }] = await Promise.all([
       supabase
         .from("store_orders")
-        .select("id, store_id, order_number, created_at, customer_name, customer_phone, customer_address, customer_governorate, total_amount, risk_flags, items:store_order_items(product_name, quantity, variant_info)")
+        .select("id, store_id, order_number, created_at, customer_name, customer_phone, customer_address, customer_governorate, notes, total_amount, risk_flags, items:store_order_items(product_name, quantity, variant_info)")
         .in("store_id", ids)
         .eq("status", "new")
         .order("created_at", { ascending: true })
@@ -169,6 +170,9 @@ export default function TeamWorkspace() {
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
                   {[order.customer_address, order.customer_governorate].filter(Boolean).join(", ")}
                 </p>
+                {order.notes && (
+                  <p className="whitespace-pre-line rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800" dir="auto">{order.notes}</p>
+                )}
                 <p className="rounded-xl bg-gray-50 px-3 py-2 text-sm" dir="auto">
                   {(order.items || []).map((i) => `${i.quantity || 1} × ${i.product_name}${i.variant_info ? ` (${Object.values(i.variant_info).join(" / ")})` : ""}`).join(", ")}
                 </p>
