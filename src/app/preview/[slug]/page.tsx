@@ -935,7 +935,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
             onClick={() => (showForm ? formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) : addToCart(true))}
             className={`shrink-0 rounded-xl bg-primary px-6 py-3 font-black text-white shadow-lg${shake}`}
           >
-            {showForm ? t("cart.order") : checkout.buttonText || t("cart.buy_now")}
+            {checkout.buttonText || (showForm ? t("cart.order") : t("cart.buy_now"))}
           </button>
           </div>
         </div>
