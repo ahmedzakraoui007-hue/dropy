@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { SITE_URL, STORE_ROOT_DOMAIN, storeSlugFromHost, storeUrl } from "@/lib/store-url";
+import { SITE_URL, STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from "@/lib/store-url";
+import { storeSlugForHost } from "@/lib/custom-domain-lookup";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -32,7 +33,7 @@ function anonClient() {
 
 async function storeEntries(slugs?: string[]): Promise<MetadataRoute.Sitemap> {
   const supabase = anonClient();
-  let query = supabase.from("stores").select("id, slug, created_at").eq("is_active", true);
+  let query = supabase.from("stores").select("id, slug, created_at, custom_domain, custom_domain_status").eq("is_active", true);
   if (slugs) query = query.in("slug", slugs);
   const { data: stores } = await query;
   if (!stores?.length) return [];
@@ -46,11 +47,12 @@ async function storeEntries(slugs?: string[]): Promise<MetadataRoute.Sitemap> {
   const entries: MetadataRoute.Sitemap = [];
   for (const store of stores) {
     if (!(products || []).some((p) => p.store_id === store.id)) continue;
-    entries.push({ url: storeUrl(store.slug), changeFrequency: "daily", priority: 0.7 });
+    const domain = store.custom_domain_status === "active" ? store.custom_domain : null;
+    entries.push({ url: storeUrl(store.slug, "", domain), changeFrequency: "daily", priority: 0.7 });
     for (const page of (pages || []).filter((p) => p.store_id === store.id)) {
       if (page.is_homepage || page.slug === "home" || SYSTEM_PAGES.has(page.slug)) continue;
       entries.push({
-        url: storeUrl(store.slug, `/${page.slug}`),
+        url: storeUrl(store.slug, `/${page.slug}`, domain),
         lastModified: page.updated_at ? new Date(page.updated_at) : undefined,
         changeFrequency: "weekly",
         priority: 0.5,
@@ -58,7 +60,7 @@ async function storeEntries(slugs?: string[]): Promise<MetadataRoute.Sitemap> {
     }
     for (const product of (products || []).filter((p) => p.store_id === store.id)) {
       entries.push({
-        url: storeUrl(store.slug, `/p/${product.id}`),
+        url: storeUrl(store.slug, `/p/${product.id}`, domain),
         lastModified: product.created_at ? new Date(product.created_at) : undefined,
         changeFrequency: "weekly",
         priority: 0.6,
@@ -70,7 +72,7 @@ async function storeEntries(slugs?: string[]): Promise<MetadataRoute.Sitemap> {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const host = (await headers()).get("host");
-  const storeSlug = storeSlugFromHost(host);
+  const storeSlug = await storeSlugForHost(host, storeSlugFromHost, isPlatformHost);
   if (storeSlug) return storeEntries([storeSlug]);
 
   const now = new Date();
