@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { confirmStoreOrder } from "@/lib/confirm-store-order";
 
 const CANCEL_REASONS = ["unreachable", "customer_cancelled", "fake_order", "out_of_stock", "other"] as const;
 
@@ -83,22 +84,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const now = new Date().toISOString();
 
   if (action === "confirm") {
-    if (order.status !== "new") {
+    if (order.status !== "new" || !(await confirmStoreOrder(admin, order.id))) {
       return NextResponse.json({ error: "Cette commande n'est plus à confirmer" }, { status: 409 });
-    }
-    const { error } = await admin.from("store_orders").update({ status: "confirmed", confirmed_at: now }).eq("id", order.id).eq("status", "new");
-    if (error) throw error;
-
-    for (const so of (supplierOrders || []).filter((s) => s.status === "awaiting_confirmation")) {
-      await admin.from("supplier_orders").update({ status: "pending", updated_at: now }).eq("id", so.id);
-      await admin.from("notifications").insert({
-        user_id: so.supplier_id,
-        type: "new_order",
-        title: "📦 Nouvelle commande",
-        message: `Commande ${so.supplier_order_number} confirmée par le vendeur : à accepter et préparer.`,
-        link: "/supplier/orders",
-        is_read: false,
-      });
     }
     return NextResponse.json({ success: true, status: "confirmed" });
   }

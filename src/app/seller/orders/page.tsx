@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, RotateCcw, Filter, PackageX, Download, ShieldCheck, BarChart3 } from 'lucide-react';
+import { Search, RotateCcw, Filter, PackageX, Download, ShieldCheck, BarChart3, Plus } from 'lucide-react';
 import { getStatusLabel } from '@/hooks/useOrderRealtime';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -94,6 +94,12 @@ export default function SellerOrdersPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" asChild>
+            <Link href="/seller/orders/new">
+              <Plus className="w-4 h-4 me-2" />
+              {t("seller_app.manual_order.open")}
+            </Link>
+          </Button>
           <Button
             variant="outline"
             size="sm"
