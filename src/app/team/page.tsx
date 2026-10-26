@@ -46,12 +46,8 @@ export default function TeamWorkspace() {
       router.push("/login");
       return;
     }
-    const { data: memberships } = await supabase
-      .from("store_members")
-      .select("store_id, stores(id, name, storefront_language)")
-      .eq("user_id", user.id)
-      .eq("status", "active");
-    const list = (memberships || []).map((m: any) => m.stores).filter(Boolean) as Store[];
+    const res = await fetch("/api/team/stores", { cache: "no-store" });
+    const list = res.ok ? (((await res.json()).stores || []) as Store[]) : [];
     setStores(list);
     if (!list.length) {
       setOrders([]);

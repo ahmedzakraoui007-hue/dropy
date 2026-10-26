@@ -41,7 +41,7 @@ async function sendInvite(request: Request, email: string, name: string, storeNa
   if (error || !link?.properties?.hashed_token) return false;
   const url = confirmLink(request, link.properties.hashed_token, "recovery");
   const safeStore = escapeHtml(storeName);
-  await sendEmail({
+  const sent = await sendEmail({
     to: email,
     subject: `Invitation à l'équipe de ${storeName} sur Dropy`,
     html: `
@@ -58,7 +58,7 @@ async function sendInvite(request: Request, email: string, name: string, storeNa
         <p style="font-size: 12px; color: #9ca3af;">L'équipe Dropy</p>
       </div>`,
   });
-  return true;
+  return Boolean(sent);
 }
 
 export async function GET() {
