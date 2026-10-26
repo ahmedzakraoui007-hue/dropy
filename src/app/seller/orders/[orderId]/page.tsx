@@ -426,7 +426,7 @@ export default function OrderDetailPage() {
   const ownItems = order.items?.filter(i => i.fulfillment_type === "own" || !i.fulfillment_type) || [];
   const dropItems = order.items?.filter(i => i.fulfillment_type === "dropshipping") || [];
   const subtotal = order.items?.reduce((sum, i) => sum + (i.unit_price * i.quantity), 0) || 0;
-  const shipping = order.shipping_cost || 7;
+  const shipping = Number(order.shipping_cost ?? 0);
 
   const getNextPickupDates = () => {
     const dates = [];
