@@ -443,3 +443,22 @@
   opacity: 0.05;
   border-radius: 0 0 0 100%;
 }
+
+@keyframes dropy-shake {
+  0%, 82%, 100% { transform: translateX(0) rotate(0); }
+  85% { transform: translateX(-4px) rotate(-2deg); }
+  88% { transform: translateX(4px) rotate(2deg); }
+  91% { transform: translateX(-3px) rotate(-1deg); }
+  94% { transform: translateX(3px) rotate(1deg); }
+  97% { transform: translateX(-1px); }
+}
+
+.dropy-shake {
+  animation: dropy-shake 3.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropy-shake {
+    animation: none;
+  }
+}

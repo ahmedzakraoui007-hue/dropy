@@ -1,6 +1,6 @@
 # Dropy — Action plan to a functional platform
 
-## Roadmap 2026-10-23 — competing with Converty
+## Roadmap 2026-10-23 — competing with Converty (updated 2026-10-27)
 
 Live since the last status: subdomain per store (`<boutique>.dropy.store`), rebuilt visual editor (sections,
 pages, style, FR/AR, mobile), 9 themes with niche home pages, store generator ("Que vendez-vous ?"), Arabic and
@@ -10,20 +10,22 @@ abandoned-order recovery, WhatsApp order confirmation, newsletter, Google/Meta/T
 Benchmark: features seen in a live Converty account (read-only review). Priority = impact for Tunisian
 cash-on-delivery sellers ÷ effort.
 
-| Prio | Feature | What it means for Dropy | Size | Needs from you |
+| Prio | Feature | What it means for Dropy | Size | Status / needs from you |
 |---|---|---|---|---|
-| **P1** | **Fake-order protection** | Block a phone / IP / customer from an order; max quantity and max amount per order; optional block of VPN/datacenter IPs and desktop orders; anti-bot check (Cloudflare Turnstile) on the order form; "suspicious" flag on orders | M | Turnstile keys (free) |
-| **P1** | **Custom domain** (`maboutique.tn`) in addition to the free subdomain | Seller enters a domain → added to the Vercel project through the Vercel API → DNS instructions shown (A `76.76.21.21` for the root, CNAME `cname.vercel-dns.com` for `www`) → status checked until verified → SSL automatic → middleware maps the host to the store (cached lookup), canonical URLs/sitemap use the custom domain, subdomain redirects to it | M | `VERCEL_API_TOKEN` + project/team id in Vercel env; decide if free or paid later |
-| **P1** | **Delivery companies** | Connect real carriers (create shipment, print the label/bordereau, automatic tracking and status sync, returns). One integration per carrier, starting with the 2–3 most used by sellers; generic "own delivery" + Excel export meanwhile | L (per carrier M) | Which carriers + their API docs/keys |
-| **P2** | **Confirmation team** | Team members with an "agent" role, manual or automatic order dispatch (rules), agent performance; statistics: confirmation rate, delivery rate, return rate, rejection reasons, average confirmation time | L | — |
-| **P2** | **Manual order entry** | Create an order from the dashboard (phone/WhatsApp orders), optionally by pasting a WhatsApp message | S–M | — |
-| **P2** | **Checkout options** | Express / cart / both; form position on the product page; custom fields (2nd phone, note…); sticky "shaking" order button | M | — |
-| **P2** | **Upsells, bundles, related products** | Offer a second product after the order or in the form ("add X for +15 DT"), product bundles, related products per product | M | — |
-| **P2** | **Ad statistics** | Capture UTM / `fbclid` / `ttclid` on each order → orders, confirmed, delivered and profit per campaign / ad set / ad; Meta Conversions API (server-side events) | M | Meta CAPI token per store (seller) |
+| **P1** | **Fake-order protection** | Block a phone / IP from ordering; max quantity and amount per order; block desktop orders; anti-bot check (Cloudflare Turnstile); risk flags on orders (repeat phone, previous fake, IP burst) | M | ✅ Live (#9). Optional: Turnstile keys in Vercel to switch the anti-bot check on |
+| **P1** | **Custom domain** (`maboutique.tn`) | Seller adds a domain → added to Vercel through the API → DNS instructions → status checked → SSL automatic → middleware maps the host to the store; subdomain redirects to it | M | ✅ Code live (#10). **Needs `VERCEL_API_TOKEN` in Vercel** to switch on |
+| **P1** | **Delivery companies** | Create shipment, label, automatic tracking and status sync, returns. One integration per carrier, starting with the 2–3 most used | L (per carrier M) | ⏳ **Needs your choice of carriers + their API docs/keys** |
+| **P2** | **Confirmation team** | "Agent" accounts invited by email, `/team` workspace limited to the store's orders, who handled each order; statistics: confirmation/delivery rates, cancel reasons, per governorate, per product, per agent | L | ✅ Live (#11, #12). Later: automatic dispatch rules between agents |
+| **P2** | **Manual order entry** | "Nouvelle commande" in Commandes for phone/WhatsApp/Instagram orders, same pricing/stock/supplier logic, optional "already confirmed" | S–M | ✅ Live (#13). Later: paste a WhatsApp message to prefill |
+| **P2** | **Checkout options** | Ma boutique → Commande: express / cart / both, city-email-note hidden/optional/required, up to 3 custom questions, button text, sticky bar, shake animation | M | ✅ Live (#15). Later: form position on the product page, 2nd phone field |
+| **P2** | **Store menus** | Menus page shows the automatic menu, keeps links when editing, products / tracking / external links | S | ✅ Live (#14) |
+| **P2** | **UI/UX consistency pass** | One visual style across seller pages, one price format (DT), every page translated FR/AR, tabs for Commandes, page titles, loading states | M | ▶ Next |
+| **P2** | **Upsells, bundles, related products** | Offer a second product after the order or in the form ("add X for +15 DT"), bundles, related products per product | M | — |
+| **P2** | **Ad statistics** | Capture UTM / `fbclid` / `ttclid` on each order → orders, confirmed, delivered and profit per campaign / ad set / ad; Meta Conversions API | M | Meta CAPI token per store (seller) |
 | **P3** | **Product video & reviews** | MP4 video in the gallery; product reviews (manual import + moderation) | S–M | — |
 | **P3** | **Automatic SMS per delivery status** | Confirmed / shipped / delivered / return SMS | M | SMS provider + budget |
-| **P3** | **AI tools** | AI sales-page generator from a product, AI chatbot on the store answering from products and FAQ (Claude API) | M | Anthropic API key + budget |
-| **P3** | **Operations** | Stock value, per-product shipping fee, weight-based delivery pricing, "landing page only" / "link only" products, Google Sheets sync, invoices, English storefront | M | — |
+| **P3** | **AI tools** | AI sales-page generator, AI chatbot on the store answering from products and FAQ (Claude API) | M | Anthropic API key + budget |
+| **P3** | **Operations** | Stock value, per-product shipping fee, weight-based delivery pricing, "landing page only" products, Google Sheets sync, invoices, English storefront | M | — |
 
 Already ahead of Converty: free section-based builder and store generator, supplier catalog with dropshipping
 fulfilment, Claude Desktop (MCP), free launch, subdomain per store.

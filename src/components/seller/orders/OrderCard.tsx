@@ -79,6 +79,9 @@ export function OrderCard({ order, sellerId, onViewDetails, onCancel, onRefresh 
             <MapPin className="w-3 h-3 mr-1 mt-0.5 shrink-0" />
             <span className="line-clamp-1">{[order.customer_address, order.customer_governorate].filter(Boolean).join(', ')}</span>
           </div>
+          {order.notes && (
+            <p className="line-clamp-2 whitespace-pre-line rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-800" dir="auto">{order.notes}</p>
+          )}
 
           <div className="text-xs border-t pt-2 mt-2">
             <span className="font-medium">{t('seller_app.orders.card.products')}</span> {order.items?.map(item => `${item.quantity}x ${item.product_name}`).join(', ')}

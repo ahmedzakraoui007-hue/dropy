@@ -217,6 +217,7 @@
             "cancelled": "Annulée"
         },
         "orders": {
+            "customer_note": "Note du client",
             "title": "Gestion des commandes",
             "subtitle": "Confirmez vos commandes par téléphone et suivez les expéditions.",
             "refresh": "Actualiser",
@@ -419,6 +420,49 @@
         }
     },
     "store_builder": {
+        "checkout": {
+            "title": "Commande",
+            "subtitle": "Choisissez comment vos clients commandent et ce que le formulaire leur demande.",
+            "save": "Enregistrer",
+            "saved": "Réglages de commande enregistrés",
+            "save_error": "Erreur lors de l'enregistrement. Réessayez.",
+            "no_store": "Créez d'abord votre boutique.",
+            "mode_title": "Mode de commande",
+            "mode_help": "La plupart des boutiques tunisiennes vendent mieux avec le formulaire express : le client commande sans quitter la page produit.",
+            "mode_express": "Formulaire express",
+            "mode_express_help": "Formulaire sur la page produit, sans panier. Idéal pour un seul produit ou les publicités.",
+            "mode_both": "Les deux",
+            "mode_both_help": "Formulaire express sur la page produit, et panier pour commander plusieurs produits.",
+            "mode_cart": "Panier",
+            "mode_cart_help": "Boutons « Acheter maintenant » et « Ajouter au panier », puis page de commande.",
+            "fields_title": "Champs du formulaire",
+            "fields_help": "Nom, téléphone, gouvernorat et adresse sont toujours demandés. Moins de champs = plus de commandes.",
+            "field_city": "Ville / délégation",
+            "field_city_help": "Aide le livreur à trouver le client.",
+            "field_email": "E-mail",
+            "field_email_help": "Rarement utile en Tunisie : à masquer sauf besoin précis.",
+            "field_note": "Remarque du client",
+            "field_note_help": "Une zone libre : heure de livraison, précisions…",
+            "rule_hidden": "Masqué",
+            "rule_optional": "Facultatif",
+            "rule_required": "Obligatoire",
+            "custom_title": "Questions personnalisées",
+            "custom_help": "Jusqu'à 3 questions en plus (ex. taille, couleur, prénom à graver). Les réponses apparaissent dans la commande.",
+            "custom_add": "Ajouter une question",
+            "custom_empty": "Aucune question personnalisée.",
+            "custom_label": "Question",
+            "custom_placeholder": "Ex. : Votre pointure",
+            "custom_remove": "Supprimer la question",
+            "field_label_required": "Chaque question doit avoir un texte.",
+            "button_title": "Bouton de commande",
+            "button_help": "Le bouton qui déclenche la commande.",
+            "button_text": "Texte du bouton",
+            "button_text_placeholder": "Commander maintenant",
+            "sticky": "Bouton fixe en bas de l'écran",
+            "sticky_help": "Reste visible quand le client fait défiler la page produit.",
+            "shake": "Animation « secousse »",
+            "shake_help": "Le bouton bouge légèrement toutes les quelques secondes pour attirer l'œil."
+        },
         "menus": {
             "title": "Menus",
             "subtitle": "Choisissez les liens affichés en haut et en bas de votre boutique.",
@@ -453,6 +497,7 @@
             "remove": "Supprimer"
         },
         "nav": {
+            "checkout": "Commande",
             "title": "Ma boutique",
             "back": "Retour au tableau de bord",
             "hub": "Ma boutique",
@@ -490,6 +535,7 @@
                 "home_desc": "Textes, images et sections de votre page principale."
             },
             "tools": {
+                "checkout_desc": "Formulaire express ou panier, champs demandés et bouton de commande.",
                 "editor_desc": "Modifiez vos pages, sections, couleurs et polices avec un aperçu en direct.",
                 "themes_desc": "Changez l'apparence complète de votre boutique en un clic.",
                 "menus_desc": "Choisissez les liens affichés en haut et en bas de votre boutique.",

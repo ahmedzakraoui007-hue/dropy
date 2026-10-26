@@ -88,7 +88,7 @@ interface Order {
   customer_phone?: string;
   customer_address: string;
   customer_governorate?: string;
-  customer_note?: string;
+  notes?: string | null;
   total_amount: number;
   subtotal?: number;
   shipping_cost?: number;
@@ -638,10 +638,10 @@ export default function OrderDetailPage() {
                 <p className="text-sm text-muted-foreground">{order.customer_governorate}</p>
               )}
             </div>
-            {order.customer_note && (
+            {order.notes && (
               <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <p className="text-xs font-medium text-amber-700 mb-1">Note du client:</p>
-                <p className="text-sm text-amber-800">{order.customer_note}</p>
+                <p className="text-xs font-medium text-amber-700 mb-1">{t("seller_app.orders.customer_note")}</p>
+                <p className="text-sm text-amber-800 whitespace-pre-line" dir="auto">{order.notes}</p>
               </div>
             )}
           </CardContent>
