@@ -66,7 +66,7 @@ export default function NewManualOrderPage() {
       }
       const { data: rows } = await supabase
         .from("store_products")
-        .select("id, name, selling_price, price, images, stock_quantity, has_variants, variants")
+        .select("id, name, selling_price, images, stock_quantity, has_variants, variants")
         .eq("store_id", store.id)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -93,7 +93,7 @@ export default function NewManualOrderPage() {
           return {
             id: r.id,
             name: r.name,
-            price: Number(r.selling_price ?? r.price ?? 0),
+            price: Number(r.selling_price ?? 0),
             image: r.images?.[0] ?? null,
             stock: r.stock_quantity ?? null,
             hasVariants: Boolean(r.has_variants),
