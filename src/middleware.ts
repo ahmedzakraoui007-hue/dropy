@@ -4,19 +4,20 @@ import { RESERVED_SLUGS } from '@/lib/store-slug';
 import { STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from '@/lib/store-url';
 import { customDomainForSlug, storeSlugForDomain } from '@/lib/custom-domain-lookup';
 
-const ROLE_AREAS = ['admin', 'seller', 'supplier', 'creator'];
+const AREA_ROLE: Record<string, string> = { admin: 'admin', seller: 'seller', supplier: 'supplier', creator: 'creator', team: 'agent' };
 const ROLE_HOME: Record<string, string> = {
   admin: '/admin',
   seller: '/seller/dashboard',
   supplier: '/supplier/dashboard',
   creator: '/creator/dashboard',
+  agent: '/team',
 };
 const ACTIVE_STATUSES = ['approved', 'active'];
 
 function isProtectedPath(pathname: string) {
   const firstSegment = pathname.split('/')[1];
   const isPublicRolePage = /^\/(seller|supplier|creator)(\/signup)?\/?$/.test(pathname);
-  const roleArea = ROLE_AREAS.includes(firstSegment) && !isPublicRolePage ? firstSegment : null;
+  const roleArea = firstSegment in AREA_ROLE && !isPublicRolePage ? firstSegment : null;
   const isLoginOnlyRoute = ['dashboard', 'settings'].includes(firstSegment);
   return { roleArea, isLoginOnlyRoute, isProtected: Boolean(roleArea || isLoginOnlyRoute) };
 }
@@ -139,7 +140,7 @@ export async function middleware(request: NextRequest) {
       if (!isActive) {
         return NextResponse.redirect(new URL('/login?error=account_disabled', request.url));
       }
-      if (profile.role !== roleArea && profile.role !== 'admin') {
+      if (roleArea && profile.role !== AREA_ROLE[roleArea] && profile.role !== 'admin') {
         return NextResponse.redirect(new URL(ROLE_HOME[profile.role] || '/', request.url));
       }
     }

@@ -12,6 +12,7 @@ type Row = {
   total_amount: number | null;
   customer_governorate: string | null;
   risk_flags: string[] | null;
+  handled_by: string | null;
   items: { product_name: string | null; quantity: number | null }[] | null;
 };
 
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
   const [{ data, error }, { data: leads }] = await Promise.all([
     auth.supabase
       .from("store_orders")
-      .select("status, cancel_reason, created_at, confirmed_at, total_amount, customer_governorate, risk_flags, items:store_order_items(product_name, quantity)")
+      .select("status, cancel_reason, created_at, confirmed_at, total_amount, customer_governorate, risk_flags, handled_by, items:store_order_items(product_name, quantity)")
       .eq("store_id", store.id)
       .gte("created_at", since.toISOString())
       .order("created_at", { ascending: true })
@@ -69,6 +70,7 @@ export async function GET(request: Request) {
   const byDay = new Map<string, Bucket>();
   const byProduct = new Map<string, Bucket>();
   const byGovernorate = new Map<string, Bucket>();
+  const byAgent = new Map<string, { confirmed: number; cancelled: number }>();
 
   for (let i = 0; i < days; i++) byDay.set(tunisDay(new Date(since.getTime() + (i + 1) * 86400000).toISOString()), bucket());
 
@@ -89,6 +91,12 @@ export async function GET(request: Request) {
     const day = tunisDay(row.created_at);
     if (!byDay.has(day)) byDay.set(day, bucket());
     count(byDay.get(day)!, row);
+    if (row.handled_by && (CONFIRMED.has(row.status) || row.status === "cancelled")) {
+      const agent = byAgent.get(row.handled_by) || { confirmed: 0, cancelled: 0 };
+      if (row.status === "cancelled") agent.cancelled += 1;
+      else agent.confirmed += 1;
+      byAgent.set(row.handled_by, agent);
+    }
     const governorate = row.customer_governorate || "—";
     if (!byGovernorate.has(governorate)) byGovernorate.set(governorate, bucket());
     count(byGovernorate.get(governorate)!, row);
@@ -99,6 +107,15 @@ export async function GET(request: Request) {
   }
 
   const decided = totals.confirmed + totals.cancelled;
+  const { data: members } = byAgent.size
+    ? await auth.supabase.from("store_members").select("user_id, full_name, email").eq("store_id", store.id)
+    : { data: [] as { user_id: string; full_name: string | null; email: string }[] };
+  const agents = [...byAgent.entries()]
+    .map(([userId, a]) => {
+      const member = (members || []).find((m) => m.user_id === userId);
+      return { id: userId, name: userId === auth.user.id ? null : member?.full_name || member?.email || "—", ...a, confirmationRate: rate(a.confirmed, a.confirmed + a.cancelled) };
+    })
+    .sort((a, b) => b.confirmed + b.cancelled - (a.confirmed + a.cancelled));
   const sortedHours = [...confirmHours].sort((a, b) => a - b);
   const table = (map: Map<string, Bucket>) =>
     [...map.entries()]
@@ -119,6 +136,7 @@ export async function GET(request: Request) {
     byDay: [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([date, b]) => ({ date, ...b })),
     byProduct: table(byProduct),
     byGovernorate: table(byGovernorate),
+    agents,
     leads: {
       total: (leads || []).length,
       recovered: (leads || []).filter((l) => l.status === "converted").length,

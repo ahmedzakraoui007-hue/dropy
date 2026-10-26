@@ -1,5 +1,5 @@
 export const RESERVED_SLUGS = new Set([
-  "admin", "api", "auth", "creator", "forgot-password", "help", "inscription", "login", "preview", "seller",
+  "admin", "api", "auth", "team", "creator", "forgot-password", "help", "inscription", "login", "preview", "seller",
   "supplier", "track", "dashboard", "settings", "register", "reset-password", "a-propos", "aide", "carrieres",
   "conditions-utilisation", "contact", "createurs", "demande-en-attente", "faq", "fournisseurs",
   "mentions-legales", "politique-confidentialite", "tarifs", "vendeurs", "themes", "shop", "sitemap",

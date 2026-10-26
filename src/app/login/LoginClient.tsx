@@ -114,6 +114,7 @@ function LoginForm() {
       seller: "/seller/dashboard",
       supplier: "/supplier/dashboard",
       creator: "/creator/dashboard",
+      agent: "/team",
     };
 
     const home = redirectMap[userRole] || "/seller/dashboard";
