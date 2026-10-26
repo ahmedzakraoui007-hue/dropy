@@ -370,6 +370,43 @@
             }
         },
         "settings": {
+            "domain": {
+                "title": "Votre propre nom de domaine",
+                "description": "Utilisez votre domaine (ex. : maboutique.tn) en plus de votre adresse dropy.store. Le certificat de sécurité (https) est créé automatiquement.",
+                "not_available": "Bientôt disponible : la connexion de domaines personnalisés sera activée très prochainement.",
+                "connect": "Connecter",
+                "connect_help": "Achetez d'abord le domaine chez un registraire (ex. : un registraire tunisien pour un .tn), puis saisissez-le ici sans « www ».",
+                "status": {
+                    "pending": "En attente de configuration DNS",
+                    "active": "Actif"
+                },
+                "check": "Vérifier",
+                "open": "Ouvrir",
+                "remove": "Retirer le domaine",
+                "remove_confirm": "Retirer {domain} ? Votre boutique restera accessible à son adresse dropy.store.",
+                "dns_title": "Ajoutez ces enregistrements DNS chez votre registraire",
+                "dns_help": "Dans l'espace client de votre registraire, section DNS ou « Zone DNS », créez exactement ces enregistrements (supprimez les anciens enregistrements A ou CNAME du même nom).",
+                "dns_type": "Type",
+                "dns_name": "Nom",
+                "dns_value": "Valeur",
+                "copy": "Copier",
+                "copied": "Copié",
+                "propagation": "La prise en compte peut prendre de quelques minutes à 48 heures. Cliquez sur « Vérifier » après avoir ajouté les enregistrements.",
+                "now_active": "Votre domaine est actif !",
+                "still_pending": "Pas encore actif : les DNS ne sont pas encore pris en compte.",
+                "active_help": "Votre boutique s'ouvre sur ce domaine, et l'adresse dropy.store y redirige automatiquement. Google utilisera ce domaine.",
+                "errors": {
+                    "required": "Saisissez un nom de domaine.",
+                    "invalid": "Nom de domaine invalide (ex. : maboutique.tn).",
+                    "platform": "Utilisez votre propre domaine, pas une adresse dropy.store.",
+                    "taken": "Ce domaine est déjà utilisé par une autre boutique ou un autre compte.",
+                    "already_set": "Retirez d'abord le domaine actuel.",
+                    "not_configured": "La connexion de domaines n'est pas encore activée.",
+                    "vercel_error": "Le domaine n'a pas pu être ajouté. Réessayez plus tard.",
+                    "save_failed": "Enregistrement impossible. Réessayez.",
+                    "generic": "Une erreur est survenue."
+                }
+            },
             "language": {
                 "label": "Langue de la boutique",
                 "fr": "Français",

@@ -22,7 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
   const { data: store } = await supabase
     .from("stores")
-    .select("id, name, slug, description, is_active")
+    .select("id, name, slug, description, is_active, custom_domain, custom_domain_status")
     .eq("slug", slug)
     .maybeSingle();
   if (!store || store.is_active === false) return new Response("Not found", { status: 404 });
@@ -45,7 +45,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
         `<g:id>${xml(p.id)}</g:id>`,
         `<g:title>${xml(p.name).slice(0, 150)}</g:title>`,
         `<g:description>${xml(plainText(p.description, 4900) || p.name)}</g:description>`,
-        `<g:link>${xml(storeUrl(store.slug, `/p/${p.id}`))}</g:link>`,
+        `<g:link>${xml(storeUrl(store.slug, `/p/${p.id}`, store.custom_domain_status === "active" ? store.custom_domain : null))}</g:link>`,
         `<g:image_link>${xml(images[0])}</g:image_link>`,
         ...images.slice(1, 10).map((img) => `<g:additional_image_link>${xml(img)}</g:additional_image_link>`),
         `<g:availability>${inStock ? "in stock" : "out of stock"}</g:availability>`,
@@ -63,7 +63,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
 <channel>
 <title>${xml(store.name)}</title>
-<link>${xml(storeUrl(store.slug))}</link>
+<link>${xml(storeUrl(store.slug, "", store.custom_domain_status === "active" ? store.custom_domain : null))}</link>
 <description>${xml(plainText(store.description) || store.name)}</description>
 ${items.join("\n")}
 </channel>

@@ -29,7 +29,7 @@ export async function loadStoreProduct(storeSlug: string, productId: string) {
   const supabase = anonClient();
   const { data: store } = await supabase
     .from("stores")
-    .select("id, name, slug, logo_url, is_active")
+    .select("id, name, slug, logo_url, is_active, custom_domain, custom_domain_status")
     .eq("slug", storeSlug)
     .maybeSingle();
   if (!store || store.is_active === false) return null;
@@ -47,13 +47,14 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
   const supabase = anonClient();
   const { data: store } = await supabase
     .from("stores")
-    .select("id, name, description, seo_title, seo_description, logo_url, is_active, google_site_verification, facebook_domain_verification, storefront_language")
+    .select("id, name, description, seo_title, seo_description, logo_url, is_active, google_site_verification, facebook_domain_verification, storefront_language, custom_domain, custom_domain_status")
     .eq("slug", storeSlug)
     .maybeSingle();
   if (!store) return { title: { absolute: "Boutique introuvable" }, robots: { index: false, follow: false } };
 
   const offline = store.is_active === false;
   const arabic = store.storefront_language === "ar";
+  const domain = store.custom_domain_status === "active" ? store.custom_domain : null;
   const locale = arabic ? "ar_TN" : "fr_TN";
   const verification = storeVerification(store);
   const robots = offline ? { index: false, follow: false } : undefined;
@@ -71,7 +72,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
           ? `${product.name} بسعر ${price} د.ت لدى ${store.name}. الدفع عند الاستلام في كل ولايات تونس.`
           : `${product.name} à ${price} DT chez ${store.name}. Paiement à la livraison partout en Tunisie.`);
       const image = product.images?.[0] || store.logo_url || undefined;
-      const url = storeUrl(storeSlug, `/p/${product.id}`);
+      const url = storeUrl(storeSlug, `/p/${product.id}`, domain);
       return {
         title: { absolute: title },
         description,
@@ -101,7 +102,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
   const title = page ? page.seo_title || `${page.title} | ${store.name}` : storeTitle;
   const description = page?.seo_description || store.seo_description || plainText(store.description) || (arabic ? `اكتشف متجر ${store.name}. الدفع عند الاستلام في كل ولايات تونس.` : `Découvrez la boutique ${store.name}. Paiement à la livraison partout en Tunisie.`);
   const image = page?.seo_image || store.logo_url || undefined;
-  const url = storeUrl(storeSlug, page && first !== "home" ? `/${first}` : "");
+  const url = storeUrl(storeSlug, page && first !== "home" ? `/${first}` : "", domain);
 
   return {
     title: { absolute: title },

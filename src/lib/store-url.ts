@@ -9,13 +9,22 @@ function withLeadingSlash(path: string) {
   return path.startsWith("/") ? path : `/${path}`;
 }
 
-export function storeUrl(slug: string, path = "") {
+export function storeUrl(slug: string, path = "", customDomain?: string | null) {
   const suffix = withLeadingSlash(path);
+  if (customDomain) return `https://${customDomain}${suffix}`;
   return STORE_ROOT_DOMAIN ? `https://${slug}.${STORE_ROOT_DOMAIN}${suffix}` : `${SITE_URL}/${slug}${suffix}`;
 }
 
-export function storeDisplayUrl(slug: string) {
-  return storeUrl(slug).replace(/^https?:\/\//, "");
+export function storeDisplayUrl(slug: string, customDomain?: string | null) {
+  return storeUrl(slug, "", customDomain).replace(/^https?:\/\//, "");
+}
+
+export function isPlatformHost(host: string | null | undefined) {
+  const hostname = String(host || "").split(":")[0].toLowerCase();
+  if (!hostname || hostname === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.endsWith(".vercel.app")) return true;
+  const siteHost = SITE_URL.replace(/^https?:\/\//, "").split("/")[0].toLowerCase();
+  if (hostname === siteHost || hostname === `www.${siteHost}`) return true;
+  return Boolean(STORE_ROOT_DOMAIN) && (hostname === STORE_ROOT_DOMAIN || hostname.endsWith(`.${STORE_ROOT_DOMAIN}`));
 }
 
 export function storeSlugFromHost(host: string | null | undefined): string | null {
@@ -29,7 +38,7 @@ export function storeSlugFromHost(host: string | null | undefined): string | nul
 
 export function storeBasePath(slug: string, pathname: string, hostname: string) {
   if (pathname.startsWith("/preview/")) return `/preview/${slug}`;
-  if (storeSlugFromHost(hostname) === slug) return "";
+  if (storeSlugFromHost(hostname) === slug || !isPlatformHost(hostname)) return "";
   return `/${slug}`;
 }
 
@@ -37,8 +46,9 @@ export function productPath(productId: string) {
   return `/p/${productId}`;
 }
 
-export function storeViewHref(slug: string, isActive: boolean | null | undefined) {
+export function storeViewHref(slug: string, isActive: boolean | null | undefined, customDomain?: string | null) {
   if (isActive === false) return `/preview/${slug}`;
+  if (customDomain) return storeUrl(slug, "", customDomain);
   return STORE_ROOT_DOMAIN ? storeUrl(slug) : `/${slug}`;
 }
 

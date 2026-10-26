@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { RESERVED_SLUGS } from '@/lib/store-slug';
-import { STORE_ROOT_DOMAIN, storeSlugFromHost, storeUrl } from '@/lib/store-url';
+import { STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from '@/lib/store-url';
+import { customDomainForSlug, storeSlugForDomain } from '@/lib/custom-domain-lookup';
 
 const ROLE_AREAS = ['admin', 'seller', 'supplier', 'creator'];
 const ROLE_HOME: Record<string, string> = {
@@ -35,14 +36,22 @@ export async function middleware(request: NextRequest) {
   try {
     const hostname = request.headers.get('host') || '';
 
-    const storeSlug = storeSlugFromHost(hostname);
+    const isAsset =
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api/') ||
+      pathname === '/sitemap.xml' ||
+      pathname === '/robots.txt' ||
+      /\.[a-z0-9]{2,5}$/i.test(pathname);
+    const hostOnly = hostname.split(':')[0].toLowerCase();
+    let storeSlug = storeSlugFromHost(hostname);
+    if (storeSlug && !isAsset) {
+      const customDomain = await customDomainForSlug(storeSlug);
+      if (customDomain) return NextResponse.redirect(`https://${customDomain}${pathname}${request.nextUrl.search}`, 301);
+    }
+    if (!storeSlug && STORE_ROOT_DOMAIN && hostOnly && !isPlatformHost(hostOnly)) {
+      storeSlug = await storeSlugForDomain(hostOnly.replace(/^www\./, ''));
+    }
     if (storeSlug) {
-      const isAsset =
-        pathname.startsWith('/_next') ||
-        pathname.startsWith('/api/') ||
-        pathname === '/sitemap.xml' ||
-        pathname === '/robots.txt' ||
-        /\.[a-z0-9]{2,5}$/i.test(pathname);
       if (isAsset) return NextResponse.next();
       const url = request.nextUrl.clone();
       url.pathname = pathname === '/' ? `/${storeSlug}` : `/${storeSlug}${pathname}`;

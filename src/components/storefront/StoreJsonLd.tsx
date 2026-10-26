@@ -25,7 +25,7 @@ export async function ProductJsonLd({ storeSlug, productId }: { storeSlug: strin
         brand: { "@type": "Brand", name: store.name },
         offers: {
           "@type": "Offer",
-          url: storeUrl(storeSlug, `/p/${product.id}`),
+          url: storeUrl(storeSlug, `/p/${product.id}`, store.custom_domain_status === "active" ? store.custom_domain : null),
           price: Number(product.selling_price || 0).toFixed(3),
           priceCurrency: "TND",
           availability:

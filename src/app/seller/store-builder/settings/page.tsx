@@ -17,6 +17,7 @@ import { storeDisplayUrl } from "@/lib/store-url";
 import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput";
 import { McpConnectCard } from "@/components/store-builder/McpConnectCard";
 import { SubscribersCard } from "@/components/store-builder/SubscribersCard";
+import { CustomDomainCard } from "@/components/store-builder/CustomDomainCard";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 import { normalizeStorefrontLanguage } from "@/lib/storefront-i18n";
@@ -488,6 +489,8 @@ export default function StoreSettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <CustomDomainCard />
 
       <SubscribersCard storeId={store.id} />
 
