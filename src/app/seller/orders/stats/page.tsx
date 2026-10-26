@@ -19,6 +19,7 @@ type Stats = {
   byDay: (Bucket & { date: string })[];
   byProduct: Row[];
   byGovernorate: Row[];
+  agents: { id: string; name: string | null; confirmed: number; cancelled: number; confirmationRate: number | null }[];
   leads: { total: number; recovered: number };
 };
 
@@ -191,6 +192,37 @@ export default function ConfirmationStatsPage() {
               </Card>
             ))}
           </div>
+          <Card className="rounded-2xl">
+            <CardHeader>
+              <CardTitle className="text-lg">{tr("by_agent")}</CardTitle>
+            </CardHeader>
+            <CardContent className="overflow-x-auto p-0">
+              {stats.agents.length === 0 ? (
+                <p className="px-6 pb-6 text-sm text-muted-foreground">{tr("no_agent")}</p>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="text-xs text-muted-foreground">
+                    <tr className="border-b">
+                      <th className="px-4 py-2 text-start font-medium">{tr("agent")}</th>
+                      <th className="px-2 py-2 text-end font-medium">{tr("confirmed")}</th>
+                      <th className="px-2 py-2 text-end font-medium">{tr("cancelled")}</th>
+                      <th className="px-4 py-2 text-end font-medium">{tr("confirmation_short")}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.agents.map((agent) => (
+                      <tr key={agent.id} className="border-b last:border-0">
+                        <td className="px-4 py-2">{agent.name ?? tr("owner")}</td>
+                        <td className="px-2 py-2 text-end tabular-nums">{agent.confirmed}</td>
+                        <td className="px-2 py-2 text-end tabular-nums">{agent.cancelled}</td>
+                        <td className="px-4 py-2 text-end font-semibold tabular-nums">{pct(agent.confirmationRate)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </CardContent>
+          </Card>
           <p className="text-xs text-muted-foreground">{tr("definitions")}</p>
         </>
       )}

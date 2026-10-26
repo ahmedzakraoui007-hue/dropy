@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { confirmStoreOrder } from "@/lib/confirm-store-order";
 
 const CANCEL_REASONS = ["unreachable", "customer_cancelled", "fake_order", "out_of_stock", "other"] as const;
 
@@ -54,7 +55,7 @@ async function restoreStock(admin: Admin, orderId: string) {
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser(["seller", "admin"]);
+  const auth = await requireUser(["seller", "admin", "agent"]);
   if (!auth.ok) return auth.response;
   const { id } = await params;
 
@@ -71,7 +72,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .eq("id", id)
     .maybeSingle();
   const vendorId = (order?.stores as any)?.vendor_id;
-  if (!order || (vendorId !== auth.user.id && auth.role !== "admin")) {
+  let allowed = Boolean(order) && (vendorId === auth.user.id || auth.role === "admin");
+  if (order && !allowed && auth.role === "agent") {
+    const { data: member } = await admin
+      .from("store_members")
+      .select("id")
+      .eq("store_id", order.store_id)
+      .eq("user_id", auth.user.id)
+      .eq("status", "active")
+      .maybeSingle();
+    allowed = Boolean(member);
+  }
+  if (!order || !allowed) {
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
   }
 
@@ -83,22 +95,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const now = new Date().toISOString();
 
   if (action === "confirm") {
-    if (order.status !== "new") {
+    if (order.status !== "new" || !(await confirmStoreOrder(admin, order.id, auth.user.id))) {
       return NextResponse.json({ error: "Cette commande n'est plus à confirmer" }, { status: 409 });
-    }
-    const { error } = await admin.from("store_orders").update({ status: "confirmed", confirmed_at: now }).eq("id", order.id).eq("status", "new");
-    if (error) throw error;
-
-    for (const so of (supplierOrders || []).filter((s) => s.status === "awaiting_confirmation")) {
-      await admin.from("supplier_orders").update({ status: "pending", updated_at: now }).eq("id", so.id);
-      await admin.from("notifications").insert({
-        user_id: so.supplier_id,
-        type: "new_order",
-        title: "📦 Nouvelle commande",
-        message: `Commande ${so.supplier_order_number} confirmée par le vendeur : à accepter et préparer.`,
-        link: "/supplier/orders",
-        is_read: false,
-      });
     }
     return NextResponse.json({ success: true, status: "confirmed" });
   }
@@ -114,7 +112,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const { error } = await admin
     .from("store_orders")
-    .update({ status: "cancelled", cancelled_at: now, cancel_reason: reason })
+    .update({ status: "cancelled", cancelled_at: now, cancel_reason: reason, handled_by: auth.user.id })
     .eq("id", order.id)
     .in("status", ["new", "confirmed", "preparing"]);
   if (error) throw error;
