@@ -646,6 +646,8 @@
             "view": "عرض واستيراد"
         },
         "order_detail": {
+            "supplier_rejected": "رفض المورد هذا الطلب",
+            "supplier_rejected_text": "لا يستطيع توفير هذه المنتجات. أعلِم العميل ثم ألغِ الطلب.",
             "dropy_delivery": "توصيل Dropy",
             "soon": "قريبًا",
             "dropy_delivery_soon": "سيتوفر استلام الطرود عبر عون توصيل Dropy مع ربط شركات التوصيل. في الأثناء، استعمل عون التوصيل الخاص بك.",
@@ -670,6 +672,7 @@
                 "delivered": "تم التسليم"
             },
             "drop_steps": {
+                "rejected": "رفضه المورد",
                 "pending": "مُرسَل",
                 "accepted": "مقبول",
                 "preparing": "قيد التحضير",

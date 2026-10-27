@@ -346,9 +346,6 @@ export default function NewSupplierProductPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="rounded-full px-6 font-semibold border-gray-200">
-              Aperçu
-            </Button>
             <Button
               className="rounded-full px-8 font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
               onClick={handleSubmit}
@@ -817,9 +814,6 @@ export default function NewSupplierProductPage() {
                       Retour
                     </Button>
                     <div className="flex gap-3">
-                      <Button variant="outline" className="rounded-full px-8 h-12 font-bold text-gray-600 border-gray-200">
-                        Brouillon
-                      </Button>
                       <Button
                         onClick={handleSubmit}
                         className="rounded-full px-12 bg-primary h-12 shadow-lg shadow-primary/20"

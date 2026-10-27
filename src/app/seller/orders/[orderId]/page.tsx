@@ -522,6 +522,24 @@ export default function OrderDetailPage() {
         </Card>
       )}
 
+      {order.dropshipping_status === "rejected" && order.status !== "cancelled" && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
+              <div>
+                <p className="font-bold text-red-900">{tx("supplier_rejected")}</p>
+                <p className="text-sm text-red-800">{tx("supplier_rejected_text")}</p>
+              </div>
+            </div>
+            <Button variant="outline" className="shrink-0 gap-2 border-red-200 bg-white text-red-700" onClick={() => { setCancelReason("out_of_stock"); setCancelOpen(true); }}>
+              <XCircle className="h-4 w-4" />
+              {tx("cancel_order")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {order.status === "cancelled" && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6 text-sm text-red-800">

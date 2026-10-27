@@ -13,7 +13,8 @@ async function restoreStock(admin: Admin, orderId: string) {
   const { data: items } = await admin
     .from("store_order_items")
     .select("store_product_id, variant_id, quantity")
-    .eq("store_order_id", orderId);
+    .eq("store_order_id", orderId)
+    .or("item_status.is.null,item_status.neq.rejected");
 
   for (const item of items || []) {
     const quantity = Number(item.quantity || 0);
@@ -117,7 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .in("status", ["new", "confirmed", "preparing"]);
   if (error) throw error;
 
-  for (const so of (supplierOrders || []).filter((s) => s.status !== "cancelled")) {
+  for (const so of (supplierOrders || []).filter((s) => s.status !== "cancelled" && s.status !== "rejected")) {
     await admin.from("supplier_orders").update({ status: "cancelled", rejection_reason: `Annulée par le vendeur (${reason})`, updated_at: now }).eq("id", so.id);
     if (so.status !== "awaiting_confirmation") {
       await admin.from("notifications").insert({
@@ -130,8 +131,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       });
     }
   }
-  await admin.from("store_order_items").update({ item_status: "cancelled" }).eq("store_order_id", order.id);
   await restoreStock(admin, order.id);
+  await admin.from("store_order_items").update({ item_status: "cancelled" }).eq("store_order_id", order.id).or("item_status.is.null,item_status.neq.rejected");
 
   return NextResponse.json({ success: true, status: "cancelled" });
 }

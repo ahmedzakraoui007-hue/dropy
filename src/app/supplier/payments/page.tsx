@@ -31,6 +31,7 @@ const STATUS_LABELS: Record<string, string> = {
   in_transit: "En transit",
   delivered: "Livrée",
   cancelled: "Annulée",
+  rejected: "Refusée",
   returned: "Retournée",
 };
 
