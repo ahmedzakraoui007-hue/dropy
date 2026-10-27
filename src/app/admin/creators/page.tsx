@@ -97,10 +97,6 @@ export default function AdminCreatorsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filtres
-          </Button>
         </div>
 
         {isLoading ? (

@@ -118,6 +118,18 @@ export default function UserManagement() {
   };
 
 
+  const exportCsv = () => {
+    const header = ["Nom", "E-mail", "Rôle", "Statut", "Inscription"];
+    const rows = users.map((u) => [u.full_name || "", u.email || "", u.role || "", u.status || "", (u.created_at || "").slice(0, 10)]);
+    const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "utilisateurs-dropy.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -125,8 +137,8 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold tracking-tight text-red-500">Gestion des Utilisateurs</h1>
           <p className="text-muted-foreground">Administrez les comptes et les rôles de la plateforme.</p>
         </div>
-        <Button className="bg-red-500 hover:bg-red-600">
-          <Download className="w-4 h-4 mr-2" />
+        <Button className="bg-red-500 hover:bg-red-600" disabled={users.length === 0} onClick={exportCsv}>
+          <Download className="w-4 h-4 me-2" />
           Exporter CSV
         </Button>
       </div>

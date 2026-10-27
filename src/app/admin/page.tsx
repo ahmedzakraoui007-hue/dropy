@@ -36,6 +36,9 @@ interface Stats {
   onlineStores: number;
   totalOrders: number;
   ordersThisMonth: number;
+  activeMissions: number;
+  pendingProducts: number;
+  disputes: number;
   recentUsers: any[];
 }
 
@@ -58,10 +61,13 @@ export default function AdminOverview() {
       const pendingRequests = users?.filter(u => u.role !== 'admin' && (!u.status || u.status === 'pending')).length || 0;
       const approvedSellers = users?.filter(u => u.role === 'seller' && (u.status === 'approved' || u.status === 'active')).length || 0;
 
-      const [onlineStoresRes, ordersRes, monthOrdersRes] = await Promise.all([
+      const [onlineStoresRes, ordersRes, monthOrdersRes, missionsRes, pendingProductsRes, disputesRes] = await Promise.all([
         supabase.from("stores").select("id", { count: "exact", head: true }).eq("is_active", true),
         supabase.from("store_orders").select("id", { count: "exact", head: true }),
         supabase.from("store_orders").select("id", { count: "exact", head: true }).gte("created_at", monthStart),
+        supabase.from("content_briefs").select("id", { count: "exact", head: true }).in("status", ["assigned", "in_progress", "delivered"]),
+        supabase.from("products").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("content_briefs").select("id", { count: "exact", head: true }).eq("is_disputed", true),
       ]);
 
       const { data: recentUsers } = await supabase
@@ -81,6 +87,9 @@ export default function AdminOverview() {
         onlineStores: onlineStoresRes.count || 0,
         totalOrders: ordersRes.count || 0,
         ordersThisMonth: monthOrdersRes.count || 0,
+        activeMissions: missionsRes.count || 0,
+        pendingProducts: pendingProductsRes.count || 0,
+        disputes: disputesRes.count || 0,
         recentUsers: recentUsers || []
       });
       setLoading(false);
@@ -266,20 +275,20 @@ export default function AdminOverview() {
             <div className="pt-6 border-t border-border">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground">Marketplace Statut</h4>
-                <Badge variant="outline" className="text-[10px] font-bold border-primary/30">24 En cours</Badge>
+                <Badge variant="outline" className="text-[10px] font-bold border-primary/30">{stats?.activeMissions || 0} missions en cours</Badge>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
                   <span className="text-muted-foreground">Approbation</span>
-                  <span className="text-primary">12</span>
+                  <span className="text-primary">{stats?.pendingProducts || 0}</span>
                 </div>
                 <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
                   <span className="text-muted-foreground">Litiges</span>
-                  <span className="text-destructive">2</span>
+                  <span className="text-destructive">{stats?.disputes || 0}</span>
                 </div>
               </div>
-              <Button className="w-full mt-6 bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-widest h-10 shadow-lg shadow-primary/10">
-                Détails Marketplace
+              <Button asChild className="w-full mt-6 bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-widest h-10 shadow-lg shadow-primary/10">
+                <Link href="/admin/products">Produits à valider</Link>
               </Button>
             </div>
           </CardContent>

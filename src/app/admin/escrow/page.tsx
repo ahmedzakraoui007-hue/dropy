@@ -201,9 +201,6 @@ export default function AdminEscrowDisputes() {
                     <div className="text-center space-y-2">
                       <p className="text-xs font-bold uppercase text-emerald-500">Résolu</p>
                       <p className="text-sm font-medium">{dispute.resolution_type.replace('_', ' ')}</p>
-                      <Button variant="outline" size="sm" className="w-full gap-2">
-                        <ExternalLink className="w-3 h-3" /> Voir les détails
-                      </Button>
                     </div>
                   )}
                 </div>
