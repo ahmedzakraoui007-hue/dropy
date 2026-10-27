@@ -74,10 +74,6 @@ export default function AdminBriefsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filtres
-          </Button>
         </div>
 
         {isLoading ? (
@@ -134,12 +130,6 @@ export default function AdminBriefsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="gap-2" onClick={() => window.open(`/seller/content/briefs/${brief.id}`, "_blank")}>
                             <Eye className="w-4 h-4" /> Voir les détails
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 text-destructive">
-                            <AlertTriangle className="w-4 h-4" /> Signaler le contenu
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="gap-2 text-destructive">
-                            <XCircle className="w-4 h-4" /> Annuler le projet
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

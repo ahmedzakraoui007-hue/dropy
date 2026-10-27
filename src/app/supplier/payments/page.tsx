@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Wallet, Clock, CheckCircle2, Building2, AlertCircle } from "lucide-react";
@@ -36,6 +37,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function SupplierPaymentsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.payments.${key}`);
+  const statusLabel = (status: string) => {
+    const label = tt(`supplier_app.status.${status}`);
+    return label.startsWith("supplier_app.") ? status : label;
+  };
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<EarningRow[]>([]);
   const [hasPayoutDetails, setHasPayoutDetails] = useState(false);
@@ -91,8 +98,8 @@ export default function SupplierPaymentsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-black">Paiements</h1>
-        <p className="text-muted-foreground">Vos revenus sur les commandes passées par les boutiques Dropy.</p>
+        <h1 className="text-3xl font-black">{tr("paiements")}</h1>
+        <p className="text-muted-foreground">{tr("vos_revenus_sur_les_commandes")}</p>
       </div>
 
       {!hasPayoutDetails && (
@@ -101,14 +108,14 @@ export default function SupplierPaymentsPage() {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
               <div>
-                <p className="font-bold text-amber-900">Coordonnées de versement manquantes</p>
-                <p className="text-sm text-amber-800">Ajoutez votre RIB, D17 ou Flouci pour recevoir vos virements.</p>
+                <p className="font-bold text-amber-900">{tr("coordonnees_de_versement_manquantes")}</p>
+                <p className="text-sm text-amber-800">{tr("ajoutez_votre_rib_d17_ou")}</p>
               </div>
             </div>
             <Button asChild variant="outline" className="bg-white">
               <Link href="/supplier/settings">
                 <Building2 className="w-4 h-4 mr-2" />
-                Renseigner mes coordonnées
+                {tr("renseigner_mes_coordonnees")}
               </Link>
             </Button>
           </CardContent>
@@ -119,7 +126,7 @@ export default function SupplierPaymentsPage() {
         <Card>
           <CardContent className="pt-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Gagné (commandes livrées)</p>
+              <p className="text-sm font-medium text-muted-foreground">{tr("gagne_commandes_livrees")}</p>
               <h3 className="text-2xl font-black">{formatPrice(earned)}</h3>
             </div>
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -130,7 +137,7 @@ export default function SupplierPaymentsPage() {
         <Card>
           <CardContent className="pt-6 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">En cours (pas encore livrées)</p>
+              <p className="text-sm font-medium text-muted-foreground">{tr("en_cours_pas_encore_livrees")}</p>
               <h3 className="text-2xl font-black">{formatPrice(inProgress)}</h3>
             </div>
             <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center">
@@ -144,7 +151,7 @@ export default function SupplierPaymentsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="w-5 h-5" />
-            Détail par commande
+            {tr("detail_par_commande")}
           </CardTitle>
           <CardDescription>
             Montant = prix fournisseur × quantité. Dropy vous verse le montant des commandes livrées par virement.
@@ -152,7 +159,7 @@ export default function SupplierPaymentsPage() {
         </CardHeader>
         <CardContent>
           {rows.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Aucune commande pour le moment.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">{tr("aucune_commande_pour_le_moment")}</p>
           ) : (
             <div className="divide-y">
               {rows.map((row) => (
@@ -162,7 +169,7 @@ export default function SupplierPaymentsPage() {
                     <p className="text-xs text-muted-foreground">{formatDate(row.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <Badge variant="secondary">{STATUS_LABELS[row.status] || row.status}</Badge>
+                    <Badge variant="secondary">{statusLabel(row.status)}</Badge>
                     <span className="font-black text-sm w-24 text-right">{formatPrice(row.amount)}</span>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -99,7 +100,7 @@ const deliveryCompanies = [
   { id: "rapid-poste", name: "Rapid Poste", logo: "✉️" },
   { id: "sotupab", name: "Sotupab", logo: "🚛" },
   { id: "dhl", name: "DHL Express", logo: "🟡" },
-  { id: "other", name: "Autre transporteur", logo: "🚐" },
+  { id: "other", name: "other", logo: "🚐" },
 ];
 
 const statusColors: Record<string, string> = {
@@ -123,12 +124,19 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SupplierShippingPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.shipping.${key}`);
+  const statusLabel = (status: string) => {
+    const label = tt(`supplier_app.status.${status}`);
+    return label.startsWith("supplier_app.") ? status : label;
+  };
   const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<SupplierOrder | null>(null);
   const [showBordereauDialog, setShowBordereauDialog] = useState(false);
+  const [sender, setSender] = useState<Sender | null>(null);
 
   useEffect(() => {
     loadOrders();
@@ -140,6 +148,21 @@ export default function SupplierShippingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) return;
+
+      const [{ data: supplierProfile }, { data: profile }] = await Promise.all([
+        supabase.from("supplier_profiles").select("company_name, tax_id, pickup_address, contact_name").eq("user_id", user.id).maybeSingle(),
+        supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
+      ]);
+      const address = (supplierProfile?.pickup_address || {}) as Record<string, string>;
+      setSender({
+        company: supplierProfile?.company_name || profile?.full_name || "",
+        taxId: supplierProfile?.tax_id || null,
+        street: address.street || "",
+        city: address.city || "",
+        governorate: address.governorate || "",
+        contact: supplierProfile?.contact_name || null,
+        phone: profile?.phone || null,
+      });
 
       const { data, error } = await supabase
         .from("supplier_orders")
@@ -163,7 +186,7 @@ export default function SupplierShippingPage() {
       setOrders(data || []);
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Erreur lors du chargement");
+      toast.error(tr("erreur_lors_du_chargement"));
     } finally {
       setLoading(false);
     }
@@ -171,7 +194,7 @@ export default function SupplierShippingPage() {
 
   function copyTrackingNumber(trackingNumber: string) {
     navigator.clipboard.writeText(trackingNumber);
-    toast.success("Numéro de suivi copié");
+    toast.success(tr("numero_de_suivi_copie"));
   }
 
   const filteredOrders = orders.filter(order => {
@@ -201,7 +224,7 @@ export default function SupplierShippingPage() {
     <div className="space-y-8">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black">Expéditions</h1>
+          <h1 className="text-3xl font-black">{tr("expeditions")}</h1>
           <p className="text-muted-foreground">Suivez l&apos;enlèvement et la livraison de vos colis par Dropy Livraison.</p>
         </div>
       </div>
@@ -229,7 +252,7 @@ export default function SupplierShippingPage() {
               </div>
               <div>
                 <p className="text-3xl font-black text-indigo-600">{shippedOrders.length}</p>
-                <p className="text-sm text-indigo-600/70 font-medium">En transit</p>
+                <p className="text-sm text-indigo-600/70 font-medium">{tr("en_transit")}</p>
               </div>
             </div>
           </CardContent>
@@ -243,7 +266,7 @@ export default function SupplierShippingPage() {
               </div>
               <div>
                 <p className="text-3xl font-black text-green-600">{deliveredOrders.length}</p>
-                <p className="text-sm text-green-600/70 font-medium">Livrées</p>
+                <p className="text-sm text-green-600/70 font-medium">{tr("livrees")}</p>
               </div>
             </div>
           </CardContent>
@@ -262,7 +285,7 @@ export default function SupplierShippingPage() {
                     return new Date(o.estimated_delivery) < new Date();
                   }).length}
                 </p>
-                <p className="text-sm text-amber-600/70 font-medium">En retard</p>
+                <p className="text-sm text-amber-600/70 font-medium">{tr("en_retard")}</p>
               </div>
             </div>
           </CardContent>
@@ -274,13 +297,13 @@ export default function SupplierShippingPage() {
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
               <Truck className="w-5 h-5 text-primary" />
-              Gestion des expéditions
+              {tr("gestion_des_expeditions")}
             </CardTitle>
             <div className="flex items-center gap-3">
               <div className="relative flex-1 lg:w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
-                  placeholder="Rechercher..."
+                  placeholder={tr("rechercher")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -291,10 +314,10 @@ export default function SupplierShippingPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les statuts</SelectItem>
-                  <SelectItem value="ready">Prêtes</SelectItem>
-                  <SelectItem value="shipped">Expédiées</SelectItem>
-                  <SelectItem value="delivered">Livrées</SelectItem>
+                  <SelectItem value="all">{tr("tous_les_statuts")}</SelectItem>
+                  <SelectItem value="ready">{tr("pretes")}</SelectItem>
+                  <SelectItem value="shipped">{tr("expediees")}</SelectItem>
+                  <SelectItem value="delivered">{tr("livrees")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -304,9 +327,9 @@ export default function SupplierShippingPage() {
           {filteredOrders.length === 0 ? (
             <div className="text-center py-12">
               <Truck className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="font-bold text-lg mb-2">Aucune expédition</h3>
+              <h3 className="font-bold text-lg mb-2">{tr("aucune_expedition")}</h3>
               <p className="text-muted-foreground text-sm">
-                Les commandes prêtes à expédier apparaîtront ici.
+                {tr("les_commandes_pretes_a_expedier")}
               </p>
             </div>
           ) : (
@@ -328,7 +351,7 @@ export default function SupplierShippingPage() {
                         <div className="flex items-center gap-3 mb-1">
                           <p className="font-bold">{order.supplier_order_number}</p>
                           <Badge className={`${statusColors[order.status]} border text-xs`}>
-                            {statusLabels[order.status]}
+                            {statusLabel(order.status)}
                           </Badge>
                         </div>
                         {order.store_order && (
@@ -369,7 +392,7 @@ export default function SupplierShippingPage() {
                     <div className="flex items-center gap-2">
                       {["ready", "ready_for_pickup", "scheduled"].includes(order.status) && (
                         <span className="text-xs font-bold text-purple-700 bg-purple-50 rounded-full px-3 py-1.5">
-                          Enlèvement par Dropy Livraison
+                          {tr("enlevement_par_dropy_livraison")}
                         </span>
                       )}
                       {["picked_up", "shipped"].includes(order.status) && (
@@ -436,16 +459,18 @@ export default function SupplierShippingPage() {
       <Dialog open={showBordereauDialog} onOpenChange={setShowBordereauDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Bordereau de livraison</DialogTitle>
+            <DialogTitle>{tr("bordereau_de_livraison")}</DialogTitle>
           </DialogHeader>
-          {selectedOrder && <BordereauProfessionnel order={selectedOrder} />}
+          {selectedOrder && <BordereauProfessionnel order={selectedOrder} sender={sender} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-function BordereauProfessionnel({ order }: { order: SupplierOrder }) {
+type Sender = { company: string; taxId: string | null; street: string; city: string; governorate: string; contact: string | null; phone: string | null };
+
+function BordereauProfessionnel({ order, sender }: { order: SupplierOrder; sender: Sender | null }) {
   const TVA_RATE = 0.19;
   const TIMBRE_FISCAL = 1;
 
@@ -482,11 +507,14 @@ function BordereauProfessionnel({ order }: { order: SupplierOrder }) {
           <div className="p-4 bg-gray-50 rounded-xl">
             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Expéditeur</h3>
             <div className="space-y-1">
-              <p className="font-bold text-lg">DROPY Logistics</p>
-              <p className="text-sm text-muted-foreground">Centre de distribution</p>
-              <p className="text-sm text-muted-foreground">Zone Industrielle, Tunis</p>
-              <p className="text-sm text-muted-foreground">MF: 1234567/A/B/C/000</p>
-              <p className="text-sm text-muted-foreground">Tél: +216 71 XXX XXX</p>
+              <p className="font-bold text-lg">{sender?.company || "—"}</p>
+              {sender?.street && <p className="text-sm text-muted-foreground">{sender.street}</p>}
+              {(sender?.city || sender?.governorate) && (
+                <p className="text-sm text-muted-foreground">{[sender?.city, sender?.governorate].filter(Boolean).join(", ")}</p>
+              )}
+              {sender?.taxId && <p className="text-sm text-muted-foreground">MF : {sender.taxId}</p>}
+              {sender?.contact && <p className="text-sm text-muted-foreground">{sender.contact}</p>}
+              {sender?.phone && <p className="text-sm text-muted-foreground">Tél : {sender.phone}</p>}
             </div>
           </div>
 
@@ -512,7 +540,7 @@ function BordereauProfessionnel({ order }: { order: SupplierOrder }) {
             <p className="font-mono font-bold text-lg">{order.supplier_order_number}</p>
           </div>
           <div className="p-4 bg-gray-50 rounded-xl text-center">
-            <p className="text-xs text-muted-foreground mb-1">Date d'expédition</p>
+            <p className="text-xs text-muted-foreground mb-1">Date d&apos;expédition</p>
             <p className="font-bold text-lg">
               {order.shipped_at ? format(new Date(order.shipped_at), "dd/MM/yyyy", { locale: fr }) : format(new Date(), "dd/MM/yyyy", { locale: fr })}
             </p>

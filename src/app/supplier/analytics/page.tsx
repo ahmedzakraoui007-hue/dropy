@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { formatPrice } from "@/lib/utils";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from "react";
@@ -47,6 +48,8 @@ interface TopProduct {
 }
 
 export default function SupplierAnalyticsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.analytics.${key}`);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("30d");
   const [stats, setStats] = useState<Stats>({
@@ -150,28 +153,28 @@ export default function SupplierAnalyticsPage() {
 
   const statCards = [
     { 
-      title: "Commandes", 
+      title: tr("card_orders"),
       value: stats.totalOrders.toString(), 
       change: stats.ordersChange, 
       icon: ShoppingCart, 
       color: "bg-blue-500"
     },
     { 
-      title: "Revenus", 
+      title: tr("card_revenue"),
       value: formatPrice(stats.totalRevenue),
       change: stats.revenueChange, 
       icon: DollarSign, 
       color: "bg-emerald-500"
     },
     { 
-      title: "Produits", 
+      title: tr("card_products"),
       value: stats.totalProducts.toString(), 
       change: 0, 
       icon: Package, 
       color: "bg-purple-500"
     },
     { 
-      title: "Livrées", 
+      title: tr("card_delivered"),
       value: stats.conversionRate.toString(), 
       change: 0, 
       icon: TrendingUp, 
@@ -183,8 +186,8 @@ export default function SupplierAnalyticsPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black">Statistiques</h1>
-          <p className="text-muted-foreground">Suivez les performances de vos produits.</p>
+          <h1 className="text-3xl font-black">{tr("statistiques")}</h1>
+          <p className="text-muted-foreground">{tr("suivez_les_performances_de_vos")}</p>
         </div>
         <Select value={period} onValueChange={setPeriod}>
           <SelectTrigger className="w-[180px]">
@@ -192,10 +195,10 @@ export default function SupplierAnalyticsPage() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="7d">7 derniers jours</SelectItem>
-            <SelectItem value="30d">30 derniers jours</SelectItem>
-            <SelectItem value="90d">90 derniers jours</SelectItem>
-            <SelectItem value="year">Cette année</SelectItem>
+            <SelectItem value="7d">{tr("t_7_derniers_jours")}</SelectItem>
+            <SelectItem value="30d">{tr("t_30_derniers_jours")}</SelectItem>
+            <SelectItem value="90d">{tr("t_90_derniers_jours")}</SelectItem>
+            <SelectItem value="year">{tr("cette_annee")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -235,9 +238,9 @@ export default function SupplierAnalyticsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5 text-primary" />
-                Évolution des ventes
+                {tr("evolution_des_ventes")}
               </CardTitle>
-              <CardDescription>Performances sur la période sélectionnée.</CardDescription>
+              <CardDescription>{tr("performances_sur_la_periode_selectionnee")}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="h-[300px]">
@@ -259,7 +262,7 @@ export default function SupplierAnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Package className="w-5 h-5 text-primary" />
-              Top Produits
+              {tr("top_produits")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -267,7 +270,7 @@ export default function SupplierAnalyticsPage() {
               {topProducts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Package className="w-10 h-10 mx-auto mb-2 opacity-20" />
-                  <p className="text-sm">Aucun produit</p>
+                  <p className="text-sm">{tr("aucun_produit")}</p>
                 </div>
               ) : (
                 topProducts.map((product, index) => (
@@ -302,11 +305,11 @@ export default function SupplierAnalyticsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold mb-2">Besoin d&apos;aide pour améliorer vos ventes ?</h3>
-              <p className="text-muted-foreground">Consultez nos conseils et bonnes pratiques pour optimiser vos performances.</p>
+              <p className="text-muted-foreground">{tr("consultez_nos_conseils_et_bonnes")}</p>
             </div>
             <Button asChild className="gap-2 bg-primary">
               <a href="https://dropyblog.vercel.app" target="_blank" rel="noreferrer">
-                Voir les conseils
+                {tr("voir_les_conseils")}
                 <ArrowUpRight className="w-4 h-4" />
               </a>
             </Button>

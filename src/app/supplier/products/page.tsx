@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -47,6 +48,12 @@ interface Product {
 }
 
 export default function SupplierProductsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.products.${key}`);
+  const statusLabel = (status: string) => {
+    const label = tt(`supplier_app.status.${status}`);
+    return label.startsWith("supplier_app.") ? status : label;
+  };
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -74,11 +81,11 @@ export default function SupplierProductsPage() {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const messages: Record<string, string> = {
-        invalid_name: "Le nom est trop court.",
-        invalid_price: "Le prix doit être supérieur à 0.",
-        invalid_stock: "Le stock doit être un nombre entier positif.",
+        invalid_name: tr("invalid_name"),
+        invalid_price: tr("invalid_price"),
+        invalid_stock: tr("invalid_stock"),
       };
-      toast.error(messages[data.error] || "Impossible d'enregistrer. Réessayez.");
+      toast.error(messages[data.error] || tr("save_error"));
       return false;
     }
     return true;
@@ -96,16 +103,16 @@ export default function SupplierProductsPage() {
     });
     setSaving(false);
     if (!ok) return;
-    toast.success("Produit mis à jour");
+    toast.success(tr("produit_mis_a_jour"));
     setEditing(null);
     loadProducts();
   };
 
   const toggleActive = async (product: Product) => {
     const next = product.is_active === false;
-    if (!next && !window.confirm("Retirer ce produit du catalogue ? Il sera aussi masqué dans les boutiques qui le vendent, et leurs vendeurs seront prévenus.")) return;
+    if (!next && !window.confirm(tr("retire_confirm"))) return;
     if (await patchProduct(product.id, { is_active: next })) {
-      toast.success(next ? "Produit remis dans le catalogue" : "Produit retiré du catalogue");
+      toast.success(tr(next ? "restored" : "retired"));
       loadProducts();
     }
   };
@@ -138,13 +145,13 @@ export default function SupplierProductsPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Mes Produits</h1>
-          <p className="text-muted-foreground">Gérez votre catalogue de produits pour les vendeurs.</p>
+          <h1 className="text-3xl font-bold">{tr("mes_produits")}</h1>
+          <p className="text-muted-foreground">{tr("gerez_votre_catalogue_de_produits")}</p>
         </div>
         <Link href="/supplier/products/new">
           <Button className="gap-2 bg-gradient-to-r from-cyan-500 to-teal-600">
             <Plus className="w-4 h-4" />
-            Nouveau produit
+            {tr("nouveau_produit")}
           </Button>
         </Link>
       </div>
@@ -155,7 +162,7 @@ export default function SupplierProductsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher un produit..." 
+                placeholder={tr("rechercher_un_produit")} 
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -167,12 +174,12 @@ export default function SupplierProductsPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-border text-sm font-medium text-muted-foreground">
-                  <th className="pb-4 pr-4">Produit</th>
-                  <th className="pb-4 px-4">Catégorie</th>
-                  <th className="pb-4 px-4">Prix de base</th>
-                  <th className="pb-4 px-4">Stock</th>
-                  <th className="pb-4 px-4">Statut</th>
-                  <th className="pb-4 pl-4 text-right">Actions</th>
+                  <th className="pb-4 pr-4">{tr("produit")}</th>
+                  <th className="pb-4 px-4">{tr("categorie")}</th>
+                  <th className="pb-4 px-4">{tr("prix_de_base")}</th>
+                  <th className="pb-4 px-4">{tr("stock")}</th>
+                  <th className="pb-4 px-4">{tr("statut")}</th>
+                  <th className="pb-4 pl-4 text-right">{tr("actions")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -190,8 +197,8 @@ export default function SupplierProductsPage() {
                       <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                         <Package className="w-8 h-8 opacity-50" />
                       </div>
-                      <p className="text-lg font-semibold">Aucun produit trouvé</p>
-                      <p className="text-muted-foreground">Commencez par ajouter votre premier produit.</p>
+                      <p className="text-lg font-semibold">{tr("aucun_produit_trouve")}</p>
+                      <p className="text-muted-foreground">{tr("commencez_par_ajouter_votre_premier")}</p>
                     </td>
                   </tr>
                 ) : (
@@ -235,11 +242,10 @@ export default function SupplierProductsPage() {
                               product.status === "pending" ? "bg-orange-100 text-orange-700" : 
                               "bg-red-100 text-red-700"
                             }`}>
-                              {product.status === "approved" ? "Approuvé" : 
-                               product.status === "pending" ? "En attente" : "Refusé"}
+                              {statusLabel(product.status)}
                             </span>
                             {product.is_active === false && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full w-fit bg-gray-100 text-gray-600">Retiré</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full w-fit bg-gray-100 text-gray-600">{tr("retire")}</span>
                             )}
                             {product.status === "rejected" && product.rejection_reason && (
                               <div className="group relative">
@@ -265,7 +271,7 @@ export default function SupplierProductsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem className={`gap-2 ${product.is_active === false ? "" : "text-red-600"}`} onClick={() => toggleActive(product)}>
                               {product.is_active === false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                              {product.is_active === false ? "Remettre dans le catalogue" : "Retirer du catalogue"}
+                              {tr(product.is_active === false ? "restore" : "retire")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -281,35 +287,35 @@ export default function SupplierProductsPage() {
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier le produit</DialogTitle>
+            <DialogTitle>{tr("modifier_le_produit")}</DialogTitle>
             <DialogDescription>Les changements de prix s&apos;appliquent aux prochaines commandes. Le stock est mis à jour dans les boutiques qui vendent ce produit.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">Nom</Label>
+              <Label htmlFor="edit-name">{tr("nom")}</Label>
               <Input id="edit-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="edit-price">Prix (DT)</Label>
+                <Label htmlFor="edit-price">{tr("prix_dt")}</Label>
                 <Input id="edit-price" inputMode="decimal" value={form.base_price} onChange={(e) => setForm({ ...form, base_price: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-advised">Prix conseillé</Label>
+                <Label htmlFor="edit-advised">{tr("prix_conseille")}</Label>
                 <Input id="edit-advised" inputMode="decimal" value={form.compare_price} onChange={(e) => setForm({ ...form, compare_price: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-stock">Stock</Label>
+                <Label htmlFor="edit-stock">{tr("stock")}</Label>
                 <Input id="edit-stock" inputMode="numeric" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
+              <Label htmlFor="edit-description">{tr("description")}</Label>
               <Textarea id="edit-description" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>{tr("annuler")}</Button>
             <Button onClick={saveEdit} disabled={saving} className="gap-2">
               {saving && <Loader2 className="w-4 h-4 animate-spin" />}
               Enregistrer

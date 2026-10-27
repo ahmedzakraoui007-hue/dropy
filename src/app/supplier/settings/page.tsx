@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, MapPin, Save } from "lucide-react";
@@ -16,6 +17,8 @@ import { createClient } from "@/lib/supabase/client";
 type Pickup = { street: string; city: string; governorate: string; contact: string; notes: string };
 
 export default function SettingsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.settings.${key}`);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [pickup, setPickup] = useState<Pickup>({ street: "", city: "", governorate: "", contact: "", notes: "" });
   const [saving, setSaving] = useState(false);
@@ -46,7 +49,7 @@ export default function SettingsPage() {
   const save = async () => {
     if (!profileId) return;
     if (!pickup.street.trim() || !pickup.governorate) {
-      toast.error("Indiquez au moins l'adresse et le gouvernorat.");
+      toast.error(tr("indiquez_au_moins_l_adresse"));
       return;
     }
     setSaving(true);
@@ -60,14 +63,14 @@ export default function SettingsPage() {
       })
       .eq("id", profileId);
     setSaving(false);
-    if (error) toast.error("Impossible d'enregistrer. Réessayez.");
-    else toast.success("Adresse d'enlèvement enregistrée");
+    if (error) toast.error(tr("impossible_d_enregistrer_reessayez"));
+    else toast.success(tr("adresse_d_enlevement_enregistree"));
   };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Paramètres</h1>
+        <h1 className="text-3xl font-bold">{tr("parametres")}</h1>
         <p className="text-muted-foreground">Votre adresse d&apos;enlèvement, votre compte et vos coordonnées de paiement.</p>
       </div>
 
@@ -78,18 +81,18 @@ export default function SettingsPage() {
               <MapPin className="h-5 w-5 text-primary" />
               Adresse d&apos;enlèvement
             </CardTitle>
-            <CardDescription>Le livreur Dropy vient récupérer vos colis à cette adresse.</CardDescription>
+            <CardDescription>{tr("le_livreur_dropy_vient_recuperer")}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="pickup-street">Adresse</Label>
+              <Label htmlFor="pickup-street">{tr("adresse")}</Label>
               <Input id="pickup-street" value={pickup.street} onChange={(e) => setPickup({ ...pickup, street: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>Gouvernorat</Label>
+              <Label>{tr("gouvernorat")}</Label>
               <Select value={pickup.governorate} onValueChange={(governorate) => setPickup({ ...pickup, governorate })}>
-                <SelectTrigger aria-label="Gouvernorat">
-                  <SelectValue placeholder="Gouvernorat" />
+                <SelectTrigger aria-label={tr("gouvernorat")}>
+                  <SelectValue placeholder={tr("gouvernorat")} />
                 </SelectTrigger>
                 <SelectContent>
                   {TUNISIAN_GOVERNORATES.map((g) => (
@@ -101,16 +104,16 @@ export default function SettingsPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pickup-city">Ville / délégation</Label>
+              <Label htmlFor="pickup-city">{tr("ville_delegation")}</Label>
               <Input id="pickup-city" value={pickup.city} onChange={(e) => setPickup({ ...pickup, city: e.target.value })} />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="pickup-contact">Personne à contacter sur place</Label>
+              <Label htmlFor="pickup-contact">{tr("personne_a_contacter_sur_place")}</Label>
               <Input id="pickup-contact" value={pickup.contact} onChange={(e) => setPickup({ ...pickup, contact: e.target.value })} />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="pickup-notes">Instructions pour le livreur (facultatif)</Label>
-              <Textarea id="pickup-notes" rows={2} placeholder="Horaires, étage, repère…" value={pickup.notes} onChange={(e) => setPickup({ ...pickup, notes: e.target.value })} />
+              <Label htmlFor="pickup-notes">{tr("instructions_pour_le_livreur_facultatif")}</Label>
+              <Textarea id="pickup-notes" rows={2} placeholder={tr("horaires_etage_repere")} value={pickup.notes} onChange={(e) => setPickup({ ...pickup, notes: e.target.value })} />
             </div>
             <div className="sm:col-span-2">
               <Button onClick={save} disabled={saving} className="gap-2">
