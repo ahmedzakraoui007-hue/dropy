@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -22,6 +24,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export default function OpportunitiesPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.opportunities.${key}`);
   const router = useRouter();
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
@@ -78,23 +82,19 @@ export default function OpportunitiesPage() {
         <div className="max-w-7xl mx-auto px-4 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-black mb-1">Opportunités de projets</h1>
-              <p className="text-muted-foreground">Trouvez les missions parfaites correspondant à vos compétences</p>
+              <h1 className="text-3xl font-black mb-1">{tr("opportunites_de_projets")}</h1>
+              <p className="text-muted-foreground">{tr("trouvez_les_missions_parfaites_correspondant")}</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Rechercher des missions..." 
+                  placeholder={tr("rechercher_des_missions")} 
                   className="pl-10"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Button variant="outline">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtres
-              </Button>
             </div>
           </div>
 
@@ -107,9 +107,9 @@ export default function OpportunitiesPage() {
                 <div className="w-20 h-20 rounded-3xl bg-muted flex items-center justify-center mb-4">
                   <Target className="w-10 h-10 text-muted-foreground opacity-20" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Aucune opportunité pour le moment</h3>
+                <h3 className="text-xl font-bold mb-2">{tr("aucune_opportunite_pour_le_moment")}</h3>
                 <p className="text-muted-foreground max-w-sm">
-                  Revenez plus tard pour de nouvelles missions ou mettez à jour votre profil.
+                  {tr("revenez_plus_tard_pour_de")}
                 </p>
               </Card>
             ) : (
@@ -168,9 +168,9 @@ export default function OpportunitiesPage() {
                           <div className="flex items-center gap-1.5 text-primary">
                             <DollarSign className="w-4 h-4" />
                             {brief.budget_min && brief.budget_max 
-                              ? `${brief.budget_min} - ${brief.budget_max} TND`
+                              ? `${formatPrice(brief.budget_min)} – ${formatPrice(brief.budget_max)}`
                               : brief.budget_min 
-                                ? `${brief.budget_min} TND`
+                                ? formatPrice(brief.budget_min)
                                 : "À négocier"}
                           </div>
                         <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -191,7 +191,7 @@ export default function OpportunitiesPage() {
                         variant="ghost"
                         onClick={() => router.push(`/creator/opportunities/${brief.id}`)}
                       >
-                        Détails & Postuler
+                        {tr("details_postuler")}
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </CardFooter>

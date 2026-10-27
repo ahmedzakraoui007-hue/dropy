@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
@@ -31,6 +32,9 @@ import { cn } from "@/lib/utils";
 import { ShieldAlert } from "lucide-react";
 
 export default function MissionDetailsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.mission.${key}`);
+  const tc = (key: string) => tt(`creator_app.common.${key}`);
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClient();
@@ -60,7 +64,7 @@ export default function MissionDetailsPage() {
 
 
       if (briefError) {
-        toast.error("Mission introuvable");
+        toast.error(tr("mission_introuvable"));
         router.push("/creator/missions");
         return;
       }
@@ -98,14 +102,14 @@ export default function MissionDetailsPage() {
 
   const handleDeliver = async () => {
     if (deliveryFiles.length === 0) {
-      toast.error("Veuillez envoyer au moins un fichier");
+      toast.error(tr("veuillez_envoyer_au_moins_un"));
       return;
     }
 
     setIsDelivering(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non connecté");
+      if (!user) throw new Error(tc("not_signed_in"));
       
       // Upload files to Supabase Storage
       const uploadedFiles = [];
@@ -138,15 +142,15 @@ export default function MissionDetailsPage() {
         body: JSON.stringify({ files: uploadedFiles, message: deliveryMessage }),
       });
       const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "Erreur lors de la livraison");
+      if (!response.ok) throw new Error(result.error || tr("deliver_error"));
 
-      toast.success("Projet livré ! En attente de validation par le vendeur.");
+      toast.success(tr("projet_livre_en_attente_de"));
       setBrief({ ...brief, status: "delivered" });
       setLastDelivery({ status: "submitted", revision_count: lastDelivery?.revision_count || 0 });
       setDeliveryFiles([]);
       setDeliveryMessage("");
     } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la livraison");
+      toast.error(error.message || tr("deliver_error"));
     } finally {
       setIsDelivering(false);
     }
@@ -163,12 +167,12 @@ export default function MissionDetailsPage() {
   const isHired = Boolean(myApplication) && brief.selected_creator_id === myApplication?.creator_id;
   const fundsSecured = Boolean(payment?.escrowed_at);
   const statusLabel: Record<string, string> = {
-    published: isHired ? "En attente de paiement" : "Ouvert",
-    assigned: "En cours",
-    in_progress: "Retouches",
-    delivered: "Livré",
-    completed: "Terminé",
-    cancelled: "Annulé",
+    published: isHired ? tr("waiting_payment") : tr("open"),
+    assigned: tc("brief_assigned"),
+    in_progress: tc("brief_in_progress"),
+    delivered: tc("brief_delivered"),
+    completed: tc("brief_completed"),
+    cancelled: tc("brief_cancelled"),
   };
 
   return (
@@ -176,7 +180,7 @@ export default function MissionDetailsPage() {
       <div className="max-w-6xl mx-auto px-4 pt-8">
         <Button variant="ghost" className="mb-6" onClick={() => router.push("/creator/missions")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux missions
+            {tr("retour_aux_missions")}
           </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -186,7 +190,7 @@ export default function MissionDetailsPage() {
                   <div className="flex justify-between items-start gap-4 w-full">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{({ photography: "Photo", video: "Vidéo", ugc: "Contenu UGC", design: "Design", copywriting: "Rédaction" } as Record<string, string>)[brief.content_type] || brief.content_type}</Badge>
+                        <Badge variant="outline">{tc(`type_${brief.content_type}`)}</Badge>
                         <Badge className={cn(
                           brief.status === "completed" ? "bg-emerald-500" : 
                           brief.status === "delivered" ? "bg-blue-500" :
@@ -195,7 +199,7 @@ export default function MissionDetailsPage() {
                           {statusLabel[brief.status] || brief.status}
                         </Badge>
                         {brief.is_disputed && (
-                          <Badge variant="destructive" className="animate-pulse">En litige</Badge>
+                          <Badge variant="destructive" className="animate-pulse">{tr("en_litige")}</Badge>
                         )}
                       </div>
                       <CardTitle className="text-3xl">{brief.title}</CardTitle>
@@ -211,7 +215,7 @@ export default function MissionDetailsPage() {
                         onClick={() => setIsDisputeOpen(true)}
                       >
                         <ShieldAlert className="w-4 h-4 mr-2" />
-                          Ouvrir un litige
+                          {tr("ouvrir_un_litige")}
                         </Button>
                     )}
                   </div>
@@ -220,30 +224,30 @@ export default function MissionDetailsPage() {
               <CardContent className="space-y-8">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-border/50">
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">Mon Prix</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("mon_prix")}</p>
                       <p className="font-semibold text-primary">{myApplication?.proposed_price} TND</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("date_limite")}</p>
                       <p className="font-semibold">{format(new Date(brief.deadline), "dd/MM/yyyy")}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">Statut</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("statut")}</p>
                       <p className="font-semibold">{statusLabel[brief.status] || brief.status}</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">Livraison</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("livraison")}</p>
                       <p className="font-semibold">{myApplication?.delivery_days} jours</p>
                     </div>
                   </div>
 
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold">Détails du brief</h3>
+                    <h3 className="text-lg font-bold">{tr("details_du_brief")}</h3>
                     <p className="text-muted-foreground whitespace-pre-wrap">{brief.description}</p>
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-bold">Livrables spécifiques</h3>
+                    <h3 className="text-lg font-bold">{tr("livrables_specifiques")}</h3>
                   <div className="p-4 rounded-xl bg-muted/50 border border-border">
                     <p className="text-muted-foreground whitespace-pre-wrap">{brief.deliverables}</p>
                   </div>
@@ -251,7 +255,7 @@ export default function MissionDetailsPage() {
 
                 {brief.products && brief.products.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-bold">Produits</h3>
+                      <h3 className="text-lg font-bold">{tr("produits")}</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {brief.products.map((product: any, idx: number) => (
                           <Card key={product.id || idx} className="flex items-center gap-3 p-3 border-border/50">
@@ -271,11 +275,11 @@ export default function MissionDetailsPage() {
             {isHired && brief.status === "published" && (
               <Card className="border-amber-500/20 bg-amber-500/5 p-8 text-center">
                 <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">Vous avez été retenu !</h3>
+                <h3 className="text-xl font-bold mb-2">{tr("vous_avez_ete_retenu")}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   {payment
-                    ? "Le vendeur a envoyé son paiement. Dropy le vérifie : vous pourrez commencer dès sa confirmation."
-                    : "Le vendeur doit maintenant envoyer le paiement à Dropy. Ne commencez pas avant la confirmation du séquestre."}
+                    ? tr("payment_sent")
+                    : tr("payment_wait")}
                 </p>
               </Card>
             )}
@@ -283,26 +287,26 @@ export default function MissionDetailsPage() {
             {isHired && (brief.status === "assigned" || brief.status === "in_progress") && !brief.is_disputed && (
               <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
-                    <CardTitle>{brief.status === "in_progress" ? "Livrer la version corrigée" : "Livrer votre travail"}</CardTitle>
+                    <CardTitle>{brief.status === "in_progress" ? tr("deliver_revision") : tr("deliver_work")}</CardTitle>
                     <CardDescription>
                       {lastDelivery?.status === "revision_requested"
-                        ? "Le vendeur a demandé des retouches (détails dans vos notifications). Envoyez les fichiers corrigés."
-                        : "Téléchargez les fichiers finaux et envoyez-les au vendeur pour approbation"}
+                        ? tr("revision_help")
+                        : tr("deliver_help")}
                     </CardDescription>
                   </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-2">
-                      <Label htmlFor="message">Message pour le vendeur</Label>
+                      <Label htmlFor="message">{tr("message_pour_le_vendeur")}</Label>
                       <Textarea 
                         id="message" 
-                        placeholder="Incluez des notes sur la livraison..."
+                        placeholder={tr("incluez_des_notes_sur_la")}
                         value={deliveryMessage}
                         onChange={(e) => setDeliveryMessage(e.target.value)}
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Fichiers finaux*</Label>
+                      <Label>{tr("fichiers_finaux")}</Label>
                       <FileUpload 
                         onFilesSelected={setDeliveryFiles}
                         maxFiles={10}
@@ -315,7 +319,7 @@ export default function MissionDetailsPage() {
                       onClick={handleDeliver}
                       disabled={isDelivering || deliveryFiles.length === 0}
                     >
-                      {isDelivering ? "Envoi en cours..." : "Livrer le projet"}
+                      {isDelivering ? tr("sending") : tr("deliver")}
                       <Send className="w-4 h-4 ml-2" />
                     </Button>
                   </CardContent>
@@ -325,9 +329,9 @@ export default function MissionDetailsPage() {
             {brief.status === "delivered" && (
               <Card className="border-blue-500/20 bg-blue-500/5 p-8 text-center">
                 <CheckCircle2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">Travail soumis</h3>
+                <h3 className="text-xl font-bold mb-2">{tr("travail_soumis")}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                  Votre travail a été soumis au vendeur. Il peut le valider ou demander des retouches. Une fois validé, Dropy vous verse votre paiement.
+                  {tr("votre_travail_a_ete_soumis")}
                 </p>
               </Card>
             )}
@@ -335,18 +339,18 @@ export default function MissionDetailsPage() {
             {brief.status === "completed" && (
               <Card className="border-emerald-500/20 bg-emerald-500/5 p-8 text-center">
                 <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">Projet terminé</h3>
+                <h3 className="text-xl font-bold mb-2">{tr("projet_termine")}</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   {payment?.stripe_transfer_id
-                    ? "Cette mission est terminée et votre paiement a été versé."
-                    : "Cette mission est terminée. Dropy va vous verser votre paiement sur le compte indiqué dans vos paramètres."}
+                    ? tr("done_paid")
+                    : tr("done_pending")}
                 </p>
                 <Button 
                   variant="outline" 
                   className="mt-6"
                   onClick={() => router.push("/creator/payments")}
                 >
-                  Voir mes revenus
+                  {tr("voir_mes_revenus")}
                 </Button>
               </Card>
             )}
@@ -358,10 +362,10 @@ export default function MissionDetailsPage() {
                 <CardContent className="pt-6">
                     <div className="flex items-center gap-2 text-orange-600 mb-2">
                       <Clock className="w-5 h-5" />
-                      <p className="font-bold">Proposition en attente</p>
+                      <p className="font-bold">{tr("proposition_en_attente")}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Le vendeur examine encore les propositions. Vous serez notifié si vous êtes sélectionné.
+                      {tr("le_vendeur_examine_encore_les")}
                     </p>
                   </CardContent>
               </Card>
@@ -372,10 +376,10 @@ export default function MissionDetailsPage() {
                 <CardContent className="pt-6">
                     <div className="flex items-center gap-2 text-emerald-600 mb-2">
                       <Shield className="w-5 h-5" />
-                      <p className="font-bold">Paiement sécurisé</p>
+                      <p className="font-bold">{tr("paiement_securise")}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Les fonds sont conservés par Dropy et vous seront versés après validation du vendeur.
+                      {tr("les_fonds_sont_conserves_par")}
                     </p>
                   </CardContent>
               </Card>
@@ -383,13 +387,13 @@ export default function MissionDetailsPage() {
 
             <Card>
               <CardHeader>
-                  <CardTitle>Chat de mission</CardTitle>
+                  <CardTitle>{tr("chat_de_mission")}</CardTitle>
                 </CardHeader>
               <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">Discutez des détails du projet avec le vendeur.</p>
+                  <p className="text-sm text-muted-foreground">{tr("discutez_des_details_du_projet")}</p>
                   <Button className="w-full gap-2" variant="outline" onClick={() => router.push(`/creator/messages?briefId=${id}`)}>
                     <MessageSquare className="w-4 h-4" />
-                    Ouvrir le chat
+                    {tr("ouvrir_le_chat")}
                   </Button>
                 </CardContent>
             </Card>
@@ -398,13 +402,13 @@ export default function MissionDetailsPage() {
               <CardHeader>
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-blue-500" />
-                    <CardTitle className="text-lg">Conseils utiles</CardTitle>
+                    <CardTitle className="text-lg">{tr("conseils_utiles")}</CardTitle>
                   </div>
                 </CardHeader>
               <CardContent className="space-y-4 text-sm text-muted-foreground">
-                  <p>• Communiquez souvent pour éviter les révisions.</p>
-                  <p>• Livrez toujours avant la deadline.</p>
-                  <p>• Un travail de qualité mène à des avis 5 étoiles et plus de missions.</p>
+                  <p>{tr("communiquez_souvent_pour_eviter_les")}</p>
+                  <p>{tr("livrez_toujours_avant_la_deadline")}</p>
+                  <p>{tr("un_travail_de_qualite_mene")}</p>
                 </CardContent>
             </Card>
           </div>

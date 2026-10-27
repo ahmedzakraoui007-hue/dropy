@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import {
   DollarSign,
@@ -18,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import Link from "next/link";
 
 const STATE: Record<string, { label: string; className: string }> = {
@@ -36,6 +37,8 @@ function paymentState(p: any) {
 }
 
 export default function CreatorPaymentsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.payments.${key}`);
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
@@ -82,12 +85,12 @@ export default function CreatorPaymentsPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Revenus et paiements</h1>
-            <p className="text-muted-foreground">Suivez vos missions payées et vos versements</p>
+            <h1 className="text-3xl font-bold">{tr("revenus_et_paiements")}</h1>
+            <p className="text-muted-foreground">{tr("suivez_vos_missions_payees_et")}</p>
           </div>
           <Button asChild className="bg-gradient-to-r from-violet-500 to-purple-600">
             <Link href="/creator/settings">
-              Coordonnées de versement
+              {tr("coordonnees_de_versement")}
               <ArrowUpRight className="w-4 h-4 ml-2" />
             </Link>
           </Button>
@@ -98,8 +101,8 @@ export default function CreatorPaymentsPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium opacity-80">Versement en cours</p>
-                  <h3 className="text-4xl font-bold mt-1">{stats.available.toFixed(2)} TND</h3>
+                  <p className="text-sm font-medium opacity-80">{tr("versement_en_cours")}</p>
+                  <h3 className="text-4xl font-bold mt-1">{formatPrice(stats.available)}</h3>
                 </div>
                 <div className="p-2 bg-white/10 rounded-lg">
                   <DollarSign className="w-6 h-6" />
@@ -112,8 +115,8 @@ export default function CreatorPaymentsPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">En séquestre</p>
-                  <h3 className="text-4xl font-bold mt-1">{stats.escrow.toFixed(2)} TND</h3>
+                  <p className="text-sm font-medium text-muted-foreground">{tr("en_sequestre")}</p>
+                  <h3 className="text-4xl font-bold mt-1">{formatPrice(stats.escrow)}</h3>
                 </div>
                 <div className="p-2 bg-muted rounded-lg">
                   <Clock className="w-6 h-6 text-muted-foreground" />
@@ -126,8 +129,8 @@ export default function CreatorPaymentsPage() {
             <CardContent className="pt-6">
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total perçu</p>
-                  <h3 className="text-4xl font-bold mt-1">{stats.total.toFixed(2)} TND</h3>
+                  <p className="text-sm font-medium text-muted-foreground">{tr("total_percu")}</p>
+                  <h3 className="text-4xl font-bold mt-1">{formatPrice(stats.total)}</h3>
                 </div>
                 <div className="p-2 bg-emerald-500/10 rounded-lg">
                   <TrendingUp className="w-6 h-6 text-emerald-600" />
@@ -142,8 +145,8 @@ export default function CreatorPaymentsPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle>Historique des transactions</CardTitle>
-                  <CardDescription>Paiements de vos missions</CardDescription>
+                  <CardTitle>{tr("historique_des_transactions")}</CardTitle>
+                  <CardDescription>{tr("paiements_de_vos_missions")}</CardDescription>
                 </div>
               </CardHeader>
               <CardContent>
@@ -154,7 +157,7 @@ export default function CreatorPaymentsPage() {
                 ) : payments.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
                     <History className="w-12 h-12 mx-auto mb-2 opacity-10" />
-                    <p>Aucune transaction pour le moment</p>
+                    <p>{tr("aucune_transaction_pour_le_moment")}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -173,9 +176,9 @@ export default function CreatorPaymentsPage() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold">{Number(payment.creator_amount || 0).toFixed(2)} TND</p>
+                          <p className="font-bold">{formatPrice(Number(payment.creator_amount || 0))}</p>
                           <Badge className={`${state.className} border-0 text-[10px] h-5`}>
-                            {state.label}
+                            {tr(`state_${paymentState(payment)}`)}
                           </Badge>
                         </div>
                       </div>
@@ -189,17 +192,17 @@ export default function CreatorPaymentsPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Moyens de versement</CardTitle>
+                <CardTitle>{tr("moyens_de_versement")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-4 rounded-xl border border-border/50 bg-muted/30 flex items-center gap-3">
                   <div className="p-2 bg-background rounded-lg border">
                     <CreditCard className="w-4 h-4" />
                   </div>
-                  <p className="text-sm text-muted-foreground">Dropy vous verse vos gains par virement (RIB), D17 ou Flouci selon les coordonnées de vos paramètres.</p>
+                  <p className="text-sm text-muted-foreground">{tr("dropy_vous_verse_vos_gains")}</p>
                 </div>
                 <Button asChild variant="outline" className="w-full text-xs">
-                  <Link href="/creator/settings">Gérer mes coordonnées</Link>
+                  <Link href="/creator/settings">{tr("gerer_mes_coordonnees")}</Link>
                 </Button>
               </CardContent>
             </Card>
@@ -208,10 +211,10 @@ export default function CreatorPaymentsPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-blue-600 mb-2">
                   <AlertCircle className="w-5 h-5" />
-                  <p className="font-bold">Quand suis-je payé ?</p>
+                  <p className="font-bold">{tr("quand_suis_je_paye")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Dès que le vendeur valide votre contenu, Dropy vous verse votre part (montant moins la commission de la plateforme).
+                  {tr("des_que_le_vendeur_valide")}
                 </p>
               </CardContent>
             </Card>
