@@ -31,6 +31,9 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -85,6 +88,9 @@ export default function SupplierOrdersPage() {
   const [showBordereauModal, setShowBordereauModal] = useState(false);
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState<{ id: string; number: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("out_of_stock");
+  const [rejectNote, setRejectNote] = useState("");
 
   useEffect(() => {
     loadOrders();
@@ -131,6 +137,31 @@ export default function SupplierOrdersPage() {
       }
     } catch (error) {
       toast.error("Erreur lors de l'action");
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const confirmReject = async () => {
+    if (!rejecting) return;
+    setProcessingAction(rejecting.id);
+    try {
+      const response = await fetch(`/api/supplier/orders/${rejecting.id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: rejectReason, note: rejectNote }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        toast.success("Commande refusée : le vendeur est prévenu");
+        setRejecting(null);
+        setRejectNote("");
+        loadOrders();
+      } else {
+        toast.error(data.error || "Erreur lors du refus");
+      }
+    } catch {
+      toast.error("Erreur lors du refus");
     } finally {
       setProcessingAction(null);
     }
@@ -387,11 +418,19 @@ export default function SupplierOrdersPage() {
                             <CheckCircle2 className="w-4 h-4 mr-1" />
                             Accepter
                           </Button>
-                          <Button size="sm" variant="outline" className="text-red-600 border-red-200">
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Refuser
-                          </Button>
                         </>
+                      )}
+                      {["pending", "accepted", "preparing"].includes(order.status) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 border-red-200"
+                          disabled={processingAction === order.id}
+                          onClick={() => setRejecting({ id: order.id, number: order.supplier_order_number })}
+                        >
+                          <XCircle className="w-4 h-4 me-1" />
+                          Refuser
+                        </Button>
                       )}
                       {order.status === "accepted" && (
                         <Button 
@@ -461,6 +500,40 @@ export default function SupplierOrdersPage() {
           </div>
         </CardContent>
       </Card>
+      <Dialog open={!!rejecting} onOpenChange={(open) => !open && setRejecting(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Refuser la commande {rejecting?.number}</DialogTitle>
+            <DialogDescription>Le vendeur est prévenu immédiatement et le stock est remis en vente.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Motif</Label>
+              <Select value={rejectReason} onValueChange={setRejectReason}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="out_of_stock">Rupture de stock</SelectItem>
+                  <SelectItem value="discontinued">Produit arrêté</SelectItem>
+                  <SelectItem value="cannot_ship">Expédition impossible</SelectItem>
+                  <SelectItem value="other">Autre raison</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="reject-note">Précision pour le vendeur (facultatif)</Label>
+              <Textarea id="reject-note" rows={2} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejecting(null)}>Retour</Button>
+            <Button className="bg-red-600 hover:bg-red-700" disabled={processingAction === rejecting?.id} onClick={confirmReject}>
+              Refuser la commande
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

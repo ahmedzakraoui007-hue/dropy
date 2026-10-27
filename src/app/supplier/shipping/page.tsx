@@ -464,10 +464,6 @@ function BordereauProfessionnel({ order }: { order: SupplierOrder }) {
           <Printer className="w-4 h-4" />
           Imprimer
         </Button>
-        <Button variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
-          Télécharger PDF
-        </Button>
       </div>
 
       <div id="bordereau-content" className="bg-white p-8 border rounded-xl print:border-0 print:p-0">

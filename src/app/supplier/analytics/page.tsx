@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
@@ -56,6 +58,7 @@ export default function SupplierAnalyticsPage() {
     revenueChange: 0
   });
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [daily, setDaily] = useState<{ day: string; revenue: number; orders: number }[]>([]);
 
   useEffect(() => {
     async function loadAnalytics() {
@@ -119,6 +122,19 @@ export default function SupplierAnalyticsPage() {
       }
       setTopProducts([...byProduct.values()].sort((x, y) => y.revenue - x.revenue).slice(0, 5));
 
+      const byDay = new Map<string, { day: string; revenue: number; orders: number }>();
+      for (let d = new Date(start); d <= now; d = new Date(d.getTime() + 86400000)) {
+        const key = d.toISOString().slice(0, 10);
+        byDay.set(key, { day: key.slice(5).split("-").reverse().join("/"), revenue: 0, orders: 0 });
+      }
+      for (const order of current) {
+        const entry = byDay.get(order.created_at.slice(0, 10));
+        if (!entry) continue;
+        entry.orders += 1;
+        entry.revenue += (order.items || []).reduce((sum, i) => sum + Number(i.unit_price || 0) * Number(i.quantity || 0), 0);
+      }
+      setDaily([...byDay.values()]);
+
       setLoading(false);
     }
     loadAnalytics();
@@ -142,7 +158,7 @@ export default function SupplierAnalyticsPage() {
     },
     { 
       title: "Revenus", 
-      value: `${stats.totalRevenue.toFixed(0)} TND`, 
+      value: formatPrice(stats.totalRevenue),
       change: stats.revenueChange, 
       icon: DollarSign, 
       color: "bg-emerald-500"
@@ -224,12 +240,16 @@ export default function SupplierAnalyticsPage() {
               <CardDescription>Performances sur la période sélectionnée.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px] flex items-center justify-center bg-muted/30 rounded-xl border-2 border-dashed border-border">
-                <div className="text-center text-muted-foreground">
-                  <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                  <p className="font-medium">Graphique en cours de développement</p>
-                  <p className="text-xs mt-1">Les données seront bientôt disponibles</p>
-                </div>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={daily}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="day" axisLine={false} tickLine={false} fontSize={11} minTickGap={16} />
+                    <YAxis axisLine={false} tickLine={false} fontSize={11} width={48} />
+                    <Tooltip formatter={(value) => [formatPrice(Number(value ?? 0)), "CA"]} />
+                    <Bar dataKey="revenue" name="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -284,9 +304,11 @@ export default function SupplierAnalyticsPage() {
               <h3 className="text-xl font-bold mb-2">Besoin d&apos;aide pour améliorer vos ventes ?</h3>
               <p className="text-muted-foreground">Consultez nos conseils et bonnes pratiques pour optimiser vos performances.</p>
             </div>
-            <Button className="gap-2 bg-primary">
-              Voir les conseils
-              <ArrowUpRight className="w-4 h-4" />
+            <Button asChild className="gap-2 bg-primary">
+              <a href="https://dropyblog.vercel.app" target="_blank" rel="noreferrer">
+                Voir les conseils
+                <ArrowUpRight className="w-4 h-4" />
+              </a>
             </Button>
           </div>
         </CardContent>

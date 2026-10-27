@@ -6,11 +6,11 @@ import { motion } from "framer-motion";
 import { 
   Plus, 
   Search, 
-  Filter, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
+  MoreVertical,
+  Edit,
+  EyeOff,
   Eye,
+  Loader2,
   Package,
   TrendingUp,
   AlertCircle
@@ -25,6 +25,11 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
+import { toast } from "sonner";
+import { formatPrice } from "@/lib/utils";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Product {
   id: string;
@@ -37,15 +42,79 @@ interface Product {
   status: string;
   rejection_reason?: string;
   images?: any;
+  compare_price?: number | null;
+  is_active?: boolean;
 }
 
 export default function SupplierProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState({ name: "", description: "", base_price: "", compare_price: "", stock_quantity: "" });
+  const [saving, setSaving] = useState(false);
+
+  const openEdit = (product: Product) => {
+    setEditing(product);
+    setForm({
+      name: product.name || "",
+      description: product.description || "",
+      base_price: String(product.base_price ?? ""),
+      compare_price: product.compare_price != null ? String(product.compare_price) : "",
+      stock_quantity: String(product.stock_quantity ?? 0),
+    });
+  };
+
+  const patchProduct = async (id: string, payload: Record<string, unknown>) => {
+    const res = await fetch(`/api/supplier/products/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const messages: Record<string, string> = {
+        invalid_name: "Le nom est trop court.",
+        invalid_price: "Le prix doit être supérieur à 0.",
+        invalid_stock: "Le stock doit être un nombre entier positif.",
+      };
+      toast.error(messages[data.error] || "Impossible d'enregistrer. Réessayez.");
+      return false;
+    }
+    return true;
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const ok = await patchProduct(editing.id, {
+      name: form.name,
+      description: form.description,
+      base_price: form.base_price,
+      compare_price: form.compare_price,
+      stock_quantity: Number(form.stock_quantity),
+    });
+    setSaving(false);
+    if (!ok) return;
+    toast.success("Produit mis à jour");
+    setEditing(null);
+    loadProducts();
+  };
+
+  const toggleActive = async (product: Product) => {
+    const next = product.is_active === false;
+    if (!next && !window.confirm("Retirer ce produit du catalogue ? Il sera aussi masqué dans les boutiques qui le vendent, et leurs vendeurs seront prévenus.")) return;
+    if (await patchProduct(product.id, { is_active: next })) {
+      toast.success(next ? "Produit remis dans le catalogue" : "Produit retiré du catalogue");
+      loadProducts();
+    }
+  };
 
   useEffect(() => {
-    async function loadProducts() {
+    loadProducts();
+  }, []);
+
+  async function loadProducts() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -58,9 +127,7 @@ export default function SupplierProductsPage() {
 
       if (data) setProducts(data);
       setLoading(false);
-    }
-    loadProducts();
-  }, []);
+  }
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -94,10 +161,6 @@ export default function SupplierProductsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button variant="outline" className="gap-2">
-              <Filter className="w-4 h-4" />
-              Filtres
-            </Button>
           </div>
 
           <div className="overflow-x-auto">
@@ -155,7 +218,7 @@ export default function SupplierProductsPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 font-bold text-sm">
-                        {product.base_price} TND
+                        {formatPrice(product.base_price)}
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
@@ -175,6 +238,9 @@ export default function SupplierProductsPage() {
                               {product.status === "approved" ? "Approuvé" : 
                                product.status === "pending" ? "En attente" : "Refusé"}
                             </span>
+                            {product.is_active === false && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full w-fit bg-gray-100 text-gray-600">Retiré</span>
+                            )}
                             {product.status === "rejected" && product.rejection_reason && (
                               <div className="group relative">
                                 <AlertCircle className="w-4 h-4 text-red-500 cursor-help" />
@@ -193,17 +259,13 @@ export default function SupplierProductsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2">
+                            <DropdownMenuItem className="gap-2" onClick={() => openEdit(product)}>
                               <Edit className="w-4 h-4" />
                               Modifier
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2">
-                              <Eye className="w-4 h-4" />
-                              Voir
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2 text-red-600">
-                              <Trash2 className="w-4 h-4" />
-                              Supprimer
+                            <DropdownMenuItem className={`gap-2 ${product.is_active === false ? "" : "text-red-600"}`} onClick={() => toggleActive(product)}>
+                              {product.is_active === false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              {product.is_active === false ? "Remettre dans le catalogue" : "Retirer du catalogue"}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -216,6 +278,45 @@ export default function SupplierProductsPage() {
           </div>
         </CardContent>
       </Card>
+      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Modifier le produit</DialogTitle>
+            <DialogDescription>Les changements de prix s&apos;appliquent aux prochaines commandes. Le stock est mis à jour dans les boutiques qui vendent ce produit.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nom</Label>
+              <Input id="edit-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-price">Prix (DT)</Label>
+                <Input id="edit-price" inputMode="decimal" value={form.base_price} onChange={(e) => setForm({ ...form, base_price: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-advised">Prix conseillé</Label>
+                <Input id="edit-advised" inputMode="decimal" value={form.compare_price} onChange={(e) => setForm({ ...form, compare_price: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-stock">Stock</Label>
+                <Input id="edit-stock" inputMode="numeric" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea id="edit-description" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Annuler</Button>
+            <Button onClick={saveEdit} disabled={saving} className="gap-2">
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

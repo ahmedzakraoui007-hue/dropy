@@ -48,11 +48,13 @@ export async function POST(
     const mainOrder = storeOrders[0];
     const destination = (supplierOrder.delivery_address || {}) as Record<string, string | null>;
 
-    const pickupAddress = supplierProfile?.pickup_address || {
-      street: 'Adresse non configurée',
-      city: '',
-      country: 'TN',
-    };
+    const pickupAddress = supplierProfile?.pickup_address as { street: string; city: string; country: string; governorate?: string } | null;
+    if (!pickupAddress?.street) {
+      return NextResponse.json(
+        { error: "Ajoutez votre adresse d'enlèvement dans Paramètres pour que le livreur sache où venir." },
+        { status: 400 }
+      );
+    }
 
     const deliveryAddress = {
       street: destination.address || mainOrder?.customer_address || '',

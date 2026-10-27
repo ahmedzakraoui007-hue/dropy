@@ -646,6 +646,8 @@
             "view": "Voir et importer"
         },
         "order_detail": {
+            "supplier_rejected": "Le fournisseur a refusé cette commande",
+            "supplier_rejected_text": "Il ne peut pas livrer ces produits. Prévenez le client, puis annulez la commande.",
             "dropy_delivery": "Livraison Dropy",
             "soon": "Bientôt disponible",
             "dropy_delivery_soon": "L'enlèvement par un livreur Dropy arrive avec l'intégration des sociétés de livraison. En attendant, utilisez votre propre livreur.",
@@ -670,6 +672,7 @@
                 "delivered": "Livré"
             },
             "drop_steps": {
+                "rejected": "Refusé par le fournisseur",
                 "pending": "Transmis",
                 "accepted": "Accepté",
                 "preparing": "En préparation",
