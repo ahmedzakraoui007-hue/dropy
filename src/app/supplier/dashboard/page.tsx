@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +27,8 @@ interface Stats {
 }
 
 export default function SupplierDashboard() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.dashboard.${key}`);
   const router = useRouter();
   const [stats, setStats] = useState<Stats>({
     totalProducts: 0,
@@ -80,16 +84,16 @@ export default function SupplierDashboard() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground animate-pulse">Chargement de votre inventaire fournisseur...</p>
+          <p className="text-muted-foreground animate-pulse">{tr("chargement_de_votre_inventaire_fournisseur")}</p>
         </div>
       </div>
     );
   }
 
   const statCards = [
-    { title: "Produits", value: stats.totalProducts.toString(), icon: Package, color: "bg-primary" },
-    { title: "Commandes", value: stats.totalOrders.toString(), icon: ShoppingCart, color: "bg-primary" },
-    { title: "Revenus", value: `${stats.totalRevenue.toFixed(0)} TND`, icon: DollarSign, color: "bg-primary" },
+    { title: tr("card_products"), value: stats.totalProducts.toString(), icon: Package, color: "bg-primary" },
+    { title: tr("card_orders"), value: stats.totalOrders.toString(), icon: ShoppingCart, color: "bg-primary" },
+    { title: tr("card_revenue"), value: formatPrice(stats.totalRevenue), icon: DollarSign, color: "bg-primary" },
     { title: "À expédier", value: stats.pendingShipments.toString(), icon: Truck, color: "bg-primary" },
   ];
 
@@ -97,13 +101,13 @@ export default function SupplierDashboard() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black mb-1">Tableau de bord fournisseur</h1>
-          <p className="text-muted-foreground tracking-tight">Gérez vos produits et commandes</p>
+          <h1 className="text-3xl font-black mb-1">{tr("tableau_de_bord_fournisseur")}</h1>
+          <p className="text-muted-foreground tracking-tight">{tr("gerez_vos_produits_et_commandes")}</p>
         </div>
         <Link href="/supplier/products/new">
           <Button className="gap-2 bg-primary text-primary-foreground shadow-lg shadow-primary/20 border-none hover:opacity-90">
             <Plus className="w-4 h-4" />
-            Ajouter un produit
+            {tr("ajouter_un_produit")}
           </Button>
         </Link>
       </div>
@@ -136,7 +140,7 @@ export default function SupplierDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm bg-card">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">Actions rapides</CardTitle>
+            <CardTitle className="text-xl font-bold">{tr("actions_rapides")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Link href="/supplier/products/new" className="block group">
@@ -145,8 +149,8 @@ export default function SupplierDashboard() {
                   <Plus className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold group-hover:text-primary transition-colors">Ajouter un produit</p>
-                  <p className="text-xs text-muted-foreground">Proposez vos produits aux vendeurs</p>
+                  <p className="font-bold group-hover:text-primary transition-colors">{tr("ajouter_un_produit")}</p>
+                  <p className="text-xs text-muted-foreground">{tr("proposez_vos_produits_aux_vendeurs")}</p>
                 </div>
                 <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
@@ -157,8 +161,8 @@ export default function SupplierDashboard() {
                   <ShoppingCart className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-bold group-hover:text-primary transition-colors">Voir les commandes</p>
-                  <p className="text-xs text-muted-foreground">Gérez vos commandes entrantes</p>
+                  <p className="font-bold group-hover:text-primary transition-colors">{tr("voir_les_commandes")}</p>
+                  <p className="text-xs text-muted-foreground">{tr("gerez_vos_commandes_entrantes")}</p>
                 </div>
                 <ArrowUpRight className="w-5 h-5 text-muted-foreground group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
               </div>
@@ -177,15 +181,15 @@ export default function SupplierDashboard() {
             {stats.pendingShipments === 0 ? (
               <div className="text-center py-8 text-muted-foreground bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
                 <Truck className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p className="font-medium">Aucune commande à expédier</p>
+                <p className="font-medium">{tr("aucune_commande_a_expedier")}</p>
               </div>
             ) : (
               <div className="text-center py-8 bg-primary/5 rounded-3xl border border-primary/20">
                 <p className="text-5xl font-black text-primary">{stats.pendingShipments}</p>
-                <p className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-widest">commandes en attente</p>
+                <p className="text-xs font-bold text-muted-foreground mt-2 uppercase tracking-widest">{tr("commandes_en_attente")}</p>
                 <Link href="/supplier/orders?status=pending">
                   <Button className="mt-4 border-primary/20 hover:bg-primary hover:text-primary-foreground transition-colors" variant="outline">
-                    Voir les commandes
+                    {tr("voir_les_commandes")}
                   </Button>
                 </Link>
               </div>
