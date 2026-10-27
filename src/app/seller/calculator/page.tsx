@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from "@/context/LanguageContext";
+import { FREE_LAUNCH } from "@/lib/launch";
+import { formatPrice } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { 
   Calculator, 
@@ -38,6 +41,9 @@ import {
 } from "@/components/ui/tooltip";
 
 export default function SmartCalculatorPage() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.calculator_page.${key}`);
+  const dropyRate = FREE_LAUNCH ? 0 : 0.05;
   const [supplierPrice, setSupplierPrice] = useState(30);
   const [sellingPrice, setSellingPrice] = useState(60);
   const [shippingCost, setShippingCost] = useState(7);
@@ -47,11 +53,10 @@ export default function SmartCalculatorPage() {
   const [returnRate, setReturnRate] = useState(5);
   const [conversionRate, setConversionRate] = useState(3);
   const [monthlyOrders, setMonthlyOrders] = useState(100);
-  const [includeDropyFee, setIncludeDropyFee] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const calculations = useMemo(() => {
-    const dropyFee = includeDropyFee ? sellingPrice * 0.05 : 0;
+    const dropyFee = sellingPrice * dropyRate;
     const totalCosts = supplierPrice + shippingCost + marketingCost + packagingCost + dropyFee;
     const grossProfit = sellingPrice - totalCosts;
     const profitMargin = sellingPrice > 0 ? (grossProfit / sellingPrice) * 100 : 0;
@@ -93,7 +98,7 @@ export default function SmartCalculatorPage() {
       dropyFee,
       monthlyAdSpend
     };
-  }, [supplierPrice, sellingPrice, shippingCost, marketingCost, packagingCost, returnRate, conversionRate, monthlyOrders, includeDropyFee]);
+  }, [supplierPrice, sellingPrice, shippingCost, marketingCost, packagingCost, returnRate, conversionRate, monthlyOrders]);
 
   const getProfitColor = (profit: number) => {
     if (profit > 15) return "text-green-600";
@@ -135,12 +140,12 @@ export default function SmartCalculatorPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Calculator className="w-8 h-8 text-primary" />
-            Smart Calculator
+            {tr("title")}
           </h1>
-          <p className="text-muted-foreground">Calculez vos marges et optimisez vos prix de vente.</p>
+          <p className="text-muted-foreground">{tr("subtitle")}</p>
         </div>
         <Badge className="text-lg px-4 py-2" variant={healthScore > 70 ? "default" : healthScore > 40 ? "secondary" : "destructive"}>
-          Score santé: {healthScore}/100
+          {tr("health")} : {healthScore}/100
         </Badge>
       </div>
 
@@ -150,21 +155,21 @@ export default function SmartCalculatorPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                Paramètres du produit
+                {tr("product")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
-                    Prix fournisseur (DT)
+                    {tr("supplier_price")}
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
                           <Info className="w-4 h-4 text-muted-foreground" />
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Le prix d&apos;achat auprès du fournisseur</p>
+                          <p>{tr("supplier_price_help")}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -188,8 +193,8 @@ export default function SmartCalculatorPage() {
 
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
-                    Prix de vente (DT)
-                    <Badge variant="outline" className="text-xs">Votre marge</Badge>
+                    {tr("selling_price")}
+                    <Badge variant="outline" className="text-xs">{tr("your_margin")}</Badge>
                   </Label>
                   <div className="flex gap-2">
                     <Input
@@ -209,7 +214,7 @@ export default function SmartCalculatorPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Frais de livraison (DT)</Label>
+                  <Label>{tr("shipping")}</Label>
                   <Input
                     type="number"
                     value={shippingCost}
@@ -218,7 +223,7 @@ export default function SmartCalculatorPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Coût marketing par vente (DT)</Label>
+                  <Label>{tr("marketing")}</Label>
                   <Input
                     type="number"
                     value={marketingCost}
@@ -229,13 +234,12 @@ export default function SmartCalculatorPage() {
 
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <Switch checked={includeDropyFee} onCheckedChange={setIncludeDropyFee} />
                   <div>
-                    <p className="font-medium">Frais Dropy (5%)</p>
-                    <p className="text-xs text-muted-foreground">Commission plateforme</p>
+                    <p className="font-medium">{tr("dropy_fee")} ({Math.round(dropyRate * 100)}%)</p>
+                    <p className="text-xs text-muted-foreground">{FREE_LAUNCH ? tr("dropy_fee_free") : tr("dropy_fee_help")}</p>
                   </div>
                 </div>
-                <span className="font-bold text-lg">{calculations.dropyFee.toFixed(2)} DT</span>
+                <span className="font-bold text-lg">{formatPrice(calculations.dropyFee)}</span>
               </div>
 
               <Button
@@ -243,7 +247,7 @@ export default function SmartCalculatorPage() {
                 className="w-full justify-between"
                 onClick={() => setShowAdvanced(!showAdvanced)}
               >
-                <span>Options avancées</span>
+                <span>{tr("advanced")}</span>
                 {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </Button>
 
@@ -254,7 +258,7 @@ export default function SmartCalculatorPage() {
                   className="grid md:grid-cols-2 gap-4 pt-4 border-t"
                 >
                   <div className="space-y-3">
-                    <Label>Frais d&apos;emballage (DT)</Label>
+                    <Label>{tr("packaging")}</Label>
                     <Input
                       type="number"
                       value={packagingCost}
@@ -262,7 +266,7 @@ export default function SmartCalculatorPage() {
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label>Taux de retour (%)</Label>
+                    <Label>{tr("return_rate")}</Label>
                     <Input
                       type="number"
                       value={returnRate}
@@ -270,7 +274,7 @@ export default function SmartCalculatorPage() {
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label>Taux de conversion (%)</Label>
+                    <Label>{tr("conversion_rate")}</Label>
                     <Input
                       type="number"
                       value={conversionRate}
@@ -278,7 +282,7 @@ export default function SmartCalculatorPage() {
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label>Commandes estimées/mois</Label>
+                    <Label>{tr("monthly_orders")}</Label>
                     <Input
                       type="number"
                       value={monthlyOrders}
@@ -294,7 +298,7 @@ export default function SmartCalculatorPage() {
             <Card className={`${getProfitBg(calculations.netMargin)} border-2`}>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium">Profit net par vente</span>
+                  <span className="text-sm font-medium">{tr("net_profit")}</span>
                   {calculations.netProfit > 0 ? (
                     <TrendingUp className={`w-5 h-5 ${getProfitColor(calculations.netMargin)}`} />
                   ) : (
@@ -302,10 +306,10 @@ export default function SmartCalculatorPage() {
                   )}
                 </div>
                 <p className={`text-4xl font-bold ${getProfitColor(calculations.netMargin)}`}>
-                  {calculations.netProfit.toFixed(2)} DT
+                  {formatPrice(calculations.netProfit)}
                 </p>
                 <p className={`text-sm ${getProfitColor(calculations.netMargin)}`}>
-                  Marge: {calculations.netMargin.toFixed(1)}%
+                  {tr("margin")} : {calculations.netMargin.toFixed(1)}%
                 </p>
               </CardContent>
             </Card>
@@ -313,12 +317,12 @@ export default function SmartCalculatorPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium">Coûts totaux</span>
+                  <span className="text-sm font-medium">{tr("total_costs")}</span>
                   <DollarSign className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <p className="text-4xl font-bold">{calculations.totalCosts.toFixed(2)} DT</p>
+                <p className="text-4xl font-bold">{formatPrice(calculations.totalCosts)}</p>
                 <p className="text-sm text-muted-foreground">
-                  Dont retours: {calculations.returnLoss.toFixed(2)} DT
+                  {tr("of_which_returns")} : {formatPrice(calculations.returnLoss)}
                 </p>
               </CardContent>
             </Card>
@@ -328,19 +332,19 @@ export default function SmartCalculatorPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
-                Projections mensuelles
+                {tr("monthly")}
               </CardTitle>
-              <CardDescription>Basées sur {monthlyOrders} commandes/mois</CardDescription>
+              <CardDescription>{tr("based_on").replace("{n}", String(monthlyOrders))}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-blue-50 rounded-xl text-center">
-                  <p className="text-sm text-blue-600 font-medium">Chiffre d&apos;affaires</p>
-                  <p className="text-2xl font-bold text-blue-700">{calculations.monthlyRevenue.toLocaleString()} DT</p>
+                  <p className="text-sm text-blue-600 font-medium">{tr("revenue")}</p>
+                  <p className="text-2xl font-bold text-blue-700">{formatPrice(calculations.monthlyRevenue)}</p>
                 </div>
                 <div className="p-4 bg-green-50 rounded-xl text-center">
-                  <p className="text-sm text-green-600 font-medium">Profit net</p>
-                  <p className="text-2xl font-bold text-green-700">{calculations.monthlyProfit.toLocaleString()} DT</p>
+                  <p className="text-sm text-green-600 font-medium">{tr("profit")}</p>
+                  <p className="text-2xl font-bold text-green-700">{formatPrice(calculations.monthlyProfit)}</p>
                 </div>
                 <div className="p-4 bg-purple-50 rounded-xl text-center">
                   <p className="text-sm text-purple-600 font-medium">ROI</p>
@@ -360,20 +364,20 @@ export default function SmartCalculatorPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                Recommandations IA
+                {tr("tips")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-white rounded-xl border border-primary/10">
-                <p className="text-sm font-medium text-primary mb-1">Prix recommandé</p>
+                <p className="text-sm font-medium text-primary mb-1">{tr("recommended")}</p>
                 <p className="text-3xl font-bold">{calculations.recommendedPrice.toFixed(0)} DT</p>
-                <p className="text-xs text-muted-foreground">Pour une marge de 40%</p>
+                <p className="text-xs text-muted-foreground">{tr("recommended_help")}</p>
               </div>
 
               <div className="p-4 bg-white rounded-xl border border-primary/10">
-                <p className="text-sm font-medium text-primary mb-1">Seuil de rentabilité</p>
+                <p className="text-sm font-medium text-primary mb-1">{tr("break_even")}</p>
                 <p className="text-3xl font-bold">{calculations.breakEvenPrice.toFixed(0)} DT</p>
-                <p className="text-xs text-muted-foreground">Prix minimum pour ne pas perdre</p>
+                <p className="text-xs text-muted-foreground">{tr("break_even_help")}</p>
               </div>
 
               <div className="space-y-3 pt-4">
@@ -381,7 +385,7 @@ export default function SmartCalculatorPage() {
                   <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                     <p className="text-xs text-amber-800">
-                      Marge faible. Augmentez votre prix de vente ou négociez avec votre fournisseur.
+                      {tr("tip_low_margin")}
                     </p>
                   </div>
                 )}
@@ -390,7 +394,7 @@ export default function SmartCalculatorPage() {
                   <div className="flex items-start gap-3 p-3 bg-red-50 rounded-lg">
                     <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
                     <p className="text-xs text-red-800">
-                      ROAS faible. Optimisez vos publicités ou réduisez vos coûts marketing.
+                      {tr("tip_low_roas")}
                     </p>
                   </div>
                 )}
@@ -399,7 +403,7 @@ export default function SmartCalculatorPage() {
                   <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
                     <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
                     <p className="text-xs text-green-800">
-                      Excellente marge ! Vous pouvez investir davantage en marketing.
+                      {tr("tip_good")}
                     </p>
                   </div>
                 )}
@@ -411,16 +415,16 @@ export default function SmartCalculatorPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5" />
-                Répartition des coûts
+                {tr("breakdown")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {[
-                { label: "Fournisseur", value: supplierPrice, color: "bg-blue-500" },
-                { label: "Livraison", value: shippingCost, color: "bg-purple-500" },
-                { label: "Marketing", value: marketingCost, color: "bg-pink-500" },
-                { label: "Emballage", value: packagingCost, color: "bg-orange-500" },
-                { label: "Frais Dropy", value: calculations.dropyFee, color: "bg-indigo-500" },
+                { label: tr("cost_supplier"), value: supplierPrice, color: "bg-blue-500" },
+                { label: tr("cost_shipping"), value: shippingCost, color: "bg-purple-500" },
+                { label: tr("cost_marketing"), value: marketingCost, color: "bg-pink-500" },
+                { label: tr("cost_packaging"), value: packagingCost, color: "bg-orange-500" },
+                ...(dropyRate > 0 ? [{ label: tr("dropy_fee"), value: calculations.dropyFee, color: "bg-indigo-500" }] : []),
               ].map((item) => {
                 const percentage = calculations.totalCosts > 0 
                   ? (item.value / calculations.totalCosts) * 100 
@@ -429,7 +433,7 @@ export default function SmartCalculatorPage() {
                   <div key={item.label}>
                     <div className="flex justify-between text-sm mb-1">
                       <span>{item.label}</span>
-                      <span className="font-medium">{item.value.toFixed(2)} DT ({percentage.toFixed(0)}%)</span>
+                      <span className="font-medium">{formatPrice(item.value)} ({percentage.toFixed(0)}%)</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <motion.div
@@ -451,12 +455,12 @@ export default function SmartCalculatorPage() {
                   <PiggyBank className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="font-bold text-green-800">Profit annuel estimé</p>
-                  <p className="text-sm text-green-600">Si tendance maintenue</p>
+                  <p className="font-bold text-green-800">{tr("yearly")}</p>
+                  <p className="text-sm text-green-600">{tr("yearly_help")}</p>
                 </div>
               </div>
               <p className="text-4xl font-bold text-green-700">
-                {(calculations.monthlyProfit * 12).toLocaleString()} DT
+                {formatPrice(calculations.monthlyProfit * 12)}
               </p>
             </CardContent>
           </Card>

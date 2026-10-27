@@ -45,9 +45,14 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
+import { useTranslation } from "@/context/LanguageContext";
+import { formatPrice } from "@/lib/utils";
 
 export default function CouponsPage() {
+  const { t, locale } = useTranslation();
+  const tr = (key: string) => t(`seller_app.coupons_page.${key}`);
+  const dateLocale = locale === "ar" ? arTN : fr;
   const [loading, setLoading] = useState(true);
   const [coupons, setCoupons] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -76,7 +81,7 @@ export default function CouponsPage() {
       const data = await response.json();
       setCoupons(data);
     } catch (error) {
-      toast.error("Erreur lors du chargement des coupons");
+      toast.error(tr("load_error"));
     } finally {
       setLoading(false);
     }
@@ -139,15 +144,15 @@ export default function CouponsPage() {
       });
 
       if (response.ok) {
-        toast.success(editingCoupon ? "Coupon mis à jour" : "Coupon créé avec succès");
+        toast.success(tr(editingCoupon ? "updated" : "created"));
         setIsDialogOpen(false);
         fetchCoupons();
       } else {
         const err = await response.json();
-        toast.error(err.error || "Une erreur est survenue");
+        toast.error(err.error || tr("error"));
       }
     } catch (error) {
-      toast.error("Erreur de connexion");
+      toast.error(tr("network"));
     } finally {
       setSubmitting(false);
     }
@@ -162,13 +167,13 @@ export default function CouponsPage() {
       });
 
       if (response.ok) {
-        toast.success("Coupon supprimé");
+        toast.success(tr("deleted"));
         fetchCoupons();
       } else {
-        toast.error("Erreur lors de la suppression");
+        toast.error(tr("delete_error"));
       }
     } catch (error) {
-      toast.error("Erreur de connexion");
+      toast.error(tr("network"));
     }
   };
 
@@ -181,11 +186,11 @@ export default function CouponsPage() {
       });
 
       if (response.ok) {
-        toast.success(coupon.is_active ? "Coupon désactivé" : "Coupon activé");
+        toast.success(tr(coupon.is_active ? "disabled_toast" : "enabled_toast"));
         fetchCoupons();
       }
     } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(tr("error"));
     }
   };
 
@@ -197,12 +202,12 @@ export default function CouponsPage() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Coupons & Promotions</h1>
-          <p className="text-muted-foreground">Gérez vos codes promotionnels pour booster vos ventes.</p>
+          <h1 className="text-3xl font-bold">{tr("title")}</h1>
+          <p className="text-muted-foreground">{tr("subtitle")}</p>
         </div>
         <Button className="gap-2" onClick={() => handleOpenDialog()}>
           <Plus className="w-4 h-4" />
-          Créer un coupon
+          {tr("create")}
         </Button>
       </div>
 
@@ -214,7 +219,7 @@ export default function CouponsPage() {
                 <Ticket className="w-6 h-6 text-violet-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Coupons actifs</p>
+                <p className="text-sm text-muted-foreground">{tr("active")}</p>
                 <p className="text-2xl font-bold">{coupons.filter(c => c.is_active).length}</p>
               </div>
             </div>
@@ -227,7 +232,7 @@ export default function CouponsPage() {
                 <Users className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Utilisations totales</p>
+                <p className="text-sm text-muted-foreground">{tr("total_uses")}</p>
                 <p className="text-2xl font-bold">{coupons.reduce((acc, c) => acc + (c.usage_count || 0), 0)}</p>
               </div>
             </div>
@@ -240,7 +245,7 @@ export default function CouponsPage() {
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Expirent bientôt</p>
+                <p className="text-sm text-muted-foreground">{tr("expiring")}</p>
                 <p className="text-2xl font-bold">
                   {coupons.filter(c => c.end_date && new Date(c.end_date) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)).length}
                 </p>
@@ -254,7 +259,7 @@ export default function CouponsPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Rechercher un code..." 
+            placeholder={tr("search")} 
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -265,15 +270,15 @@ export default function CouponsPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Chargement des coupons...</p>
+          <p className="text-muted-foreground">{tr("loading")}</p>
         </div>
       ) : filteredCoupons.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-20">
             <Ticket className="w-12 h-12 text-muted-foreground opacity-20 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Aucun coupon trouvé</h3>
-            <p className="text-muted-foreground mb-6">Commencez par créer votre premier code promotionnel.</p>
-            <Button onClick={() => handleOpenDialog()}>Créer un coupon</Button>
+            <h3 className="text-xl font-semibold mb-2">{tr("empty_title")}</h3>
+            <p className="text-muted-foreground mb-6">{tr("empty_text")}</p>
+            <Button onClick={() => handleOpenDialog()}>{tr("create")}</Button>
           </CardContent>
         </Card>
       ) : (
@@ -287,7 +292,7 @@ export default function CouponsPage() {
                       {coupon.code}
                     </Badge>
                     {!coupon.is_active && (
-                      <Badge variant="secondary">Inactif</Badge>
+                      <Badge variant="secondary">{tr("inactive")}</Badge>
                     )}
                   </div>
                   <DropdownMenu>
@@ -298,25 +303,25 @@ export default function CouponsPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => handleOpenDialog(coupon)}>
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        Modifier
+                        <Edit2 className="w-4 h-4 me-2" />
+                        {tr("edit")}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => toggleStatus(coupon)}>
                         {coupon.is_active ? (
                           <>
-                            <XCircle className="w-4 h-4 mr-2" />
-                            Désactiver
+                            <XCircle className="w-4 h-4 me-2" />
+                            {tr("disable")}
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Activer
+                            <CheckCircle2 className="w-4 h-4 me-2" />
+                            {tr("enable")}
                           </>
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(coupon.id)}>
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Supprimer
+                        <Trash2 className="w-4 h-4 me-2" />
+                        {tr("delete")}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -325,12 +330,12 @@ export default function CouponsPage() {
                   {coupon.type === "percentage" ? (
                     <span className="flex items-center gap-1 text-emerald-600 font-bold">
                       <Percent className="w-4 h-4" />
-                      {coupon.value}% de réduction
+                      {coupon.value}% {tr("off")}
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-blue-600 font-bold">
                       <DollarSign className="w-4 h-4" />
-                      {coupon.value} TND de réduction
+                      {formatPrice(coupon.value)} {tr("off")}
                     </span>
                   )}
                 </CardDescription>
@@ -338,22 +343,22 @@ export default function CouponsPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="space-y-1">
-                    <p className="text-muted-foreground">Min. achat</p>
-                    <p className="font-medium">{coupon.min_purchase} TND</p>
+                    <p className="text-muted-foreground">{tr("min_purchase_short")}</p>
+                    <p className="font-medium">{Number(coupon.min_purchase) > 0 ? formatPrice(coupon.min_purchase) : "—"}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-muted-foreground">Utilisations</p>
+                    <p className="text-muted-foreground">{tr("uses")}</p>
                     <p className="font-medium">
                       {coupon.usage_count} / {coupon.usage_limit || "∞"}
                     </p>
                   </div>
                   <div className="col-span-2 space-y-1">
-                    <p className="text-muted-foreground">Validité</p>
+                    <p className="text-muted-foreground">{tr("validity")}</p>
                     <p className="font-medium flex items-center gap-2">
                       <Calendar className="w-3 h-3" />
-                      {coupon.start_date ? format(new Date(coupon.start_date), "d MMM yyyy", { locale: fr }) : "Maintenant"}
+                      {coupon.start_date ? format(new Date(coupon.start_date), "d MMM yyyy", { locale: dateLocale }) : tr("now")}
                       {" → "}
-                      {coupon.end_date ? format(new Date(coupon.end_date), "d MMM yyyy", { locale: fr }) : "Illimité"}
+                      {coupon.end_date ? format(new Date(coupon.end_date), "d MMM yyyy", { locale: dateLocale }) : tr("unlimited")}
                     </p>
                   </div>
                 </div>
@@ -366,15 +371,15 @@ export default function CouponsPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>{editingCoupon ? "Modifier le coupon" : "Nouveau coupon"}</DialogTitle>
+            <DialogTitle>{tr(editingCoupon ? "edit_title" : "new_title")}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-6 pt-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="code">Code promo</Label>
+                <Label htmlFor="code">{tr("code")}</Label>
                 <Input 
                   id="code" 
-                  placeholder="EX: ETE2024" 
+                  placeholder={tr("code_ph")} 
                   className="font-mono uppercase"
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
@@ -383,7 +388,7 @@ export default function CouponsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="type">Type de réduction</Label>
+                <Label htmlFor="type">{tr("type")}</Label>
                 <Select 
                   value={formData.type} 
                   onValueChange={(v) => setFormData({ ...formData, type: v })}
@@ -392,14 +397,14 @@ export default function CouponsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="percentage">Pourcentage (%)</SelectItem>
-                    <SelectItem value="fixed">Montant fixe (TND)</SelectItem>
+                    <SelectItem value="percentage">{tr("percentage")}</SelectItem>
+                    <SelectItem value="fixed">{tr("fixed")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="value">Valeur</Label>
+                <Label htmlFor="value">{tr("value")}</Label>
                 <Input 
                   id="value" 
                   type="number" 
@@ -411,7 +416,7 @@ export default function CouponsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="min_purchase">Achat minimum (TND)</Label>
+                <Label htmlFor="min_purchase">{tr("min_purchase")}</Label>
                 <Input 
                   id="min_purchase" 
                   type="number"
@@ -421,18 +426,18 @@ export default function CouponsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="usage_limit">Limite d&apos;utilisations</Label>
+                <Label htmlFor="usage_limit">{tr("usage_limit")}</Label>
                 <Input 
                   id="usage_limit" 
                   type="number" 
-                  placeholder="Illimité"
+                  placeholder={tr("unlimited")}
                   value={formData.usage_limit}
                   onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="start_date">Date de début</Label>
+                <Label htmlFor="start_date">{tr("start")}</Label>
                 <Input 
                   id="start_date" 
                   type="date"
@@ -442,7 +447,7 @@ export default function CouponsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="end_date">Date d&apos;expiration</Label>
+                <Label htmlFor="end_date">{tr("end")}</Label>
                 <Input 
                   id="end_date" 
                   type="date"
@@ -453,8 +458,8 @@ export default function CouponsPage() {
 
               <div className="col-span-2 flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="space-y-0.5">
-                  <Label>Activer le coupon</Label>
-                  <p className="text-xs text-muted-foreground">Le coupon sera immédiatement utilisable.</p>
+                  <Label>{tr("enable_label")}</Label>
+                  <p className="text-xs text-muted-foreground">{tr("enable_help")}</p>
                 </div>
                 <Switch 
                   checked={formData.is_active}
@@ -465,11 +470,11 @@ export default function CouponsPage() {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Annuler
+                {tr("cancel")}
               </Button>
               <Button type="submit" disabled={submitting}>
                 {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {editingCoupon ? "Mettre à jour" : "Créer le coupon"}
+                {tr(editingCoupon ? "update" : "create_submit")}
               </Button>
             </DialogFooter>
           </form>

@@ -24,9 +24,13 @@ import {
   Clock
 } from "lucide-react";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
+import { useTranslation } from "@/context/LanguageContext";
 
 export default function SellerReviewsPage() {
+  const { t, locale } = useTranslation();
+  const tr = (key: string) => t(`seller_app.reviews_page.${key}`);
+  const dateLocale = locale === "ar" ? arTN : fr;
   const [loading, setLoading] = useState(true);
   const [store, setStore] = useState<any>(null);
   const [productReviews, setProductReviews] = useState<any[]>([]);
@@ -107,8 +111,8 @@ export default function SellerReviewsPage() {
       if (!res.ok) throw new Error("Failed to submit reply");
 
       toast({
-        title: "Réponse publiée",
-        description: "Votre réponse a été enregistrée avec succès.",
+        title: tr("reply_published"),
+        description: tr("reply_saved"),
       });
 
       setReplyingTo(null);
@@ -116,8 +120,8 @@ export default function SellerReviewsPage() {
       fetchData();
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de publier la réponse.",
+        title: tr("error"),
+        description: tr("reply_error"),
         variant: "destructive"
       });
     } finally {
@@ -143,13 +147,13 @@ export default function SellerReviewsPage() {
                   {review.is_verified_purchase && (
                     <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" />
-                      Vérifié
+                      {tr("verified")}
                     </span>
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground flex items-center gap-2">
                   <Clock className="w-3 h-3" />
-                  {format(new Date(review.created_at), "d MMMM yyyy", { locale: fr })}
+                  {format(new Date(review.created_at), "d MMMM yyyy", { locale: dateLocale })}
                   {type === "product" && (
                     <span className="text-primary font-medium">
                       • {review.store_products?.title}
@@ -169,7 +173,7 @@ export default function SellerReviewsPage() {
             <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-r-xl">
               <div className="flex items-center gap-2 mb-2">
                 <MessageSquare className="w-4 h-4 text-primary" />
-                <span className="text-xs font-bold text-primary">Votre réponse</span>
+                <span className="text-xs font-bold text-primary">{tr("your_reply")}</span>
               </div>
               <p className="text-sm text-muted-foreground">{existingReply}</p>
               <Button 
@@ -181,13 +185,13 @@ export default function SellerReviewsPage() {
                   setReplyText(existingReply);
                 }}
               >
-                Modifier
+                {tr("edit")}
               </Button>
             </div>
           ) : isReplying ? (
             <div className="space-y-3 animate-in slide-in-from-top-2">
               <Textarea 
-                placeholder="Votre réponse au client..."
+                placeholder={tr("reply_ph")}
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 className="text-sm min-h-[100px]"
@@ -199,7 +203,7 @@ export default function SellerReviewsPage() {
                   disabled={isSubmittingReply || !replyText}
                 >
                   {isSubmittingReply && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                  Publier
+                  {tr("publish")}
                 </Button>
                 <Button 
                   variant="outline" 
@@ -209,7 +213,7 @@ export default function SellerReviewsPage() {
                     setReplyText("");
                   }}
                 >
-                  Annuler
+                  {tr("cancel")}
                 </Button>
               </div>
             </div>
@@ -221,7 +225,7 @@ export default function SellerReviewsPage() {
               onClick={() => setReplyingTo(review.id)}
             >
               <MessageSquare className="w-4 h-4" />
-              Répondre
+              {tr("reply")}
             </Button>
           )}
         </CardContent>
@@ -240,14 +244,14 @@ export default function SellerReviewsPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-black mb-2">Gestion des Avis</h1>
-        <p className="text-muted-foreground">Suivez et répondez aux avis de vos clients pour améliorer votre réputation.</p>
+        <h1 className="text-3xl font-black mb-2">{tr("title")}</h1>
+        <p className="text-muted-foreground">{tr("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="bg-gradient-to-br from-violet-500 to-purple-600 text-white border-none shadow-xl">
           <CardHeader className="pb-2">
-            <CardTitle className="text-white/80 text-sm font-medium">Note Moyenne</CardTitle>
+            <CardTitle className="text-white/80 text-sm font-medium">{tr("average")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black mb-2">
@@ -262,24 +266,24 @@ export default function SellerReviewsPage() {
 
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">Total Avis</CardTitle>
+            <CardTitle className="text-muted-foreground text-sm font-medium">{tr("total")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black">{productReviews.length + storeReviews.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">Depuis le début</p>
+            <p className="text-xs text-muted-foreground mt-1">{tr("since_start")}</p>
           </CardContent>
         </Card>
 
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-muted-foreground text-sm font-medium">Taux de Réponse</CardTitle>
+            <CardTitle className="text-muted-foreground text-sm font-medium">{tr("reply_rate")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-4xl font-black">
               {Math.round(((productReviews.filter(r => r.admin_reply).length + storeReviews.filter(r => r.seller_reply).length) / 
                 (productReviews.length + storeReviews.length || 1)) * 100)}%
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Réponses publiées</p>
+            <p className="text-xs text-muted-foreground mt-1">{tr("replies")}</p>
           </CardContent>
         </Card>
       </div>
@@ -288,11 +292,11 @@ export default function SellerReviewsPage() {
         <TabsList className="bg-muted/50 p-1 rounded-xl">
           <TabsTrigger value="products" className="rounded-lg gap-2">
             <ShoppingBag className="w-4 h-4" />
-            Produits ({productReviews.length})
+            {tr("tab_products")} ({productReviews.length})
           </TabsTrigger>
           <TabsTrigger value="store" className="rounded-lg gap-2">
             <Store className="w-4 h-4" />
-            Boutique ({storeReviews.length})
+            {tr("tab_store")} ({storeReviews.length})
           </TabsTrigger>
         </TabsList>
 
@@ -300,7 +304,7 @@ export default function SellerReviewsPage() {
           {productReviews.length === 0 ? (
             <div className="text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed">
               <ShoppingBag className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-              <p className="text-muted-foreground">Aucun avis produit pour le moment.</p>
+              <p className="text-muted-foreground">{tr("empty_products")}</p>
             </div>
           ) : (
             <div className="grid gap-4">
@@ -315,7 +319,7 @@ export default function SellerReviewsPage() {
           {storeReviews.length === 0 ? (
             <div className="text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed">
               <Store className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-              <p className="text-muted-foreground">Aucun avis boutique pour le moment.</p>
+              <p className="text-muted-foreground">{tr("empty_store")}</p>
             </div>
           ) : (
             <div className="grid gap-4">
