@@ -47,7 +47,6 @@ export default function ProductDetailPage() {
   const [variants, setVariants] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [sellingPrice, setSellingPrice] = useState(0);
-  const [otherSuppliers, setOtherSuppliers] = useState<any[]>([]);
   const [supplierReviews, setSupplierReviews] = useState<any[]>([]);
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -227,18 +226,14 @@ export default function ProductDetailPage() {
             <h1 className="text-4xl font-bold text-gray-900">{product.name}</h1>
             
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < 4 ? "fill-current" : ""}`} />
-                  ))}
+              {supplierReviews.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 fill-current text-yellow-400" />
+                  <span className="text-sm font-bold">
+                    {(supplierReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / supplierReviews.length).toFixed(1)} ({supplierReviews.length} avis)
+                  </span>
                 </div>
-                <span className="text-sm font-bold">4.8 ({supplierReviews.length} avis)</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                <Package className="w-4 h-4" />
-                {Math.floor(Math.random() * 500) + 100} imports
-              </div>
+              )}
             </div>
           </div>
 
@@ -278,51 +273,6 @@ export default function ProductDetailPage() {
                   <p className="text-3xl font-black text-gray-900">{formatPrice(basePrice)}</p>
                 </div>
 
-                {otherSuppliers.length > 0 && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 rounded-full font-bold border-gray-200 bg-white">
-                      <Scale className="w-4 h-4" />
-                      Comparer
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl rounded-3xl">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold">Comparatif Fournisseurs</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50">
-                            <tr className="text-left">
-                              <th className="p-4 font-bold text-gray-700">Fournisseur</th>
-                              <th className="p-4 font-bold text-gray-700">Prix</th>
-                              <th className="p-4 font-bold text-gray-700">Note</th>
-                              <th className="p-4 font-bold text-gray-700">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            <tr className="bg-primary/5">
-                              <td className="p-4 font-bold text-gray-900">{product.profiles?.full_name}</td>
-                              <td className="p-4 font-black">{formatPrice(basePrice)}</td>
-                              <td className="p-4 text-yellow-500 font-bold">⭐ 4.9</td>
-                              <td className="p-4"><Badge className="bg-primary">Actuel</Badge></td>
-                            </tr>
-                            {otherSuppliers.map((s) => (
-                              <tr key={s.id}>
-                                <td className="p-4 font-medium">{s.supplier}</td>
-                                <td className="p-4 font-bold">{formatPrice(s.price)}</td>
-                                <td className="p-4 text-gray-500">⭐ {s.rating}</td>
-                                <td className="p-4"><Button variant="ghost" size="sm" className="font-bold">Choisir</Button></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                )}
               </div>
 
               <div className="space-y-4 pt-6 border-t border-gray-200">
@@ -363,7 +313,7 @@ export default function ProductDetailPage() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="p-4 rounded-2xl border border-gray-100 bg-white flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
                 <Truck className="w-5 h-5 text-blue-500" />
@@ -371,15 +321,6 @@ export default function ProductDetailPage() {
               <div>
                 <p className="text-[10px] text-gray-400 uppercase font-black">Expédition</p>
                 <p className="text-sm font-bold text-gray-700">24-48h</p>
-              </div>
-            </div>
-            <div className="p-4 rounded-2xl border border-gray-100 bg-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase font-black">Qualité</p>
-                <p className="text-sm font-bold text-gray-700">Certifiée</p>
               </div>
             </div>
           </div>
@@ -414,7 +355,7 @@ export default function ProductDetailPage() {
             </div>
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex justify-between items-center">
               <span className="text-gray-500 font-medium">Poids</span>
-              <span className="font-bold text-gray-900">{product.weight || "0.5"} kg</span>
+              <span className="font-bold text-gray-900">{product.weight ? `${product.weight} kg` : "—"}</span>
             </div>
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex justify-between items-center">
               <span className="text-gray-500 font-medium">Statut</span>
@@ -439,27 +380,8 @@ export default function ProductDetailPage() {
                       {product.profiles?.city || "Tunis"}, Tunisie
                     </p>
                   </div>
-                  <Button variant="outline" className="rounded-full px-6 font-bold border-gray-200">Contacter le fournisseur</Button>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Livraison</p>
-                    <p className="text-lg font-black text-blue-600">98%</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Temps réponse</p>
-                    <p className="text-lg font-black text-emerald-600">&lt; 2h</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Produits</p>
-                    <p className="text-lg font-black text-gray-900">42</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sur Dropy</p>
-                    <p className="text-lg font-black text-gray-900">1 an</p>
-                  </div>
-                </div>
               </div>
             </div>
           </TabsContent>
