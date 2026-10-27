@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { fetchProfileCards } from "@/lib/profile-cards";
@@ -41,6 +42,8 @@ function shortTime(date: string | null) {
 }
 
 export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.messaging.${key}`);
   const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
   const briefIdParam = searchParams.get("briefId");
@@ -102,9 +105,9 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
         brief_id: brief.id,
         brief_title: brief.title,
         other_party_id: userRole === "creator" ? store?.vendor_id || "" : brief.selected_creator_id,
-        other_party_name: userRole === "creator" ? store?.name || "Vendeur" : card?.full_name || "Créateur",
+        other_party_name: userRole === "creator" ? store?.name || tr("seller") : card?.full_name || tr("creator"),
         other_party_avatar: userRole === "creator" ? store?.logo_url || "" : card?.avatar_url || "",
-        last_message: msgs[0]?.message || "Démarrer la conversation",
+        last_message: msgs[0]?.message || tr("start"),
         last_message_at: msgs[0]?.created_at || null,
         unread_count: msgs.filter((m) => m.receiver_id === user.id && !m.is_read).length,
       };
@@ -224,7 +227,7 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
     if (error || !data) {
       setMessages((prev) => prev.filter((m) => m.id !== tempMsg.id));
       setNewMessage(text);
-      toast.error("Le message n'a pas pu être envoyé");
+      toast.error(tr("send_error"));
     } else {
       setMessages((prev) => prev.map((m) => (m.id === tempMsg.id ? data : m)));
       setConversations((prev) =>
@@ -249,7 +252,7 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Rechercher..."
+              placeholder={tr("search")}
               className="pl-10 bg-muted/50 border-none"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -258,14 +261,14 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
         </div>
         <div className="flex-1 overflow-y-auto divide-y">
           {isLoading ? (
-            <p className="p-6 text-sm text-muted-foreground text-center">Chargement...</p>
+            <p className="p-6 text-sm text-muted-foreground text-center">{tr("loading")}</p>
           ) : filtered.length === 0 ? (
             <div className="p-6 text-sm text-muted-foreground text-center">
               {conversations.length === 0
                 ? userRole === "creator"
-                  ? "Vos conversations apparaîtront ici dès qu'un vendeur vous aura retenu pour une mission."
-                  : "Vos conversations apparaîtront ici dès que vous aurez choisi un créateur pour un brief."
-                : "Aucun résultat"}
+                  ? tr("empty_creator")
+                  : tr("empty_seller")
+                : tr("no_result")}
             </div>
           ) : (
             filtered.map((conv) => (
@@ -324,7 +327,7 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
               <Button variant="outline" size="sm" asChild className="shrink-0">
                 <Link href={missionHref(selectedConv.brief_id)}>
                   <ExternalLink className="w-4 h-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Voir la mission</span>
+                  <span className="hidden sm:inline">{tr("view_mission")}</span>
                 </Link>
               </Button>
             </div>
@@ -362,7 +365,7 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
             <div className="p-4 border-t bg-card">
               <div className="flex items-center gap-2">
                 <Input
-                  placeholder="Écrivez votre message..."
+                  placeholder={tr("write")}
                   className="bg-muted/50 border-none"
                   value={newMessage}
                   maxLength={4000}
@@ -380,8 +383,8 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="w-10 h-10 opacity-20" />
             </div>
-            <h3 className="text-xl font-bold">Vos messages</h3>
-            <p className="max-w-xs mx-auto mt-2">Sélectionnez une conversation pour échanger avec vos partenaires.</p>
+            <h3 className="text-xl font-bold">{tr("title")}</h3>
+            <p className="max-w-xs mx-auto mt-2">{tr("select")}</p>
           </div>
         )}
       </div>
