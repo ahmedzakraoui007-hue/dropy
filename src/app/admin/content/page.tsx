@@ -128,11 +128,6 @@ export default function ContentModeration() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">Tous</Button>
-              <Button variant="outline" size="sm">En attente</Button>
-              <Button variant="outline" size="sm">Publiés</Button>
-            </div>
           </div>
         </CardHeader>
         <CardContent>
