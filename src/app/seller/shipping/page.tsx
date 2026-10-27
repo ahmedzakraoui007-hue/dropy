@@ -43,7 +43,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
+import { useTranslation } from "@/context/LanguageContext";
+import { formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface OrderItem {
@@ -78,11 +80,10 @@ interface OrderForShipping {
 }
 
 const deliveryCompanies = [
-  { id: 'dropy_internal', name: 'Dropy Livraison', logo: '🚚' },
   { id: 'aramex', name: 'Aramex', logo: '📦' },
   { id: 'tunisie_livraison', name: 'Tunisie Livraison', logo: '🇹🇳' },
   { id: 'rapid-poste', name: 'Rapid Poste', logo: '✉️' },
-  { id: 'manual', name: 'Livraison manuelle', logo: '👤' },
+  { id: 'manual', name: 'manual', logo: '👤' },
 ];
 
 const statusColors: Record<string, string> = {
@@ -104,6 +105,11 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SellerShippingPage() {
+  const { t, locale } = useTranslation();
+  const tr = (key: string) => t(`seller_app.shipping_page.${key}`);
+  const dateLocale = locale === "ar" ? arTN : fr;
+  const companyName = (id: string | null | undefined) => (id === "manual" ? tr("manual_carrier") : deliveryCompanies.find((c) => c.id === id)?.name || id || "");
+  const [trackingInput, setTrackingInput] = useState("");
   const [orders, setOrders] = useState<OrderForShipping[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -117,7 +123,7 @@ export default function SellerShippingPage() {
 
   useEffect(() => {
     loadOrders();
-  }, [statusFilter]);
+  }, []);
 
   async function loadOrders() {
     const supabase = createClient();
@@ -144,9 +150,8 @@ export default function SellerShippingPage() {
         items:store_order_items(id, product_name, quantity, unit_price, product_image)
       `)
       .eq("store_id", store.id)
-      .in("status", statusFilter === "all"
-        ? ["new", "confirmed", "preparing", "shipped"]
-        : [statusFilter === "ready_to_ship" ? "preparing" : statusFilter])
+      .eq("has_own_products", true)
+      .in("status", ["confirmed", "preparing", "shipped", "delivered"])
       .order("created_at", { ascending: false });
 
     const { data } = await query;
@@ -154,9 +159,11 @@ export default function SellerShippingPage() {
     setLoading(false);
   }
 
+  const wantedStatus = statusFilter === "ready_to_ship" ? "preparing" : statusFilter;
   const filteredOrders = orders.filter(order =>
-    order.order_number.toLowerCase().includes(search.toLowerCase()) ||
-    order.customer_name.toLowerCase().includes(search.toLowerCase())
+    (statusFilter === "all" ? order.status !== "delivered" : order.status === wantedStatus) &&
+    (order.order_number.toLowerCase().includes(search.toLowerCase()) ||
+    (order.customer_name || "").toLowerCase().includes(search.toLowerCase()))
   );
 
   const toggleOrderSelection = (orderId: string) => {
@@ -181,7 +188,19 @@ export default function SellerShippingPage() {
       .from("store_orders")
       .update({ status: "preparing", own_products_status: "prepared" })
       .eq("id", orderId);
-    toast.success("Commande marquée prête à expédier");
+    toast.success(tr("marked_ready"));
+    loadOrders();
+  };
+
+  const handleDelivered = async (orderId: string) => {
+    const now = new Date().toISOString();
+    const { error } = await createClient()
+      .from("store_orders")
+      .update({ status: "delivered", own_products_status: "delivered", delivered_at: now, payment_status: "paid" })
+      .eq("id", orderId)
+      .eq("status", "shipped");
+    if (error) toast.error(tr("update_error"));
+    else toast.success(tr("marked_delivered"));
     loadOrders();
   };
 
@@ -193,26 +212,28 @@ export default function SellerShippingPage() {
       const supabase = createClient();
       
       for (const orderId of selectedOrders) {
-        const trackingNumber = `${selectedCompany.toUpperCase().slice(0,3)}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
-        
+        const trackingNumber = selectedOrders.length === 1 ? trackingInput.trim() || null : null;
+
         await supabase
           .from("store_orders")
           .update({
             status: "shipped",
             shipping_company: selectedCompany,
+            own_products_status: "shipped",
             tracking_number: trackingNumber,
             shipped_at: new Date().toISOString(),
           })
           .eq("id", orderId);
       }
 
-      toast.success(`${selectedOrders.length} commande(s) expédiée(s)`);
+      toast.success(`${selectedOrders.length} ${tr("shipped_toast")}`);
       setShowShipModal(false);
       setSelectedOrders([]);
       setSelectedCompany("");
+      setTrackingInput("");
       loadOrders();
     } catch (error) {
-      toast.error("Erreur lors de l'expédition");
+      toast.error(tr("ship_error"));
     } finally {
       setProcessing(false);
     }
@@ -220,7 +241,7 @@ export default function SellerShippingPage() {
 
   const copyTrackingNumber = (tracking: string) => {
     navigator.clipboard.writeText(tracking);
-    toast.success("Numéro de suivi copié");
+    toast.success(tr("copied"));
   };
 
   const selectedOrdersData = orders.filter(o => selectedOrders.includes(o.id));
@@ -231,20 +252,20 @@ export default function SellerShippingPage() {
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
             <Truck className="w-8 h-8 text-primary" />
-            Gestion des Livraisons
+            {tr("title")}
           </h1>
-          <p className="text-muted-foreground">Expédiez vos produits à vos clients.</p>
+          <p className="text-muted-foreground">{tr("subtitle")}</p>
         </div>
         <div className="flex gap-2">
           {selectedOrders.length > 0 && (
             <>
               <Button variant="outline" className="gap-2" onClick={() => setShowBordereauModal(true)}>
                 <FileText className="w-4 h-4" />
-                Bordereau ({selectedOrders.length})
+                {tr("slip")} ({selectedOrders.length})
               </Button>
               <Button className="gap-2 bg-primary" onClick={() => setShowShipModal(true)}>
                 <Send className="w-4 h-4" />
-                Expédier ({selectedOrders.length})
+                {tr("ship")} ({selectedOrders.length})
               </Button>
             </>
           )}
@@ -253,10 +274,10 @@ export default function SellerShippingPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "À préparer", value: orders.filter(o => o.status === "confirmed").length, color: "bg-yellow-500" },
-          { label: "Prêt à expédier", value: orders.filter(o => o.status === "preparing").length, color: "bg-purple-500" },
-          { label: "En transit", value: orders.filter(o => o.status === "shipped").length, color: "bg-blue-500" },
-          { label: "Livrées", value: orders.filter(o => o.status === "delivered").length, color: "bg-green-500" },
+          { label: tr("to_prepare"), value: orders.filter(o => o.status === "confirmed").length, color: "bg-yellow-500" },
+          { label: tr("ready"), value: orders.filter(o => o.status === "preparing").length, color: "bg-purple-500" },
+          { label: tr("in_transit"), value: orders.filter(o => o.status === "shipped").length, color: "bg-blue-500" },
+          { label: tr("delivered"), value: orders.filter(o => o.status === "delivered").length, color: "bg-green-500" },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="pt-6">
@@ -276,24 +297,25 @@ export default function SellerShippingPage() {
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher par numéro ou client..."
-                className="pl-10"
+                placeholder={tr("search")}
+                className="ps-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[200px]">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Statut" />
+                <Filter className="w-4 h-4 me-2" />
+                <SelectValue placeholder={tr("status")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes</SelectItem>
-                <SelectItem value="confirmed">À préparer</SelectItem>
-                <SelectItem value="ready_to_ship">Prêt à expédier</SelectItem>
-                <SelectItem value="shipped">Expédiées</SelectItem>
+                <SelectItem value="all">{tr("filter_all")}</SelectItem>
+                <SelectItem value="confirmed">{tr("to_prepare")}</SelectItem>
+                <SelectItem value="ready_to_ship">{tr("ready")}</SelectItem>
+                <SelectItem value="delivered">{tr("delivered")}</SelectItem>
+                <SelectItem value="shipped">{tr("in_transit")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -306,8 +328,8 @@ export default function SellerShippingPage() {
               />
               <span className="text-sm text-muted-foreground">
                 {selectedOrders.length > 0 
-                  ? `${selectedOrders.length} sélectionnée(s)`
-                  : "Tout sélectionner"}
+                  ? `${selectedOrders.length} ${tr("selected")}`
+                  : tr("select_all")}
               </span>
             </div>
           )}
@@ -320,8 +342,8 @@ export default function SellerShippingPage() {
             ) : filteredOrders.length === 0 ? (
               <div className="text-center py-20">
                 <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                <p className="text-lg font-semibold">Aucune commande</p>
-                <p className="text-muted-foreground">Pas de commandes à traiter pour le moment.</p>
+                <p className="text-lg font-semibold">{tr("empty_title")}</p>
+                <p className="text-muted-foreground">{tr("empty_text")}</p>
               </div>
             ) : (
               filteredOrders.map((order) => (
@@ -347,20 +369,20 @@ export default function SellerShippingPage() {
                         <div>
                           <div className="flex items-center gap-3">
                             <span className="font-mono font-bold text-primary">{order.order_number}</span>
-                            <Badge className={statusColors[order.status]}>{statusLabels[order.status]}</Badge>
+                            <Badge className={statusColors[order.status]}>{t(`seller_app.order_detail.status.${order.status}`)}</Badge>
                             {order.payment_method === "cod" && (
                               <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                                COD: {order.total_amount} TND
+                                {tr("cod")} : {formatPrice(order.total_amount)}
                               </Badge>
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {format(new Date(order.created_at), "dd MMM yyyy à HH:mm", { locale: fr })}
+                            {format(new Date(order.created_at), "dd MMM yyyy, HH:mm", { locale: dateLocale })}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold">{order.total_amount} TND</p>
-                          <p className="text-xs text-muted-foreground">{order.items.length} article(s)</p>
+                        <div className="text-end">
+                          <p className="text-2xl font-bold">{formatPrice(order.total_amount)}</p>
+                          <p className="text-xs text-muted-foreground">{order.items.length} {tr("items")}</p>
                         </div>
                       </div>
 
@@ -381,7 +403,7 @@ export default function SellerShippingPage() {
                         </div>
 
                         <div className="p-3 bg-muted/30 rounded-lg">
-                          <p className="text-sm font-medium mb-2">Articles:</p>
+                          <p className="text-sm font-medium mb-2">{tr("articles")}</p>
                           <div className="space-y-1">
                             {order.items.slice(0, 3).map(item => (
                               <div key={item.id} className="text-sm flex items-center gap-2">
@@ -392,7 +414,7 @@ export default function SellerShippingPage() {
                               </div>
                             ))}
                             {order.items.length > 3 && (
-                              <p className="text-xs text-muted-foreground">+{order.items.length - 3} autres</p>
+                              <p className="text-xs text-muted-foreground">+{order.items.length - 3} {tr("others")}</p>
                             )}
                           </div>
                         </div>
@@ -403,7 +425,7 @@ export default function SellerShippingPage() {
                           <Truck className="w-5 h-5 text-blue-600" />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-blue-800">
-                              {deliveryCompanies.find(c => c.id === order.shipping_company)?.name || order.shipping_company}
+                              {companyName(order.shipping_company)}
                             </p>
                             <p className="text-xs text-blue-600 font-mono">{order.tracking_number}</p>
                           </div>
@@ -413,7 +435,7 @@ export default function SellerShippingPage() {
                           <a href={`/track/${order.order_number}`} target="_blank" rel="noopener noreferrer">
                             <Button variant="outline" size="sm" className="gap-1 text-blue-700 border-blue-200">
                               <ExternalLink className="w-4 h-4" />
-                              Suivi
+                              {tr("tracking")}
                             </Button>
                           </a>
                         </div>
@@ -422,8 +444,8 @@ export default function SellerShippingPage() {
                       <div className="flex gap-2">
                         {order.status === "confirmed" && (
                           <Button size="sm" variant="outline" onClick={() => handleMarkReady(order.id)}>
-                            <CheckCircle2 className="w-4 h-4 mr-1" />
-                            Marquer prêt
+                            <CheckCircle2 className="w-4 h-4 me-1" />
+                            {tr("mark_ready")}
                           </Button>
                         )}
                         {order.status === "preparing" && (
@@ -435,8 +457,14 @@ export default function SellerShippingPage() {
                               setShowShipModal(true);
                             }}
                           >
-                            <Send className="w-4 h-4 mr-1" />
-                            Expédier
+                            <Send className="w-4 h-4 me-1" />
+                            {tr("ship")}
+                          </Button>
+                        )}
+                        {order.status === "shipped" && (
+                          <Button size="sm" variant="outline" className="text-green-700 border-green-200" onClick={() => handleDelivered(order.id)}>
+                            <CheckCircle2 className="w-4 h-4 me-1" />
+                            {tr("mark_delivered")}
                           </Button>
                         )}
                         <Button
@@ -447,8 +475,8 @@ export default function SellerShippingPage() {
                             setShowBordereauModal(true);
                           }}
                         >
-                          <FileText className="w-4 h-4 mr-1" />
-                          Bordereau
+                          <FileText className="w-4 h-4 me-1" />
+                          {tr("slip")}
                         </Button>
                       </div>
                     </div>
@@ -463,15 +491,15 @@ export default function SellerShippingPage() {
       <Dialog open={showShipModal} onOpenChange={setShowShipModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Expédier les commandes</DialogTitle>
+            <DialogTitle>{tr("ship_title")}</DialogTitle>
             <DialogDescription>
-              {selectedOrders.length} commande(s) sélectionnée(s)
+              {selectedOrders.length} {tr("selected")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Société de livraison</label>
+              <label className="text-sm font-medium mb-2 block">{tr("carrier")}</label>
               <div className="grid grid-cols-2 gap-3">
                 {deliveryCompanies.map((company) => (
                   <div
@@ -484,33 +512,37 @@ export default function SellerShippingPage() {
                     }`}
                   >
                     <div className="text-2xl mb-2">{company.logo}</div>
-                    <p className="font-medium text-sm">{company.name}</p>
+                    <p className="font-medium text-sm">{companyName(company.id)}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
-                <div className="text-sm text-amber-800">
-                  <p className="font-medium">Rappel</p>
-                  <p>Un numéro de suivi sera automatiquement généré pour chaque commande.</p>
+            {selectedOrders.length === 1 ? (
+              <div className="space-y-2">
+                <label htmlFor="tracking-input" className="text-sm font-medium block">{tr("tracking_label")}</label>
+                <Input id="tracking-input" dir="ltr" value={trackingInput} onChange={(e) => setTrackingInput(e.target.value)} placeholder={tr("tracking_ph")} />
+              </div>
+            ) : (
+              <div className="p-4 bg-amber-50 rounded-xl border border-amber-200">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                  <p className="text-sm text-amber-800">{tr("tracking_bulk")}</p>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="flex gap-3 justify-end">
             <Button variant="outline" onClick={() => setShowShipModal(false)}>
-              Annuler
+              {tr("cancel")}
             </Button>
             <Button
               className="bg-primary"
               onClick={handleShipOrders}
               disabled={!selectedCompany || processing}
             >
-              {processing ? "Traitement..." : "Confirmer l'expédition"}
+              {processing ? tr("processing") : tr("confirm_ship")}
             </Button>
           </div>
         </DialogContent>

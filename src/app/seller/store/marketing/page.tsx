@@ -1,69 +1,48 @@
 "use client";
 
-import { TrendingUp, Megaphone, Share2, Search, Target } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ChevronRight, Mail, Megaphone, PhoneMissed, Search, Star, TicketPercent } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/context/LanguageContext";
+
+const TOOLS = [
+  { key: "coupons", href: "/seller/store/marketing/coupons", icon: TicketPercent },
+  { key: "abandoned", href: "/seller/orders/abandoned", icon: PhoneMissed },
+  { key: "pixels", href: "/seller/store-builder/settings", icon: Megaphone },
+  { key: "seo", href: "/seller/store-builder/settings", icon: Search },
+  { key: "newsletter", href: "/seller/store-builder/settings", icon: Mail },
+  { key: "reviews", href: "/seller/store/reviews", icon: Star },
+];
 
 export default function MarketingPage() {
-  const tools = [
-    {
-      title: "SEO & Référencement",
-      description: "Optimisez votre visibilité sur les moteurs de recherche.",
-      icon: Search,
-      status: "Bientôt disponible"
-    },
-    {
-      title: "Publicités Facebook",
-      description: "Lancez des campagnes publicitaires directement depuis Dropy.",
-      icon: Megaphone,
-      status: "Bientôt disponible"
-    },
-    {
-      title: "Réseaux Sociaux",
-      description: "Gérez vos publications Instagram et TikTok.",
-      icon: Share2,
-      status: "Bientôt disponible"
-    },
-    {
-      title: "Email Marketing",
-      description: "Envoyez des newsletters à vos clients.",
-      icon: Target,
-      status: "Bientôt disponible"
-    }
-  ];
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.marketing_page.${key}`);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Marketing & SEO</h1>
-        <p className="text-muted-foreground">Outils pour attirer plus de clients et augmenter vos ventes.</p>
+        <h1 className="text-3xl font-bold">{tr("title")}</h1>
+        <p className="text-muted-foreground">{tr("subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {tools.map((tool) => (
-          <Card key={tool.title} className="opacity-75 grayscale-[0.5]">
-            <CardHeader>
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                <tool.icon className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle>{tool.title}</CardTitle>
-              <CardDescription>{tool.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button disabled className="w-full">{tool.status}</Button>
-            </CardContent>
-          </Card>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {TOOLS.map((tool) => (
+          <Link key={tool.key} href={tool.href} className="group">
+            <Card className="h-full rounded-2xl transition-colors group-hover:border-primary/40">
+              <CardContent className="flex items-start gap-4 p-5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <tool.icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold">{tr(`tools.${tool.key}`)}</p>
+                  <p className="text-sm text-muted-foreground">{tr(`tools.${tool.key}_desc`)}</p>
+                </div>
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
-
-      <Card className="bg-gradient-to-br from-violet-500 to-purple-600 border-0 text-white">
-        <CardContent className="p-8 text-center">
-          <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <h2 className="text-2xl font-bold mb-2">Besoin d&apos;aide pour votre marketing ?</h2>
-          <p className="mb-6 opacity-80">Nos experts peuvent vous accompagner dans la croissance de votre boutique.</p>
-          <Button variant="secondary">Contacter un expert</Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

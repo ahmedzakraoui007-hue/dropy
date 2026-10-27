@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
+import { useTranslation } from "@/context/LanguageContext";
 import Link from "next/link";
 
 interface OrderItem {
@@ -49,6 +50,9 @@ const statusConfig: Record<string, { label: string; variant: "default" | "second
 };
 
 export default function CustomerDetailsPage() {
+  const { t, locale } = useTranslation();
+  const tr = (key: string) => t(`seller_app.customers_page.${key}`);
+  const dateLocale = locale === "ar" ? arTN : fr;
   const params = useParams();
   const router = useRouter();
   const [customer, setCustomer] = useState<CustomerDetails | null>(null);
@@ -109,7 +113,7 @@ export default function CustomerDetailsPage() {
           });
 
           setCustomer({
-            customer_name: firstOrder.customer_name || "Client",
+            customer_name: firstOrder.customer_name || "—",
             customer_email: firstOrder.customer_email || "",
             customer_phone: firstOrder.customer_phone || "",
             customer_governorate: firstOrder.customer_governorate || "",
@@ -137,7 +141,7 @@ export default function CustomerDetailsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">Chargement...</p>
+        <p className="text-muted-foreground">{tr("loading")}</p>
       </div>
     );
   }
@@ -146,11 +150,11 @@ export default function CustomerDetailsPage() {
     return (
       <div className="space-y-6">
         <Button variant="ghost" onClick={() => router.back()} className="gap-2">
-          <ArrowLeft className="w-4 h-4" />
-          Retour
+          <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+          {tr("back")}
         </Button>
         <div className="text-center py-20">
-          <p className="text-lg font-semibold">Client introuvable</p>
+          <p className="text-lg font-semibold">{tr("not_found")}</p>
         </div>
       </div>
     );
@@ -159,15 +163,15 @@ export default function CustomerDetailsPage() {
   return (
     <div className="space-y-6">
       <Button variant="ghost" onClick={() => router.back()} className="gap-2">
-        <ArrowLeft className="w-4 h-4" />
-        Retour aux clients
+        <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+        {tr("back_list")}
       </Button>
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Informations client</CardTitle>
+              <CardTitle>{tr("info")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-4">
@@ -176,7 +180,7 @@ export default function CustomerDetailsPage() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">{customer.customer_name}</h2>
-                  <p className="text-sm text-muted-foreground">Client depuis {format(new Date(customer.first_order_date), "MMMM yyyy", { locale: fr })}</p>
+                  <p className="text-sm text-muted-foreground">{tr("since")} {format(new Date(customer.first_order_date), "MMMM yyyy", { locale: dateLocale })}</p>
                 </div>
               </div>
 
@@ -211,29 +215,29 @@ export default function CustomerDetailsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Statistiques</CardTitle>
+              <CardTitle>{tr("stats")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
                   <ShoppingBag className="w-5 h-5 text-primary" />
-                  <span className="text-sm">Total commandes</span>
+                  <span className="text-sm">{tr("total_orders")}</span>
                 </div>
                 <span className="font-bold">{customer.orders.length}</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
                   <TrendingUp className="w-5 h-5 text-green-500" />
-                  <span className="text-sm">Total dépensé</span>
+                  <span className="text-sm">{tr("total_spent")}</span>
                 </div>
                 <span className="font-bold text-green-600">{formatPrice(customer.total_spent)}</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-blue-500" />
-                  <span className="text-sm">Dernière commande</span>
+                  <span className="text-sm">{tr("last_order")}</span>
                 </div>
-                <span className="font-medium text-sm">{format(new Date(customer.last_order_date), "dd MMM yyyy", { locale: fr })}</span>
+                <span className="font-medium text-sm">{format(new Date(customer.last_order_date), "dd MMM yyyy", { locale: dateLocale })}</span>
               </div>
             </CardContent>
           </Card>
@@ -244,7 +248,7 @@ export default function CustomerDetailsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Package className="w-5 h-5" />
-                Historique des commandes
+                {tr("history")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -259,14 +263,14 @@ export default function CustomerDetailsPage() {
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-sm font-medium">{order.order_number || `#${order.id.slice(0, 8)}`}</span>
                         <Badge variant={statusConfig[order.status]?.variant || "default"}>
-                          {statusConfig[order.status]?.label || order.status}
+                          {t(`seller_app.order_detail.status.${order.status}`)}
                         </Badge>
                       </div>
                       <span className="text-lg font-bold text-primary">{formatPrice(order.total_amount)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{format(new Date(order.created_at), "dd MMMM yyyy à HH:mm", { locale: fr })}</span>
-                      <span>{order.items?.length || 0} article(s)</span>
+                      <span>{format(new Date(order.created_at), "dd MMMM yyyy, HH:mm", { locale: dateLocale })}</span>
+                      <span>{order.items?.length || 0} {tr("items")}</span>
                     </div>
                     {order.items && order.items.length > 0 && (
                       <div className="mt-3 pt-3 border-t border-dashed">
@@ -277,7 +281,7 @@ export default function CustomerDetailsPage() {
                             </span>
                           ))}
                           {order.items.length > 3 && (
-                            <span className="text-xs text-muted-foreground">+{order.items.length - 3} autres</span>
+                            <span className="text-xs text-muted-foreground">+{order.items.length - 3} {tr("others")}</span>
                           )}
                         </div>
                       </div>

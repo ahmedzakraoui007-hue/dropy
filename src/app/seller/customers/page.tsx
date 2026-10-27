@@ -2,7 +2,8 @@
 
 import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { Users, Search, Download, Filter, Mail, Phone, ShoppingBag, MapPin, ChevronRight } from "lucide-react";
+import { Users, Search, Download, Mail, Phone, ShoppingBag, MapPin, ChevronRight } from "lucide-react";
+import { useTranslation } from "@/context/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ interface Customer {
 }
 
 export default function CustomersPage() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.customers_page.${key}`);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -65,7 +68,7 @@ export default function CustomersPage() {
           } else {
             customerMap.set(key, {
               customer_email: order.customer_email || "",
-              customer_name: order.customer_name || "Client",
+              customer_name: order.customer_name || "—",
               customer_phone: order.customer_phone || "",
               customer_governorate: order.customer_governorate || "",
               total_orders: 1,
@@ -90,16 +93,28 @@ export default function CustomersPage() {
     c.customer_phone.includes(search)
   );
 
+  const exportCsv = () => {
+    const header = [tr("csv_name"), tr("csv_phone"), tr("csv_email"), tr("csv_governorate"), tr("csv_orders"), tr("csv_spent"), tr("csv_last")];
+    const rows = filteredCustomers.map((c) => [c.customer_name, c.customer_phone, c.customer_email, c.customer_governorate, String(c.total_orders), c.total_spent.toFixed(3), c.last_order_date.slice(0, 10)]);
+    const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
+    const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "clients.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
-          <p className="text-muted-foreground">Gérez votre base de clients et leurs informations.</p>
+          <h1 className="text-3xl font-bold">{tr("title")}</h1>
+          <p className="text-muted-foreground">{tr("subtitle")}</p>
         </div>
-        <Button variant="outline" className="gap-2">
+        <Button variant="outline" className="gap-2" onClick={exportCsv} disabled={filteredCustomers.length === 0}>
           <Download className="w-4 h-4" />
-          Exporter
+          {tr("export")}
         </Button>
       </div>
 
@@ -107,31 +122,27 @@ export default function CustomersPage() {
         <CardContent className="p-4 md:p-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher un client..." 
-                className="pl-10" 
+                placeholder={tr("search")}
+                className="ps-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button variant="outline">
-              <Filter className="w-4 h-4 mr-2" />
-              Filtres
-            </Button>
           </div>
 
           {loading ? (
             <div className="py-20 text-center">
-              <p className="text-muted-foreground">Chargement...</p>
+              <p className="text-muted-foreground">{tr("loading")}</p>
             </div>
           ) : filteredCustomers.length === 0 ? (
             <div className="py-20 text-center">
               <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 opacity-50" />
               </div>
-              <p className="text-lg font-semibold">Aucun client pour le moment</p>
-              <p className="text-muted-foreground">Les clients apparaîtront ici dès qu&apos;ils passeront commande.</p>
+              <p className="text-lg font-semibold">{tr("empty_title")}</p>
+              <p className="text-muted-foreground">{tr("empty_text")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -170,14 +181,14 @@ export default function CustomersPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="text-right">
+                      <div className="text-end">
                         <div className="flex items-center gap-1 text-sm font-medium">
                           <ShoppingBag className="w-4 h-4 text-primary" />
-                          {customer.total_orders} commande{customer.total_orders > 1 ? "s" : ""}
+                          {customer.total_orders} {tr(customer.total_orders > 1 ? "orders" : "order")}
                         </div>
                         <p className="text-lg font-bold text-primary">{formatPrice(customer.total_spent)}</p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                      <ChevronRight className="w-5 h-5 text-muted-foreground rtl:rotate-180" />
                     </div>
                   </Link>
                 ))}

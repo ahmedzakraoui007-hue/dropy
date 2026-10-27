@@ -1,6 +1,7 @@
 "use client";
 
 import { formatPrice } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { 
   BarChart3, 
@@ -52,6 +53,8 @@ interface AnalyticsData {
 }
 
 export default function AnalyticsPage() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.analytics_page.${key}`);
   const [range, setRange] = useState("7d");
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +68,7 @@ export default function AnalyticsPage() {
       setData(result);
     } catch (error) {
       console.error("Analytics Error:", error);
-      toast.error("Erreur lors du chargement des analytics");
+      toast.error(tr("load_error"));
     } finally {
       setLoading(false);
     }
@@ -78,7 +81,7 @@ export default function AnalyticsPage() {
   const exportToCSV = () => {
     if (!data) return;
     
-    const headers = ["Date", "Revenu", "Commandes", "Visites"];
+    const headers = [tr("csv_date"), tr("csv_revenue"), tr("csv_orders"), tr("csv_visits")];
     const rows = data.chartData.map(item => [
       item.date,
       item.revenue,
@@ -100,33 +103,33 @@ export default function AnalyticsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Export CSV réussi");
+    toast.success(tr("exported"));
   };
 
   const stats = [
     { 
-      title: "Chiffre d'affaires", 
+      title: tr("revenue"), 
       value: formatPrice(data?.summary.revenue ?? 0), 
       icon: TrendingUp,
       color: "text-violet-500",
       bg: "bg-violet-500/10"
     },
     { 
-      title: "Commandes", 
+      title: tr("orders"), 
       value: data?.summary.orders.toString() || "0", 
       icon: ShoppingBag,
       color: "text-blue-500",
       bg: "bg-blue-500/10"
     },
     { 
-      title: "Visiteurs", 
+      title: tr("visitors"), 
       value: data?.summary.visits.toString() || "0", 
       icon: Users,
       color: "text-cyan-500",
       bg: "bg-cyan-500/10"
     },
     { 
-      title: "Taux de conversion", 
+      title: tr("conversion"), 
       value: `${data?.summary.conversion.toFixed(2)}%`, 
       icon: BarChart3,
       color: "text-emerald-500",
@@ -138,7 +141,7 @@ export default function AnalyticsPage() {
     return (
       <div className="flex flex-col items-center justify-center h-[600px] gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Analyse de vos données en cours...</p>
+        <p className="text-muted-foreground">{tr("loading")}</p>
       </div>
     );
   }
@@ -147,27 +150,27 @@ export default function AnalyticsPage() {
     <div className="space-y-8 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics Avancés</h1>
-          <p className="text-muted-foreground">Pilotez votre croissance avec des données précises.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{tr("title")}</h1>
+          <p className="text-muted-foreground">{tr("subtitle")}</p>
         </div>
         
         <div className="flex items-center gap-3">
           <Select value={range} onValueChange={setRange}>
             <SelectTrigger className="w-[180px] bg-card">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Période" />
+              <Calendar className="w-4 h-4 me-2" />
+              <SelectValue placeholder={tr("period")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="24h">Aujourd'hui</SelectItem>
-              <SelectItem value="7d">7 derniers jours</SelectItem>
-              <SelectItem value="30d">30 derniers jours</SelectItem>
-              <SelectItem value="12m">12 derniers mois</SelectItem>
+              <SelectItem value="24h">{tr("today")}</SelectItem>
+              <SelectItem value="7d">{tr("last_7")}</SelectItem>
+              <SelectItem value="30d">{tr("last_30")}</SelectItem>
+              <SelectItem value="12m">{tr("last_12m")}</SelectItem>
             </SelectContent>
           </Select>
           
           <Button variant="outline" onClick={exportToCSV} disabled={!data}>
-            <Download className="w-4 h-4 mr-2" />
-            Exporter
+            <Download className="w-4 h-4 me-2" />
+            {tr("export")}
           </Button>
         </div>
       </div>
@@ -194,8 +197,8 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-2 border-none shadow-sm bg-card">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Évolution du Revenu</CardTitle>
-              <p className="text-sm text-muted-foreground">Revenu total par jour sur la période sélectionnée.</p>
+              <CardTitle>{tr("revenue_chart")}</CardTitle>
+              <p className="text-sm text-muted-foreground">{tr("revenue_chart_help")}</p>
             </div>
             {loading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
           </CardHeader>
@@ -247,22 +250,22 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="w-5 h-5 text-violet-500" />
-              Top Produits
+              {tr("top_products")}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">Vos meilleures ventes en valeur.</p>
+            <p className="text-sm text-muted-foreground">{tr("top_products_help")}</p>
           </CardHeader>
           <CardContent className="space-y-6 pt-4">
             {data?.topProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
                 <Package className="w-12 h-12 mb-2" />
-                <p className="italic text-sm">Aucune donnée disponible</p>
+                <p className="italic text-sm">{tr("no_data")}</p>
               </div>
             ) : (
               data?.topProducts.map((product, i) => (
                 <div key={i} className="flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="font-semibold text-sm truncate max-w-[150px]">{product.name}</span>
-                    <span className="text-xs text-muted-foreground">{product.quantity} ventes</span>
+                    <span className="text-xs text-muted-foreground">{product.quantity} {tr("sales")}</span>
                   </div>
                   <div className="text-right">
                     <span className="font-bold text-sm">{formatPrice(product.revenue)}</span>
@@ -279,9 +282,9 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MapPin className="w-5 h-5 text-emerald-500" />
-              Performance par Région
+              {tr("regions")}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">Distribution géographique de vos ventes.</p>
+            <p className="text-sm text-muted-foreground">{tr("regions_help")}</p>
           </CardHeader>
           <CardContent className="h-[300px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
@@ -318,9 +321,9 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShoppingBag className="w-5 h-5 text-blue-500" />
-              Statistiques des Commandes
+              {tr("orders_chart")}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">Volume de commandes par jour.</p>
+            <p className="text-sm text-muted-foreground">{tr("orders_chart_help")}</p>
           </CardHeader>
           <CardContent className="h-[300px] pt-4">
             <ResponsiveContainer width="100%" height="100%">
