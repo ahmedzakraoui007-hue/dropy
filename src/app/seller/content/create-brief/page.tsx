@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -52,6 +53,8 @@ const RIGHTS_TYPES = [
 ];
 
 export default function CreateBriefPage() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.create_brief.${key}`);
   const router = useRouter();
   const { plan, usage, limits, loading: quotaLoading, check } = useQuota();
   const supabase = createClient();
@@ -73,20 +76,20 @@ export default function CreateBriefPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !contentType || !budgetMin || !budgetMax || !deadline || !deliverables) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+      toast.error(tr("required"));
       return;
     }
 
     const min = parseFloat(budgetMin);
     const max = parseFloat(budgetMax);
     if (!(min > 0) || !(max > 0) || min > max) {
-      toast.error("Le budget minimum doit être positif et inférieur ou égal au budget maximum");
+      toast.error(tr("budget_error"));
       return;
     }
 
     if (!check('maxBriefsPerMonth')) {
-      toast.error("Limite de briefs atteinte", {
-        description: `Votre plan ${plan} est limité à ${limits.maxBriefsPerMonth} brief(s) par mois.`
+      toast.error(tr("limit_title"), {
+        description: tr("limit_text").replace("{max}", String(limits.maxBriefsPerMonth))
       });
       return;
     }
@@ -138,10 +141,10 @@ export default function CreateBriefPage() {
 
       await fetch(`/api/content/briefs/${data.id}/publish`, { method: "POST" }).catch(() => null);
 
-      toast.success("Brief publié avec succès !");
+      toast.success(tr("published"));
       router.push("/seller/content/briefs");
     } catch (error: any) {
-      toast.error(error.message || "Erreur lors de la création du brief");
+      toast.error(error.message || tr("create_error"));
     } finally {
       setIsSubmitting(false);
     }
@@ -152,8 +155,8 @@ export default function CreateBriefPage() {
       <div className="max-w-5xl mx-auto px-4 pt-8 space-y-8">
         {!quotaLoading && !check('maxBriefsPerMonth') && (
           <QuotaAlert 
-            title="Limite de briefs atteinte"
-            description={`Vous avez déjà créé ${usage.briefsThisMonth} brief(s) ce mois-ci. Votre plan ${plan} est limité à ${limits.maxBriefsPerMonth} par mois.`}
+            title={tr("limit_title")}
+            description={tr("limit_text").replace("{max}", String(limits.maxBriefsPerMonth))}
             plan={plan}
           />
         )}
@@ -162,25 +165,25 @@ export default function CreateBriefPage() {
           className="mb-6"
           onClick={() => router.back()}
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Retour
+          <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
+          {tr("back")}
         </Button>
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Créer un brief de contenu</h1>
-            <p className="text-muted-foreground">Définissez vos besoins et trouvez le créateur idéal</p>
+            <h1 className="text-3xl font-bold">{tr("title")}</h1>
+            <p className="text-muted-foreground">{tr("subtitle")}</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => router.push("/seller/content/briefs")}>
-              Annuler
+              {tr("cancel")}
             </Button>
             <Button 
               onClick={handleSubmit} 
               disabled={isSubmitting}
               className="bg-gradient-to-r from-violet-500 to-purple-600"
             >
-              {isSubmitting ? "Publication..." : "Publier le brief"}
+              {tr(isSubmitting ? "publishing" : "publish")}
             </Button>
           </div>
         </div>
@@ -189,25 +192,25 @@ export default function CreateBriefPage() {
           <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Informations générales</CardTitle>
-                <CardDescription>Commencez par l'essentiel de votre projet</CardDescription>
+                <CardTitle>{tr("general")}</CardTitle>
+                <CardDescription>{tr("general_help")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Titre du projet*</Label>
+                  <Label htmlFor="title">{tr("project_title")} *</Label>
                   <Input 
                     id="title" 
-                    placeholder="ex. 5 photos lifestyle pour la collection été"
+                    placeholder={tr("project_title_ph")}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description détaillée*</Label>
+                  <Label htmlFor="description">{tr("description")} *</Label>
                   <Textarea 
                     id="description" 
-                    placeholder="Décrivez votre vision, votre cible et vos exigences particulières..."
+                    placeholder={tr("description_ph")}
                     className="min-h-[150px]"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -215,7 +218,7 @@ export default function CreateBriefPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <Label>Type de contenu*</Label>
+                  <Label>{tr("content_type")} *</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {CONTENT_TYPES.map((type) => (
                       <div
@@ -229,7 +232,7 @@ export default function CreateBriefPage() {
                         )}
                       >
                         <type.icon className={cn("w-6 h-6", type.color)} />
-                        <span className="text-sm font-medium">{type.label}</span>
+                        <span className="text-sm font-medium">{tr(`types.${type.id}`)}</span>
                       </div>
                     ))}
                   </div>
@@ -239,20 +242,20 @@ export default function CreateBriefPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Budget et délais</CardTitle>
-                <CardDescription>Définissez votre budget et vos délais</CardDescription>
+                <CardTitle>{tr("budget_title")}</CardTitle>
+                <CardDescription>{tr("budget_help")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="budget-min">Fourchette de budget (TND)*</Label>
+                    <Label htmlFor="budget-min">{tr("budget_range")} *</Label>
                     <div className="flex items-center gap-3">
                       <div className="relative flex-1">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                           id="budget-min" 
                           type="number" 
-                          placeholder="Min" 
+                          placeholder={tr("min")}
                           className="pl-10"
                           value={budgetMin}
                           onChange={(e) => setBudgetMin(e.target.value)}
@@ -264,7 +267,7 @@ export default function CreateBriefPage() {
                         <Input 
                           id="budget-max" 
                           type="number" 
-                          placeholder="Max" 
+                          placeholder={tr("max")}
                           className="pl-10"
                           value={budgetMax}
                           onChange={(e) => setBudgetMax(e.target.value)}
@@ -273,20 +276,20 @@ export default function CreateBriefPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Date limite*</Label>
+                    <Label>{tr("deadline")} *</Label>
                     <DatePicker 
                       date={deadline} 
                       setDate={setDeadline}
-                      placeholder="Choisir la date de livraison"
+                      placeholder={tr("deadline_ph")}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="deliverables">Livrables attendus*</Label>
+                  <Label htmlFor="deliverables">{tr("deliverables")} *</Label>
                   <Textarea 
                     id="deliverables" 
-                    placeholder="ex. 5 photos JPG haute résolution, 1 vidéo verticale montée (15-30 s)..."
+                    placeholder={tr("deliverables_ph")}
                     value={deliverables}
                     onChange={(e) => setDeliverables(e.target.value)}
                   />
@@ -296,8 +299,8 @@ export default function CreateBriefPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Droits d'utilisation et lieu</CardTitle>
-                <CardDescription>Comment comptez-vous utiliser le contenu</CardDescription>
+                <CardTitle>{tr("rights_title")}</CardTitle>
+                <CardDescription>{tr("rights_help")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <RadioGroup 
@@ -317,9 +320,9 @@ export default function CreateBriefPage() {
                         htmlFor={type.id}
                         className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
                       >
-                        <span className="text-sm font-semibold">{type.label}</span>
+                        <span className="text-sm font-semibold">{tr(`rights.${type.id}`)}</span>
                         <span className="text-xs text-muted-foreground mt-1 text-center">
-                          {type.description}
+                          {tr(`rights.${type.id}_desc`)}
                         </span>
                       </Label>
                     </div>
@@ -327,18 +330,18 @@ export default function CreateBriefPage() {
                 </RadioGroup>
 
                 <div className="space-y-2">
-                  <Label htmlFor="city">Ville souhaitée (facultatif)</Label>
+                  <Label htmlFor="city">{tr("city")}</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input 
                       id="city" 
-                      placeholder="ex. Tunis, Sousse, Sfax..." 
+                      placeholder={tr("city_ph")}
                       className="pl-10"
                       value={preferredCity}
                       onChange={(e) => setPreferredCity(e.target.value)}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">Utile si des produits doivent être récupérés ou si une présence physique est nécessaire</p>
+                  <p className="text-xs text-muted-foreground">{tr("city_help")}</p>
                 </div>
               </CardContent>
             </Card>
@@ -347,8 +350,8 @@ export default function CreateBriefPage() {
           <div className="space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Produits</CardTitle>
-                <CardDescription>Sélectionnez les produits de cette mission</CardDescription>
+                <CardTitle>{tr("products")}</CardTitle>
+                <CardDescription>{tr("products_help")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ProductSelector 
@@ -360,8 +363,8 @@ export default function CreateBriefPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Images de référence</CardTitle>
-                <CardDescription>Moodboard ou exemples de style</CardDescription>
+                <CardTitle>{tr("references")}</CardTitle>
+                <CardDescription>{tr("references_help")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <FileUpload 
@@ -375,17 +378,17 @@ export default function CreateBriefPage() {
               <CardContent className="pt-6 space-y-4">
                 <div className="flex gap-3">
                   <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                  <p className="text-sm font-medium">Paiement sécurisé (séquestre)</p>
+                  <p className="text-sm font-medium">{tr("escrow")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Votre paiement est conservé en sécurité par Dropy et n'est versé qu'après validation du contenu final.
+                  {tr("escrow_help")}
                 </p>
                 <div className="flex gap-3">
                   <AlertCircle className="w-5 h-5 text-primary shrink-0" />
-                  <p className="text-sm font-medium">2 retouches incluses</p>
+                  <p className="text-sm font-medium">{tr("revisions")}</p>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Chaque mission inclut au moins 2 séries de retouches pour obtenir exactement ce dont vous avez besoin.
+                  {tr("revisions_help")}
                 </p>
               </CardContent>
             </Card>

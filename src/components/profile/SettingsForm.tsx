@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { 
@@ -28,6 +29,8 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 export function SettingsForm() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.account_form.${key}`);
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -74,9 +77,9 @@ export function SettingsForm() {
       .eq("id", profile.id);
 
     if (error) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(tr("update_error"));
     } else {
-      toast.success("Profil mis à jour avec succès");
+      toast.success(tr("updated"));
     }
     setSaving(false);
   }
@@ -94,7 +97,7 @@ export function SettingsForm() {
       .upload(filePath, file, { upsert: true });
 
     if (uploadError) {
-      toast.error("Erreur lors de l'upload de l'avatar");
+      toast.error(tr("avatar_error"));
       setUploading(false);
       return;
     }
@@ -109,10 +112,10 @@ export function SettingsForm() {
       .eq("id", profile.id);
 
     if (updateError) {
-      toast.error("Erreur lors de la mise à jour du profil");
+      toast.error(tr("update_error"));
     } else {
       setProfile({ ...profile, avatar_url: publicUrl });
-      toast.success("Avatar mis à jour !");
+      toast.success(tr("avatar_updated"));
     }
     setUploading(false);
   }
@@ -137,15 +140,15 @@ export function SettingsForm() {
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="profile" className="gap-2">
             <User className="w-4 h-4" />
-            Profil
+            {tr("tab_profile")}
           </TabsTrigger>
           <TabsTrigger value="payment" className="gap-2">
             <Wallet className="w-4 h-4" />
-            Paiements
+            {tr("tab_payment")}
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
             <ShieldCheck className="w-4 h-4" />
-            Sécurité
+            {tr("tab_security")}
           </TabsTrigger>
         </TabsList>
 
@@ -153,8 +156,8 @@ export function SettingsForm() {
           <form onSubmit={handleUpdateProfile} className="space-y-6">
             <Card className="border-border/50">
               <CardHeader>
-                <CardTitle>Informations personnelles</CardTitle>
-                <CardDescription>Mettez à jour vos coordonnées et votre avatar.</CardDescription>
+                <CardTitle>{tr("personal")}</CardTitle>
+                <CardDescription>{tr("personal_help")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-border/50">
@@ -181,17 +184,17 @@ export function SettingsForm() {
                     </label>
                   </div>
                   <div className="text-center sm:text-left">
-                    <h3 className="text-lg font-semibold">{profile?.full_name || "Utilisateur"}</h3>
+                    <h3 className="text-lg font-semibold">{profile?.full_name || tr("user")}</h3>
                     <p className="text-sm text-muted-foreground mb-2">{profile?.email}</p>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground capitalize">
-                      {profile?.role === "seller" ? "Vendeur" : profile?.role === "supplier" ? "Fournisseur" : "Créateur"}
+                      {tr(`roles.${profile?.role || "seller"}`)}
                     </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Nom complet</Label>
+                    <Label htmlFor="name">{tr("name")}</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input 
@@ -203,7 +206,7 @@ export function SettingsForm() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Téléphone</Label>
+                    <Label htmlFor="phone">{tr("phone")}</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input 
@@ -215,7 +218,7 @@ export function SettingsForm() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email (Non modifiable)</Label>
+                    <Label htmlFor="email">{tr("email")}</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-50" />
                       <Input 
@@ -227,7 +230,7 @@ export function SettingsForm() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="role">Rôle (Contactez le support pour modifier)</Label>
+                    <Label htmlFor="role">{tr("role")}</Label>
                     <div className="relative">
                       <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground opacity-50" />
                       <Input 
@@ -245,7 +248,7 @@ export function SettingsForm() {
             <div className="flex justify-end">
               <Button type="submit" disabled={saving} className="gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Enregistrer les modifications
+                {tr("save")}
               </Button>
             </div>
           </form>
@@ -255,16 +258,16 @@ export function SettingsForm() {
           <form onSubmit={handleUpdateProfile} className="space-y-6">
             <Card className="border-border/50">
               <CardHeader>
-                <CardTitle>Détails de paiement</CardTitle>
+                <CardTitle>{tr("payment")}</CardTitle>
                 <CardDescription>
-                  Configurez vos informations de virement bancaire ou mobile.
+                  {tr("payment_help")}
                   {profile?.role === "creator" && " (Nécessaire pour recevoir vos gains)"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="bank_name">Nom de la banque</Label>
+                    <Label htmlFor="bank_name">{tr("bank")}</Label>
                     <div className="relative">
                       <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input 
@@ -278,14 +281,14 @@ export function SettingsForm() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="bank_rib">RIB (20 chiffres)</Label>
+                      <Label htmlFor="bank_rib">{tr("rib")}</Label>
                       <button 
                         type="button" 
                         onClick={() => setShowRib(!showRib)}
                         className="text-xs text-primary hover:underline flex items-center gap-1"
                       >
                         {showRib ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                        {showRib ? "Masquer" : "Afficher"}
+                        {tr(showRib ? "hide" : "show")}
                       </button>
                     </div>
                     <div className="relative">
@@ -293,7 +296,9 @@ export function SettingsForm() {
                       <Input 
                         id="bank_rib" 
                         placeholder="XX XXX XXXXXXXXXXXXXXXX XX" 
-                        value={maskValue(profile?.bank_rib)} 
+                        value={maskValue(profile?.bank_rib)}
+                        readOnly={!showRib && Boolean(profile?.bank_rib)}
+                        onFocus={() => setShowRib(true)}
                         onChange={(e) => setProfile({ ...profile, bank_rib: e.target.value })}
                         className="pl-9"
                       />
@@ -308,19 +313,19 @@ export function SettingsForm() {
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label htmlFor="d17">Numéro D17</Label>
+                      <Label htmlFor="d17">{tr("d17")}</Label>
                       <Input 
                         id="d17" 
-                        placeholder="Numéro associé" 
+                        placeholder={tr("linked_number")} 
                         value={profile?.d17_number || ""} 
                         onChange={(e) => setProfile({ ...profile, d17_number: e.target.value })}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="flouci">Numéro Flouci</Label>
+                      <Label htmlFor="flouci">{tr("flouci")}</Label>
                       <Input 
                         id="flouci" 
-                        placeholder="Numéro associé" 
+                        placeholder={tr("linked_number")} 
                         value={profile?.flouci_number || ""} 
                         onChange={(e) => setProfile({ ...profile, flouci_number: e.target.value })}
                       />
@@ -333,7 +338,7 @@ export function SettingsForm() {
             <div className="flex justify-end">
               <Button type="submit" disabled={saving} className="gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Sauvegarder les modes de paiement
+                {tr("save_payment")}
               </Button>
             </div>
           </form>
@@ -342,8 +347,8 @@ export function SettingsForm() {
         <TabsContent value="security">
           <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Sécurité du compte</CardTitle>
-              <CardDescription>Gérez votre mot de passe et l'authentification.</CardDescription>
+              <CardTitle>{tr("security")}</CardTitle>
+              <CardDescription>{tr("security_help")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between p-4 border rounded-xl hover:bg-muted/50 transition-colors cursor-pointer">
@@ -352,12 +357,12 @@ export function SettingsForm() {
                     <Lock className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">Changer le mot de passe</p>
-                    <p className="text-sm text-muted-foreground">Modifier votre mot de passe de connexion.</p>
+                    <p className="font-medium">{tr("password")}</p>
+                    <p className="text-sm text-muted-foreground">{tr("password_help")}</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/forgot-password">Modifier</Link>
+                  <Link href="/forgot-password">{tr("change")}</Link>
                 </Button>
               </div>
 
@@ -365,12 +370,12 @@ export function SettingsForm() {
                 <div className="flex items-center gap-3 text-red-600">
                   <ShieldCheck className="w-5 h-5" />
                   <div>
-                    <p className="font-medium text-red-700">Supprimer le compte</p>
-                    <p className="text-sm text-red-600/70">Écrivez-nous : nous supprimons votre compte et vos données après vérification.</p>
+                    <p className="font-medium text-red-700">{tr("delete")}</p>
+                    <p className="text-sm text-red-600/70">{tr("delete_help")}</p>
                   </div>
                 </div>
                 <Button variant="outline" size="sm" className="border-red-200 text-red-700" asChild>
-                  <Link href="/contact">Contacter le support</Link>
+                  <Link href="/contact">{tr("contact")}</Link>
                 </Button>
               </div>
             </CardContent>

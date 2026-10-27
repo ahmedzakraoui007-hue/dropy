@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { 
   Search, 
@@ -28,6 +29,8 @@ import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 
 export default function ContentLibraryPage() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.library_page.${key}`);
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);
@@ -78,8 +81,8 @@ export default function ContentLibraryPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Bibliothèque de contenu</h1>
-            <p className="text-muted-foreground">Vos photos, vidéos et designs achetés</p>
+            <h1 className="text-3xl font-bold">{tr("title")}</h1>
+            <p className="text-muted-foreground">{tr("subtitle")}</p>
           </div>
           <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
             <Button 
@@ -105,7 +108,7 @@ export default function ContentLibraryPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Rechercher par nom ou type..." 
+              placeholder={tr("search")}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -126,9 +129,9 @@ export default function ContentLibraryPage() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <ImageIcon className="w-10 h-10 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">La bibliothèque est vide</h3>
+            <h3 className="text-xl font-semibold mb-2">{tr("empty_title")}</h3>
             <p className="text-muted-foreground max-w-sm">
-              Vos contenus achetés apparaîtront ici une fois les missions terminées.
+              {tr("empty_text")}
             </p>
           </Card>
         ) : viewMode === "grid" ? (
@@ -176,10 +179,7 @@ export default function ContentLibraryPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem className="gap-2">
-                          <Download className="w-4 h-4" /> Télécharger
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2">
-                          <Star className="w-4 h-4" /> {item.is_favorite ? "Remove from Favorites" : "Add to Favorites"}
+                          <Download className="w-4 h-4" /> {tr("download")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive">
                           Supprimer
@@ -196,10 +196,10 @@ export default function ContentLibraryPage() {
             <table className="w-full text-left">
               <thead className="bg-muted text-xs uppercase font-bold text-muted-foreground">
                 <tr>
-                  <th className="px-6 py-3">Fichier</th>
-                  <th className="px-6 py-3">Type</th>
-                  <th className="px-6 py-3">Taille</th>
-                  <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">{tr("file")}</th>
+                  <th className="px-6 py-3">{tr("type")}</th>
+                  <th className="px-6 py-3">{tr("size")}</th>
+                  <th className="px-6 py-3">{tr("date")}</th>
                   <th className="px-6 py-3"></th>
                 </tr>
               </thead>
@@ -238,10 +238,7 @@ export default function ContentLibraryPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem className="gap-2">
-                              <Download className="w-4 h-4" /> Télécharger
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2">
-                              <Star className="w-4 h-4" /> {item.is_favorite ? "Remove from Favorites" : "Add to Favorites"}
+                              <Download className="w-4 h-4" /> {tr("download")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

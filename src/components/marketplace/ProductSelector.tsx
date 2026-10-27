@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
+
 import { useState, useEffect } from "react";
 import { Check, Search, Package, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,8 @@ interface ProductSelectorProps {
 }
 
 export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelectorProps) {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`common_ui.product_selector.${key}`);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,7 +102,7 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Rechercher un produit..."
+          placeholder={tr("search")}
           className="pl-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -118,9 +122,9 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
         ) : filteredProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Package className="w-12 h-12 mb-2 opacity-20" />
-            <p className="text-sm mb-2">Aucun produit dans votre boutique</p>
+            <p className="text-sm mb-2">{tr("empty")}</p>
             <a href="/seller/products/catalog" className="text-xs text-primary hover:underline">
-              + Ajouter des produits
+              + {tr("add")}
             </a>
           </div>
         ) : (
@@ -154,7 +158,7 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
         )}
       </ScrollArea>
       <p className="text-xs text-muted-foreground text-right">
-        {selectedIds.length} / {maxSelection} products selected
+        {selectedIds.length} / {maxSelection} {tr("selected")}
       </p>
     </div>
   );

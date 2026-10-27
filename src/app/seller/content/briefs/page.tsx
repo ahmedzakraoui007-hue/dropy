@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
+import { formatPrice } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -23,6 +25,8 @@ import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
 
 export default function BriefsListPage() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.briefs_page.${key}`);
   const router = useRouter();
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
@@ -72,13 +76,13 @@ export default function BriefsListPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "published": return <Badge className="bg-blue-500">Publié</Badge>;
-      case "cancelled": return <Badge variant="outline">Annulé</Badge>;
-      case "assigned": return <Badge className="bg-purple-500">En cours</Badge>;
-      case "in_progress": return <Badge className="bg-orange-500">Retouches</Badge>;
-      case "delivered": return <Badge className="bg-emerald-500">Livré</Badge>;
-      case "completed": return <Badge className="bg-gray-500">Terminé</Badge>;
-      case "draft": return <Badge variant="outline">Brouillon</Badge>;
+      case "published": return <Badge className="bg-blue-500">{tr("status_published")}</Badge>;
+      case "cancelled": return <Badge variant="outline">{tr("status_cancelled")}</Badge>;
+      case "assigned": return <Badge className="bg-purple-500">{tr("status_assigned")}</Badge>;
+      case "in_progress": return <Badge className="bg-orange-500">{tr("status_in_progress")}</Badge>;
+      case "delivered": return <Badge className="bg-emerald-500">{tr("status_delivered")}</Badge>;
+      case "completed": return <Badge className="bg-gray-500">{tr("status_completed")}</Badge>;
+      case "draft": return <Badge variant="outline">{tr("status_draft")}</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
@@ -88,15 +92,15 @@ export default function BriefsListPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Briefs de contenu</h1>
-            <p className="text-muted-foreground">Gérez vos missions de création de contenu</p>
+            <h1 className="text-3xl font-bold">{tr("title")}</h1>
+            <p className="text-muted-foreground">{tr("subtitle")}</p>
           </div>
           <Button 
             onClick={() => router.push("/seller/content/create-brief")}
             className="bg-gradient-to-r from-violet-500 to-purple-600"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Nouveau brief
+            {tr("new")}
           </Button>
         </div>
 
@@ -104,7 +108,7 @@ export default function BriefsListPage() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Rechercher un brief..." 
+              placeholder={tr("search")} 
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -112,10 +116,10 @@ export default function BriefsListPage() {
           </div>
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
             <TabsList>
-              <TabsTrigger value="all">Tous</TabsTrigger>
-              <TabsTrigger value="active">En cours</TabsTrigger>
-              <TabsTrigger value="completed">Terminé</TabsTrigger>
-              <TabsTrigger value="draft">Brouillons</TabsTrigger>
+              <TabsTrigger value="all">{tr("tab_all")}</TabsTrigger>
+              <TabsTrigger value="active">{tr("tab_active")}</TabsTrigger>
+              <TabsTrigger value="completed">{tr("tab_done")}</TabsTrigger>
+              <TabsTrigger value="draft">{tr("tab_draft")}</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -129,12 +133,12 @@ export default function BriefsListPage() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <MessageSquare className="w-10 h-10 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Aucun brief trouvé</h3>
+            <h3 className="text-xl font-semibold mb-2">{tr("empty_title")}</h3>
             <p className="text-muted-foreground max-w-sm mb-6">
-              Vous n&apos;avez encore créé aucun brief. Décrivez votre première mission pour recevoir des propositions de créateurs.
+              {tr("empty_text")}
             </p>
             <Button onClick={() => router.push("/seller/content/create-brief")}>
-              Créer votre premier brief
+              {tr("empty_cta")}
             </Button>
           </Card>
         ) : (
@@ -159,11 +163,11 @@ export default function BriefsListPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <Clock className="w-4 h-4" />
-                              Date limite : {format(new Date(brief.deadline), "dd/MM/yyyy")}
+                              {tr("deadline")} : {format(new Date(brief.deadline), "dd/MM/yyyy")}
                             </span>
                             <span className="flex items-center gap-1">
                               <Users className="w-4 h-4" />
-                              {brief.applications?.[0]?.count || 0} applications
+                              {brief.applications?.[0]?.count || 0} {tr("applications")}
                             </span>
                           </div>
                         </div>
@@ -181,8 +185,8 @@ export default function BriefsListPage() {
 
                       <div className="flex items-center gap-4 pt-2">
                         <div className="flex items-center gap-1 text-sm font-semibold">
-                          <span className="text-muted-foreground font-normal">Budget :</span>
-                          {brief.budget_min} - {brief.budget_max} TND
+                          <span className="text-muted-foreground font-normal">{tr("budget")} :</span>
+                          {formatPrice(brief.budget_min || 0)} – {formatPrice(brief.budget_max || 0)}
                         </div>
                         {brief.preferred_city && (
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -195,11 +199,11 @@ export default function BriefsListPage() {
                     
                     <div className="flex md:flex-col justify-between items-center md:items-end gap-4 min-w-[150px]">
                       <div className="text-right hidden md:block">
-                        <p className="text-xs text-muted-foreground mb-1">Créé le</p>
+                        <p className="text-xs text-muted-foreground mb-1">{tr("created")}</p>
                         <p className="text-sm font-medium">{format(new Date(brief.created_at), "dd/MM/yyyy")}</p>
                       </div>
                       <Button variant="ghost" className="group-hover:translate-x-1 transition-transform">
-                        Voir les détails
+                        {tr("details")}
                         <ArrowRight className="ml-2 w-4 h-4" />
                       </Button>
                     </div>

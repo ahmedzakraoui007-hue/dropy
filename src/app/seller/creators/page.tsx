@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { fetchProfileCards } from "@/lib/profile-cards";
@@ -44,6 +45,8 @@ interface Creator {
 }
 
 export default function CreatorMarketplace() {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.creators_page.${key}`);
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -67,7 +70,7 @@ export default function CreatorMarketplace() {
             : c.specialty
               ? [c.specialty]
               : [],
-          full_name: cards.get(c.user_id)?.full_name ?? "Créateur",
+          full_name: cards.get(c.user_id)?.full_name ?? "—",
           avatar_url: cards.get(c.user_id)?.avatar_url ?? null,
         }));
         setCreators(mappedCreators);
@@ -88,16 +91,16 @@ export default function CreatorMarketplace() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold">Créateurs de contenu</h1>
-          <p className="text-muted-foreground mt-2">Engagez les meilleurs talents tunisiens pour vos produits.</p>
+          <h1 className="text-4xl font-bold">{tr("title")}</h1>
+          <p className="text-muted-foreground mt-2">{tr("subtitle")}</p>
         </div>
         <div className="flex gap-3">
           <Link href="/seller/content/briefs">
-            <Button variant="outline">Mes Briefs</Button>
+            <Button variant="outline">{tr("my_briefs")}</Button>
           </Link>
           <Link href="/seller/content/create-brief">
             <Button className="bg-gradient-to-r from-emerald-500 to-green-600">
-              Lancer un projet
+              {tr("new_brief")}
             </Button>
           </Link>
         </div>
@@ -109,7 +112,7 @@ export default function CreatorMarketplace() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher par nom, bio, ville..." 
+                placeholder={tr("search")}
                 className="pl-10 h-12 rounded-xl"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -117,14 +120,14 @@ export default function CreatorMarketplace() {
             </div>
             <Select value={specialtyFilter} onValueChange={setSpecialtyFilter}>
               <SelectTrigger className="w-full sm:w-[200px] h-12 rounded-xl">
-                <SelectValue placeholder="Spécialité" />
+                <SelectValue placeholder={tr("specialty")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Toutes les spécialités</SelectItem>
-                <SelectItem value="Photography">Photographie</SelectItem>
-                <SelectItem value="Videography">Vidéo</SelectItem>
-                <SelectItem value="UGC">UGC (Contenu utilisateur)</SelectItem>
-                <SelectItem value="Modeling">Mannequinat</SelectItem>
+                <SelectItem value="all">{tr("all_specialties")}</SelectItem>
+                <SelectItem value="Photography">{tr("photography")}</SelectItem>
+                <SelectItem value="Videography">{tr("video")}</SelectItem>
+                <SelectItem value="UGC">{tr("ugc")}</SelectItem>
+                <SelectItem value="Modeling">{tr("modeling")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -137,8 +140,8 @@ export default function CreatorMarketplace() {
             ) : filteredCreators.length === 0 ? (
               <div className="col-span-full py-20 text-center">
                 <Camera className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-semibold">Aucun créateur trouvé</p>
-                <p className="text-muted-foreground">Essayez d&apos;ajuster vos filtres.</p>
+                <p className="text-lg font-semibold">{tr("empty_title")}</p>
+                <p className="text-muted-foreground">{tr("empty_text")}</p>
               </div>
             ) : (
               filteredCreators.map((creator) => (
@@ -189,7 +192,7 @@ export default function CreatorMarketplace() {
                             <Star className="w-3.5 h-3.5 fill-current" />
                             {creator.rating}
                           </div>
-                          <div className="text-[10px] text-muted-foreground">{creator.review_count} avis</div>
+                          <div className="text-[10px] text-muted-foreground">{creator.review_count} {tr("reviews")}</div>
                         </div>
                       </div>
                       <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">
@@ -199,14 +202,14 @@ export default function CreatorMarketplace() {
                         <div>
                           {Number(creator.starting_price) > 0 && (
                             <>
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">À partir de</p>
+                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">{tr("from")}</p>
                               <p className="text-lg font-extrabold text-emerald-600">{formatPrice(creator.starting_price)}</p>
                             </>
                           )}
                         </div>
                         <Link href="/seller/content/create-brief">
                           <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 rounded-lg group/btn">
-                            Créer un brief
+                            {tr("create_brief")}
                             <ChevronRight className="w-4 h-4 ms-1 group-hover/btn:translate-x-1 transition-transform rtl:rotate-180" />
                           </Button>
                         </Link>
@@ -222,27 +225,27 @@ export default function CreatorMarketplace() {
         <div className="space-y-6">
           <Card className="bg-gradient-to-br from-emerald-500 to-green-600 border-0 text-white">
             <CardContent className="p-6">
-              <h3 className="text-xl font-bold mb-2">Besoin d&apos;aide ?</h3>
+              <h3 className="text-xl font-bold mb-2">{tr("help_title")}</h3>
               <p className="text-white/80 text-sm mb-4">
-                Nos experts peuvent vous aider à trouver le meilleur créateur pour votre projet.
+                {tr("help_text")}
               </p>
-              <Button className="w-full bg-white text-emerald-600 hover:bg-white/90">
-                Parler à un conseiller
+              <Button asChild className="w-full bg-white text-emerald-600 hover:bg-white/90">
+                <Link href="/contact">{tr("help_cta")}</Link>
               </Button>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <h3 className="font-bold mb-4">Catégories populaires</h3>
+              <h3 className="font-bold mb-4">{tr("popular")}</h3>
               <div className="space-y-2">
                 {[
-                  { label: "UGC (Vidéos TikTok/Reels)", icon: Video },
-                  { label: "Shooting Packshot", icon: Camera },
-                  { label: "Mannequinat Mode", icon: CheckCircle2 },
-                  { label: "Montage Vidéo", icon: ExternalLink },
+                  { label: tr("cat_ugc"), value: "UGC", icon: Video },
+                  { label: tr("cat_packshot"), value: "Photography", icon: Camera },
+                  { label: tr("cat_modeling"), value: "Modeling", icon: CheckCircle2 },
+                  { label: tr("cat_editing"), value: "Videography", icon: ExternalLink },
                 ].map((cat, i) => (
-                  <button key={i} className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted transition-colors text-sm group">
+                  <button key={i} type="button" onClick={() => setSpecialtyFilter(cat.value)} className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-muted transition-colors text-sm group">
                     <span className="flex items-center gap-2">
                       <cat.icon className="w-4 h-4 text-emerald-500" />
                       {cat.label}
@@ -256,13 +259,13 @@ export default function CreatorMarketplace() {
 
           <Card>
             <CardContent className="p-6">
-              <h3 className="font-bold mb-4">Comment ça marche ?</h3>
+              <h3 className="font-bold mb-4">{tr("how")}</h3>
               <div className="space-y-4">
                 {[
-                  { step: 1, text: "Choisissez un créateur ou postez un brief." },
-                  { step: 2, text: "Envoyez vos produits au créateur." },
-                  { step: 3, text: "Recevez et validez votre contenu." },
-                  { step: 4, text: "Le paiement est libéré au créateur." },
+                  { step: 1, text: tr("step1") },
+                  { step: 2, text: tr("step2") },
+                  { step: 3, text: tr("step3") },
+                  { step: 4, text: tr("step4") },
                 ].map((item) => (
                   <div key={item.step} className="flex gap-3">
                     <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px] font-bold flex-shrink-0">

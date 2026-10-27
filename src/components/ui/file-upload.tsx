@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
+
 import { useState, useRef } from "react";
 import { Upload, X, File, Image as ImageIcon, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,8 @@ export function FileUpload({
   maxFiles = 5,
   className
 }: FileUploadProps) {
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`common_ui.upload.${key}`);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +33,7 @@ export function FileUpload({
     const validFiles = files.filter(file => {
       const sizeInMB = file.size / (1024 * 1024);
       if (sizeInMB > maxSize) {
-        toast.error(`File ${file.name} is too large (max ${maxSize}MB)`);
+        toast.error(tr("too_large").replace("{name}", file.name).replace("{max}", String(maxSize)));
         return false;
       }
       return true;
@@ -85,9 +89,9 @@ export function FileUpload({
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
             <Upload className="w-6 h-6 text-primary" />
           </div>
-          <p className="font-medium">Click to upload or drag and drop</p>
+          <p className="font-medium">{tr("drop")}</p>
           <p className="text-sm text-muted-foreground">
-            {acceptedTypes.join(", ")} up to {maxSize}MB
+            {tr("limits").replace("{types}", acceptedTypes.join(", ")).replace("{max}", String(maxSize))}
           </p>
         </div>
       </div>
