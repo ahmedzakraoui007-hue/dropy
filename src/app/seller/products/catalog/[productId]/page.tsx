@@ -1,5 +1,6 @@
 "use client";
 
+import { fetchProfileCards } from "@/lib/profile-cards";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
@@ -32,7 +33,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { importCatalogProduct, suggestedSellingPrice, CATALOG_IMPORT_MESSAGES } from "@/lib/catalog-import";
+import { importCatalogProduct, suggestedSellingPrice } from "@/lib/catalog-import";
+import { useTranslation } from "@/context/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -40,6 +42,8 @@ import { formatPrice } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ProductDetailPage() {
+  const { t } = useTranslation();
+  const tc = (key: string) => t(`seller_app.catalog.${key}`);
   const { productId } = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -47,7 +51,6 @@ export default function ProductDetailPage() {
   const [variants, setVariants] = useState<any[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [sellingPrice, setSellingPrice] = useState(0);
-  const [otherSuppliers, setOtherSuppliers] = useState<any[]>([]);
   const [supplierReviews, setSupplierReviews] = useState<any[]>([]);
   
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
@@ -62,19 +65,19 @@ export default function ProductDetailPage() {
         .from("products")
         .select(`
           *,
-          profiles:supplier_id (id, full_name, avatar_url, city, bank_name),
           categories:category_id (name)
         `)
         .eq("id", productId)
         .single();
 
       if (error || !data) {
-        toast.error("Produit introuvable");
+        toast.error(tc("not_found"));
         router.push("/seller/products/catalog");
         return;
       }
 
-      setProduct(data);
+      const cards = await fetchProfileCards(supabase, [data.supplier_id]);
+      setProduct({ ...data, profiles: cards.get(data.supplier_id) || null });
       setSellingPrice(suggestedSellingPrice(data.base_price));
       
       // 2. Fetch product variants and their values
@@ -155,15 +158,15 @@ export default function ProductDetailPage() {
 
   const handleImport = async () => {
     const result = await importCatalogProduct(createClient(), product.id, sellingPrice);
-    if (result.ok) toast.success("Produit et variantes importés !");
-    else toast.error(CATALOG_IMPORT_MESSAGES[result.reason]);
+    if (result.ok) toast.success(tc("imported"));
+    else toast.error(tc(`import_errors.${result.reason}`));
   };
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <p className="text-muted-foreground animate-pulse">Chargement des détails...</p>
+        <p className="text-muted-foreground animate-pulse">{tc("loading")}</p>
       </div>
     );
   }
@@ -175,8 +178,8 @@ export default function ProductDetailPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-20">
       <Button variant="ghost" className="gap-2" onClick={() => router.back()}>
-        <ChevronLeft className="w-4 h-4" />
-        Retour au catalogue
+        <ChevronLeft className="w-4 h-4 rtl:rotate-180" />
+        {tc("back")}
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -216,29 +219,25 @@ export default function ProductDetailPage() {
               {(currentVariant?.stock_quantity ?? product.stock_quantity) > 0 ? (
                 <Badge variant="outline" className="text-emerald-600 border-emerald-600/20 bg-emerald-50 font-bold">
                   <Check className="w-3 h-3 mr-1" />
-                  En Stock ({(currentVariant?.stock_quantity ?? product.stock_quantity)})
+                  {tc("in_stock").replace("{count}", String(currentVariant?.stock_quantity ?? product.stock_quantity))}
                 </Badge>
               ) : (
                 <Badge variant="outline" className="text-red-600 border-red-600/20 bg-red-50 font-bold">
-                  Rupture de stock
+                  {tc("out_of_stock")}
                 </Badge>
               )}
             </div>
             <h1 className="text-4xl font-bold text-gray-900">{product.name}</h1>
             
             <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < 4 ? "fill-current" : ""}`} />
-                  ))}
+              {supplierReviews.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <Star className="w-4 h-4 fill-current text-yellow-400" />
+                  <span className="text-sm font-bold">
+                    {(supplierReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / supplierReviews.length).toFixed(1)} ({supplierReviews.length} {tc("reviews")})
+                  </span>
                 </div>
-                <span className="text-sm font-bold">4.8 ({supplierReviews.length} avis)</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-                <Package className="w-4 h-4" />
-                {Math.floor(Math.random() * 500) + 100} imports
-              </div>
+              )}
             </div>
           </div>
 
@@ -274,60 +273,15 @@ export default function ProductDetailPage() {
             <CardContent className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Prix Fournisseur</p>
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">{tc("supplier_price")}</p>
                   <p className="text-3xl font-black text-gray-900">{formatPrice(basePrice)}</p>
                 </div>
 
-                {otherSuppliers.length > 0 && (
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 rounded-full font-bold border-gray-200 bg-white">
-                      <Scale className="w-4 h-4" />
-                      Comparer
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl rounded-3xl">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-bold">Comparatif Fournisseurs</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <div className="border border-gray-100 rounded-2xl overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead className="bg-gray-50">
-                            <tr className="text-left">
-                              <th className="p-4 font-bold text-gray-700">Fournisseur</th>
-                              <th className="p-4 font-bold text-gray-700">Prix</th>
-                              <th className="p-4 font-bold text-gray-700">Note</th>
-                              <th className="p-4 font-bold text-gray-700">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-gray-100">
-                            <tr className="bg-primary/5">
-                              <td className="p-4 font-bold text-gray-900">{product.profiles?.full_name}</td>
-                              <td className="p-4 font-black">{formatPrice(basePrice)}</td>
-                              <td className="p-4 text-yellow-500 font-bold">⭐ 4.9</td>
-                              <td className="p-4"><Badge className="bg-primary">Actuel</Badge></td>
-                            </tr>
-                            {otherSuppliers.map((s) => (
-                              <tr key={s.id}>
-                                <td className="p-4 font-medium">{s.supplier}</td>
-                                <td className="p-4 font-bold">{formatPrice(s.price)}</td>
-                                <td className="p-4 text-gray-500">⭐ {s.rating}</td>
-                                <td className="p-4"><Button variant="ghost" size="sm" className="font-bold">Choisir</Button></td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                )}
               </div>
 
               <div className="space-y-4 pt-6 border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="selling-price" className="font-bold text-gray-700">Prix de vente souhaité</Label>
+                  <Label htmlFor="selling-price" className="font-bold text-gray-700">{tc("selling_price")}</Label>
                   <div className="relative w-32">
                     <Input 
                       id="selling-price"
@@ -336,18 +290,18 @@ export default function ProductDetailPage() {
                       onChange={(e) => setSellingPrice(Number(e.target.value))}
                       className="pr-10 h-11 rounded-xl font-bold text-right"
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">TND</span>
+                    <span className="absolute start-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">DT</span>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
                   <div>
-                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-1">Marge brute</p>
+                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-1">{tc("gross_margin")}</p>
                     <p className="text-lg font-black text-emerald-600">+{formatPrice(margin)}</p>
                   </div>
 
                   <div className="text-right">
-                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-1">Taux de marge</p>
+                    <p className="text-[10px] uppercase font-black text-gray-400 tracking-widest mb-1">{tc("margin_rate")}</p>
                     <p className="text-lg font-black text-emerald-600">{marginPercent}%</p>
                   </div>
                 </div>
@@ -358,28 +312,19 @@ export default function ProductDetailPage() {
                 className="w-full h-14 text-lg font-bold gap-3 rounded-2xl bg-primary hover:bg-primary/90 text-white shadow-xl shadow-primary/20 transition-all active:scale-95"
               >
                 <Plus className="w-5 h-5" />
-                Importer dans ma boutique
+                {tc("import")}
               </Button>
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="p-4 rounded-2xl border border-gray-100 bg-white flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
                 <Truck className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-[10px] text-gray-400 uppercase font-black">Expédition</p>
+                <p className="text-[10px] text-gray-400 uppercase font-black">{tc("shipping")}</p>
                 <p className="text-sm font-bold text-gray-700">24-48h</p>
-              </div>
-            </div>
-            <div className="p-4 rounded-2xl border border-gray-100 bg-white flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-[10px] text-gray-400 uppercase font-black">Qualité</p>
-                <p className="text-sm font-bold text-gray-700">Certifiée</p>
               </div>
             </div>
           </div>
@@ -390,35 +335,35 @@ export default function ProductDetailPage() {
       <div className="pt-12 border-t border-gray-100">
         <Tabs defaultValue="description" className="space-y-8">
           <TabsList className="bg-gray-100/50 p-1 h-12 rounded-xl gap-2">
-            <TabsTrigger value="description" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm px-8">Description</TabsTrigger>
-            <TabsTrigger value="specs" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm px-8">Fiche Technique</TabsTrigger>
-            <TabsTrigger value="supplier" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm px-8">Fournisseur</TabsTrigger>
+            <TabsTrigger value="description" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm px-8">{tc("tab_description")}</TabsTrigger>
+            <TabsTrigger value="specs" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm px-8">{tc("tab_specs")}</TabsTrigger>
+            <TabsTrigger value="supplier" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm px-8">{tc("tab_supplier")}</TabsTrigger>
           </TabsList>
           
           <TabsContent value="description" className="space-y-6">
             <div className="prose prose-slate max-w-none">
               <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
-                {product.description || "Aucune description disponible."}
+                {product.description || tc("no_description")}
               </p>
             </div>
           </TabsContent>
           
           <TabsContent value="specs" className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Référence (SKU)</span>
+              <span className="text-gray-500 font-medium">{tc("sku")}</span>
               <span className="font-bold text-gray-900">{currentVariant?.sku || product.sku || "N/A"}</span>
             </div>
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Catégorie</span>
+              <span className="text-gray-500 font-medium">{tc("category")}</span>
               <span className="font-bold text-gray-900">{product.categories?.name}</span>
             </div>
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Poids</span>
-              <span className="font-bold text-gray-900">{product.weight || "0.5"} kg</span>
+              <span className="text-gray-500 font-medium">{tc("weight")}</span>
+              <span className="font-bold text-gray-900">{product.weight ? `${product.weight} kg` : "—"}</span>
             </div>
             <div className="p-5 rounded-2xl bg-gray-50 border border-gray-100 flex justify-between items-center">
-              <span className="text-gray-500 font-medium">Statut</span>
-              <Badge className="bg-emerald-500">Actif</Badge>
+              <span className="text-gray-500 font-medium">{tc("status")}</span>
+              <Badge className="bg-emerald-500">{tc("active")}</Badge>
             </div>
           </TabsContent>
 
@@ -434,32 +379,9 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900">{product.profiles?.full_name}</h3>
-                    <p className="text-gray-500 font-medium flex items-center gap-1.5 mt-1">
-                      <MapPin className="w-4 h-4 text-red-400" />
-                      {product.profiles?.city || "Tunis"}, Tunisie
-                    </p>
                   </div>
-                  <Button variant="outline" className="rounded-full px-6 font-bold border-gray-200">Contacter le fournisseur</Button>
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Livraison</p>
-                    <p className="text-lg font-black text-blue-600">98%</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Temps réponse</p>
-                    <p className="text-lg font-black text-emerald-600">&lt; 2h</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Produits</p>
-                    <p className="text-lg font-black text-gray-900">42</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sur Dropy</p>
-                    <p className="text-lg font-black text-gray-900">1 an</p>
-                  </div>
-                </div>
               </div>
             </div>
           </TabsContent>

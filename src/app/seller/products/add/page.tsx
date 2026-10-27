@@ -1041,7 +1041,7 @@ export default function MyProductsPage() {
                       <div className="space-y-2">
                         <Label className="flex items-center gap-2 text-sm">
                           <Droplets className="w-4 h-4" />
-                          Volumes disponibles (ml, L)
+                          {t("seller_app.products.volumes")}
                         </Label>
                         <div className="flex flex-wrap gap-2">
                           {PREDEFINED_VOLUMES.map((vol) => {
@@ -1157,7 +1157,7 @@ export default function MyProductsPage() {
                                     value={variant.price || ""}
                                     onChange={(e) => updateVariant(variant.id, "price", parseFloat(e.target.value) || 0)}
                                   />
-                                  <span className="text-xs text-gray-500">TND</span>
+                                  <span className="text-xs text-gray-500">DT</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                   <span className="text-xs text-gray-500">{t("seller_app.products.stock_label")}</span>
