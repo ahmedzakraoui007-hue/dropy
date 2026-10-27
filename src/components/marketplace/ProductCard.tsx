@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { motion } from "framer-motion";
 import { 
   Star, 
@@ -29,6 +30,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAdd, onView }: ProductCardProps) {
+  const { t } = useTranslation();
+  const tc = (key: string) => t(`seller_app.catalog.${key}`);
   const resale = Number(product.suggested_price || product.market_avg_price || 0);
   const estimatedMargin = resale > 0 ? ((resale - Number(product.base_price || 0)) / resale) * 100 : 0;
 
@@ -53,19 +56,19 @@ export default function ProductCard({ product, onAdd, onView }: ProductCardProps
             {product.is_trending && (
               <Badge className="bg-orange-500 hover:bg-orange-600 border-0 gap-1">
                 <TrendingUp className="w-3 h-3" />
-                Trending
+                {tc("card_trending")}
               </Badge>
             )}
             {product.is_top_seller && (
               <Badge className="bg-violet-500 hover:bg-violet-600 border-0 gap-1">
                 <Star className="w-3 h-3 fill-current" />
-                Top Seller
+                {tc("card_top")}
               </Badge>
             )}
           </div>
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="glass backdrop-blur-md border-white/20">
-              {product.stock_quantity > 0 ? `${product.stock_quantity} en stock` : "Rupture"}
+              {product.stock_quantity > 0 ? tc("in_stock").replace("{count}", String(product.stock_quantity)) : tc("out_of_stock")}
             </Badge>
           </div>
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -73,8 +76,8 @@ export default function ProductCard({ product, onAdd, onView }: ProductCardProps
               e.stopPropagation();
               onView(product.id);
             }}>
-              <Info className="w-4 h-4 mr-2" />
-              Voir détails
+              <Info className="w-4 h-4 me-2" />
+              {tc("details")}
             </Button>
           </div>
         </div>
@@ -82,7 +85,7 @@ export default function ProductCard({ product, onAdd, onView }: ProductCardProps
         <CardContent className="p-4 space-y-3">
           <div className="space-y-1">
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
-              {product.categories?.name || "Catégorie"}
+              {product.categories?.name || tc("category")}
             </p>
             <h3 className="font-bold text-lg line-clamp-1 group-hover:text-primary transition-colors">
               {product.name}
@@ -91,12 +94,12 @@ export default function ProductCard({ product, onAdd, onView }: ProductCardProps
 
           <div className="flex items-center justify-between py-2 border-y border-border/50">
             <div className="space-y-0.5">
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">Coût</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">{tc("cost")}</p>
               <p className="text-lg font-bold text-foreground">{formatPrice(product.base_price)}</p>
             </div>
-            <div className="text-right space-y-0.5">
-              <p className="text-[10px] text-muted-foreground uppercase font-bold">Marge Est.</p>
-              <p className="text-lg font-bold text-emerald-600">+{estimatedMargin.toFixed(0)}%</p>
+            <div className="text-end space-y-0.5">
+              <p className="text-[10px] text-muted-foreground uppercase font-bold">{tc("est_margin")}</p>
+              <p className="text-lg font-bold text-emerald-600">{estimatedMargin > 0 ? `+${estimatedMargin.toFixed(0)}%` : "—"}</p>
             </div>
           </div>
 
@@ -126,7 +129,7 @@ export default function ProductCard({ product, onAdd, onView }: ProductCardProps
             onClick={() => onAdd(product)}
           >
             <Plus className="w-4 h-4" />
-            Ajouter à ma boutique
+            {tc("add")}
           </Button>
         </CardFooter>
       </Card>
