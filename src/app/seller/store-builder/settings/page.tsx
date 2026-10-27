@@ -324,7 +324,7 @@ export default function StoreSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-3xl">
+      <Card id="delivery" className="rounded-3xl scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg"><Truck className="w-5 h-5 text-purple-600" />{tr("delivery.title")}</CardTitle>
           <CardDescription>{tr("delivery.desc")}</CardDescription>

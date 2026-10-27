@@ -17,6 +17,59 @@
         "action_error": "Action impossible. Réessayez."
     },
     "seller_app": {
+        "settings_page": {
+            "title": "Paramètres",
+            "subtitle": "Votre compte, votre adresse d'enlèvement et l'accès rapide aux réglages de la boutique.",
+            "store_settings": "Réglages de la boutique",
+            "shortcuts": {
+                "store": "Boutique",
+                "store_desc": "Nom, logo, langue, domaine, référencement Google et pixels publicitaires.",
+                "checkout": "Commande",
+                "checkout_desc": "Formulaire express ou panier, champs demandés, bouton de commande.",
+                "design": "Apparence",
+                "design_desc": "Thème, couleurs et polices de la boutique.",
+                "delivery": "Livraison et offres",
+                "delivery_desc": "Frais de livraison, livraison gratuite et offres de quantité.",
+                "team": "Équipe",
+                "team_desc": "Agents qui confirment les commandes à votre place.",
+                "protection": "Protection",
+                "protection_desc": "Blocage des fausses commandes et des numéros suspects."
+            },
+            "pickup_title": "Adresse d'enlèvement",
+            "pickup_help": "Où le livreur récupère vos propres produits (hors dropshipping).",
+            "street": "Adresse",
+            "governorate": "Gouvernorat",
+            "city": "Ville / délégation",
+            "contact": "Personne à contacter",
+            "phone": "Téléphone",
+            "save": "Enregistrer l'adresse",
+            "saved": "Adresse d'enlèvement enregistrée",
+            "save_error": "Erreur lors de l'enregistrement. Réessayez.",
+            "account": "Mon compte"
+        },
+        "training_page": {
+            "title": "Bien démarrer",
+            "subtitle": "Les étapes pour passer de zéro à vos premières commandes livrées.",
+            "step": "Étape",
+            "open": "Ouvrir",
+            "steps": {
+                "store": "Créez votre boutique",
+                "store_desc": "Choisissez ce que vous vendez : Dropy génère les pages, le thème et les textes.",
+                "products": "Ajoutez des produits",
+                "products_desc": "Importez du catalogue Dropy (sans stock) ou ajoutez vos propres produits.",
+                "publish": "Mettez la boutique en ligne",
+                "publish_desc": "Vérifiez l'aperçu, puis publiez sur votre adresse .dropy.store ou votre domaine.",
+                "ads": "Branchez vos publicités",
+                "ads_desc": "Ajoutez vos pixels Meta, TikTok et Google pour mesurer vos campagnes.",
+                "confirm": "Confirmez chaque commande",
+                "confirm_desc": "Appelez ou écrivez sur WhatsApp avant d'expédier : c'est ce qui réduit les retours.",
+                "ship": "Expédiez et suivez",
+                "ship_desc": "Les produits Dropy partent du fournisseur ; pour les vôtres, suivez l'expédition ici."
+            },
+            "blog_title": "Le blog Dropy",
+            "blog_desc": "Conseils pour vendre en ligne en Tunisie : publicités, confirmation, livraison.",
+            "blog_open": "Lire le blog"
+        },
         "catalog": {
             "limit_title": "Limite de produits atteinte",
             "limit_text": "Votre plan est limité à {max} produits.",
@@ -91,6 +144,9 @@
             "view": "Voir et importer"
         },
         "order_detail": {
+            "dropy_delivery": "Livraison Dropy",
+            "soon": "Bientôt disponible",
+            "dropy_delivery_soon": "L'enlèvement par un livreur Dropy arrive avec l'intégration des sociétés de livraison. En attendant, utilisez votre propre livreur.",
             "automatic": "Automatique",
             "status": {
                 "new": "À confirmer",

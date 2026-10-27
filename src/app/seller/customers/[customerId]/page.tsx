@@ -20,6 +20,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  order_number?: string | null;
   total_amount: number;
   status: string;
   created_at: string;
@@ -87,7 +88,7 @@ export default function CustomerDetailsPage() {
           const firstOrder = orders[orders.length - 1];
           const lastOrder = orders[0];
           
-          const totalSpent = orders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+          const totalSpent = orders.filter((o) => o.status !== "cancelled").reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
           const orderIds = orders.map(o => o.id);
           const { data: allItems } = await supabase
@@ -115,6 +116,7 @@ export default function CustomerDetailsPage() {
             customer_address: firstOrder.customer_address || "",
             orders: orders.map(o => ({
               id: o.id,
+              order_number: o.order_number,
               total_amount: Number(o.total_amount) || 0,
               status: o.status,
               created_at: o.created_at,
@@ -255,7 +257,7 @@ export default function CustomerDetailsPage() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <span className="font-mono text-sm font-medium">#{order.id.slice(0, 8)}</span>
+                        <span className="font-mono text-sm font-medium">{order.order_number || `#${order.id.slice(0, 8)}`}</span>
                         <Badge variant={statusConfig[order.status]?.variant || "default"}>
                           {statusConfig[order.status]?.label || order.status}
                         </Badge>
