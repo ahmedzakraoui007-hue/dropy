@@ -157,7 +157,7 @@ export default function SmartCalculatorPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
-                    Prix fournisseur (TND)
+                    Prix fournisseur (DT)
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
@@ -188,7 +188,7 @@ export default function SmartCalculatorPage() {
 
                 <div className="space-y-3">
                   <Label className="flex items-center gap-2">
-                    Prix de vente (TND)
+                    Prix de vente (DT)
                     <Badge variant="outline" className="text-xs">Votre marge</Badge>
                   </Label>
                   <div className="flex gap-2">
@@ -209,7 +209,7 @@ export default function SmartCalculatorPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Frais de livraison (TND)</Label>
+                  <Label>Frais de livraison (DT)</Label>
                   <Input
                     type="number"
                     value={shippingCost}
@@ -218,7 +218,7 @@ export default function SmartCalculatorPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Label>Coût marketing par vente (TND)</Label>
+                  <Label>Coût marketing par vente (DT)</Label>
                   <Input
                     type="number"
                     value={marketingCost}
@@ -235,7 +235,7 @@ export default function SmartCalculatorPage() {
                     <p className="text-xs text-muted-foreground">Commission plateforme</p>
                   </div>
                 </div>
-                <span className="font-bold text-lg">{calculations.dropyFee.toFixed(2)} TND</span>
+                <span className="font-bold text-lg">{calculations.dropyFee.toFixed(2)} DT</span>
               </div>
 
               <Button
@@ -254,7 +254,7 @@ export default function SmartCalculatorPage() {
                   className="grid md:grid-cols-2 gap-4 pt-4 border-t"
                 >
                   <div className="space-y-3">
-                    <Label>Frais d&apos;emballage (TND)</Label>
+                    <Label>Frais d&apos;emballage (DT)</Label>
                     <Input
                       type="number"
                       value={packagingCost}
@@ -302,7 +302,7 @@ export default function SmartCalculatorPage() {
                   )}
                 </div>
                 <p className={`text-4xl font-bold ${getProfitColor(calculations.netMargin)}`}>
-                  {calculations.netProfit.toFixed(2)} TND
+                  {calculations.netProfit.toFixed(2)} DT
                 </p>
                 <p className={`text-sm ${getProfitColor(calculations.netMargin)}`}>
                   Marge: {calculations.netMargin.toFixed(1)}%
@@ -316,9 +316,9 @@ export default function SmartCalculatorPage() {
                   <span className="text-sm font-medium">Coûts totaux</span>
                   <DollarSign className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <p className="text-4xl font-bold">{calculations.totalCosts.toFixed(2)} TND</p>
+                <p className="text-4xl font-bold">{calculations.totalCosts.toFixed(2)} DT</p>
                 <p className="text-sm text-muted-foreground">
-                  Dont retours: {calculations.returnLoss.toFixed(2)} TND
+                  Dont retours: {calculations.returnLoss.toFixed(2)} DT
                 </p>
               </CardContent>
             </Card>
@@ -336,11 +336,11 @@ export default function SmartCalculatorPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 bg-blue-50 rounded-xl text-center">
                   <p className="text-sm text-blue-600 font-medium">Chiffre d&apos;affaires</p>
-                  <p className="text-2xl font-bold text-blue-700">{calculations.monthlyRevenue.toLocaleString()} TND</p>
+                  <p className="text-2xl font-bold text-blue-700">{calculations.monthlyRevenue.toLocaleString()} DT</p>
                 </div>
                 <div className="p-4 bg-green-50 rounded-xl text-center">
                   <p className="text-sm text-green-600 font-medium">Profit net</p>
-                  <p className="text-2xl font-bold text-green-700">{calculations.monthlyProfit.toLocaleString()} TND</p>
+                  <p className="text-2xl font-bold text-green-700">{calculations.monthlyProfit.toLocaleString()} DT</p>
                 </div>
                 <div className="p-4 bg-purple-50 rounded-xl text-center">
                   <p className="text-sm text-purple-600 font-medium">ROI</p>
@@ -366,13 +366,13 @@ export default function SmartCalculatorPage() {
             <CardContent className="space-y-4">
               <div className="p-4 bg-white rounded-xl border border-primary/10">
                 <p className="text-sm font-medium text-primary mb-1">Prix recommandé</p>
-                <p className="text-3xl font-bold">{calculations.recommendedPrice.toFixed(0)} TND</p>
+                <p className="text-3xl font-bold">{calculations.recommendedPrice.toFixed(0)} DT</p>
                 <p className="text-xs text-muted-foreground">Pour une marge de 40%</p>
               </div>
 
               <div className="p-4 bg-white rounded-xl border border-primary/10">
                 <p className="text-sm font-medium text-primary mb-1">Seuil de rentabilité</p>
-                <p className="text-3xl font-bold">{calculations.breakEvenPrice.toFixed(0)} TND</p>
+                <p className="text-3xl font-bold">{calculations.breakEvenPrice.toFixed(0)} DT</p>
                 <p className="text-xs text-muted-foreground">Prix minimum pour ne pas perdre</p>
               </div>
 
@@ -429,7 +429,7 @@ export default function SmartCalculatorPage() {
                   <div key={item.label}>
                     <div className="flex justify-between text-sm mb-1">
                       <span>{item.label}</span>
-                      <span className="font-medium">{item.value.toFixed(2)} TND ({percentage.toFixed(0)}%)</span>
+                      <span className="font-medium">{item.value.toFixed(2)} DT ({percentage.toFixed(0)}%)</span>
                     </div>
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <motion.div
@@ -456,7 +456,7 @@ export default function SmartCalculatorPage() {
                 </div>
               </div>
               <p className="text-4xl font-bold text-green-700">
-                {(calculations.monthlyProfit * 12).toLocaleString()} TND
+                {(calculations.monthlyProfit * 12).toLocaleString()} DT
               </p>
             </CardContent>
           </Card>

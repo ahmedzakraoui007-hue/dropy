@@ -47,7 +47,7 @@ export default function CustomersPage() {
 
       const { data: orders } = await supabase
         .from("store_orders")
-        .select("customer_email, customer_name, customer_phone, customer_governorate, total_amount, created_at")
+        .select("customer_email, customer_name, customer_phone, customer_governorate, total_amount, created_at, status")
         .eq("store_id", store.id)
         .order("created_at", { ascending: false });
 
@@ -61,7 +61,7 @@ export default function CustomersPage() {
           if (customerMap.has(key)) {
             const existing = customerMap.get(key)!;
             existing.total_orders += 1;
-            existing.total_spent += Number(order.total_amount) || 0;
+            if (order.status !== "cancelled") existing.total_spent += Number(order.total_amount) || 0;
           } else {
             customerMap.set(key, {
               customer_email: order.customer_email || "",
@@ -69,7 +69,7 @@ export default function CustomersPage() {
               customer_phone: order.customer_phone || "",
               customer_governorate: order.customer_governorate || "",
               total_orders: 1,
-              total_spent: Number(order.total_amount) || 0,
+              total_spent: order.status === "cancelled" ? 0 : Number(order.total_amount) || 0,
               last_order_date: order.created_at,
             });
           }

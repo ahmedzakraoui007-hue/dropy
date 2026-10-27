@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { fetchProfileCards } from "@/lib/profile-cards";
 import Link from "next/link";
@@ -87,14 +88,14 @@ export default function CreatorMarketplace() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold">Content Marketplace</h1>
+          <h1 className="text-4xl font-bold">Créateurs de contenu</h1>
           <p className="text-muted-foreground mt-2">Engagez les meilleurs talents tunisiens pour vos produits.</p>
         </div>
         <div className="flex gap-3">
-          <Link href="/seller/creators/briefs">
+          <Link href="/seller/content/briefs">
             <Button variant="outline">Mes Briefs</Button>
           </Link>
-          <Link href="/seller/creators/briefs/new">
+          <Link href="/seller/content/create-brief">
             <Button className="bg-gradient-to-r from-emerald-500 to-green-600">
               Lancer un projet
             </Button>
@@ -196,13 +197,17 @@ export default function CreatorMarketplace() {
                       </p>
                       <div className="flex items-center justify-between pt-4 border-t border-border/50">
                         <div>
-                          <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">À partir de</p>
-                          <p className="text-lg font-extrabold text-emerald-600">{creator.starting_price} TND</p>
+                          {Number(creator.starting_price) > 0 && (
+                            <>
+                              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-tight">À partir de</p>
+                              <p className="text-lg font-extrabold text-emerald-600">{formatPrice(creator.starting_price)}</p>
+                            </>
+                          )}
                         </div>
-                        <Link href={`/seller/creators/${creator.id}`}>
+                        <Link href="/seller/content/create-brief">
                           <Button size="sm" className="bg-emerald-500 hover:bg-emerald-600 rounded-lg group/btn">
-                            Voir le profil
-                            <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                            Créer un brief
+                            <ChevronRight className="w-4 h-4 ms-1 group-hover/btn:translate-x-1 transition-transform rtl:rotate-180" />
                           </Button>
                         </Link>
                       </div>

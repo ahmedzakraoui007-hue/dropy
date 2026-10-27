@@ -819,39 +819,28 @@ export default function OrderDetailPage() {
                   {tx("choose_delivery")}
                 </h4>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div 
-                    className="p-4 border-2 rounded-xl cursor-pointer hover:border-primary transition-all"
-                    onClick={() => setShowPickupModal(true)}
-                  >
+                  <div className="p-4 border-2 border-dashed rounded-xl bg-muted/30" aria-disabled="true">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                         <Sparkles className="w-5 h-5 text-primary" />
                       </div>
                       <div>
-                        <p className="font-bold">Livraison Dropy</p>
-                        <p className="text-xs text-green-600">Recommandé</p>
+                        <p className="font-bold">{tx("dropy_delivery")}</p>
+                        <p className="text-xs font-semibold text-amber-600">{tx("soon")}</p>
                       </div>
                     </div>
-                    <ul className="text-xs text-muted-foreground space-y-1 ml-13">
-                      <li>• {tx("dropy_pickup_1")}</li>
-                      <li>• {tx("dropy_pickup_2")}</li>
-                      <li>• {tx("dropy_pickup_3")}</li>
-                    </ul>
-                    <Button className="w-full mt-4 gap-2">
-                      <Send className="w-4 h-4" />
-                      {tx("schedule_pickup")}
-                    </Button>
+                    <p className="text-xs text-muted-foreground">{tx("dropy_delivery_soon")}</p>
                   </div>
 
                   <div 
-                    className="p-4 border rounded-xl cursor-pointer hover:border-gray-300 transition-all"
+                    className="p-4 border-2 border-primary/40 rounded-xl cursor-pointer hover:border-primary transition-all"
                     onClick={() => setShowOwnDeliveryModal(true)}
                   >
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
                         <Truck className="w-5 h-5 text-gray-600" />
                       </div>
-                      <p className="font-bold">Ma propre livraison</p>
+                      <p className="font-bold">{tx("own_title_modal")}</p>
                     </div>
                     <ul className="text-xs text-muted-foreground space-y-1 ml-13">
                       <li>• {tx("own_1")}</li>

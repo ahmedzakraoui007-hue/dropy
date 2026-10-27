@@ -131,7 +131,7 @@ export default function BriefsListPage() {
             </div>
             <h3 className="text-xl font-semibold mb-2">Aucun brief trouvé</h3>
             <p className="text-muted-foreground max-w-sm mb-6">
-              You haven&apos;t created any content briefs yet. Start by defining your first mission!
+              Vous n&apos;avez encore créé aucun brief. Décrivez votre première mission pour recevoir des propositions de créateurs.
             </p>
             <Button onClick={() => router.push("/seller/content/create-brief")}>
               Créer votre premier brief

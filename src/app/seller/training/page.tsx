@@ -1,78 +1,75 @@
 "use client";
 
-import { GraduationCap, PlayCircle, BookOpen, Trophy, Clock } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { ArrowRight, BookOpen, ExternalLink, Megaphone, Package, PhoneCall, Rocket, Store, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "@/context/LanguageContext";
+
+const STEPS = [
+  { key: "store", href: "/seller/store-builder/start", icon: Store },
+  { key: "products", href: "/seller/products/catalog", icon: Package },
+  { key: "publish", href: "/seller/store-builder", icon: Rocket },
+  { key: "ads", href: "/seller/store-builder/settings", icon: Megaphone },
+  { key: "confirm", href: "/seller/orders", icon: PhoneCall },
+  { key: "ship", href: "/seller/shipping", icon: Truck },
+];
+
+const BLOG_URL = "https://dropyblog.vercel.app";
 
 export default function TrainingPage() {
-  const courses = [
-    {
-      title: "Introduction au Dropshipping en Tunisie",
-      description: "Apprenez les bases du e-commerce et comment lancer votre première boutique.",
-      duration: "45 min",
-      lessons: 8,
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=250&fit=crop"
-    },
-    {
-      title: "Optimiser vos Publicités Facebook",
-      description: "Techniques avancées pour attirer des clients et maximiser votre ROI.",
-      duration: "1h 30min",
-      lessons: 12,
-      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=400&h=250&fit=crop"
-    },
-    {
-      title: "Gestion de la Relation Client",
-      description: "Comment fidéliser vos clients et gérer les retours efficacement.",
-      duration: "30 min",
-      lessons: 5,
-      image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop"
-    }
-  ];
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`seller_app.training_page.${key}`);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Formation</h1>
-          <p className="text-muted-foreground">Apprenez à développer votre business avec nos experts.</p>
-        </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
-          <Trophy className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-primary">0 Points gagnés</span>
-        </div>
+    <div className="mx-auto max-w-4xl space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">{tr("title")}</h1>
+        <p className="mt-1 text-gray-500">{tr("subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {courses.map((course) => (
-          <Card key={course.title} className="overflow-hidden group cursor-pointer hover:border-primary transition-colors">
-            <div className="aspect-video overflow-hidden">
-              <img 
-                src={course.image} 
-                alt={course.title}
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-              />
-            </div>
-            <CardContent className="p-6">
-              <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors">{course.title}</h3>
-              <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{course.description}</p>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {course.duration}
+      <ol className="space-y-3">
+        {STEPS.map((step, index) => (
+          <li key={step.key}>
+            <Card className="rounded-2xl transition-colors hover:border-primary/40">
+              <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-4 sm:flex-1">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <step.icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-muted-foreground">{tr("step")} {index + 1}</p>
+                    <p className="font-semibold">{tr(`steps.${step.key}`)}</p>
+                    <p className="text-sm text-muted-foreground">{tr(`steps.${step.key}_desc`)}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1">
-                  <BookOpen className="w-3 h-3" />
-                  {course.lessons} leçons
-                </div>
-              </div>
-              <Button className="w-full mt-4 gap-2">
-                <PlayCircle className="w-4 h-4" />
-                Démarrer
-              </Button>
-            </CardContent>
-          </Card>
+                <Button variant="outline" size="sm" asChild className="shrink-0 gap-1.5">
+                  <Link href={step.href}>
+                    {tr("open")}
+                    <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </li>
         ))}
-      </div>
+      </ol>
+
+      <Card className="rounded-2xl bg-gradient-to-br from-purple-600 to-teal-500 text-white">
+        <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center">
+          <BookOpen className="h-8 w-8 shrink-0" />
+          <div className="flex-1">
+            <p className="font-semibold">{tr("blog_title")}</p>
+            <p className="text-sm text-white/80">{tr("blog_desc")}</p>
+          </div>
+          <Button variant="secondary" asChild className="gap-1.5">
+            <a href={BLOG_URL} target="_blank" rel="noreferrer">
+              {tr("blog_open")}
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

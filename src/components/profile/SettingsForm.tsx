@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import { 
   User, 
@@ -355,8 +356,8 @@ export function SettingsForm() {
                     <p className="text-sm text-muted-foreground">Modifier votre mot de passe de connexion.</p>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => toast.info("Fonctionnalité disponible via l'email de réinitialisation")}>
-                  Modifier
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/forgot-password">Modifier</Link>
                 </Button>
               </div>
 
@@ -365,10 +366,12 @@ export function SettingsForm() {
                   <ShieldCheck className="w-5 h-5" />
                   <div>
                     <p className="font-medium text-red-700">Supprimer le compte</p>
-                    <p className="text-sm text-red-600/70">Action irréversible. Toutes vos données seront effacées.</p>
+                    <p className="text-sm text-red-600/70">Écrivez-nous : nous supprimons votre compte et vos données après vérification.</p>
                   </div>
                 </div>
-                <Button variant="destructive" size="sm">Supprimer</Button>
+                <Button variant="outline" size="sm" className="border-red-200 text-red-700" asChild>
+                  <Link href="/contact">Contacter le support</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
