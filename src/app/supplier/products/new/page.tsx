@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -61,6 +62,8 @@ interface VariantOption {
 }
 
 export default function NewSupplierProductPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.product_form.${key}`);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -232,7 +235,7 @@ export default function NewSupplierProductPage() {
   const handleAddImage = () => {
     if (!imageUrl.trim()) return;
     if (!imageUrl.startsWith("http")) {
-      toast.error("Veuillez entrer une URL valide");
+      toast.error(tr("veuillez_entrer_une_url_valide"));
       return;
     }
     setImages([...images, imageUrl]);
@@ -245,12 +248,12 @@ export default function NewSupplierProductPage() {
 
   const handleSubmit = async () => {
     if (!formData.name || !formData.base_price) {
-      toast.error("Veuillez remplir les informations de base");
+      toast.error(tr("veuillez_remplir_les_informations_de"));
       return;
     }
 
     if (images.length === 0) {
-      toast.error("Veuillez ajouter au moins une image");
+      toast.error(tr("veuillez_ajouter_au_moins_une"));
       return;
     }
 
@@ -314,11 +317,11 @@ export default function NewSupplierProductPage() {
         }
       }
 
-      toast.success("Produit envoyé ! Il sera visible par les vendeurs après validation par l'équipe Dropy.");
+      toast.success(tr("produit_envoye_il_sera_visible"));
       router.push("/supplier/products");
     } catch (error: any) {
       console.error("Error creating product:", error);
-      toast.error(error.message || "Erreur lors de la création du produit");
+      toast.error(error.message || tr("create_error"));
     } finally {
       setLoading(false);
     }
@@ -338,10 +341,10 @@ export default function NewSupplierProductPage() {
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 uppercase text-[10px] font-bold tracking-wider">Fournisseur Textile</Badge>
-                <h1 className="text-xl font-bold text-gray-900">Nouveau Produit Textile</h1>
+                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200 uppercase text-[10px] font-bold tracking-wider">{tr("fournisseur_textile")}</Badge>
+                <h1 className="text-xl font-bold text-gray-900">{tr("nouveau_produit_textile")}</h1>
               </div>
-              <p className="text-sm text-gray-500 font-medium">Ajoutez vos vêtements et articles textiles</p>
+              <p className="text-sm text-gray-500 font-medium">{tr("ajoutez_vos_vetements_et_articles")}</p>
             </div>
           </div>
 
@@ -352,7 +355,7 @@ export default function NewSupplierProductPage() {
               disabled={loading || step < 3}
             >
               {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-              Publier le produit
+              {tr("publish")}
             </Button>
           </div>
         </div>
@@ -363,11 +366,11 @@ export default function NewSupplierProductPage() {
           <div className="col-span-3">
             <div className="sticky top-28 space-y-1">
               {[
-                { id: 1, label: "Catégorie", icon: Layers },
-                { id: 2, label: "Informations", icon: Package },
-                { id: 3, label: "Images", icon: ImageIcon },
+                { id: 1, label: tr("step_category"), icon: Layers },
+                { id: 2, label: tr("step_info"), icon: Package },
+                { id: 3, label: tr("step_images"), icon: ImageIcon },
                 ...(hasVariants && requiredVariants.length > 0 ? [
-                  { id: 4, label: "Variantes", icon: Sparkles },
+                  { id: 4, label: tr("step_variants"), icon: Sparkles },
                   { id: 5, label: "Stock & Prix", icon: CheckCircle2 },
                 ] : []),
               ].map((s) => (
@@ -400,8 +403,8 @@ export default function NewSupplierProductPage() {
                 >
                   <Card className="border-none shadow-sm overflow-hidden">
                     <CardHeader className="bg-white border-b border-gray-100 pb-6">
-                      <CardTitle className="text-xl font-bold">Sélectionner une sous-catégorie textile</CardTitle>
-                      <CardDescription>Choisissez le type de vêtement ou article textile.</CardDescription>
+                      <CardTitle className="text-xl font-bold">{tr("selectionner_une_sous_categorie_textile")}</CardTitle>
+                      <CardDescription>{tr("choisissez_le_type_de_vetement")}</CardDescription>
 
                       {selectedPath.length > 0 && (
                         <div className="flex items-center gap-2 mt-4">
@@ -414,7 +417,7 @@ export default function NewSupplierProductPage() {
                             </div>
                           ))}
                           <Button variant="ghost" size="sm" onClick={resetCategory} className="text-red-500 hover:text-red-600 hover:bg-red-50">
-                            Réinitialiser
+                            {tr("reinitialiser")}
                           </Button>
                         </div>
                       )}
@@ -425,7 +428,7 @@ export default function NewSupplierProductPage() {
                           {currentLevel.length === 0 ? (
                             <div className="text-center py-8 text-gray-500">
                               <Layers className="w-10 h-10 mx-auto mb-2 opacity-20" />
-                              <p className="text-sm">Aucune catégorie disponible</p>
+                              <p className="text-sm">{tr("aucune_categorie_disponible")}</p>
                             </div>
                           ) : (
                             currentLevel.map((cat) => (
@@ -443,7 +446,7 @@ export default function NewSupplierProductPage() {
                         <div className="bg-gray-50/50 p-8 flex flex-col items-center justify-center text-center">
                           <Layers className="w-12 h-12 text-gray-200 mb-4" />
                           <p className="text-sm text-gray-500 font-medium max-w-[200px]">
-                            Sélectionnez une sous-catégorie pour continuer.
+                            {tr("selectionnez_une_sous_categorie_pour")}
                           </p>
                         </div>
                       </div>
@@ -453,7 +456,7 @@ export default function NewSupplierProductPage() {
                   <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex gap-3">
                     <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div className="text-xs text-amber-800">
-                      <strong>Note :</strong> En tant que fournisseur textile, vous ne pouvez ajouter que des produits vestimentaires (T-shirts, robes, pantalons, etc.)
+                      <strong>{tr("note")}</strong> En tant que fournisseur textile, vous ne pouvez ajouter que des produits vestimentaires (T-shirts, robes, pantalons, etc.)
                     </div>
                   </div>
                 </motion.div>
@@ -468,14 +471,14 @@ export default function NewSupplierProductPage() {
                 >
                   <Card className="border-none shadow-sm">
                     <CardHeader>
-                      <CardTitle className="text-xl font-bold">Informations de base</CardTitle>
-                      <CardDescription>Détails essentiels sur votre produit.</CardDescription>
+                      <CardTitle className="text-xl font-bold">{tr("informations_de_base")}</CardTitle>
+                      <CardDescription>{tr("details_essentiels_sur_votre_produit")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="space-y-2">
-                        <Label className="text-sm font-bold text-gray-700">Nom du produit *</Label>
+                        <Label className="text-sm font-bold text-gray-700">{tr("nom_du_produit")}</Label>
                         <Input
-                          placeholder="Ex: T-shirt col rond, Robe d'été fleurie, Pantalon cargo..."
+                          placeholder={tr("ex_t_shirt_col_rond")}
                           className="h-12 rounded-xl border-gray-200 focus:ring-primary"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -483,9 +486,9 @@ export default function NewSupplierProductPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-bold text-gray-700">Description détaillée</Label>
+                        <Label className="text-sm font-bold text-gray-700">{tr("description_detaillee")}</Label>
                         <Textarea
-                          placeholder="Décrivez votre produit, ses caractéristiques, ses avantages..."
+                          placeholder={tr("decrivez_votre_produit_ses_caracteristiques")}
                           className="min-h-[150px] rounded-xl border-gray-200 focus:ring-primary"
                           value={formData.description}
                           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -494,7 +497,7 @@ export default function NewSupplierProductPage() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-gray-700">Prix de vente (TND) *</Label>
+                          <Label className="text-sm font-bold text-gray-700">{tr("prix_de_vente_tnd")}</Label>
                           <Input
                             type="number"
                             placeholder="0.00"
@@ -504,7 +507,7 @@ export default function NewSupplierProductPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-gray-700">Prix barré (Optionnel)</Label>
+                          <Label className="text-sm font-bold text-gray-700">{tr("prix_barre_optionnel")}</Label>
                           <Input
                             type="number"
                             placeholder="0.00"
@@ -517,16 +520,16 @@ export default function NewSupplierProductPage() {
 
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-gray-700">SKU de référence</Label>
+                          <Label className="text-sm font-bold text-gray-700">{tr("sku_de_reference")}</Label>
                           <Input
-                            placeholder="Ex: PRD-001"
+                            placeholder={tr("ex_prd_001")}
                             className="h-12 rounded-xl border-gray-200"
                             value={formData.sku}
                             onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-gray-700">Poids (kg)</Label>
+                          <Label className="text-sm font-bold text-gray-700">{tr("poids_kg")}</Label>
                           <Input
                             type="number"
                             placeholder="0.5"
@@ -540,7 +543,7 @@ export default function NewSupplierProductPage() {
 
                       {!hasVariants && (
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-gray-700">Quantité en stock</Label>
+                          <Label className="text-sm font-bold text-gray-700">{tr("quantite_en_stock")}</Label>
                           <Input
                             type="number"
                             placeholder="0"
@@ -554,8 +557,8 @@ export default function NewSupplierProductPage() {
                       {requiredVariants.length > 0 && (
                         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100">
                           <div>
-                            <p className="font-bold text-sm">Ce produit a des variantes ?</p>
-                            <p className="text-xs text-gray-500">Tailles, couleurs, etc.</p>
+                            <p className="font-bold text-sm">{tr("ce_produit_a_des_variantes")}</p>
+                            <p className="text-xs text-gray-500">{tr("tailles_couleurs_etc")}</p>
                           </div>
                           <Switch checked={hasVariants} onCheckedChange={setHasVariants} />
                         </div>
@@ -581,12 +584,12 @@ export default function NewSupplierProductPage() {
                   <Card className="border-none shadow-sm">
                     <CardHeader>
                       <CardTitle className="text-xl font-bold">Galerie d&apos;images</CardTitle>
-                      <CardDescription>Ajoutez des visuels de haute qualité.</CardDescription>
+                      <CardDescription>{tr("ajoutez_des_visuels_de_haute")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="flex gap-2">
                         <Input
-                          placeholder="Lien de l'image (https://...)"
+                          placeholder={tr("lien_de_l_image_https")}
                           className="h-12 rounded-xl border-gray-200"
                           value={imageUrl}
                           onChange={(e) => setImageUrl(e.target.value)}
@@ -610,20 +613,20 @@ export default function NewSupplierProductPage() {
                               </button>
                             </div>
                             {idx === 0 && (
-                              <Badge className="absolute top-2 left-2 bg-primary text-white text-[10px]">Principale</Badge>
+                              <Badge className="absolute top-2 left-2 bg-primary text-white text-[10px]">{tr("principale")}</Badge>
                             )}
                           </div>
                         ))}
                         <div className="aspect-square rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 p-4 text-center">
                           <ImageIcon className="w-8 h-8 mb-2 opacity-20" />
-                          <p className="text-[10px] font-bold uppercase tracking-wider">Ajouter</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider">{tr("ajouter")}</p>
                         </div>
                       </div>
 
                       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3">
                         <AlertCircle className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                         <div className="text-xs text-blue-800 leading-relaxed">
-                          <strong>Conseil :</strong> Utilisez des images claires sur fond neutre pour mettre en valeur votre produit.
+                          <strong>{tr("conseil")}</strong> Utilisez des images claires sur fond neutre pour mettre en valeur votre produit.
                         </div>
                       </div>
                     </CardContent>
@@ -644,7 +647,7 @@ export default function NewSupplierProductPage() {
                         disabled={loading}
                       >
                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        Publier le produit
+                        {tr("publish")}
                       </Button>
                     )}
                   </div>
@@ -662,7 +665,7 @@ export default function NewSupplierProductPage() {
                     <Card key={vt.id} className="border-none shadow-sm">
                       <CardHeader>
                         <CardTitle className="text-lg font-bold">{vt.name}</CardTitle>
-                        <CardDescription>Sélectionnez les options disponibles.</CardDescription>
+                        <CardDescription>{tr("selectionnez_les_options_disponibles")}</CardDescription>
                       </CardHeader>
                       <CardContent>
                         {vt.slug === 'couleur' ? (
@@ -728,19 +731,19 @@ export default function NewSupplierProductPage() {
                 >
                   <Card className="border-none shadow-sm overflow-hidden">
                     <CardHeader>
-                      <CardTitle className="text-xl font-bold">Matrice des variantes</CardTitle>
-                      <CardDescription>Définissez le stock et ajustez le prix pour chaque combinaison.</CardDescription>
+                      <CardTitle className="text-xl font-bold">{tr("matrice_des_variantes")}</CardTitle>
+                      <CardDescription>{tr("definissez_le_stock_et_ajustez")}</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left">
                           <thead className="bg-gray-50/50 border-y border-gray-100">
                             <tr>
-                              <th className="px-6 py-4 font-bold text-gray-700">Variante</th>
-                              <th className="px-6 py-4 font-bold text-gray-700">SKU</th>
-                              <th className="px-6 py-4 font-bold text-gray-700">Prix (TND)</th>
-                              <th className="px-6 py-4 font-bold text-gray-700">Stock</th>
-                              <th className="px-6 py-4 font-bold text-gray-700">Action</th>
+                              <th className="px-6 py-4 font-bold text-gray-700">{tr("variante")}</th>
+                              <th className="px-6 py-4 font-bold text-gray-700">{tr("sku")}</th>
+                              <th className="px-6 py-4 font-bold text-gray-700">{tr("prix_tnd")}</th>
+                              <th className="px-6 py-4 font-bold text-gray-700">{tr("stock")}</th>
+                              <th className="px-6 py-4 font-bold text-gray-700">{tr("action")}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">

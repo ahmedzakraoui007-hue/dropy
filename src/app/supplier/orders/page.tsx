@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -81,6 +82,12 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SupplierOrdersPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`supplier_app.orders.${key}`);
+  const statusLabel = (status: string) => {
+    const label = tt(`supplier_app.status.${status}`);
+    return label.startsWith("supplier_app.") ? status : label;
+  };
   const [orders, setOrders] = useState<SupplierOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -136,7 +143,7 @@ export default function SupplierOrdersPage() {
         toast.error(data.error);
       }
     } catch (error) {
-      toast.error("Erreur lors de l'action");
+      toast.error(tr("erreur_lors_de_l_action"));
     } finally {
       setProcessingAction(null);
     }
@@ -153,15 +160,15 @@ export default function SupplierOrdersPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        toast.success("Commande refusée : le vendeur est prévenu");
+        toast.success(tr("commande_refusee_le_vendeur_est"));
         setRejecting(null);
         setRejectNote("");
         loadOrders();
       } else {
-        toast.error(data.error || "Erreur lors du refus");
+        toast.error(data.error || tr("reject_error"))
       }
     } catch {
-      toast.error("Erreur lors du refus");
+      toast.error(tr("erreur_lors_du_refus"));
     } finally {
       setProcessingAction(null);
     }
@@ -181,7 +188,7 @@ export default function SupplierOrdersPage() {
 
   const generateBordereau = () => {
     if (selectedOrders.length === 0) {
-      toast.error("Sélectionnez au moins une commande");
+      toast.error(tr("selectionnez_au_moins_une_commande"));
       return;
     }
     
@@ -191,7 +198,7 @@ export default function SupplierOrdersPage() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Bordereau de préparation - DROPY</title>
+        <title>${tr("bordereau_de_preparation_dropy")}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 20px; }
           h1 { text-align: center; margin-bottom: 10px; }
@@ -208,24 +215,24 @@ export default function SupplierOrdersPage() {
         </style>
       </head>
       <body>
-        <h1>BON DE PRÉPARATION</h1>
+        <h1>${tr("bon_de_preparation")}</h1>
         <p class="subtitle">DROPY - ${format(new Date(), "dd/MM/yyyy HH:mm")}</p>
         
         <div class="warning">
-          <div class="warning-title">⚠️ IMPORTANT - CONFIDENTIALITÉ</div>
+          <div class="warning-title">${tr("important_confidentialite")}</div>
           <div class="warning-text">
             Les informations client (nom, adresse, téléphone) ne sont PAS visibles.<br/>
-            Dropy gère directement la livraison avec la société de transport.
+            ${tr("dropy_gere_directement_la_livraison")}
           </div>
         </div>
         
         <table>
           <thead>
             <tr>
-              <th>N° Commande</th>
-              <th>Produit</th>
-              <th>Variante</th>
-              <th>Quantité</th>
+              <th>${tr("n_commande")}</th>
+              <th>${tr("produit")}</th>
+              <th>${tr("variante")}</th>
+              <th>${tr("quantite")}</th>
             </tr>
           </thead>
           <tbody>
@@ -268,8 +275,8 @@ export default function SupplierOrdersPage() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Commandes à préparer</h1>
-          <p className="text-muted-foreground">Gérez vos commandes de dropshipping.</p>
+          <h1 className="text-3xl font-bold">{tr("commandes_a_preparer")}</h1>
+          <p className="text-muted-foreground">{tr("gerez_vos_commandes_de_dropshipping")}</p>
         </div>
         <Button 
           variant="outline" 
@@ -277,7 +284,7 @@ export default function SupplierOrdersPage() {
           onClick={() => setShowBordereauModal(true)}
         >
           <FileText className="w-4 h-4" />
-          Imprimer bordereau
+          {tr("imprimer_bordereau")}
         </Button>
       </div>
 
@@ -286,9 +293,9 @@ export default function SupplierOrdersPage() {
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-800 text-sm">Information importante</p>
+              <p className="font-bold text-amber-800 text-sm">{tr("information_importante")}</p>
               <p className="text-xs text-amber-700 mt-1">
-                Pour des raisons de confidentialité, les informations client (nom, adresse, téléphone) ne sont pas visibles.
+                {tr("pour_des_raisons_de_confidentialite")}
                 Dropy coordonne directement avec la société de livraison pour l&apos;enlèvement et la livraison.
               </p>
             </div>
@@ -305,8 +312,8 @@ export default function SupplierOrdersPage() {
           >
             <div className="p-6 border-b border-border flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-bold">Imprimer un bordereau</h2>
-                <p className="text-sm text-muted-foreground">Sélectionnez les commandes à inclure</p>
+                <h2 className="text-xl font-bold">{tr("imprimer_un_bordereau")}</h2>
+                <p className="text-sm text-muted-foreground">{tr("selectionnez_les_commandes_a_inclure")}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={() => setShowBordereauModal(false)}>
                 <X className="w-5 h-5" />
@@ -328,7 +335,7 @@ export default function SupplierOrdersPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-primary">{order.supplier_order_number}</span>
-                        <Badge className={statusColors[order.status]}>{statusLabels[order.status]}</Badge>
+                        <Badge className={statusColors[order.status]}>{statusLabel(order.status)}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
                         {order.items.length} produit(s) - {order.items.reduce((s, i) => s + i.quantity, 0)} article(s)
@@ -340,7 +347,7 @@ export default function SupplierOrdersPage() {
             </div>
             
             <div className="p-6 border-t border-border flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setShowBordereauModal(false)}>Annuler</Button>
+              <Button variant="outline" onClick={() => setShowBordereauModal(false)}>{tr("annuler")}</Button>
               <Button className="gap-2 bg-primary" onClick={generateBordereau} disabled={selectedOrders.length === 0}>
                 <Printer className="w-4 h-4" />
                 Imprimer ({selectedOrders.length})
@@ -356,7 +363,7 @@ export default function SupplierOrdersPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher par numéro..." 
+                placeholder={tr("rechercher_par_numero")} 
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -365,10 +372,10 @@ export default function SupplierOrdersPage() {
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
                 <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Statut" />
+                <SelectValue placeholder={tr("statut")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
+                <SelectItem value="all">{tr("tous")}</SelectItem>
                 {Object.entries(statusLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>{label}</SelectItem>
                 ))}
@@ -384,7 +391,7 @@ export default function SupplierOrdersPage() {
             ) : filteredOrders.length === 0 ? (
               <div className="text-center py-20">
                 <Package className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-semibold">Aucune commande</p>
+                <p className="text-lg font-semibold">{tr("aucune_commande")}</p>
                 <p className="text-muted-foreground">Vous n&apos;avez pas encore de commandes à préparer.</p>
               </div>
             ) : (
@@ -399,10 +406,10 @@ export default function SupplierOrdersPage() {
                     <div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono font-bold text-lg text-primary">{order.supplier_order_number}</span>
-                        <Badge className={statusColors[order.status]}>{statusLabels[order.status]}</Badge>
+                        <Badge className={statusColors[order.status]}>{statusLabel(order.status)}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Créée le {format(new Date(order.created_at), "dd MMM yyyy à HH:mm", { locale: fr })}
+                        {tr("created_on")} {format(new Date(order.created_at), "dd MMM yyyy, HH:mm", { locale: fr })}
                       </p>
                     </div>
                     
@@ -440,7 +447,7 @@ export default function SupplierOrdersPage() {
                           disabled={processingAction === order.id}
                         >
                           <Package className="w-4 h-4 mr-1" />
-                          Commencer préparation
+                          {tr("commencer_preparation")}
                         </Button>
                       )}
                       {order.status === "preparing" && (
@@ -451,7 +458,7 @@ export default function SupplierOrdersPage() {
                           disabled={processingAction === order.id}
                         >
                           <Truck className="w-4 h-4 mr-1" />
-                          Prêt à enlever
+                          {tr("pret_a_enlever")}
                         </Button>
                       )}
                       {order.status === "ready_for_pickup" && (
@@ -464,7 +471,7 @@ export default function SupplierOrdersPage() {
                   </div>
 
                   <div className="border-t border-border pt-4">
-                    <h4 className="font-bold text-sm mb-3">Produits à préparer :</h4>
+                    <h4 className="font-bold text-sm mb-3">{tr("produits_a_preparer")}</h4>
                     <div className="space-y-2">
                       {order.items.map((item) => (
                         <div key={item.id} className="flex items-center gap-4 p-3 bg-muted/30 rounded-xl">
@@ -490,7 +497,7 @@ export default function SupplierOrdersPage() {
 
                   <div className="mt-4 p-3 bg-blue-50 rounded-xl border border-blue-100">
                     <p className="text-xs text-blue-700">
-                      <strong>Note :</strong> Les informations du client sont gérées par Dropy. 
+                      <strong>{tr("note")}</strong> Les informations du client sont gérées par Dropy. 
                       Une fois le colis prêt, la société de livraison viendra l&apos;enlever directement.
                     </p>
                   </div>
@@ -504,32 +511,32 @@ export default function SupplierOrdersPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Refuser la commande {rejecting?.number}</DialogTitle>
-            <DialogDescription>Le vendeur est prévenu immédiatement et le stock est remis en vente.</DialogDescription>
+            <DialogDescription>{tr("le_vendeur_est_prevenu_immediatement")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Motif</Label>
+              <Label>{tr("motif")}</Label>
               <Select value={rejectReason} onValueChange={setRejectReason}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="out_of_stock">Rupture de stock</SelectItem>
-                  <SelectItem value="discontinued">Produit arrêté</SelectItem>
-                  <SelectItem value="cannot_ship">Expédition impossible</SelectItem>
-                  <SelectItem value="other">Autre raison</SelectItem>
+                  <SelectItem value="out_of_stock">{tr("rupture_de_stock")}</SelectItem>
+                  <SelectItem value="discontinued">{tr("produit_arrete")}</SelectItem>
+                  <SelectItem value="cannot_ship">{tr("expedition_impossible")}</SelectItem>
+                  <SelectItem value="other">{tr("autre_raison")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="reject-note">Précision pour le vendeur (facultatif)</Label>
+              <Label htmlFor="reject-note">{tr("precision_pour_le_vendeur_facultatif")}</Label>
               <Textarea id="reject-note" rows={2} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejecting(null)}>Retour</Button>
+            <Button variant="outline" onClick={() => setRejecting(null)}>{tr("retour")}</Button>
             <Button className="bg-red-600 hover:bg-red-700" disabled={processingAction === rejecting?.id} onClick={confirmReject}>
-              Refuser la commande
+              {tr("refuser_la_commande")}
             </Button>
           </DialogFooter>
         </DialogContent>
