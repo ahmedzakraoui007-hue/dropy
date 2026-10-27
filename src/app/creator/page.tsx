@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import CreatorLanding from "@/components/landing/CreatorLanding";
@@ -8,6 +9,8 @@ import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 
 export default function CreatorLandingPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.landing.${key}`);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function CreatorLandingPage() {
           <Link href="/creator/dashboard">
             <Button size="lg" className="shadow-2xl gap-2 bg-emerald-600 hover:bg-emerald-700">
               <LayoutDashboard className="w-5 h-5" />
-              Accéder au Dashboard
+              {tr("acceder_au_dashboard")}
             </Button>
           </Link>
         </div>

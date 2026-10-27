@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
 import { FREE_LAUNCH } from "@/lib/launch";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -28,6 +30,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function OpportunityDetailsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.opportunity.${key}`);
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClient();
@@ -60,7 +64,7 @@ export default function OpportunityDetailsPage() {
         .single();
 
       if (briefError) {
-        toast.error("Opportunité introuvable");
+        toast.error(tr("opportunite_introuvable"));
         router.push("/creator/opportunities");
         return;
       }
@@ -101,7 +105,7 @@ export default function OpportunityDetailsPage() {
       <div className="max-w-6xl mx-auto px-4 pt-8">
           <Button variant="ghost" className="mb-6" onClick={() => router.push("/creator/opportunities")}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux opportunités
+            {tr("retour_aux_opportunites")}
           </Button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -122,7 +126,7 @@ export default function OpportunityDetailsPage() {
                   {matchData && (
                     <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-primary/5 border border-primary/20">
                       <span className="text-2xl font-bold text-primary">{matchData.score}%</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Score de compatibilité</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{tr("score_de_compatibilite")}</span>
                     </div>
                   )}
                 </div>
@@ -130,21 +134,21 @@ export default function OpportunityDetailsPage() {
               <CardContent className="space-y-8">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-border/50">
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">Budget</p>
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("budget")}</p>
                       <p className="font-semibold text-primary">
                         {brief.budget_min && brief.budget_max 
-                          ? `${brief.budget_min} - ${brief.budget_max} TND`
+                          ? `${formatPrice(brief.budget_min)} – ${formatPrice(brief.budget_max)}`
                           : brief.budget_min 
-                            ? `${brief.budget_min} TND`
+                            ? formatPrice(brief.budget_min)
                             : "À négocier"}
                       </p>
                     </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Date limite</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold">{tr("date_limite")}</p>
                     <p className="font-semibold">{format(new Date(brief.deadline), "PP", { locale: fr })}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Lieu</p>
+                    <p className="text-xs text-muted-foreground uppercase font-bold">{tr("lieu")}</p>
                     <p className="font-semibold">{brief.preferred_city || "À distance"}</p>
                   </div>
                   <div className="space-y-1">
@@ -154,12 +158,12 @@ export default function OpportunityDetailsPage() {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold">Description du projet</h3>
+                  <h3 className="text-lg font-bold">{tr("description_du_projet")}</h3>
                   <p className="text-muted-foreground whitespace-pre-wrap">{brief.description}</p>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-bold">Livrables attendus</h3>
+                  <h3 className="text-lg font-bold">{tr("livrables_attendus")}</h3>
                   <div className="p-4 rounded-xl bg-muted/50 border border-border">
                     <p className="text-muted-foreground whitespace-pre-wrap">{brief.deliverables}</p>
                   </div>
@@ -169,7 +173,7 @@ export default function OpportunityDetailsPage() {
                     <div className="space-y-4">
                       <h3 className="text-lg font-bold flex items-center gap-2">
                         <Package className="w-5 h-5" />
-                        Produits à promouvoir
+                        {tr("produits_a_promouvoir")}
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {brief.products.map((product: any, idx: number) => (
@@ -198,7 +202,7 @@ export default function OpportunityDetailsPage() {
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-2 text-emerald-600">
                     <Target className="w-5 h-5" />
-                    <CardTitle className="text-lg">Pourquoi vous correspondez</CardTitle>
+                    <CardTitle className="text-lg">{tr("pourquoi_vous_correspondez")}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -221,11 +225,11 @@ export default function OpportunityDetailsPage() {
               hasApplied ? "bg-muted" : "bg-primary text-primary-foreground"
             )}>
               <CardHeader>
-                <CardTitle>{hasApplied ? "Déjà postulé" : "Intéressé ?"}</CardTitle>
+                <CardTitle>{hasApplied ? tr("applied") : tr("interested")}</CardTitle>
                 <CardDescription className={hasApplied ? "" : "text-primary-foreground/70"}>
                   {hasApplied 
-                    ? "Vous avez déjà soumis une proposition pour cette mission." 
-                    : "Soumettez votre proposition maintenant."}
+                    ? tr("applied_text") 
+                    : tr("apply_text")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -235,14 +239,14 @@ export default function OpportunityDetailsPage() {
                     className="w-full"
                     onClick={() => router.push("/creator/missions")}
                   >
-                    Voir mes candidatures
+                    {tr("voir_mes_candidatures")}
                   </Button>
                 ) : (
                   <Button 
                     className="w-full bg-white text-primary hover:bg-white/90"
                     onClick={() => router.push(`/creator/opportunities/${id}/apply`)}
                   >
-                    Postuler maintenant
+                    {tr("postuler_maintenant")}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 )}
@@ -253,18 +257,18 @@ export default function OpportunityDetailsPage() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-emerald-500" />
-                  <CardTitle className="text-lg">Protection Escrow</CardTitle>
+                  <CardTitle className="text-lg">{tr("protection_escrow")}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 text-sm text-muted-foreground">
                 <p>Le paiement est sécurisé par Dropy dès que vous êtes embauché. Travaillez l&apos;esprit tranquille.</p>
                 <div className="flex items-center gap-2 text-foreground font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {FREE_LAUNCH ? "100% pour le créateur" : "85% pour le créateur"}
+                  {FREE_LAUNCH ? tr("share_free") : tr("share_paid")}
                 </div>
                 <div className="flex items-center gap-2 text-foreground font-medium">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {FREE_LAUNCH ? "0% frais plateforme pendant le lancement" : "15% frais plateforme"}
+                  {FREE_LAUNCH ? tr("fee_free") : tr("fee_paid")}
                 </div>
               </CardContent>
             </Card>
@@ -273,16 +277,16 @@ export default function OpportunityDetailsPage() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Info className="w-5 h-5 text-blue-500" />
-                  <CardTitle className="text-lg">Exigences</CardTitle>
+                  <CardTitle className="text-lg">{tr("exigences")}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
                 <div className="space-y-2">
-                  <p className="font-bold">À fournir:</p>
+                  <p className="font-bold">{tr("a_fournir")}</p>
                   <ul className="space-y-1 list-disc list-inside text-muted-foreground">
-                    <li>Fichiers HD (4K préféré pour vidéo)</li>
-                    <li>2 révisions incluses</li>
-                    <li>Communication rapide</li>
+                    <li>{tr("fichiers_hd_4k_prefere_pour")}</li>
+                    <li>{tr("t_2_revisions_incluses")}</li>
+                    <li>{tr("communication_rapide")}</li>
                   </ul>
                 </div>
               </CardContent>

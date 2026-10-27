@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
@@ -22,6 +23,9 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 export default function CreatorMissionsPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.missions.${key}`);
+  const tc = (key: string) => tt(`creator_app.common.${key}`);
   const router = useRouter();
   const supabase = createClient();
   const [isLoading, setIsLoading] = useState(true);
@@ -64,25 +68,25 @@ export default function CreatorMissionsPage() {
     
     if (brief.selected_creator_id === userId) {
       switch (brief.status) {
-        case "published": return <Badge className="bg-amber-500">Retenu - paiement en attente</Badge>;
-        case "assigned": return <Badge className="bg-purple-500">Retenu - mission en cours</Badge>;
-        case "in_progress": return <Badge className="bg-orange-500">Retouches demandées</Badge>;
-        case "delivered": return <Badge className="bg-blue-500">Livré - en attente de validation</Badge>;
-        case "completed": return <Badge className="bg-emerald-500">Terminé</Badge>;
-        default: return <Badge>{({ draft: "Brouillon", published: "Publié", assigned: "En cours", in_progress: "Retouches", delivered: "Livré", completed: "Terminé", cancelled: "Annulé" } as Record<string, string>)[brief.status] || brief.status}</Badge>;
+        case "published": return <Badge className="bg-amber-500">{tr("retenu_paiement_en_attente")}</Badge>;
+        case "assigned": return <Badge className="bg-purple-500">{tr("retenu_mission_en_cours")}</Badge>;
+        case "in_progress": return <Badge className="bg-orange-500">{tr("retouches_demandees")}</Badge>;
+        case "delivered": return <Badge className="bg-blue-500">{tr("livre_en_attente_de_validation")}</Badge>;
+        case "completed": return <Badge className="bg-emerald-500">{tr("termine")}</Badge>;
+        default: return <Badge>{tc(`brief_${brief.status}`)}</Badge>;
       }
     }
 
     if (myApp) {
       switch (myApp.status) {
-        case "pending": return <Badge variant="outline">Candidature envoyée - en attente</Badge>;
-        case "rejected": return <Badge variant="destructive">Non retenu</Badge>;
-        case "accepted": return <Badge className="bg-emerald-500">Accepté</Badge>;
+        case "pending": return <Badge variant="outline">{tr("candidature_envoyee_en_attente")}</Badge>;
+        case "rejected": return <Badge variant="destructive">{tr("non_retenu")}</Badge>;
+        case "accepted": return <Badge className="bg-emerald-500">{tr("accepte")}</Badge>;
         default: return <Badge variant="outline">{myApp.status}</Badge>;
       }
     }
 
-    return <Badge variant="outline">{({ draft: "Brouillon", published: "Publié", assigned: "En cours", in_progress: "Retouches", delivered: "Livré", completed: "Terminé", cancelled: "Annulé" } as Record<string, string>)[brief.status] || brief.status}</Badge>;
+    return <Badge variant="outline">{tc(`brief_${brief.status}`)}</Badge>;
   };
 
   return (
@@ -90,23 +94,23 @@ export default function CreatorMissionsPage() {
       <div className="max-w-7xl mx-auto px-4 pt-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold">Mes missions</h1>
-            <p className="text-muted-foreground">Suivez vos propositions et vos projets en cours</p>
+            <h1 className="text-3xl font-bold">{tr("mes_missions")}</h1>
+            <p className="text-muted-foreground">{tr("suivez_vos_propositions_et_vos")}</p>
           </div>
           <Button 
             onClick={() => router.push("/creator/opportunities")}
             className="bg-gradient-to-r from-violet-500 to-purple-600"
           >
-            Trouver de nouvelles opportunités
+            {tr("trouver_de_nouvelles_opportunites")}
           </Button>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="w-full md:w-auto bg-muted">
-            <TabsTrigger value="all" className="flex-1 md:flex-none">Tous</TabsTrigger>
-            <TabsTrigger value="proposals" className="flex-1 md:flex-none">Propositions</TabsTrigger>
-            <TabsTrigger value="active" className="flex-1 md:flex-none">Missions en cours</TabsTrigger>
-            <TabsTrigger value="completed" className="flex-1 md:flex-none">Terminé</TabsTrigger>
+            <TabsTrigger value="all" className="flex-1 md:flex-none">{tr("tous")}</TabsTrigger>
+            <TabsTrigger value="proposals" className="flex-1 md:flex-none">{tr("propositions")}</TabsTrigger>
+            <TabsTrigger value="active" className="flex-1 md:flex-none">{tr("missions_en_cours")}</TabsTrigger>
+            <TabsTrigger value="completed" className="flex-1 md:flex-none">{tr("termine")}</TabsTrigger>
           </TabsList>
         </Tabs>
 
@@ -119,12 +123,12 @@ export default function CreatorMissionsPage() {
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
               <Briefcase className="w-10 h-10 text-muted-foreground opacity-20" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Aucune mission pour le moment</h3>
+            <h3 className="text-xl font-semibold mb-2">{tr("aucune_mission_pour_le_moment")}</h3>
             <p className="text-muted-foreground max-w-sm mb-6">
-              You haven&apos;t applied to any missions yet. Explore opportunities to get started!
+              Vous n&apos;avez encore postulé à aucune mission. Parcourez les opportunités pour commencer.
             </p>
             <Button onClick={() => router.push("/creator/opportunities")}>
-              Voir les opportunités
+              {tr("voir_les_opportunites")}
             </Button>
           </Card>
         ) : (
@@ -166,21 +170,21 @@ export default function CreatorMissionsPage() {
 
                       <div className="flex items-center gap-6 pt-2">
                         <div className="flex items-center gap-1 text-sm">
-                          <span className="text-muted-foreground">My Proposal:</span>
+                          <span className="text-muted-foreground">{tr("ma_proposition")}</span>
                           <span className="font-bold">
-                            {mission.applications?.find((a: any) => a.creator_id === mission.applications?.[0]?.creator_id)?.proposed_price} TND
+                            {mission.applications?.find((a: any) => a.creator_id === mission.applications?.[0]?.creator_id)?.proposed_price} DT
                           </span>
                         </div>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <AlertCircle className="w-4 h-4" />
-                          {mission.applications?.find((a: any) => a.creator_id === mission.applications?.[0]?.creator_id)?.delivery_days} days delivery
+                          {mission.applications?.find((a: any) => a.creator_id === mission.applications?.[0]?.creator_id)?.delivery_days} jours de livraison
                         </div>
                       </div>
                     </div>
                     
                     <div className="flex items-center min-w-[120px]">
                       <Button variant="ghost" className="w-full group-hover:translate-x-1 transition-transform">
-                        Détails
+                        {tr("details")}
                         <ArrowRight className="ml-2 w-4 h-4" />
                       </Button>
                     </div>

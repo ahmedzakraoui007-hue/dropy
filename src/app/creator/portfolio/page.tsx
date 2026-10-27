@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Image as ImageIcon, Video, Trash2, ExternalLink, Loader2, LayoutGrid, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,9 @@ const MAX_SIZE_MB = 50;
 const EMPTY = { title: "", description: "", category: "product_photo", link: "" };
 
 export default function PortfolioPage() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.portfolio.${key}`);
+  const tc = (key: string) => tt(`creator_app.common.${key}`);
   const supabase = useMemo(() => createClient(), []);
   const [loading, setLoading] = useState(true);
   const [portfolio, setPortfolio] = useState<any[]>([]);
@@ -45,18 +49,18 @@ export default function PortfolioPage() {
       .select("*")
       .eq("creator_id", user.id)
       .order("created_at", { ascending: false });
-    if (error) toast.error("Impossible de charger le portfolio");
+    if (error) toast.error(tr("impossible_de_charger_le_portfolio"));
     else setPortfolio(data || []);
     setLoading(false);
   }
 
   function pickFile(f: File | null) {
     if (f && f.size > MAX_SIZE_MB * 1024 * 1024) {
-      toast.error(`Fichier trop lourd (${MAX_SIZE_MB} Mo maximum)`);
+      toast.error(tr("too_large").replace("{max}", String(MAX_SIZE_MB)));
       return;
     }
     if (f && !/^(image|video)\//.test(f.type)) {
-      toast.error("Seules les images et vidéos sont acceptées");
+      toast.error(tr("seules_les_images_et_videos"));
       return;
     }
     setFile(f);
@@ -68,14 +72,14 @@ export default function PortfolioPage() {
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non connecté");
+      if (!user) throw new Error(tc("not_signed_in"));
 
       let mediaUrl = link;
       let type = isVideoUrl(link) ? "video" : "image";
       if (file) {
         const path = `${user.id}/portfolio/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
         const { error: uploadError } = await supabase.storage.from("store-assets").upload(path, file);
-        if (uploadError) throw new Error("Échec de l'envoi du fichier");
+        if (uploadError) throw new Error(tr("upload_error"));
         mediaUrl = supabase.storage.from("store-assets").getPublicUrl(path).data.publicUrl;
         type = file.type.startsWith("video/") ? "video" : "image";
       }
@@ -89,32 +93,32 @@ export default function PortfolioPage() {
         thumbnail_url: type === "image" ? mediaUrl : null,
         content_url: mediaUrl,
       });
-      if (error) throw new Error("Impossible d'ajouter le projet");
+      if (error) throw new Error(tr("add_error"));
 
-      toast.success("Projet ajouté au portfolio");
+      toast.success(tr("projet_ajoute_au_portfolio"));
       setIsAdding(false);
       setForm(EMPTY);
       setFile(null);
       loadPortfolio();
     } catch (e: any) {
-      toast.error(e.message || "Impossible d'ajouter le projet");
+      toast.error(e.message || tr("add_error"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDeleteProject(item: any) {
-    if (!window.confirm(`Supprimer « ${item.title} » de votre portfolio ?`)) return;
+    if (!window.confirm(tr("delete_confirm").replace("{title}", item.title))) return;
     setIsDeleting(item.id);
     const { error } = await supabase.from("creator_portfolio").delete().eq("id", item.id);
     if (error) {
-      toast.error("Impossible de supprimer le projet");
+      toast.error(tr("impossible_de_supprimer_le_projet"));
     } else {
       const prefix = "/storage/v1/object/public/store-assets/";
       const url: string = item.content_url || item.thumbnail_url || "";
       const i = url.indexOf(prefix);
       if (i >= 0) await supabase.storage.from("store-assets").remove([decodeURIComponent(url.slice(i + prefix.length))]);
-      toast.success("Projet supprimé");
+      toast.success(tr("projet_supprime"));
       setPortfolio((prev) => prev.filter((p) => p.id !== item.id));
     }
     setIsDeleting(null);
@@ -134,30 +138,30 @@ export default function PortfolioPage() {
     <div className="max-w-7xl mx-auto space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black mb-2">Mon portfolio</h1>
+          <h1 className="text-3xl font-black mb-2">{tr("mon_portfolio")}</h1>
           <p className="text-muted-foreground">
-            Présentez vos meilleures réalisations : les vendeurs le consultent quand vous postulez à leurs briefs.
+            {tr("presentez_vos_meilleures_realisations_les")}
           </p>
         </div>
         <Button onClick={() => setIsAdding(true)} className="bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20 gap-2">
           <Plus className="w-4 h-4" />
-          Ajouter un projet
+          {tr("ajouter_un_projet")}
         </Button>
       </div>
 
       <Dialog open={isAdding} onOpenChange={(open) => !saving && setIsAdding(open)}>
         <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Ajouter un projet</DialogTitle>
-            <DialogDescription>Envoyez une photo ou une vidéo, ou collez un lien (Instagram, TikTok, YouTube...).</DialogDescription>
+            <DialogTitle>{tr("ajouter_un_projet")}</DialogTitle>
+            <DialogDescription>{tr("envoyez_une_photo_ou_une")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             <div className="grid gap-2">
-              <Label htmlFor="title">Titre du projet *</Label>
-              <Input id="title" placeholder="ex : Vidéo UGC pour une marque de cosmétiques" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <Label htmlFor="title">{tr("titre_du_projet")}</Label>
+              <Input id="title" placeholder={tr("ex_video_ugc_pour_une")} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="category">Catégorie</Label>
+              <Label htmlFor="category">{tr("categorie")}</Label>
               <select
                 id="category"
                 value={form.category}
@@ -182,17 +186,17 @@ export default function PortfolioPage() {
             </div>
             {!file && (
               <div className="grid gap-2">
-                <Label htmlFor="link">ou lien vers la réalisation</Label>
+                <Label htmlFor="link">{tr("ou_lien_vers_la_realisation")}</Label>
                 <Input id="link" placeholder="https://..." value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
               </div>
             )}
             <div className="grid gap-2">
-              <Label htmlFor="description">Description (facultatif)</Label>
-              <Textarea id="description" placeholder="Marque, objectif, résultats obtenus..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <Label htmlFor="description">{tr("description_facultatif")}</Label>
+              <Textarea id="description" placeholder={tr("marque_objectif_resultats_obtenus")} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAdding(false)} disabled={saving}>Annuler</Button>
+            <Button variant="outline" onClick={() => setIsAdding(false)} disabled={saving}>{tr("annuler")}</Button>
             <Button onClick={handleAddProject} className="bg-primary text-primary-foreground" disabled={!canSave || saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Ajouter au portfolio
@@ -205,10 +209,10 @@ export default function PortfolioPage() {
         {portfolio.length === 0 ? (
           <div className="col-span-full text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed">
             <LayoutGrid className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-            <h3 className="text-xl font-bold mb-2">Votre portfolio est vide</h3>
-            <p className="text-muted-foreground mb-6">Ajoutez au moins 3 réalisations pour convaincre les vendeurs.</p>
+            <h3 className="text-xl font-bold mb-2">{tr("votre_portfolio_est_vide")}</h3>
+            <p className="text-muted-foreground mb-6">{tr("ajoutez_au_moins_3_realisations")}</p>
             <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setIsAdding(true)}>
-              Ajouter mon premier projet
+              {tr("ajouter_mon_premier_projet")}
             </Button>
           </div>
         ) : (
@@ -232,7 +236,7 @@ export default function PortfolioPage() {
                   <div>
                     <h3 className="font-bold truncate">{item.title}</h3>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {video ? "Vidéo" : "Image"} • {portfolioCategoryLabel(item.category)}
+                      {tr(video ? "video" : "image")} • {tc(`cat_${item.category || "general"}`).startsWith("creator_app.") ? portfolioCategoryLabel(item.category) : tc(`cat_${item.category || "general"}`)}
                     </p>
                     {item.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>}
                   </div>
@@ -251,7 +255,7 @@ export default function PortfolioPage() {
                       className="text-destructive hover:bg-destructive/10"
                       onClick={() => handleDeleteProject(item)}
                       disabled={isDeleting === item.id}
-                      aria-label="Supprimer"
+                      aria-label={tr("supprimer")}
                     >
                       {isDeleting === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                     </Button>

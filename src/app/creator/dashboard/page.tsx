@@ -1,5 +1,7 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,12 +37,15 @@ const MISSION_STATUS: Record<string, string> = {
   cancelled: "Annulée",
 };
 
-function since(date: string) {
+function since(date: string, tr: (key: string) => string) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 86400000));
-  return days === 0 ? "aujourd'hui" : `il y a ${days} jour${days > 1 ? "s" : ""}`;
+  return days === 0 ? tr("today") : tr(days > 1 ? "days_ago" : "day_ago").replace("{n}", String(days));
 }
 
 export default function CreatorDashboard() {
+  const { t: tt } = useTranslation();
+  const tr = (key: string) => tt(`creator_app.dashboard.${key}`);
+  const tc = (key: string) => tt(`creator_app.common.${key}`);
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [creatorProfile, setCreatorProfile] = useState<any>(null);
@@ -79,9 +84,9 @@ export default function CreatorDashboard() {
       setMissions((briefs as unknown as Mission[]) || []);
       setEarned((payments || []).reduce((sum, p) => sum + Number(p.creator_amount || 0), 0));
       setSteps([
-        { text: "Ajouter au moins 3 réalisations à votre portfolio", done: (portfolioCount || 0) >= 3, href: "/creator/portfolio" },
-        { text: "Renseigner vos coordonnées de versement (RIB, D17 ou Flouci)", done: Boolean(profile?.bank_rib || profile?.d17_number || profile?.flouci_number), href: "/creator/settings" },
-        { text: "Ajouter vos réseaux sociaux", done: Boolean(cp.instagram_handle || cp.instagram_username || cp.tiktok_handle), href: "/creator/settings" },
+        { text: tr("todo_portfolio"), done: (portfolioCount || 0) >= 3, href: "/creator/portfolio" },
+        { text: tr("todo_payout"), done: Boolean(profile?.bank_rib || profile?.d17_number || profile?.flouci_number), href: "/creator/settings" },
+        { text: tr("todo_social"), done: Boolean(cp.instagram_handle || cp.instagram_username || cp.tiktok_handle), href: "/creator/settings" },
       ]);
       setLoading(false);
     }
@@ -93,7 +98,7 @@ export default function CreatorDashboard() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground animate-pulse">Chargement de votre profil créateur...</p>
+          <p className="text-muted-foreground animate-pulse">{tr("chargement_de_votre_profil_createur")}</p>
         </div>
       </div>
     );
@@ -103,30 +108,30 @@ export default function CreatorDashboard() {
   const verified = creatorProfile?.is_verified || creatorProfile?.status === "approved";
 
   const statCards = [
-    { title: "Missions actives", value: active.length.toString(), icon: Briefcase },
-    { title: "Gains validés", value: `${earned.toFixed(2)} TND`, icon: DollarSign },
-    { title: "Note moyenne", value: creatorProfile?.rating ? `${Number(creatorProfile.rating).toFixed(1)}/5` : "—", icon: Star },
-    { title: "Avis clients", value: String(creatorProfile?.total_reviews || 0), icon: Users },
+    { title: tr("card_active"), value: active.length.toString(), icon: Briefcase },
+    { title: tr("card_earned"), value: formatPrice(earned), icon: DollarSign },
+    { title: tr("card_rating"), value: creatorProfile?.rating ? `${Number(creatorProfile.rating).toFixed(1)}/5` : "—", icon: Star },
+    { title: tr("card_reviews"), value: String(creatorProfile?.total_reviews || 0), icon: Users },
   ];
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black mb-1">Tableau de bord créateur</h1>
-          <p className="text-muted-foreground">Gérez vos missions et votre portfolio.</p>
+          <h1 className="text-3xl font-black mb-1">{tr("tableau_de_bord_createur")}</h1>
+          <p className="text-muted-foreground">{tr("gerez_vos_missions_et_votre")}</p>
         </div>
         <div className="flex gap-2">
           <Link href="/creator/opportunities">
             <Button variant="outline" className="gap-2">
               <Briefcase className="w-4 h-4" />
-              Opportunités
+              {tr("opportunites")}
             </Button>
           </Link>
           <Link href="/creator/portfolio">
             <Button className="bg-primary text-primary-foreground hover:opacity-90 gap-2">
               <Edit className="w-4 h-4" />
-              Modifier le portfolio
+              {tr("modifier_le_portfolio")}
             </Button>
           </Link>
         </div>
@@ -153,16 +158,16 @@ export default function CreatorDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">Missions récentes</CardTitle>
-            <CardDescription>Vos collaborations avec les vendeurs</CardDescription>
+            <CardTitle className="text-xl font-bold">{tr("missions_recentes")}</CardTitle>
+            <CardDescription>{tr("vos_collaborations_avec_les_vendeurs")}</CardDescription>
           </CardHeader>
           <CardContent>
             {missions.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-3xl border-border/50">
                 <Briefcase className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                <p className="font-medium">Aucune mission pour le moment</p>
+                <p className="font-medium">{tr("aucune_mission_pour_le_moment")}</p>
                 <Link href="/creator/opportunities">
-                  <Button variant="link" className="mt-2 text-primary">Explorer les opportunités</Button>
+                  <Button variant="link" className="mt-2 text-primary">{tr("explorer_les_opportunites")}</Button>
                 </Link>
               </div>
             ) : (
@@ -184,9 +189,9 @@ export default function CreatorDashboard() {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                        {MISSION_STATUS[m.status] || m.status}
+                        {tr(`mission_${m.status}`)}
                       </span>
-                      <p className="text-[10px] text-muted-foreground mt-1.5">{since(m.updated_at || m.created_at)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1.5">{since(m.updated_at || m.created_at, tr)}</p>
                     </div>
                   </Link>
                 ))}
@@ -197,8 +202,8 @@ export default function CreatorDashboard() {
 
         <Card className="border-border/50 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-bold">Statut du compte</CardTitle>
-            <CardDescription>Vérification et paiements</CardDescription>
+            <CardTitle className="text-xl font-bold">{tr("statut_du_compte")}</CardTitle>
+            <CardDescription>{tr("verification_et_paiements")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4 p-5 rounded-3xl border border-primary/20 bg-primary/5">
@@ -208,13 +213,13 @@ export default function CreatorDashboard() {
               <div>
                 <p className="font-black text-sm uppercase tracking-wide">{verified ? "Profil validé" : "Profil en cours de validation"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {verified ? "Votre profil est visible par les vendeurs." : "L'équipe Dropy examine votre profil."}
+                  {tr(verified ? "profile_visible" : "profile_review")}
                 </p>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Prochaines étapes</h4>
+              <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">{tr("prochaines_etapes")}</h4>
               <div className="space-y-3">
                 {steps.map((item, i) => (
                   <Link key={i} href={item.href} className="flex items-center gap-3 text-sm">
@@ -228,7 +233,7 @@ export default function CreatorDashboard() {
             </div>
 
             <Button asChild className="w-full border-primary/20 hover:bg-primary/5" variant="outline">
-              <a href="mailto:ahmed@dropy.store">Contacter le support créateur</a>
+              <a href="mailto:ahmed@dropy.store">{tr("contacter_le_support_createur")}</a>
             </Button>
           </CardContent>
         </Card>
