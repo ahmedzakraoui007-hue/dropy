@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Mail, Phone, MapPin, ShoppingBag, Calendar, Package, TrendingUp } from "lucide-react";
@@ -223,7 +224,7 @@ export default function CustomerDetailsPage() {
                   <TrendingUp className="w-5 h-5 text-green-500" />
                   <span className="text-sm">Total dépensé</span>
                 </div>
-                <span className="font-bold text-green-600">{customer.total_spent.toFixed(2)} TND</span>
+                <span className="font-bold text-green-600">{formatPrice(customer.total_spent)}</span>
               </div>
               <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="flex items-center gap-3">
@@ -259,7 +260,7 @@ export default function CustomerDetailsPage() {
                           {statusConfig[order.status]?.label || order.status}
                         </Badge>
                       </div>
-                      <span className="text-lg font-bold text-primary">{order.total_amount.toFixed(2)} TND</span>
+                      <span className="text-lg font-bold text-primary">{formatPrice(order.total_amount)}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm text-muted-foreground">
                       <span>{format(new Date(order.created_at), "dd MMMM yyyy à HH:mm", { locale: fr })}</span>

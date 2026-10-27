@@ -66,7 +66,8 @@ export default function StoreBuilderDashboard() {
   }
 
   const isOnline = store.is_active !== false;
-  const publicUrl = storeUrl(store.slug);
+  const customDomain = store.custom_domain_status === "active" ? store.custom_domain : null;
+  const publicUrl = storeUrl(store.slug, "", customDomain);
 
   const steps = [
     {
@@ -125,7 +126,7 @@ export default function StoreBuilderDashboard() {
           <p className="text-sm font-medium text-muted-foreground">{tr("hub.eyebrow")}</p>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight truncate">{store.name}</h1>
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-mono text-gray-600 truncate">{storeDisplayUrl(store.slug)}</span>
+            <span className="font-mono text-gray-600 truncate">{storeDisplayUrl(store.slug, customDomain)}</span>
             <button
               type="button"
               className="text-gray-400 hover:text-gray-700"

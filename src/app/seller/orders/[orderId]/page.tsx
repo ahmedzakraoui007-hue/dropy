@@ -60,7 +60,7 @@ import {
 import { formatPrice } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { format, addDays } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
 import { toast } from "sonner";
 
 interface OrderItem {
@@ -141,19 +141,6 @@ const CANCEL_REASON_LABELS: Record<string, string> = {
 
 const phoneDigits = (phone: string | null | undefined) => String(phone || "").replace(/\D/g, "").replace(/^216/, "");
 
-const statusLabels: Record<string, string> = {
-  new: "À confirmer",
-  pending: "En attente",
-  confirmed: "Confirmée",
-  preparing: "En préparation",
-  prepared: "Préparé",
-  ready_to_ship: "Prêt à expédier",
-  pickup_scheduled: "Enlèvement programmé",
-  shipped: "Expédiée",
-  delivered: "Livrée",
-  cancelled: "Annulée",
-};
-
 const ownStatusSteps = [
   { key: "pending", label: "En attente", icon: Clock },
   { key: "prepared", label: "Préparé", icon: Package },
@@ -183,7 +170,14 @@ export default function OrderDetailPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isPrepared, setIsPrepared] = useState(false);
   const [processing, setProcessing] = useState(false);
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const tx = (key: string) => t(`seller_app.order_detail.${key}`);
+  const tl = (group: string, key: string) => {
+    const path = `seller_app.order_detail.${group}.${key}`;
+    const value = t(path);
+    return value === path ? key : value;
+  };
+  const dateLocale = locale === "ar" ? arTN : fr;
   const [blocking, setBlocking] = useState(false);
 
   async function blockCustomer() {
@@ -246,7 +240,7 @@ export default function OrderDetailPage() {
       setSellerNote(data.seller_notes || "");
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Commande non trouvée");
+      toast.error(tx("not_found"));
       router.push("/seller/orders");
     } finally {
       setLoading(false);
@@ -266,10 +260,10 @@ export default function OrderDetailPage() {
         })
         .eq("id", order.id);
 
-      toast.success("Commande marquée comme préparée");
+      toast.success(tx("marked_prepared"));
       loadOrder();
     } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(tx("update_error"));
     } finally {
       setProcessing(false);
     }
@@ -277,7 +271,7 @@ export default function OrderDetailPage() {
 
   async function schedulePickup() {
     if (!order || !pickupData.date) {
-      toast.error("Veuillez sélectionner une date");
+      toast.error(tx("pick_date"));
       return;
     }
     setProcessing(true);
@@ -298,11 +292,11 @@ export default function OrderDetailPage() {
         })
         .eq("id", order.id);
 
-      toast.success("Enlèvement programmé avec succès!");
+      toast.success(tx("pickup_scheduled_ok"));
       setShowPickupModal(false);
       loadOrder();
     } catch (error) {
-      toast.error("Erreur lors de la programmation");
+      toast.error(tx("pickup_error"));
     } finally {
       setProcessing(false);
     }
@@ -321,16 +315,16 @@ export default function OrderDetailPage() {
           own_products_status: "shipped",
           delivery_type: "own",
           tracking_number: ownDeliveryData.trackingNumber || null,
-          shipping_company: ownDeliveryData.carrier || "Livraison propre",
+          shipping_company: ownDeliveryData.carrier || tx("own_delivery"),
           shipped_at: new Date().toISOString(),
         })
         .eq("id", order.id);
 
-      toast.success("Commande marquée comme expédiée");
+      toast.success(tx("marked_shipped"));
       setShowOwnDeliveryModal(false);
       loadOrder();
     } catch (error) {
-      toast.error("Erreur lors de la mise à jour");
+      toast.error(tx("update_error"));
     } finally {
       setProcessing(false);
     }
@@ -352,10 +346,10 @@ export default function OrderDetailPage() {
         })
         .eq("id", order.id);
 
-      toast.success("Commande marquée comme livrée");
+      toast.success(tx("marked_delivered"));
       loadOrder();
     } catch (error) {
-      toast.error("Erreur");
+      toast.error(tx("error"));
     } finally {
       setProcessing(false);
     }
@@ -372,11 +366,11 @@ export default function OrderDetailPage() {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Erreur");
-      toast.success(action === "confirm" ? "Commande confirmée : le fournisseur la reçoit maintenant" : "Commande annulée, stock remis en vente");
+      toast.success(tx(action === "confirm" ? "confirmed_toast" : "cancelled_toast"));
       setCancelOpen(false);
       await loadOrder();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la mise à jour");
+      toast.error(error instanceof Error ? error.message : tx("update_error"));
     } finally {
       setProcessing(false);
     }
@@ -390,15 +384,15 @@ export default function OrderDetailPage() {
         .from("store_orders")
         .update({ seller_notes: sellerNote })
         .eq("id", order.id);
-      toast.success("Note enregistrée");
+      toast.success(tx("note_saved"));
     } catch (error) {
-      toast.error("Erreur");
+      toast.error(tx("error"));
     }
   }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success("Copié");
+    toast.success(tx("copied"));
   };
 
   const getOwnStatusIndex = () => {
@@ -443,29 +437,29 @@ export default function OrderDetailPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/seller/orders")}>
-          <ArrowLeft className="w-5 h-5" />
+        <Button variant="ghost" size="icon" aria-label={tx("back")} onClick={() => router.push("/seller/orders")}>
+          <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
         </Button>
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold">Commande {order.order_number}</h1>
+            <h1 className="text-2xl font-bold">{tx("order")} {order.order_number}</h1>
             <Badge className={`${statusColors[order.status]} text-sm`}>
-              {statusLabels[order.status]}
+              {tl("status", order.status)}
             </Badge>
             {order.has_own_products && order.has_dropshipping_products && (
               <Badge className="bg-gradient-to-r from-amber-100 to-purple-100 text-amber-800 border-amber-200">
-                Commande Mixte
+                {tx("mixed")}
               </Badge>
             )}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            {format(new Date(order.created_at), "EEEE d MMMM yyyy à HH:mm", { locale: fr })}
+            {format(new Date(order.created_at), "EEEE d MMMM yyyy, HH:mm", { locale: dateLocale })}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-2" onClick={() => window.print()}>
             <Printer className="w-4 h-4" />
-            Imprimer
+            {tx("print")}
           </Button>
         </div>
       </div>
@@ -498,9 +492,9 @@ export default function OrderDetailPage() {
             <div className="flex items-start gap-3">
               <Phone className="w-5 h-5 text-amber-700 mt-0.5 shrink-0" />
               <div>
-                <p className="font-bold text-amber-900">Commande à confirmer</p>
+                <p className="font-bold text-amber-900">{tx("to_confirm_title")}</p>
                 <p className="text-sm text-amber-800">
-                  Appelez {order.customer_name || "le client"} pour vérifier la commande et l&apos;adresse. Le fournisseur ne la reçoit qu&apos;après votre confirmation.
+                  {tx("to_confirm_text")}
                 </p>
               </div>
             </div>
@@ -508,7 +502,7 @@ export default function OrderDetailPage() {
               {order.customer_phone && (
                 <>
                   <Button asChild variant="outline" className="bg-white gap-2">
-                    <a href={`tel:${order.customer_phone}`}><Phone className="w-4 h-4" />Appeler</a>
+                    <a href={`tel:${order.customer_phone}`}><Phone className="w-4 h-4" />{tx("call")}</a>
                   </Button>
                   <Button asChild variant="outline" className="bg-white gap-2">
                     <a href={whatsappLink(order.customer_phone, sellerConfirmationMessage(order, order.store?.name || "", order.store?.storefront_language === "ar" ? "ar" : "fr"))} target="_blank" rel="noreferrer"><MessageSquare className="w-4 h-4" />WhatsApp</a>
@@ -517,11 +511,11 @@ export default function OrderDetailPage() {
               )}
               <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700" disabled={processing} onClick={() => updateOrderStatus("confirm")}>
                 <CheckCircle2 className="w-4 h-4" />
-                Confirmer
+                {tx("confirm")}
               </Button>
               <Button variant="outline" className="gap-2 bg-white text-red-600 border-red-200 hover:bg-red-50" disabled={processing} onClick={() => setCancelOpen(true)}>
                 <XCircle className="w-4 h-4" />
-                Annuler
+                {tx("cancel")}
               </Button>
             </div>
           </CardContent>
@@ -531,7 +525,7 @@ export default function OrderDetailPage() {
       {order.status === "cancelled" && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="pt-6 text-sm text-red-800">
-            Commande annulée{order.cancel_reason ? ` : ${CANCEL_REASON_LABELS[order.cancel_reason] || order.cancel_reason}` : ""}.
+            {tx("cancelled_banner")}{order.cancel_reason ? ` : ${tl("reasons", order.cancel_reason)}` : ""}.
           </CardContent>
         </Card>
       )}
@@ -541,9 +535,9 @@ export default function OrderDetailPage() {
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
             <div>
-              <p className="font-medium text-amber-800">Commande avec 2 types de produits</p>
+              <p className="font-medium text-amber-800">{tx("mixed_title")}</p>
               <p className="text-sm text-amber-700 mt-1">
-                Le client recevra peut-être 2 colis séparés: un de vos produits et un du fournisseur.
+                {tx("mixed_text")}
               </p>
             </div>
           </div>
@@ -555,43 +549,43 @@ export default function OrderDetailPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Package className="w-4 h-4" />
-              Informations
+              {tx("info")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Date</span>
+                <span className="text-muted-foreground">{tx("date")}</span>
                 <span>{format(new Date(order.created_at), "dd/MM/yyyy HH:mm")}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Statut</span>
-                <Badge className={statusColors[order.status]}>{statusLabels[order.status]}</Badge>
+                <span className="text-muted-foreground">{tx("status_label")}</span>
+                <Badge className={statusColors[order.status]}>{tl("status", order.status)}</Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Paiement</span>
+                <span className="text-muted-foreground">{tx("payment")}</span>
                 <span className={order.payment_status === "paid" ? "text-green-600 font-medium" : ""}>
-                  {order.payment_method === "cod" ? "À la livraison" : "✅ Payé"}
+                  {order.payment_method === "cod" ? tx("cod") : `✅ ${tx("paid")}`}
                 </span>
               </div>
             </div>
             <div className="border-t pt-4 space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Sous-total</span>
+                <span className="text-muted-foreground">{tx("subtotal")}</span>
                 <span>{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Livraison</span>
-                <span>{Number(shipping) > 0 ? formatPrice(shipping) : "Gratuite"}</span>
+                <span className="text-muted-foreground">{tx("delivery")}</span>
+                <span>{Number(shipping) > 0 ? formatPrice(shipping) : tx("free")}</span>
               </div>
               {Number(order.discount_amount) > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Réduction</span>
+                  <span>{tx("discount")}</span>
                   <span>-{formatPrice(order.discount_amount ?? 0)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">
-                <span>Total</span>
+                <span>{tx("total")}</span>
                 <span className="text-primary">{formatPrice(order.total_amount)}</span>
               </div>
             </div>
@@ -602,7 +596,7 @@ export default function OrderDetailPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <User className="w-4 h-4" />
-              Client
+              {tx("customer")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -631,7 +625,7 @@ export default function OrderDetailPage() {
             <div className="p-3 bg-muted/50 rounded-lg">
               <p className="text-xs font-medium text-muted-foreground mb-1 flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
-                ADRESSE DE LIVRAISON
+                {tx("address")}
               </p>
               <p className="text-sm">{order.customer_address}</p>
               {order.customer_governorate && (
@@ -652,12 +646,12 @@ export default function OrderDetailPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Truck className="w-4 h-4" />
-                Livraison
+                {tx("delivery")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                <p className="text-xs font-medium text-indigo-600 mb-1">N° de suivi</p>
+                <p className="text-xs font-medium text-indigo-600 mb-1">{tx("tracking_number")}</p>
                 <div className="flex items-center gap-2">
                   <code className="text-lg font-mono font-bold text-indigo-800">{order.tracking_number}</code>
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(order.tracking_number!)}>
@@ -668,9 +662,9 @@ export default function OrderDetailPage() {
               </div>
               {order.pickup_scheduled_at && (
                 <div className="text-sm">
-                  <p className="text-muted-foreground">Enlèvement prévu:</p>
+                  <p className="text-muted-foreground">{tx("pickup_planned")}</p>
                   <p className="font-medium">
-                    {format(new Date(order.pickup_scheduled_at), "EEEE d MMMM", { locale: fr })}
+                    {format(new Date(order.pickup_scheduled_at), "EEEE d MMMM", { locale: dateLocale })}
                     {order.pickup_slot === "morning" ? " (9h-12h)" : " (14h-18h)"}
                   </p>
                 </div>
@@ -678,7 +672,7 @@ export default function OrderDetailPage() {
               <Link href={`/track/${order.order_number}`} target="_blank">
                 <Button variant="outline" className="w-full gap-2">
                   <ExternalLink className="w-4 h-4" />
-                  Voir le suivi complet
+                  {tx("full_tracking")}
                 </Button>
               </Link>
             </CardContent>
@@ -693,27 +687,28 @@ export default function OrderDetailPage() {
               <div>
                 <CardTitle className="flex items-center gap-2 text-amber-800">
                   <Tag className="w-5 h-5" />
-                  Mes Produits à Expédier
+                  {tx("own_title")}
                 </CardTitle>
                 <CardDescription>
-                  Cette partie est sous votre responsabilité. Vous devez préparer et expédier ces produits.
+                  {tx("own_text")}
                 </CardDescription>
               </div>
               {["new", "confirmed"].includes(order.status) && (
-                <Badge className="bg-red-500 text-white animate-pulse">ACTION REQUISE</Badge>
+                <Badge className="bg-red-500 text-white animate-pulse">{tx("action_required")}</Badge>
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
-              <span className="text-sm font-medium">Statut:</span>
+              <span className="text-sm font-medium">{tx("status_label")} :</span>
               <Badge className={statusColors[order.own_products_status] || "bg-gray-100"}>
-                {statusLabels[order.own_products_status] || order.own_products_status}
+                {tl("status", order.own_products_status)}
               </Badge>
             </div>
 
             <div className="flex items-center justify-between overflow-x-auto pb-2">
               {ownStatusSteps.map((step, index) => {
+                const stepLabel = tl("own_steps", step.key);
                 const currentIdx = getOwnStatusIndex();
                 const isCompleted = index < currentIdx;
                 const isCurrent = index === currentIdx;
@@ -730,7 +725,7 @@ export default function OrderDetailPage() {
                         {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
                       </div>
                       <span className={`text-xs mt-2 ${isCurrent ? "font-bold text-primary" : "text-muted-foreground"}`}>
-                        {step.label}
+                        {stepLabel}
                       </span>
                     </div>
                     {index < ownStatusSteps.length - 1 && (
@@ -745,9 +740,9 @@ export default function OrderDetailPage() {
               <table className="w-full">
                 <thead className="bg-amber-100/50">
                   <tr>
-                    <th className="py-3 px-4 text-left text-xs font-bold uppercase">Produit</th>
-                    <th className="py-3 px-4 text-center text-xs font-bold uppercase">Qté</th>
-                    <th className="py-3 px-4 text-right text-xs font-bold uppercase">Prix</th>
+                    <th className="py-3 px-4 text-start text-xs font-bold uppercase">{tx("product")}</th>
+                    <th className="py-3 px-4 text-center text-xs font-bold uppercase">{tx("qty")}</th>
+                    <th className="py-3 px-4 text-end text-xs font-bold uppercase">{tx("price")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -776,7 +771,7 @@ export default function OrderDetailPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-center font-bold">{item.quantity}</td>
-                      <td className="py-3 px-4 text-right font-mono">{(item.unit_price * item.quantity).toFixed(2)} TND</td>
+                      <td className="py-3 px-4 text-end font-mono">{formatPrice(item.unit_price * item.quantity)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -787,7 +782,7 @@ export default function OrderDetailPage() {
               <div className="p-4 bg-white rounded-xl border space-y-4">
                 <h4 className="font-bold flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-primary text-white text-sm flex items-center justify-center">1</span>
-                  Préparer le colis
+                  {tx("prepare_title")}
                 </h4>
                 <div className="flex items-center gap-3">
                   <Checkbox
@@ -796,12 +791,12 @@ export default function OrderDetailPage() {
                     onCheckedChange={(v) => setIsPrepared(v === true)}
                   />
                   <label htmlFor="prepared" className="text-sm">
-                    J'ai préparé et emballé les produits
+                    {tx("prepared_check")}
                   </label>
                 </div>
                 <Button variant="outline" className="gap-2" size="sm" onClick={() => window.print()}>
                   <Printer className="w-4 h-4" />
-                  Imprimer bon de préparation
+                  {tx("print_slip")}
                 </Button>
                 {order.status === "new" && (
                   <p className="text-xs text-amber-700">Confirmez d&apos;abord la commande avec le client.</p>
@@ -812,7 +807,7 @@ export default function OrderDetailPage() {
                   onClick={markAsPrepared}
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Marquer comme préparé
+                  {tx("mark_prepared")}
                 </Button>
               </div>
             )}
@@ -821,7 +816,7 @@ export default function OrderDetailPage() {
               <div className="p-4 bg-white rounded-xl border space-y-4">
                 <h4 className="font-bold flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-primary text-white text-sm flex items-center justify-center">2</span>
-                  Choisir le mode de livraison
+                  {tx("choose_delivery")}
                 </h4>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div 
@@ -838,13 +833,13 @@ export default function OrderDetailPage() {
                       </div>
                     </div>
                     <ul className="text-xs text-muted-foreground space-y-1 ml-13">
-                      <li>• Dropy envoie un livreur chez vous</li>
-                      <li>• Coût: 7 TND (inclus)</li>
-                      <li>• Tracking automatique</li>
+                      <li>• {tx("dropy_pickup_1")}</li>
+                      <li>• {tx("dropy_pickup_2")}</li>
+                      <li>• {tx("dropy_pickup_3")}</li>
                     </ul>
                     <Button className="w-full mt-4 gap-2">
                       <Send className="w-4 h-4" />
-                      Programmer l'enlèvement
+                      {tx("schedule_pickup")}
                     </Button>
                   </div>
 
@@ -859,13 +854,13 @@ export default function OrderDetailPage() {
                       <p className="font-bold">Ma propre livraison</p>
                     </div>
                     <ul className="text-xs text-muted-foreground space-y-1 ml-13">
-                      <li>• Vous gérez le livreur</li>
-                      <li>• Mise à jour manuelle du statut</li>
-                      <li>• Vous définissez le tracking</li>
+                      <li>• {tx("own_1")}</li>
+                      <li>• {tx("own_2")}</li>
+                      <li>• {tx("own_3")}</li>
                     </ul>
                     <Button variant="outline" className="w-full mt-4 gap-2">
                       <Truck className="w-4 h-4" />
-                      J'utilise ma livraison
+                      {tx("use_own")}
                     </Button>
                   </div>
                 </div>
@@ -876,7 +871,7 @@ export default function OrderDetailPage() {
               <div className="p-4 bg-white rounded-xl border">
                 <Button onClick={markAsDelivered} className="w-full gap-2 bg-green-600 hover:bg-green-700">
                   <CheckCircle2 className="w-4 h-4" />
-                  Marquer comme livré
+                  {tx("mark_delivered")}
                 </Button>
               </div>
             )}
@@ -891,11 +886,11 @@ export default function OrderDetailPage() {
               <div>
                 <CardTitle className="flex items-center gap-2 text-purple-800">
                   <Sparkles className="w-5 h-5" />
-                  Produits Dropshipping
-                  <Badge className="bg-purple-200 text-purple-700 ml-2">AUTOMATIQUE</Badge>
+                  {tx("drop_title")}
+                  <Badge className="bg-purple-200 text-purple-700 ms-2">{tx("automatic")}</Badge>
                 </CardTitle>
                 <CardDescription>
-                  Ces produits sont gérés automatiquement. Le fournisseur prépare et Dropy livre.
+                  {tx("drop_text")}
                 </CardDescription>
               </div>
             </div>
@@ -905,23 +900,24 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-purple-600 mt-0.5" />
                 <div>
-                  <p className="font-medium text-purple-800">Vous n'avez rien à faire</p>
+                  <p className="font-medium text-purple-800">{tx("nothing_to_do")}</p>
                   <p className="text-sm text-purple-700 mt-1">
-                    Le fournisseur prépare le colis et Dropy s'occupe de la livraison. Les statuts se mettent à jour automatiquement.
+                    {tx("drop_auto")}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
-              <span className="text-sm font-medium">Statut:</span>
+              <span className="text-sm font-medium">{tx("status_label")} :</span>
               <Badge className="bg-purple-100 text-purple-700">
-                {dropStatusSteps.find(s => s.key === order.dropshipping_status)?.label || order.dropshipping_status}
+                {tl("drop_steps", order.dropshipping_status)}
               </Badge>
             </div>
 
             <div className="flex items-center justify-between overflow-x-auto pb-2">
               {dropStatusSteps.map((step, index) => {
+                const stepLabel = tl("drop_steps", step.key);
                 const currentIdx = getDropStatusIndex();
                 const isCompleted = index < currentIdx;
                 const isCurrent = index === currentIdx;
@@ -938,7 +934,7 @@ export default function OrderDetailPage() {
                         {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
                       </div>
                       <span className={`text-xs mt-2 ${isCurrent ? "font-bold text-purple-600" : "text-muted-foreground"}`}>
-                        {step.label}
+                        {stepLabel}
                       </span>
                     </div>
                     {index < dropStatusSteps.length - 1 && (
@@ -953,10 +949,10 @@ export default function OrderDetailPage() {
               <table className="w-full">
                 <thead className="bg-purple-100/50">
                   <tr>
-                    <th className="py-3 px-4 text-left text-xs font-bold uppercase">Produit</th>
-                    <th className="py-3 px-4 text-left text-xs font-bold uppercase">Fournisseur</th>
-                    <th className="py-3 px-4 text-center text-xs font-bold uppercase">Qté</th>
-                    <th className="py-3 px-4 text-right text-xs font-bold uppercase">Prix</th>
+                    <th className="py-3 px-4 text-start text-xs font-bold uppercase">{tx("product")}</th>
+                    <th className="py-3 px-4 text-start text-xs font-bold uppercase">{tx("supplier")}</th>
+                    <th className="py-3 px-4 text-center text-xs font-bold uppercase">{tx("qty")}</th>
+                    <th className="py-3 px-4 text-end text-xs font-bold uppercase">{tx("price")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -978,10 +974,10 @@ export default function OrderDetailPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-sm text-muted-foreground">
-                        {item.supplier_name || "Fournisseur Dropy"}
+                        {item.supplier_name || tx("dropy_supplier")}
                       </td>
                       <td className="py-3 px-4 text-center font-bold">{item.quantity}</td>
-                      <td className="py-3 px-4 text-right font-mono">{(item.unit_price * item.quantity).toFixed(2)} TND</td>
+                      <td className="py-3 px-4 text-end font-mono">{formatPrice(item.unit_price * item.quantity)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -995,19 +991,19 @@ export default function OrderDetailPage() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
-            Notes internes
+            {tx("notes_title")}
           </CardTitle>
-          <CardDescription>Notes privées (non visibles par le client)</CardDescription>
+          <CardDescription>{tx("notes_help")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Textarea
             value={sellerNote}
             onChange={(e) => setSellerNote(e.target.value)}
-            placeholder="Ajouter une note privée..."
+            placeholder={tx("notes_ph")}
             rows={3}
           />
           <Button variant="outline" size="sm" onClick={saveNote}>
-            Enregistrer la note
+            {tx("save_note")}
           </Button>
         </CardContent>
       </Card>
@@ -1018,21 +1014,21 @@ export default function OrderDetailPage() {
             <Button asChild variant="outline" className="gap-2">
               <a href={`tel:${order.customer_phone}`}>
                 <Phone className="w-4 h-4" />
-                Contacter le client
+                {tx("contact_customer")}
               </a>
             </Button>
           )}
           <Button asChild variant="outline" className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50">
             <Link href="/contact">
               <AlertCircle className="w-4 h-4" />
-              Signaler un problème
+              {tx("report")}
             </Link>
           </Button>
         </div>
         {["new", "confirmed", "preparing"].includes(order.status) && (
           <Button variant="outline" className="gap-2 text-red-600 border-red-200 hover:bg-red-50" onClick={() => setCancelOpen(true)}>
             <XCircle className="w-4 h-4" />
-            Annuler la commande
+            {tx("cancel_order")}
           </Button>
         )}
       </div>
@@ -1040,26 +1036,26 @@ export default function OrderDetailPage() {
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Annuler la commande {order.order_number}</DialogTitle>
-            <DialogDescription>Le stock est remis en vente et le fournisseur est prévenu s&apos;il avait reçu la commande.</DialogDescription>
+            <DialogTitle>{tx("cancel_order")} {order.order_number}</DialogTitle>
+            <DialogDescription>{tx("cancel_text")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label>Motif</Label>
+            <Label>{tx("reason")}</Label>
             <Select value={cancelReason} onValueChange={setCancelReason}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(CANCEL_REASON_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                {Object.keys(CANCEL_REASON_LABELS).map((value) => (
+                  <SelectItem key={value} value={value}>{tl("reasons", value)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelOpen(false)}>Retour</Button>
+            <Button variant="outline" onClick={() => setCancelOpen(false)}>{tx("go_back")}</Button>
             <Button className="bg-red-600 hover:bg-red-700" disabled={processing} onClick={() => updateOrderStatus("cancel")}>
-              Annuler la commande
+              {tx("cancel_order")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1070,26 +1066,26 @@ export default function OrderDetailPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Send className="w-5 h-5 text-primary" />
-              Programmer un enlèvement
+              {tx("pickup_title")}
             </DialogTitle>
             <DialogDescription>
-              Commande {order.order_number} - {ownItems.length} article(s)
+              {tx("order")} {order.order_number} · {ownItems.length} {tx("items")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
             <div className="p-4 bg-muted/50 rounded-xl">
-              <p className="text-sm font-bold mb-2">Adresse d'enlèvement</p>
+              <p className="text-sm font-bold mb-2">{tx("pickup_address")}</p>
               <p className="text-sm text-muted-foreground">
-                Votre adresse enregistrée sera utilisée.
+                {tx("pickup_address_text")}
               </p>
               <Link href="/seller/settings" className="text-xs text-primary hover:underline">
-                Modifier l'adresse →
+                {tx("edit_address")}
               </Link>
             </div>
 
             <div>
-              <Label className="font-bold mb-3 block">Date d'enlèvement</Label>
+              <Label className="font-bold mb-3 block">{tx("pickup_date")}</Label>
               <div className="grid grid-cols-4 gap-2">
                 {getNextPickupDates().map((date) => (
                   <button
@@ -1103,21 +1099,21 @@ export default function OrderDetailPage() {
                     }`}
                   >
                     <p className="text-xs text-muted-foreground">
-                      {format(date, "EEE", { locale: fr })}
+                      {format(date, "EEE", { locale: dateLocale })}
                     </p>
-                    <p className="font-bold">{format(date, "d", { locale: fr })}</p>
-                    <p className="text-xs">{format(date, "MMM", { locale: fr })}</p>
+                    <p className="font-bold">{format(date, "d", { locale: dateLocale })}</p>
+                    <p className="text-xs">{format(date, "MMM", { locale: dateLocale })}</p>
                   </button>
                 ))}
               </div>
             </div>
 
             <div>
-              <Label className="font-bold mb-3 block">Créneau horaire</Label>
+              <Label className="font-bold mb-3 block">{tx("slot")}</Label>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { id: "morning", label: "09:00 - 12:00", sub: "Matin" },
-                  { id: "afternoon", label: "14:00 - 18:00", sub: "Après-midi" },
+                  { id: "morning", label: "09:00 - 12:00", sub: tx("morning") },
+                  { id: "afternoon", label: "14:00 - 18:00", sub: tx("afternoon") },
                 ].map((slot) => (
                   <button
                     key={slot.id}
@@ -1138,33 +1134,33 @@ export default function OrderDetailPage() {
 
             <div className="p-4 bg-green-50 rounded-xl border border-green-200">
               <div className="flex justify-between text-sm mb-2">
-                <span>Enlèvement:</span>
+                <span>{tx("pickup")}</span>
                 <span className="font-medium">
-                  {pickupData.date ? format(new Date(pickupData.date), "EEEE d MMMM", { locale: fr }) : "—"}
+                  {pickupData.date ? format(new Date(pickupData.date), "EEEE d MMMM", { locale: dateLocale }) : "—"}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Livraison estimée:</span>
+                <span>{tx("eta")}</span>
                 <span className="font-medium">
-                  {pickupData.date ? format(addDays(new Date(pickupData.date), 1), "d-", { locale: fr }) + format(addDays(new Date(pickupData.date), 2), "d MMM", { locale: fr }) : "—"}
+                  {pickupData.date ? format(addDays(new Date(pickupData.date), 1), "d-", { locale: dateLocale }) + format(addDays(new Date(pickupData.date), 2), "d MMM", { locale: dateLocale }) : "—"}
                 </span>
               </div>
               <div className="flex justify-between text-sm mt-2 pt-2 border-t border-green-200">
-                <span>Coût:</span>
-                <span className="font-bold text-green-700">7 TND (inclus dans la commande)</span>
+                <span>{tx("cost")}</span>
+                <span className="font-bold text-green-700">{tx("cost_value")}</span>
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPickupModal(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setShowPickupModal(false)}>{tx("cancel")}</Button>
             <Button onClick={schedulePickup} disabled={!pickupData.date || processing} className="gap-2">
               {processing ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <CheckCircle2 className="w-4 h-4" />
               )}
-              Confirmer l'enlèvement
+              {tx("confirm_pickup")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1175,24 +1171,24 @@ export default function OrderDetailPage() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Truck className="w-5 h-5" />
-              Ma propre livraison
+              {tx("own_title_modal")}
             </DialogTitle>
             <DialogDescription>
-              Renseignez les informations de votre transporteur
+              {tx("own_text_modal")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <Label>Nom du transporteur (optionnel)</Label>
+              <Label>{tx("carrier")}</Label>
               <Input
                 value={ownDeliveryData.carrier}
                 onChange={(e) => setOwnDeliveryData(prev => ({ ...prev, carrier: e.target.value }))}
-                placeholder="Ex: Aramex, DHL..."
+                placeholder={tx("carrier_ph")}
               />
             </div>
             <div>
-              <Label>Numéro de suivi (optionnel)</Label>
+              <Label>{tx("tracking_optional")}</Label>
               <Input
                 value={ownDeliveryData.trackingNumber}
                 onChange={(e) => setOwnDeliveryData(prev => ({ ...prev, trackingNumber: e.target.value }))}
@@ -1203,21 +1199,21 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5" />
                 <p className="text-sm text-amber-800">
-                  Vous devrez mettre à jour manuellement le statut de livraison.
+                  {tx("manual_status")}
                 </p>
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowOwnDeliveryModal(false)}>Annuler</Button>
+            <Button variant="outline" onClick={() => setShowOwnDeliveryModal(false)}>{tx("cancel")}</Button>
             <Button onClick={useOwnDelivery} disabled={processing} className="gap-2">
               {processing ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
                 <Send className="w-4 h-4" />
               )}
-              Marquer comme expédié
+              {tx("mark_shipped")}
             </Button>
           </DialogFooter>
         </DialogContent>

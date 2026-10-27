@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPrice } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { Users, Search, Download, Filter, Mail, Phone, ShoppingBag, MapPin, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -174,7 +175,7 @@ export default function CustomersPage() {
                           <ShoppingBag className="w-4 h-4 text-primary" />
                           {customer.total_orders} commande{customer.total_orders > 1 ? "s" : ""}
                         </div>
-                        <p className="text-lg font-bold text-primary">{customer.total_spent.toFixed(2)} TND</p>
+                        <p className="text-lg font-bold text-primary">{formatPrice(customer.total_spent)}</p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-muted-foreground" />
                     </div>
