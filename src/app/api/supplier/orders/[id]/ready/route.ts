@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createDeliveryShipment, generateShipmentNumber, generatePackageCode } from '@/lib/delivery';
-import { linkedStoreOrders, syncStoreOrdersFromSupplier } from '@/lib/order-sync';
+import { linkedStoreOrders, parcelCodAmount, syncStoreOrdersFromSupplier } from '@/lib/order-sync';
 
 export async function POST(
   request: Request,
@@ -65,10 +65,7 @@ export async function POST(
       notes: '',
     };
 
-    const codAmount =
-      mainOrder && mainOrder.payment_method === 'cod' && !mainOrder.has_own_products && storeOrders.length === 1
-        ? Number(mainOrder.total_amount)
-        : 0;
+    const codAmount = mainOrder && storeOrders.length === 1 ? await parcelCodAmount(mainOrder.id, id) : 0;
 
     const shipmentResult = await createDeliveryShipment({
       pickup: {

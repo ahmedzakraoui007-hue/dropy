@@ -9,6 +9,21 @@ const STORE_STATUS_FROM_SUPPLIER: Record<string, string> = {
 };
 
 const STATUS_RANK = ["new", "confirmed", "preparing", "shipped", "delivered"];
+const SUPPLIER_RANK = ["pending", "accepted", "preparing", "ready_for_pickup", "shipped", "delivered"];
+const IGNORED_SUPPLIER_STATUSES = new Set(["rejected", "cancelled"]);
+
+async function slowestSupplierStatus(storeOrderId: string, fallback: string) {
+  const supabase = createAdminClient();
+  const { data: items } = await supabase.from("store_order_items").select("supplier_order_id").eq("store_order_id", storeOrderId);
+  const ids = [...new Set((items || []).map((i) => i.supplier_order_id).filter(Boolean))];
+  if (ids.length <= 1) return fallback;
+  const { data: parcels } = await supabase.from("supplier_orders").select("status").in("id", ids);
+  const ranks = (parcels || [])
+    .map((p) => String(p.status))
+    .filter((s) => !IGNORED_SUPPLIER_STATUSES.has(s))
+    .map((s) => Math.max(0, SUPPLIER_RANK.indexOf(s)));
+  return ranks.length ? SUPPLIER_RANK[Math.min(...ranks)] : fallback;
+}
 
 const SELLER_MESSAGES: Record<string, string> = {
   confirmed: "a été acceptée par le fournisseur",
@@ -35,6 +50,20 @@ export async function linkedStoreOrders(supplierOrderId: string) {
   return orders || [];
 }
 
+export async function parcelCodAmount(storeOrderId: string, supplierOrderId: string) {
+  const supabase = createAdminClient();
+  const [{ data: order }, { data: items }] = await Promise.all([
+    supabase.from("store_orders").select("total_amount, shipping_cost, discount_amount, payment_method, has_own_products").eq("id", storeOrderId).maybeSingle(),
+    supabase.from("store_order_items").select("supplier_order_id, total_price").eq("store_order_id", storeOrderId),
+  ]);
+  if (!order || order.payment_method !== "cod" || order.has_own_products) return 0;
+  const parcels = [...new Set((items || []).map((i) => i.supplier_order_id).filter(Boolean))].sort();
+  if (parcels.length <= 1) return Number(order.total_amount);
+  const own = (items || []).filter((i) => i.supplier_order_id === supplierOrderId).reduce((sum, i) => sum + Number(i.total_price || 0), 0);
+  const extra = parcels[0] === supplierOrderId ? Number(order.shipping_cost || 0) - Number(order.discount_amount || 0) : 0;
+  return Math.max(0, Math.round((own + extra) * 1000) / 1000);
+}
+
 export async function syncStoreOrdersFromSupplier(
   supplierOrderId: string,
   supplierStatus: string,
@@ -46,10 +75,11 @@ export async function syncStoreOrdersFromSupplier(
   await supabase.from("store_order_items").update({ item_status: itemStatus }).eq("supplier_order_id", supplierOrderId);
 
   const orders = await linkedStoreOrders(supplierOrderId);
-  const mapped = STORE_STATUS_FROM_SUPPLIER[supplierStatus];
 
   for (const order of orders) {
-    const update: Record<string, unknown> = { dropshipping_status: supplierStatus };
+    const overall = await slowestSupplierStatus(order.id, supplierStatus);
+    const mapped = STORE_STATUS_FROM_SUPPLIER[overall];
+    const update: Record<string, unknown> = { dropshipping_status: overall };
 
     if (!order.has_own_products) {
       if (mapped && STATUS_RANK.indexOf(mapped) > STATUS_RANK.indexOf(order.status) && order.status !== "cancelled") {

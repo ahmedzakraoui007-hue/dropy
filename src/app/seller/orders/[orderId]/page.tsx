@@ -235,7 +235,7 @@ export default function OrderDetailPage() {
         has_own_products: data.has_own_products || ownItems.length > 0,
         has_dropshipping_products: data.has_dropshipping_products || dropItems.length > 0,
         own_products_status: data.own_products_status || "pending",
-        dropshipping_status: data.dropshipping_status || "pending",
+        dropshipping_status: data.dropshipping_status === "ready_for_pickup" ? "ready" : data.dropshipping_status || "pending",
       });
       setSellerNote(data.seller_notes || "");
     } catch (error) {
@@ -406,6 +406,8 @@ export default function OrderDetailPage() {
     const idx = dropStatusSteps.findIndex(s => s.key === order.dropshipping_status);
     return idx >= 0 ? idx : 0;
   };
+
+  const awaitingConfirmation = order?.status === "new";
 
   if (loading) {
     return (
@@ -907,9 +909,9 @@ export default function OrderDetailPage() {
               <div className="flex items-start gap-3">
                 <Info className="w-5 h-5 text-purple-600 mt-0.5" />
                 <div>
-                  <p className="font-medium text-purple-800">{tx("nothing_to_do")}</p>
+                  <p className="font-medium text-purple-800">{tx(awaitingConfirmation ? "drop_waiting_title" : "nothing_to_do")}</p>
                   <p className="text-sm text-purple-700 mt-1">
-                    {tx("drop_auto")}
+                    {tx(awaitingConfirmation ? "drop_waiting" : "drop_auto")}
                   </p>
                 </div>
               </div>
@@ -918,14 +920,14 @@ export default function OrderDetailPage() {
             <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
               <span className="text-sm font-medium">{tx("status_label")} :</span>
               <Badge className="bg-purple-100 text-purple-700">
-                {tl("drop_steps", order.dropshipping_status)}
+                {awaitingConfirmation ? tx("drop_waiting_badge") : tl("drop_steps", order.dropshipping_status)}
               </Badge>
             </div>
 
             <div className="flex items-center justify-between overflow-x-auto pb-2">
               {dropStatusSteps.map((step, index) => {
                 const stepLabel = tl("drop_steps", step.key);
-                const currentIdx = getDropStatusIndex();
+                const currentIdx = awaitingConfirmation ? -1 : getDropStatusIndex();
                 const isCompleted = index < currentIdx;
                 const isCurrent = index === currentIdx;
                 const StepIcon = step.icon;
