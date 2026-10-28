@@ -11,11 +11,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://dropy.store"),
   title: {
-    default: "DROPY - Lancez votre e-commerce en 30 minutes",
-    template: "%s | DROPY"
+    default: "Dropy | Boutique en ligne sans stock en Tunisie",
+    template: "%s | Dropy"
   },
-  description: "Plateforme SaaS e-commerce tout-en-un pour le marché tunisien. Website Builder, Marketplace produits, et Créateurs de contenu.",
-  keywords: ["e-commerce", "tunisie", "dropshipping", "SaaS", "website builder", "créateurs de contenu"],
+  description: "Créez votre boutique en ligne gratuitement, vendez les produits de fournisseurs tunisiens avec paiement à la livraison et travaillez avec des créateurs UGC.",
+  keywords: ["e-commerce tunisie", "boutique en ligne tunisie", "dropshipping tunisie", "paiement à la livraison", "fournisseur textile tunisie", "créateurs UGC"],
   authors: [{ name: "Dropy Team" }],
   creator: "Dropy",
   publisher: "Dropy",
@@ -28,24 +28,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_TN",
     url: "https://dropy.store",
-    siteName: "DROPY",
-    title: "DROPY - Lancez votre e-commerce en 30 minutes",
-    description: "La plateforme e-commerce #1 en Tunisie pour lancer votre business en ligne sans stock.",
+    siteName: "Dropy",
+    title: "Dropy | Boutique en ligne sans stock en Tunisie",
+    description: "Créez votre boutique, vendez les produits de fournisseurs tunisiens et encaissez à la livraison. Gratuit pendant le lancement.",
   },
-    icons: {
-      icon: [
-        { url: "/favicon.svg", type: "image/svg+xml" },
-      ],
-      apple: [
-        { url: "/favicon.svg", sizes: "180x180", type: "image/svg+xml" },
-      ],
-    },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   manifest: "/site.webmanifest",
   twitter: {
     card: "summary_large_image",
-    title: "DROPY - Lancez votre e-commerce en 30 minutes",
-    description: "La plateforme e-commerce #1 en Tunisie pour lancer votre business en ligne sans stock.",
-    creator: "@dropy_store",
+    title: "Dropy | Boutique en ligne sans stock en Tunisie",
+    description: "Créez votre boutique, vendez les produits de fournisseurs tunisiens et encaissez à la livraison. Gratuit pendant le lancement.",
   },
   robots: {
     index: true,

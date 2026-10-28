@@ -14,19 +14,10 @@ import {
   HeartHandshake 
 } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
 
 export default function VendeursClient() {
-  const [mounted, setMounted] = useState(false);
   const { t, locale, dir } = useTranslation();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="bg-white min-h-screen pt-20" />;
-  }
 
   return (
     <div className="bg-white min-h-screen pt-20" dir={dir}>

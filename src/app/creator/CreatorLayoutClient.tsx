@@ -152,7 +152,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
               <LogOut className="w-4 h-4 mr-2" />
               Déconnexion
             </Button>
-            <Link href="/help">
+            <Link href="/aide">
               <Button>Contacter le support</Button>
             </Link>
           </div>
@@ -166,7 +166,7 @@ export default function CreatorLayout({ children }: { children: React.ReactNode 
         <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-200 ease-in-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex flex-col h-full">
               <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-                <Link href="/creator" className="flex items-center gap-2">
+                <Link href="/creator/dashboard" className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-primary-foreground" />
                   </div>

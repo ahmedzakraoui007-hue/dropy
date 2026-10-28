@@ -120,7 +120,7 @@ export default function SupplierLayout({ children }: { children: React.ReactNode
         <aside className={`fixed inset-y-0 left-0 z-50 ${sidebarWidth} bg-card border-r border-border transform transition-all duration-300 ease-out lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between h-16 px-4 border-b border-border">
-              <Link href="/supplier" className="flex items-center gap-2 overflow-hidden">
+              <Link href="/supplier/dashboard" className="flex items-center gap-2 overflow-hidden">
                 <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
                   <Package className="w-5 h-5 text-primary-foreground" />
                 </div>

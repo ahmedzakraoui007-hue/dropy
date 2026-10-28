@@ -197,7 +197,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                     <span className="text-sm font-semibold text-white">{t("dashboard.nav.need_help")}</span>
                   </div>
                   <p className="text-xs text-white/50 mb-3">{t("dashboard.nav.help_desc")}</p>
-                  <Link href="/help">
+                  <Link href="/aide">
                     <Button size="sm" variant="secondary" className="w-full bg-white/10 hover:bg-white/20 text-white border-none font-medium text-xs">
                       <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
                       {t("dashboard.nav.help_center")}

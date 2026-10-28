@@ -14,19 +14,10 @@ import {
   Smartphone 
 } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
 
 export default function CreateursClient() {
-  const [mounted, setMounted] = useState(false);
   const { t, locale, dir } = useTranslation();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="bg-white min-h-screen pt-20" />;
-  }
 
   return (
     <div className="bg-white min-h-screen pt-20" dir={dir}>
@@ -70,7 +61,7 @@ export default function CreateursClient() {
                            <DollarSign className="w-6 h-6 text-green-600" />
                         </div>
                         <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">{t("pages.createurs.hero.stats.revenue")}</p>
-                        <p className="text-2xl font-black text-slate-900">+800 TND</p>
+                        <p className="text-2xl font-black text-slate-900">{t("pages.createurs.hero.stats.revenue_value")}</p>
                      </div>
                      <div className="rounded-[2.5rem] overflow-hidden shadow-2xl">
                         <img src="https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=500&fit=crop" alt="Content" />
@@ -85,7 +76,7 @@ export default function CreateursClient() {
                            <Smartphone className="w-6 h-6 text-violet-600" />
                         </div>
                         <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-1">{t("pages.createurs.hero.stats.products")}</p>
-                        <p className="text-2xl font-black text-slate-900">12 / mois</p>
+                        <p className="text-2xl font-black text-slate-900">{t("pages.createurs.hero.stats.products_value")}</p>
                      </div>
                   </div>
                </div>

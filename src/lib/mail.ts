@@ -31,12 +31,13 @@ function fromAddress() {
   return process.env.SMTP_FROM || `Dropy <${process.env.SMTP_USER}>`
 }
 
-async function deliver({ to, subject, html }: { to: string; subject: string; html: string }) {
+async function deliver({ to, subject, html, replyTo }: { to: string; subject: string; html: string; replyTo?: string }) {
   const info = await getTransporter().sendMail({
     from: fromAddress(),
     to,
     subject,
     html,
+    replyTo,
   })
   console.log('✅ [Mail] Email envoyé avec succès. ID:', info.messageId)
   return info
@@ -45,7 +46,7 @@ async function deliver({ to, subject, html }: { to: string; subject: string; htm
 /**
  * Generic function to send email via SMTP (nodemailer)
  */
-export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+export async function sendEmail({ to, subject, html, replyTo }: { to: string; subject: string; html: string; replyTo?: string }) {
   try {
     console.log('📧 [Mail] Envoi email à:', to)
 
@@ -54,7 +55,7 @@ export async function sendEmail({ to, subject, html }: { to: string; subject: st
       return null
     }
 
-    return await deliver({ to, subject, html })
+    return await deliver({ to, subject, html, replyTo })
   } catch (error) {
     console.error('💥 [Mail] Erreur fatale sendEmail:', error)
     throw error

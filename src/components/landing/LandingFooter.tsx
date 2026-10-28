@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, Facebook, Instagram, Linkedin, MessageCircle, Send, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Mail, MessageCircle } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/context/LanguageContext";
-import { toast } from "sonner";
+import { CONTACT_EMAIL, WHATSAPP_URL } from "@/lib/contact";
 
 export default function LandingFooter() {
   const { t, dir } = useTranslation();
@@ -18,9 +17,9 @@ export default function LandingFooter() {
       { name: t("footer.links.pricing"), href: "/tarifs" },
     ],
     resources: [
-      { name: t("footer.links.blog"), href: "https://dropyblog.vercel.app", comingSoon: false },
-      { name: t("footer.links.faq"), href: "/faq", comingSoon: false },
-      { name: t("footer.links.help"), href: "/aide", comingSoon: false },
+      { name: t("footer.links.blog"), href: "https://dropyblog.vercel.app" },
+      { name: t("footer.links.faq"), href: "/faq" },
+      { name: t("footer.links.help"), href: "/aide" },
     ],
     company: [
       { name: t("footer.links.about"), href: "/a-propos" },
@@ -35,18 +34,9 @@ export default function LandingFooter() {
   };
 
   const socialLinks = [
-    { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-    { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
-    { icon: MessageCircle, href: "https://wa.me/21600000000", label: "WhatsApp" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "Linkedin" },
+    { icon: MessageCircle, href: WHATSAPP_URL, label: "WhatsApp" },
+    { icon: Mail, href: `mailto:${CONTACT_EMAIL}`, label: "E-mail" },
   ];
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    toast.success(t("footer.newsletter_success"), {
-      description: t("footer.newsletter_desc"),
-    });
-  };
 
   return (
     <footer className="bg-slate-50 text-slate-500 pt-24 pb-12 border-t border-slate-100" dir={dir}>
@@ -61,19 +51,15 @@ export default function LandingFooter() {
               {t("footer.tagline")}
             </p>
             
-            <div className="space-y-4">
-              <h4 className="text-xs font-black uppercase tracking-widest text-slate-900">{t("footer.newsletter")}</h4>
-              <form onSubmit={handleNewsletterSubmit} className="relative max-w-sm">
-                <input 
-                  type="email" 
-                  required
-                  placeholder={t("footer.newsletter_placeholder")} 
-                  className="w-full h-14 bg-white border border-slate-200 rounded-2xl px-6 text-slate-900 focus:outline-none focus:border-[#2E3192] transition-colors shadow-sm"
-                />
-                <button type="submit" className="absolute right-2 top-2 w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white hover:bg-slate-800 transition-colors">
-                  <Send className="w-4 h-4" />
-                </button>
-              </form>
+            <div className="space-y-3">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 font-bold text-slate-700 hover:text-[#00A99D] transition-colors">
+                <MessageCircle className="w-5 h-5" />
+                {t("footer.whatsapp")}
+              </a>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="flex items-center gap-3 font-bold text-slate-700 hover:text-[#2E3192] transition-colors">
+                <Mail className="w-5 h-5" />
+                {CONTACT_EMAIL}
+              </a>
             </div>
           </div>
 
@@ -96,18 +82,9 @@ export default function LandingFooter() {
             <ul className="space-y-4">
               {footerLinks.resources.map((link) => (
                 <li key={link.name}>
-                  {link.comingSoon ? (
-                    <button 
-                      onClick={() => toast.info(t("footer.blog_soon"))}
-                      className="hover:text-[#2E3192] font-bold transition-colors text-left"
-                    >
-                      {link.name}
-                    </button>
-                  ) : (
-                    <Link href={link.href} className="hover:text-[#2E3192] font-bold transition-colors">
-                      {link.name}
-                    </Link>
-                  )}
+                  <Link href={link.href} className="hover:text-[#2E3192] font-bold transition-colors">
+                    {link.name}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -145,13 +122,16 @@ export default function LandingFooter() {
         <div className="pt-12 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-4">
             {socialLinks.map((social, i) => (
-              <Link 
-                key={i} 
-                href={social.href} 
+              <a
+                key={i}
+                href={social.href}
+                aria-label={social.label}
+                target={social.href.startsWith("http") ? "_blank" : undefined}
+                rel="noopener noreferrer"
                 className="w-11 h-11 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#2E3192] hover:border-[#2E3192]/20 shadow-sm transition-all duration-300"
               >
                 <social.icon className="w-5 h-5" />
-              </Link>
+              </a>
             ))}
           </div>
 

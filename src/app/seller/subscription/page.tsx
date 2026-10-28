@@ -197,7 +197,7 @@ function SubscriptionContent() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/seller">
+        <Link href="/seller/dashboard">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="w-5 h-5" />
           </Button>

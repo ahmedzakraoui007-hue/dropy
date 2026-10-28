@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Clock, CheckCircle2, Facebook, Instagram, Linkedin, ExternalLink, ArrowLeft, Mail, MessageCircle } from "lucide-react";
@@ -11,13 +10,6 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 
 export default function WaitingPage() {
   const { t, dir } = useTranslation();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans" dir={dir}>

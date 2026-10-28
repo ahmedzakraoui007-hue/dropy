@@ -12,7 +12,6 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 export default function LandingHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { t, locale, setLocale, dir } = useTranslation();
 
   const navLinks = [
@@ -24,21 +23,10 @@ export default function LandingHeader() {
   ];
 
   useEffect(() => {
-    setMounted(true);
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  if (!mounted) {
-    return (
-      <nav className="fixed top-0 left-0 right-0 z-50 py-5">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between px-6 lg:px-8 h-16 lg:h-20 rounded-[2rem] border border-transparent bg-transparent" />
-        </div>
-      </nav>
-    );
-  }
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "py-3" : "py-5"}`} dir={dir}>

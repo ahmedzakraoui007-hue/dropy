@@ -29,8 +29,8 @@ export default function AidePage() {
             <h3 className="text-xl font-bold mb-3">{t("pages.help.guides_title")}</h3>
             <p className="text-slate-500 text-sm mb-4">{t("pages.help.guides_desc")}</p>
             <ul className="space-y-3 text-slate-600 text-sm">
-              <li><a href="#" className="hover:text-teal-500">{dir === 'rtl' ? "كيفاش نحل أول متجر" : "Créer sa première boutique"}</a></li>
-              <li><a href="#" className="hover:text-teal-500">{dir === 'rtl' ? "كيفاش نختار المنتجات" : "Choisir ses produits"}</a></li>
+              <li><a href="/faq" className="hover:text-teal-500">{dir === 'rtl' ? "كيفاش نحل أول متجر" : "Créer sa première boutique"}</a></li>
+              <li><a href="/faq" className="hover:text-teal-500">{dir === 'rtl' ? "كيفاش نختار المنتجات" : "Choisir ses produits"}</a></li>
             </ul>
           </div>
             <div className="p-8 rounded-3xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
@@ -40,7 +40,7 @@ export default function AidePage() {
               <h3 className="text-xl font-bold mb-3">{t("pages.help.videos_title")}</h3>
               <p className="text-slate-500 text-sm mb-4">{t("pages.help.videos_desc")}</p>
               <ul className="space-y-3 text-slate-600 text-sm">
-                <li><a href="/inscription" className="hover:text-teal-500">{dir === 'rtl' ? "فيديوهات تعليمية" : "Tutoriels Vidéo"}</a></li>
+                <li><a href="https://dropyblog.vercel.app" target="_blank" rel="noopener noreferrer" className="hover:text-teal-500">{dir === 'rtl' ? "اقرا مقالات المدونة" : "Lire les articles du blog"}</a></li>
               </ul>
             </div>
           <div className="p-8 rounded-3xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
