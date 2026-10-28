@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/mail";
+import { SITE_URL } from "@/lib/store-url";
 
 /**
  * These emails are sent manually via API or Triggers.
@@ -41,7 +42,7 @@ export async function sendWaitingEmail(email: string, firstName: string, lang: s
       <div style="background-color: #f8fafc; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #f1f5f9;">
         <p style="margin: 0 0 12px 0; font-weight: bold; color: #374151;">${content.resources_title}</p>
         <ul style="color: #4b5563; margin: 0; padding-inline-start: 20px;">
-          <li style="margin-bottom: 8px;">${content.blog} : <a href="https://dropyblog.vercel.app" style="color: #4f46e5; font-weight: 600; text-decoration: none;">dropyblog.vercel.app</a></li>
+          <li style="margin-bottom: 8px;">${content.blog} : <a href="${SITE_URL}/blog" style="color: #4f46e5; font-weight: 600; text-decoration: none;">dropy.store/blog</a></li>
           <li>${content.faq} : <a href="https://dropy.store/faq" style="color: #4f46e5; font-weight: 600; text-decoration: none;">dropy.store/faq</a></li>
         </ul>
       </div>

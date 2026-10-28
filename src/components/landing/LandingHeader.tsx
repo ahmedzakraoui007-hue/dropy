@@ -19,7 +19,7 @@ export default function LandingHeader() {
     { name: t("nav.creators"), href: "/createurs" },
     { name: t("nav.suppliers"), href: "/fournisseurs" },
     { name: t("nav.pricing"), href: "/tarifs" },
-    { name: t("nav.blog"), href: "https://dropyblog.vercel.app" },
+    { name: t("nav.blog"), href: "/blog" },
   ];
 
   useEffect(() => {

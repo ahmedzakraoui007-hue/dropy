@@ -2646,6 +2646,23 @@
     "status": "En ligne"
   },
   "pages": {
+    "blog": {
+      "badge": "Blog",
+      "title": "Conseils pour vendre en ligne en Tunisie",
+      "subtitle": "Guides gratuits pour lancer votre boutique, choisir vos produits, faire de la publicité et livrer vos clients.",
+      "all": "Tous",
+      "minutes": "{n} min",
+      "empty_title": "Les premiers articles arrivent bientôt",
+      "empty_text": "En attendant, nos guides et réponses sont dans le centre d'aide.",
+      "empty_cta": "Voir le centre d'aide",
+      "categories": {
+        "vendre": "Vendre en ligne",
+        "publicite": "Publicité",
+        "fournisseurs": "Fournisseurs",
+        "createurs": "Créateurs UGC",
+        "dropy": "Nouveautés Dropy"
+      }
+    },
     "not_found": {
       "title": "Page introuvable",
       "desc": "Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse ou revenez à l'accueil.",
