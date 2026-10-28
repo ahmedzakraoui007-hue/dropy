@@ -136,6 +136,19 @@ export function renderMarkdown(markdown: string) {
       i++;
       continue;
     }
+    if (line.trim().startsWith("|") && i + 1 < lines.length && /^\s*\|?\s*:?-{3,}/.test(lines[i + 1])) {
+      const cells = (row: string) => row.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+      const head = cells(line);
+      i += 2;
+      const body: string[][] = [];
+      while (i < lines.length && lines[i].trim().startsWith("|")) body.push(cells(lines[i++]));
+      out.push(
+        `<div class="blog-table"><table><thead><tr>${head.map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${body
+          .map((r) => `<tr>${head.map((_, k) => `<td>${inline(r[k] || "")}</td>`).join("")}</tr>`)
+          .join("")}</tbody></table></div>`
+      );
+      continue;
+    }
     if (line.startsWith(">")) {
       const quote: string[] = [];
       while (i < lines.length && lines[i].startsWith(">")) quote.push(lines[i++].replace(/^>\s?/, ""));
@@ -155,7 +168,7 @@ export function renderMarkdown(markdown: string) {
     while (
       i < lines.length &&
       lines[i].trim() &&
-      !/^(#{1,4}\s|```|>|\s*[-*]\s+|\s*\d+[.)]\s+)/.test(lines[i]) &&
+      !/^(#{1,4}\s|```|>|\s*[-*]\s+|\s*\d+[.)]\s+|\s*\|)/.test(lines[i]) &&
       !/^(-{3,}|\*{3,})$/.test(lines[i].trim())
     ) {
       paragraph.push(lines[i++]);
