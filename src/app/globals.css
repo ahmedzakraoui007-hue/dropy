@@ -463,6 +463,11 @@
   }
 }
 
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+}
 .blog-content { color: #334155; font-size: 1.0625rem; line-height: 1.8; }
 .blog-content > * + * { margin-top: 1.25em; }
 .blog-content h2 { margin-top: 2em; font-size: 1.75rem; font-weight: 900; line-height: 1.25; color: #0f172a; }

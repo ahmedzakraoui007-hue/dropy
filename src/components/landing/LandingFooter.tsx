@@ -18,6 +18,7 @@ export default function LandingFooter() {
     ],
     resources: [
       { name: t("footer.links.blog"), href: "/blog" },
+      { name: t("footer.links.tools"), href: "/outils" },
       { name: t("footer.links.faq"), href: "/faq" },
       { name: t("footer.links.help"), href: "/aide" },
     ],
