@@ -43,6 +43,11 @@ export async function loadStoreProduct(storeSlug: string, productId: string) {
   return product ? { store, product } : null;
 }
 
+export async function storeSlugExists(storeSlug: string) {
+  const { data } = await anonClient().from("stores").select("id").eq("slug", storeSlug).maybeSingle();
+  return Boolean(data);
+}
+
 export async function storeMetadata(storeSlug: string, path: string[] = []): Promise<Metadata> {
   const supabase = anonClient();
   const { data: store } = await supabase
@@ -50,7 +55,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
     .select("id, name, description, seo_title, seo_description, logo_url, is_active, google_site_verification, facebook_domain_verification, storefront_language, custom_domain, custom_domain_status")
     .eq("slug", storeSlug)
     .maybeSingle();
-  if (!store) return { title: { absolute: "Boutique introuvable" }, robots: { index: false, follow: false } };
+  if (!store) return { title: { absolute: "Page introuvable | Dropy" }, robots: { index: false, follow: false } };
 
   const offline = store.is_active === false;
   const arabic = store.storefront_language === "ar";

@@ -3,6 +3,7 @@
 import { useTranslation } from "@/context/LanguageContext";
 import { Sparkles, Heart, Rocket, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
 export default function CarrieresPage() {
   const { t, dir } = useTranslation();
@@ -23,9 +24,11 @@ export default function CarrieresPage() {
               : "Dropy n'est pas qu'une plateforme. C'est une équipe de passionnés qui travaillent chaque jour pour donner du pouvoir aux entrepreneurs locaux."}
           </p>
           <div className="flex gap-4">
-            <Button className="bg-teal-500 hover:bg-teal-600 text-white h-12 px-8 rounded-xl font-bold">
-              {dir === 'rtl' ? "شوف الفرص المتوفرة" : "Voir les postes ouverts"}
-            </Button>
+            <a href="#candidature">
+              <Button className="bg-teal-500 hover:bg-teal-600 text-white h-12 px-8 rounded-xl font-bold">
+                {dir === 'rtl' ? "ابعث ترشحك" : "Envoyer une candidature"}
+              </Button>
+            </a>
           </div>
         </div>
       </section>
@@ -44,7 +47,7 @@ export default function CarrieresPage() {
                 <Rocket className="w-6 h-6" />
               </div>
               <h3 className="font-bold mb-2">{dir === 'rtl' ? "تأثير حقيقي" : "Impact Réel"}</h3>
-              <p className="text-sm text-slate-500">{dir === 'rtl' ? "خدمتك تبدل بالحق حياة آلاف التوانسة." : "Vos actions changent concrètement la vie de milliers d'entrepreneurs."}</p>
+              <p className="text-sm text-slate-500">{dir === 'rtl' ? "خدمتك تعاون بالحق رواد الأعمال التوانسة." : "Votre travail aide concrètement les entrepreneurs tunisiens."}</p>
             </div>
             <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100">
               <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-blue-500 mb-6 shadow-sm">
@@ -72,7 +75,7 @@ export default function CarrieresPage() {
       </section>
 
       {/* Jobs */}
-      <section className="py-24 bg-slate-50 border-t border-slate-100 px-6 text-center">
+      <section id="candidature" className="py-24 bg-slate-50 border-t border-slate-100 px-6 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl font-bold mb-6">{dir === 'rtl' ? "مالقيتش عرض يناسبك ؟" : "Pas de postes ouverts actuellement ?"}</h2>
           <p className="text-slate-600 mb-10 leading-relaxed">
@@ -80,7 +83,7 @@ export default function CarrieresPage() {
               ? "ديما نلوجو على مواهب جديدة. ابعتلنا سيرتك الذاتية وقولنا كيفاش تنجم تعاونا." 
               : "Nous sommes toujours à la recherche de talents exceptionnels. Envoyez-nous votre candidature spontanée et racontez-nous comment vous pouvez nous aider."}
           </p>
-          <a href="mailto:ahmed@dropy.store">
+          <a href={`mailto:${CONTACT_EMAIL}`}>
             <Button variant="outline" className="h-12 px-8 rounded-xl border-slate-200">
               {dir === 'rtl' ? "ترشح بصفة تلقائية" : "Candidature spontanée"}
             </Button>

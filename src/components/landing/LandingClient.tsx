@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { formatPrice } from "@/lib/utils";
 import { 
   Store, 
   Package, 
@@ -32,12 +32,8 @@ const stagger = {
 };
 
 export default function LandingClient() {
-  const [mounted, setMounted] = useState(false);
   const { t, locale, dir } = useTranslation();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const pillars = [
     {
@@ -62,12 +58,6 @@ export default function LandingClient() {
       href: "/createurs"
     }
   ];
-
-  if (!mounted) {
-    return (
-      <div className="bg-[#FDFDFD] min-h-screen selection:bg-[#00A99D]/20" />
-    );
-  }
 
   return (
     <div className="bg-[#FDFDFD] min-h-screen selection:bg-[#00A99D]/20" dir={dir}>
@@ -122,17 +112,10 @@ export default function LandingClient() {
 
               <motion.div 
                 variants={fadeInUp}
-                className="mt-12 flex items-center gap-6"
+                className="mt-12 flex items-center gap-3"
               >
-                <div className="flex -space-x-4">
-                  {[1,2,3,4].map(i => (
-                    <div key={i} className="w-12 h-12 rounded-full border-4 border-white bg-slate-200 overflow-hidden shadow-sm">
-                      <img src={`https://i.pravatar.cc/150?u=${i}`} alt="user" />
-                    </div>
-                  ))}
-                  <div className="w-12 h-12 rounded-full border-4 border-white bg-[#00A99D] flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                    +500
-                  </div>
+                <div className="w-10 h-10 rounded-full bg-[#00A99D]/10 flex items-center justify-center shrink-0">
+                  <Check className="w-5 h-5 text-[#00A99D]" />
                 </div>
                 <p className="text-sm font-bold text-slate-500">
                   {t("hero.waitlist")}
@@ -160,7 +143,7 @@ export default function LandingClient() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-400">{locale === 'ar' ? 'مبيعة جديدة' : 'Nouvelle Vente'}</p>
-                    <p className="text-lg font-black text-slate-900">+145.00 TND</p>
+                    <p className="text-lg font-black text-slate-900">{formatPrice(145)}</p>
                   </div>
                 </div>
               </div>
@@ -173,10 +156,9 @@ export default function LandingClient() {
       <section className="py-12 border-y border-slate-100 bg-slate-50/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
-             <div className="text-xl font-black text-slate-800 tracking-tighter">ARAMEX</div>
-             <div className="text-xl font-black text-slate-800 tracking-tighter">KONNECT</div>
-             <div className="text-xl font-black text-slate-800 tracking-tighter">FLOUCI</div>
-             <div className="text-xl font-black text-slate-800 tracking-tighter">{t("landing.trust.made_in_tunisia")}</div>
+             {["cod", "coverage", "made_in_tunisia", "languages"].map((key) => (
+               <div key={key} className="text-xl font-black text-slate-800 tracking-tighter">{t(`landing.trust.${key}`)}</div>
+             ))}
           </div>
         </div>
       </section>

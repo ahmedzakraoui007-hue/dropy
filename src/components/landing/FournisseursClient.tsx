@@ -15,19 +15,10 @@ import {
   Building2 
 } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
 
 export default function FournisseursClient() {
-  const [mounted, setMounted] = useState(false);
   const { t, locale, dir } = useTranslation();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <div className="bg-white min-h-screen pt-20" />;
-  }
 
   return (
     <div className="bg-white min-h-screen pt-20" dir={dir}>
@@ -66,24 +57,24 @@ export default function FournisseursClient() {
                 <div className="space-y-6 pt-12">
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 backdrop-blur-sm">
                     <TrendingUp className="w-10 h-10 text-[#00A99D] mb-4" />
-                    <p className="text-2xl font-black text-white">+300%</p>
+                    <p className="text-2xl font-black text-white">{t("pages.fournisseurs.hero.stats.sales_value")}</p>
                     <p className="text-xs font-bold text-slate-500 uppercase">{t("pages.fournisseurs.hero.stats.sales")}</p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 backdrop-blur-sm">
                     <Users className="w-10 h-10 text-indigo-400 mb-4" />
-                    <p className="text-2xl font-black text-white">500+</p>
+                    <p className="text-2xl font-black text-white">{t("pages.fournisseurs.hero.stats.sellers_value")}</p>
                     <p className="text-xs font-bold text-slate-500 uppercase">{t("pages.fournisseurs.hero.stats.sellers")}</p>
                   </div>
                 </div>
                 <div className="space-y-6">
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 backdrop-blur-sm">
                     <BarChart3 className="w-10 h-10 text-amber-400 mb-4" />
-                    <p className="text-2xl font-black text-white">24h</p>
+                    <p className="text-2xl font-black text-white">{t("pages.fournisseurs.hero.stats.speed_value")}</p>
                     <p className="text-xs font-bold text-slate-500 uppercase">{t("pages.fournisseurs.hero.stats.speed")}</p>
                   </div>
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 backdrop-blur-sm">
                     <Globe className="w-10 h-10 text-blue-400 mb-4" />
-                    <p className="text-2xl font-black text-white">Tunisie</p>
+                    <p className="text-2xl font-black text-white">{t("pages.fournisseurs.hero.stats.coverage_value")}</p>
                     <p className="text-xs font-bold text-slate-500 uppercase">{t("pages.fournisseurs.hero.stats.coverage")}</p>
                   </div>
                 </div>

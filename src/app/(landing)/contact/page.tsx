@@ -1,11 +1,50 @@
 "use client";
 
+import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Mail, MessageCircle, Phone, MapPin } from "lucide-react";
+import { Mail, MessageCircle, MapPin } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
+import { CONTACT_EMAIL, WHATSAPP_URL } from "@/lib/contact";
+
+const SUBJECTS = ["seller", "creator", "supplier", "support", "other"] as const;
+const SUBJECT_KEYS: Record<(typeof SUBJECTS)[number], string> = {
+  seller: "vendeur",
+  creator: "creator",
+  supplier: "supplier",
+  support: "support",
+  other: "other",
+};
 
 export default function ContactPage() {
   const { t, dir } = useTranslation();
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = Object.fromEntries(new FormData(form));
+    setSending(true);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (response.status === 400) {
+        toast.error(t("pages.contact.form_invalid"));
+        return;
+      }
+      if (!response.ok) throw new Error();
+      form.reset();
+      setSent(true);
+    } catch {
+      toast.error(t("pages.contact.form_error"));
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="bg-white py-16 lg:py-32" dir={dir}>
@@ -30,7 +69,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-bold text-slate-900">{t("pages.contact.whatsapp_title")}</h3>
                     <p className="text-slate-500">{t("pages.contact.whatsapp_desc")}</p>
-                    <a href="https://wa.me/21654302654" className="text-teal-500 font-medium hover:underline">
+                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-teal-500 font-medium hover:underline">
                       Démarrer une discussion
                     </a>
                   </div>
@@ -42,8 +81,8 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-bold text-slate-900">{t("pages.contact.email_title")}</h3>
                     <p className="text-slate-500">{t("pages.contact.email_desc")}</p>
-                    <a href="mailto:ahmed@dropy.store" className="text-blue-600 font-medium hover:underline">
-                      ahmed@dropy.store
+                    <a href={`mailto:${CONTACT_EMAIL}`} className="text-blue-600 font-medium hover:underline">
+                      {CONTACT_EMAIL}
                     </a>
                   </div>
               </div>
@@ -61,39 +100,42 @@ export default function ContactPage() {
 
           <div className="bg-slate-50 p-8 lg:p-12 rounded-[2.5rem] border border-slate-100">
             <h3 className="text-2xl font-bold text-slate-900 mb-8">{t("pages.contact.form_title")}</h3>
-            <form className="space-y-6">
+            {sent ? (
+              <div className="rounded-2xl bg-teal-50 border border-teal-100 p-6 text-teal-800 font-medium">{t("pages.contact.form_sent")}</div>
+            ) : (
+            <form className="space-y-6" onSubmit={submit}>
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">{t("pages.contact.form_firstname")}</label>
-                  <input type="text" className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500" />
+                  <input type="text" name="firstName" required maxLength={80} className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-slate-700">{t("pages.contact.form_lastname")}</label>
-                  <input type="text" className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500" />
+                  <input type="text" name="lastName" maxLength={80} className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500" />
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">{t("pages.contact.form_email")}</label>
-                <input type="email" className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500" />
+                <input type="email" name="email" required className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">{t("pages.contact.form_subject")}</label>
-                <select className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500">
-                  <option>{t("pages.contact.subjects.vendeur")}</option>
-                  <option>{t("pages.contact.subjects.creator")}</option>
-                  <option>{t("pages.contact.subjects.supplier")}</option>
-                  <option>{t("pages.contact.subjects.support")}</option>
-                  <option>{t("pages.contact.subjects.other")}</option>
+                <select name="subject" className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500">
+                  {SUBJECTS.map((key) => (
+                    <option key={key} value={key}>{t(`pages.contact.subjects.${SUBJECT_KEYS[key]}`)}</option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">{t("pages.contact.form_message")}</label>
-                <textarea rows={4} className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500"></textarea>
+                <textarea name="message" required minLength={10} maxLength={5000} rows={4} className="w-full rounded-xl border-slate-200 focus:border-teal-500 focus:ring-teal-500"></textarea>
               </div>
-              <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12 rounded-xl font-bold">
-                {t("pages.contact.form_submit")}
+              <Button type="submit" disabled={sending} className="w-full bg-teal-500 hover:bg-teal-600 text-white h-12 rounded-xl font-bold">
+                {sending ? t("pages.contact.form_sending") : t("pages.contact.form_submit")}
               </Button>
             </form>
+            )}
           </div>
         </div>
       </div>

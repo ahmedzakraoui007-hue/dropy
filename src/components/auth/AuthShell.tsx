@@ -16,8 +16,8 @@ export function AuthShell({ children, wide = false }: AuthShellProps) {
 
   const points = [t("auth.shell.point1"), t("auth.shell.point2"), t("auth.shell.point3")];
   const stats = [
-    { value: "500+", label: t("auth.shell.stat_sellers") },
-    { value: "24/48h", label: t("auth.shell.stat_delivery") },
+    { value: "100 %", label: t("auth.shell.stat_sellers") },
+    { value: "24", label: t("auth.shell.stat_delivery") },
     { value: "0 DT", label: t("auth.shell.stat_stock") },
   ];
 

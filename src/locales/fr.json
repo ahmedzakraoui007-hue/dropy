@@ -2500,32 +2500,35 @@
     "signup": "Démarrer"
   },
   "hero": {
-    "badge": "N°1 de l'E-commerce en Tunisie",
+    "badge": "Fait en Tunisie · Gratuit pendant le lancement",
     "title1": "Gagnez de l'argent",
     "title2": "sans aucun stock.",
-    "description": "Vendez des produits locaux facilement. Nous gérons la livraison et vous encaissez les profits. Zéro risque, 100% gain.",
+    "description": "Créez votre boutique, choisissez des produits chez des fournisseurs tunisiens et vendez avec paiement à la livraison. Le fournisseur expédie, vous gardez votre marge.",
     "cta_primary": "Commencer maintenant",
     "cta_secondary": "Voir comment ça marche",
-    "waitlist": "Déjà 500+ entrepreneurs tunisiens"
+    "waitlist": "Inscription gratuite · 0 DT de stock · Paiement à la livraison"
   },
   "landing": {
     "trust": {
-      "made_in_tunisia": "PRODUITS TUNISIENS"
+      "made_in_tunisia": "PRODUITS TUNISIENS",
+      "cod": "PAIEMENT À LA LIVRAISON",
+      "coverage": "24 GOUVERNORATS",
+      "languages": "FRANÇAIS · العربية"
     },
     "pillars": {
       "title": "Une solution simple pour tous.",
       "subtitle": "Que vous soyez vendeur, fournisseur ou créateur, Dropy est fait pour vous.",
       "vendeurs": {
         "title": "Je veux vendre",
-        "desc": "Vendez des produits de qualité sans stock. On s'occupe de la livraison, vous recevez vos profits."
+        "desc": "Vendez sans stock : le fournisseur expédie la commande, vous gardez votre marge."
       },
       "fournisseurs": {
         "title": "Je suis fournisseur",
-        "desc": "Écoulez vos produits rapidement grâce à notre réseau de centaines de vendeurs."
+        "desc": "Proposez vos produits aux vendeurs Dropy : ils en font la publicité, vous expédiez les commandes."
       },
       "createurs": {
         "title": "Je suis créateur",
-        "desc": "Recevez des produits gratuits et gagnez de l'argent avec vos vidéos."
+        "desc": "Réalisez des vidéos pour les marques et soyez payé pour chaque mission validée."
       },
       "cta": "En savoir plus"
     },
@@ -2538,11 +2541,11 @@
       },
       "step2": {
         "title": "Choisissez vos produits",
-        "desc": "Sélectionnez parmi des milliers d'articles locaux."
+        "desc": "Choisissez dans le catalogue des fournisseurs tunisiens ou ajoutez vos propres produits."
       },
       "step3": {
         "title": "Vendez et gagnez",
-        "desc": "On livre vos clients, vous encaissez l'argent."
+        "desc": "Le client paie à la livraison, vous gardez votre marge."
       }
     },
     "final_cta": {
@@ -2553,6 +2556,7 @@
   },
   "footer": {
     "tagline": "L'e-commerce simplifié pour tous les Tunisiens.",
+    "whatsapp": "Écrire sur WhatsApp",
     "newsletter": "Restez informé",
     "newsletter_placeholder": "Votre email",
     "newsletter_success": "Bienvenue parmi nous !",
@@ -2584,6 +2588,12 @@
     "status": "En ligne"
   },
   "pages": {
+    "not_found": {
+      "title": "Page introuvable",
+      "desc": "Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse ou revenez à l'accueil.",
+      "home": "Retour à l'accueil",
+      "contact": "Nous contacter"
+    },
     "about": {
       "title": "À Propos de Dropy",
       "vision": "Simplifier l'E-commerce en Tunisie",
@@ -2597,19 +2607,23 @@
       "step1_desc": "Produits tunisiens sélectionnés avec soin.",
       "step2_title": "Outils Faciles",
       "step2_desc": "Une interface simple même pour les débutants.",
-      "step3_title": "Livraison Rapide",
-      "step3_desc": "Livraison partout en Tunisie en un temps record."
+      "step3_title": "Paiement à la livraison",
+      "step3_desc": "Vos clients paient à la réception, partout en Tunisie."
     },
     "contact": {
       "title": "Besoin d'aide ?",
       "subtitle": "Notre équipe vous répond rapidement.",
       "whatsapp_title": "WhatsApp",
-      "whatsapp_desc": "Disponible 7j/7 pour vous aider.",
+      "whatsapp_desc": "Écrivez-nous, on vous répond vite.",
       "email_title": "Email",
       "email_desc": "Pour vos demandes plus détaillées.",
       "office_title": "Bureaux",
       "office_desc": "Tunis, Tunisie",
       "form_title": "Envoyez-nous un message",
+      "form_sending": "Envoi…",
+      "form_sent": "Merci ! Votre message a bien été envoyé. Nous vous répondons par e-mail.",
+      "form_invalid": "Vérifiez votre prénom, votre e-mail et votre message (10 caractères minimum).",
+      "form_error": "L'envoi a échoué. Écrivez-nous directement par e-mail ou sur WhatsApp.",
       "form_firstname": "Prénom",
       "form_lastname": "Nom",
       "form_email": "Email",
@@ -2642,8 +2656,8 @@
       "search_placeholder": "Rechercher une aide...",
       "guides_title": "Guides",
       "guides_desc": "Tout pour bien démarrer.",
-      "videos_title": "Vidéos",
-      "videos_desc": "Apprendre en images.",
+      "videos_title": "Blog",
+      "videos_desc": "Conseils pour vendre en ligne en Tunisie.",
       "support_title": "Support Direct",
       "support_desc": "Parlez avec un conseiller."
     },
@@ -2731,13 +2745,13 @@
       "trust": {
         "title": "Toujours à vos côtés, sans compromis.",
         "security_title": "Sécurité & Qualité",
-        "security_desc": "Nous auditons chaque fournisseur et garantissons la qualité premium de chaque pièce textile.",
+        "security_desc": "Chaque fournisseur et chaque produit est vérifié par l'équipe Dropy avant d'entrer dans le catalogue.",
         "speed_title": "Rapidité d'exécution",
         "speed_desc": "De l'approbation de votre compte à votre première vente, tout est pensé pour aller vite.",
         "help_title": "Besoin d'aide ?",
-        "help_desc": "Notre équipe d'experts est disponible 7j/7 pour vous accompagner dans le choix de votre plan.",
+        "help_desc": "Notre équipe répond à vos questions sur WhatsApp et par e-mail.",
         "help_cta": "Parler à un conseiller",
-        "secure_transactions": "Transactions 100% Sécurisées"
+        "secure_transactions": "Paiement à la livraison"
       }
     },
     "login": {
@@ -2801,7 +2815,7 @@
       "quote_title": "Prêt à",
       "quote_span": "réussir",
       "quote_end": "en Tunisie ?",
-      "description": "Rejoignez des centaines de Tunisiens qui gagnent leur vie en ligne.",
+      "description": "Boutique, fournisseurs et créateurs réunis sur une seule plateforme.",
       "roles": {
         "seller": "Vendeur",
         "seller_desc": "Vendre sans stock",
@@ -2955,12 +2969,12 @@
       "hero": {
         "badge": "Zéro Stock, Zéro Risque",
         "title_main": "Vendez en ligne",
-        "title_accent": "et Gagnez Gros",
-        "desc": "Lancez votre boutique sans dépenser un millime en stock. Nous fournissons les produits et gérons la livraison.",
+        "title_accent": "sans stock",
+        "desc": "Lancez votre boutique sans dépenser un millime en stock. Les fournisseurs tunisiens préparent et expédient vos commandes.",
         "cta_primary": "Devenir Vendeur",
         "cta_secondary": "Comment ça marche ?",
-        "income_label": "PROFIT MOYEN",
-        "income_value": "+1500 TND / mois"
+        "income_label": "Stock à acheter",
+        "income_value": "0 DT"
       },
       "benefits": {
         "title": "Pourquoi choisir Dropy ?",
@@ -2970,12 +2984,12 @@
           "desc": "Vous ne payez le produit qu'après l'avoir vendu."
         },
         "quality": {
-          "title": "Produits Top",
-          "desc": "Des milliers d'articles locaux qui se vendent bien."
+          "title": "Fournisseurs vérifiés",
+          "desc": "Des produits de fournisseurs tunisiens, validés par Dropy."
         },
         "logistic": {
-          "title": "Livraison Express",
-          "desc": "On livre vos clients partout en Tunisie en 24/48h."
+          "title": "Paiement à la livraison",
+          "desc": "Vos clients paient à la réception, dans les 24 gouvernorats."
         },
         "support": {
           "title": "Accompagnement",
@@ -2988,13 +3002,13 @@
           "Boutique en ligne en 1 clic",
           "Catalogue de produits illimité",
           "Suivi des commandes en temps réel",
-          "Paiements automatiques de vos profits"
+          "Suivi de vos gains"
         ],
         "cta": "Démarrer maintenant"
       },
       "final": {
         "title": "C'est votre tour de réussir",
-        "subtitle": "Rejoignez la plus grande communauté de dropshippers en Tunisie.",
+        "subtitle": "Créez votre compte gratuitement et lancez votre boutique aujourd'hui.",
         "cta": "Créer mon compte"
       }
     },
@@ -3003,14 +3017,18 @@
         "badge": "Solution Grossiste",
         "title_main": "Vendez vos produits",
         "title_accent": "à grande échelle",
-        "desc": "Connectez vos stocks à des centaines de vendeurs tunisiens prêts à promouvoir vos produits.",
+        "desc": "Proposez vos produits aux vendeurs tunisiens qui en font la promotion dans leurs boutiques.",
         "cta_primary": "Devenir Fournisseur",
         "cta_secondary": "En savoir plus",
         "stats": {
-          "sales": "Croissance ventes",
-          "sellers": "Vendeurs actifs",
-          "speed": "Traitement rapide",
-          "coverage": "Couverture"
+          "sales": "Frais d'inscription",
+          "sellers": "Gouvernorats livrés",
+          "speed": "Gratuit pendant le lancement",
+          "coverage": "Couverture",
+          "sales_value": "0 DT",
+          "sellers_value": "24",
+          "speed_value": "100 %",
+          "coverage_value": "Tunisie"
         }
       },
       "benefits": {
@@ -3021,7 +3039,7 @@
           },
           {
             "title": "Paiement Sécurisé",
-            "desc": "Garantie de paiement pour chaque commande livrée."
+            "desc": "Suivez chaque commande et chaque paiement depuis votre tableau de bord."
           },
           {
             "title": "Zéro Marketing",
@@ -3031,7 +3049,7 @@
       },
       "network": {
         "title": "Un réseau présent partout",
-        "desc": "Nous livrons vos produits dans les 24 gouvernorats tunisiens.",
+        "desc": "Vos produits sont livrés aux clients dans les 24 gouvernorats.",
         "badges": [
           "Tunis",
           "Sousse",
@@ -3052,12 +3070,14 @@
         "badge": "Programme Créateur",
         "title_main": "Créez du contenu",
         "title_accent": "Gagnez de l'argent",
-        "desc": "Recevez des produits gratuits et soyez payé pour vos vidéos authentiques.",
+        "desc": "Créez des vidéos pour les marques tunisiennes et soyez payé pour chaque mission validée.",
         "cta_primary": "Devenir Créateur",
         "cta_secondary": "Voir les missions",
         "stats": {
-          "revenue": "Revenu moyen",
-          "products": "Produits offerts"
+          "revenue": "Votre part pendant le lancement",
+          "products": "Frais d'inscription",
+          "revenue_value": "100 %",
+          "products_value": "0 DT"
         }
       },
       "steps": {
@@ -3069,7 +3089,7 @@
           },
           {
             "title": "Créez",
-            "desc": "Recevez les produits et faites vos vidéos."
+            "desc": "Réalisez le contenu demandé dans le brief."
           },
           {
             "title": "Gagnez",
@@ -3079,7 +3099,7 @@
       },
       "final": {
         "title": "Libérez votre créativité",
-        "desc": "Rejoignez la première communauté UGC en Tunisie.",
+        "desc": "Rejoignez les créateurs UGC de Dropy.",
         "cta": "Démarrer l'aventure"
       }
     },
@@ -3159,10 +3179,10 @@
         "headline": "Le e-commerce tunisien, simplifié.",
         "sub": "Boutique en ligne, fournisseurs locaux et créateurs de contenu réunis sur une seule plateforme.",
         "point1": "Lancez votre boutique sans stock",
-        "point2": "Livraison partout en Tunisie en 24/48h",
+        "point2": "Fournisseurs tunisiens vérifiés",
         "point3": "Paiement à la livraison et suivi des commandes",
-        "stat_sellers": "Vendeurs en Tunisie",
-        "stat_delivery": "Délai de livraison",
+        "stat_sellers": "Gratuit pendant le lancement",
+        "stat_delivery": "Gouvernorats couverts",
         "stat_stock": "Stock à avancer",
         "back_home": "Retour au site"
       },
