@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { storeUrl } from "@/lib/store-url";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 function anonClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
@@ -44,7 +45,7 @@ export async function loadStoreProduct(storeSlug: string, productId: string) {
 }
 
 export async function storeSlugExists(storeSlug: string) {
-  const { data } = await anonClient().from("stores").select("id").eq("slug", storeSlug).maybeSingle();
+  const { data } = await createAdminClient().from("stores").select("id").eq("slug", storeSlug).maybeSingle();
   return Boolean(data);
 }
 

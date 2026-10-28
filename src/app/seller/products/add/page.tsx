@@ -147,7 +147,7 @@ export default function MyProductsPage() {
     hasVariants: false,
     variants: [] as Variant[],
     compareAt: "",
-    sales: { badge: "", highlights: [], faq: [] } as SalesContent,
+    sales: { badge: "", highlights: [], faq: [], upsell: null } as SalesContent,
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [storeId, setStoreId] = useState<string | null>(null);
@@ -319,7 +319,7 @@ export default function MyProductsPage() {
       hasVariants: false,
       variants: [],
       compareAt: "",
-      sales: { badge: "", highlights: [], faq: [] },
+      sales: { badge: "", highlights: [], faq: [], upsell: null },
     });
     setShowProductDialog(true);
   };
@@ -367,6 +367,14 @@ export default function MyProductsPage() {
       return;
     }
 
+    const upsell = productForm.sales.upsell;
+    const upsellProduct = upsell ? products.find((p) => p.id === upsell.productId) : null;
+    const upsellCost = Number(upsellProduct?.products?.base_price || 0);
+    if (upsell?.price != null && upsellCost > 0 && upsell.price <= upsellCost) {
+      toast.error(t("seller_app.products.sales.upsell_below_cost").replace("{cost}", formatPrice(upsellCost)));
+      return;
+    }
+
     if (!editingProduct && !check("maxProducts")) {
       toast.error(t("seller_app.products.limit"));
       return;
@@ -387,7 +395,7 @@ export default function MyProductsPage() {
       images: productForm.images.length > 0 ? productForm.images : ["/placeholder-product.jpg"],
       selling_price: Math.round(price * 100) / 100,
       compare_at_price: productForm.compareAt.trim() ? Math.round(compareAt * 100) / 100 : null,
-      sales_content: normalizeSalesContent(productForm.sales),
+      sales_content: normalizeSalesContent({ ...productForm.sales, upsell: upsellProduct ? upsell : null }),
       stock_quantity: productForm.stock ? parseInt(productForm.stock) : null,
       category: productForm.category,
       has_variants: productForm.hasVariants,
@@ -1193,6 +1201,9 @@ export default function MyProductsPage() {
               onCompareAtChange={(value) => setProductForm({ ...productForm, compareAt: value })}
               content={productForm.sales}
               onChange={(sales) => setProductForm({ ...productForm, sales })}
+              upsellChoices={products
+                .filter((p) => p.id !== editingProduct?.id && p.is_active && !p.has_variants)
+                .map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), cost: p.products?.base_price != null ? Number(p.products.base_price) : null }))}
             />
 
             <div className="flex gap-3 pt-4">

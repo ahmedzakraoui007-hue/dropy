@@ -1,12 +1,15 @@
 "use client";
 
-import { Plus, Sparkles, Trash2 } from "lucide-react";
+import { Gift, Plus, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useTranslation } from "@/context/LanguageContext";
 import { MAX_FAQ, MAX_HIGHLIGHTS, discountPercent, type SalesContent } from "@/lib/product-sales";
+import { formatPrice } from "@/lib/utils";
+
+export type UpsellChoice = { id: string; name: string; price: number; cost: number | null };
 
 type Props = {
   price: string;
@@ -14,9 +17,10 @@ type Props = {
   onCompareAtChange: (value: string) => void;
   content: SalesContent;
   onChange: (content: SalesContent) => void;
+  upsellChoices?: UpsellChoice[];
 };
 
-export function ProductSalesFields({ price, compareAt, onCompareAtChange, content, onChange }: Props) {
+export function ProductSalesFields({ price, compareAt, onCompareAtChange, content, onChange, upsellChoices = [] }: Props) {
   const { t } = useTranslation();
   const tr = (key: string) => t(`seller_app.products.sales.${key}`);
   const percent = discountPercent(price.replace(",", "."), compareAt.replace(",", "."));
@@ -25,6 +29,12 @@ export function ProductSalesFields({ price, compareAt, onCompareAtChange, conten
   const setHighlight = (index: number, value: string) => onChange({ ...content, highlights: content.highlights.map((h, i) => (i === index ? value : h)) });
   const setFaq = (index: number, key: "question" | "answer", value: string) =>
     onChange({ ...content, faq: content.faq.map((f, i) => (i === index ? { ...f, [key]: value } : f)) });
+  const upsellChoice = upsellChoices.find((c) => c.id === content.upsell?.productId) || null;
+  const setUpsellPrice = (value: string) => {
+    if (!content.upsell) return;
+    const parsed = Number(value.replace(",", "."));
+    onChange({ ...content, upsell: { ...content.upsell, price: value.trim() && Number.isFinite(parsed) && parsed > 0 ? parsed : null } });
+  };
 
   return (
     <div className="space-y-5 border-t pt-5">
@@ -111,6 +121,57 @@ export function ProductSalesFields({ price, compareAt, onCompareAtChange, conten
             <Plus className="me-1 h-4 w-4" />
             {tr("add_faq")}
           </Button>
+        )}
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-dashed border-purple-200 bg-purple-50/40 p-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+            <Gift className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold">{tr("upsell")}</p>
+            <p className="text-xs text-gray-500">{tr("upsell_help")}</p>
+          </div>
+        </div>
+        {upsellChoices.length === 0 ? (
+          <p className="text-xs text-gray-500">{tr("upsell_empty")}</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="upsell-product">{tr("upsell_product")}</Label>
+              <select
+                id="upsell-product"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                value={content.upsell?.productId || ""}
+                onChange={(e) => onChange({ ...content, upsell: e.target.value ? { productId: e.target.value, price: null } : null })}
+              >
+                <option value="">{tr("upsell_none")}</option>
+                {upsellChoices.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name} · {formatPrice(c.price)}</option>
+                ))}
+              </select>
+            </div>
+            {upsellChoice && (
+              <div className="space-y-2">
+                <Label htmlFor="upsell-price">{tr("upsell_price")}</Label>
+                <Input
+                  id="upsell-price"
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.001"
+                  placeholder={String(upsellChoice.price)}
+                  value={content.upsell?.price ?? ""}
+                  onChange={(e) => setUpsellPrice(e.target.value)}
+                />
+                <p className="text-xs text-gray-500">
+                  {tr("upsell_price_help").replace("{price}", formatPrice(upsellChoice.price))}
+                  {upsellChoice.cost != null && ` ${tr("upsell_cost").replace("{cost}", formatPrice(upsellChoice.cost))}`}
+                </p>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -1,10 +1,19 @@
 export type ProductFaq = { question: string; answer: string };
-export type SalesContent = { badge: string; highlights: string[]; faq: ProductFaq[] };
+export type ProductUpsell = { productId: string; price: number | null };
+export type SalesContent = { badge: string; highlights: string[]; faq: ProductFaq[]; upsell: ProductUpsell | null };
 
 export const MAX_HIGHLIGHTS = 6;
 export const MAX_FAQ = 8;
 
 const clean = (value: unknown, max: number) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+
+export function normalizeUpsell(raw: unknown): ProductUpsell | null {
+  const data = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  const productId = clean(data?.productId, 64);
+  if (!productId) return null;
+  const price = Number(data?.price);
+  return { productId, price: data?.price != null && data?.price !== "" && Number.isFinite(price) && price > 0 ? Math.round(price * 100) / 100 : null };
+}
 
 export function normalizeSalesContent(raw: unknown): SalesContent {
   const data = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
@@ -18,7 +27,7 @@ export function normalizeSalesContent(raw: unknown): SalesContent {
         .filter((item) => item.question && item.answer)
         .slice(0, MAX_FAQ)
     : [];
-  return { badge: clean(data.badge, 40), highlights, faq };
+  return { badge: clean(data.badge, 40), highlights, faq, upsell: normalizeUpsell(data.upsell) };
 }
 
 export function discountPercent(price: unknown, compareAt: unknown) {
