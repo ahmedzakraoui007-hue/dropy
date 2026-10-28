@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPrice } from "@/lib/utils";
 
 const METHOD_LABELS: Record<string, string> = {
   bank_transfer: "Virement",
@@ -53,7 +53,7 @@ export function ContentPaymentsPanel() {
   const act = async (payment: any, action: "confirm" | "reject" | "payout") => {
     let reference: string | undefined;
     if (action === "payout") {
-      const value = window.prompt(`Référence du versement de ${Number(payment.creator_amount).toFixed(2)} TND au créateur :`);
+      const value = window.prompt(`Référence du versement de ${formatPrice(Number(payment.creator_amount))} au créateur :`);
       if (!value) return;
       reference = value;
     }
@@ -127,18 +127,18 @@ export function ContentPaymentsPanel() {
                   <div className="grid sm:grid-cols-3 gap-2 text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Payé par le vendeur</p>
-                      <p className="font-semibold">{Number(p.amount).toFixed(2)} TND</p>
+                      <p className="font-semibold">{formatPrice(Number(p.amount))}</p>
                       <p className="text-xs text-muted-foreground">
                         {METHOD_LABELS[p.payment_method] || p.payment_method || "—"} · réf. {p.transaction_ref || "—"}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Commission Dropy</p>
-                      <p className="font-semibold">{Number(p.platform_commission || 0).toFixed(2)} TND</p>
+                      <p className="font-semibold">{formatPrice(Number(p.platform_commission || 0))}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Dû au créateur</p>
-                      <p className="font-semibold">{Number(p.creator_amount || 0).toFixed(2)} TND</p>
+                      <p className="font-semibold">{formatPrice(Number(p.creator_amount || 0))}</p>
                       {p.state === "paid_out" && <p className="text-xs text-muted-foreground">réf. {p.stripe_transfer_id}</p>}
                     </div>
                   </div>

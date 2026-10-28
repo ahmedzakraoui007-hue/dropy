@@ -49,7 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
 import Link from "next/link";
 
 interface OrderItem {
@@ -124,7 +124,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SupplierShippingPage() {
-  const { t: tt } = useTranslation();
+  const { t: tt, locale } = useTranslation();
+  const dateLocale = locale === "ar" ? arTN : fr;
   const tr = (key: string) => tt(`supplier_app.shipping.${key}`);
   const statusLabel = (status: string) => {
     const label = tt(`supplier_app.status.${status}`);
@@ -634,7 +635,7 @@ function BordereauProfessionnel({ order, sender }: { order: SupplierOrder; sende
             </p>
             {order.estimated_delivery && (
               <p className="text-sm text-blue-600 mt-1">
-                Livraison estimée: {format(new Date(order.estimated_delivery), "dd MMMM yyyy", { locale: fr })}
+                Livraison estimée : {format(new Date(order.estimated_delivery), "dd MMMM yyyy", { locale: fr })}
               </p>
             )}
           </div>

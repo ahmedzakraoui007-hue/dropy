@@ -37,7 +37,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
 import { toast } from "sonner";
 
 interface SupplierOrder {
@@ -82,7 +82,8 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function SupplierOrdersPage() {
-  const { t: tt } = useTranslation();
+  const { t: tt, locale } = useTranslation();
+  const dateLocale = locale === "ar" ? arTN : fr;
   const tr = (key: string) => tt(`supplier_app.orders.${key}`);
   const statusLabel = (status: string) => {
     const label = tt(`supplier_app.status.${status}`);
@@ -409,7 +410,7 @@ export default function SupplierOrdersPage() {
                         <Badge className={statusColors[order.status]}>{statusLabel(order.status)}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {tr("created_on")} {format(new Date(order.created_at), "dd MMM yyyy, HH:mm", { locale: fr })}
+                        {tr("created_on")} {format(new Date(order.created_at), "dd MMM yyyy, HH:mm", { locale: dateLocale })}
                       </p>
                     </div>
                     

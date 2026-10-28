@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPrice } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -171,7 +171,7 @@ export default function ContentModeration() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">
-                        {brief.budget} TND
+                        {formatPrice(brief.budget)}
                       </TableCell>
                       <TableCell>
                         <Badge className={
@@ -210,7 +210,7 @@ export default function ContentModeration() {
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-bold mb-1">Budget</h4>
-                                    <p className="text-sm">{brief.budget} TND</p>
+                                    <p className="text-sm">{formatPrice(brief.budget)}</p>
                                   </div>
                                 </div>
                                 <div className="pt-4 flex justify-end gap-2">

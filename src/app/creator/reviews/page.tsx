@@ -22,10 +22,11 @@ import {
   Briefcase
 } from "lucide-react";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
 
 export default function CreatorReviewsPage() {
-  const { t: tt } = useTranslation();
+  const { t: tt, locale } = useTranslation();
+  const dateLocale = locale === "ar" ? arTN : fr;
   const tr = (key: string) => tt(`creator_app.reviews.${key}`);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<any[]>([]);
@@ -184,7 +185,7 @@ export default function CreatorReviewsPage() {
                           <Briefcase className="w-3 h-3" />
                           {review.brief?.title}
                           <span className="opacity-50">•</span>
-                          {format(new Date(review.created_at), "d MMMM yyyy", { locale: fr })}
+                          {format(new Date(review.created_at), "d MMMM yyyy", { locale: dateLocale })}
                         </div>
                       </div>
                     </div>

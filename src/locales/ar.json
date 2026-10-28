@@ -109,6 +109,7 @@
             "details_postuler": "التفاصيل والترشح"
         },
         "opportunity": {
+            "published_on": "تنشر في",
             "opportunite_introuvable": "الفرصة غير موجودة",
             "retour_aux_opportunites": "العودة إلى الفرص",
             "score_de_compatibilite": "نسبة التوافق",
@@ -119,6 +120,11 @@
             "livrables_attendus": "المخرجات المطلوبة",
             "produits_a_promouvoir": "المنتجات المراد الترويج لها",
             "pourquoi_vous_correspondez": "لماذا أنت مناسب",
+            "reason_specialty": "الاختصاص: {value}",
+            "reason_city": "نفس المدينة: {value}",
+            "reason_budget": "الميزانية تناسبك",
+            "reason_projects": "{value} مهمة مكملة",
+            "reason_rating": "التقييم: {value} ⭐",
             "voir_mes_candidatures": "عرض ترشحاتي",
             "postuler_maintenant": "الترشح الآن",
             "protection_escrow": "حماية الدفع",

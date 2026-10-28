@@ -21,10 +21,11 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { calculateMatchScore } from "@/lib/matching";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
 
 export default function OpportunitiesPage() {
-  const { t: tt } = useTranslation();
+  const { t: tt, locale } = useTranslation();
+  const dateLocale = locale === "ar" ? arTN : fr;
   const tr = (key: string) => tt(`creator_app.opportunities.${key}`);
   const router = useRouter();
   const supabase = createClient();
@@ -175,7 +176,7 @@ export default function OpportunitiesPage() {
                           </div>
                         <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Calendar className="w-4 h-4" />
-                          {format(new Date(brief.deadline), "PP", { locale: fr })}
+                          {format(new Date(brief.deadline), "PP", { locale: dateLocale })}
                         </div>
                         {brief.preferred_city && (
                           <div className="flex items-center gap-1.5 text-muted-foreground">

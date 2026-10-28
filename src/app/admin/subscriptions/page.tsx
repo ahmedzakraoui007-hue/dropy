@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPrice } from "@/lib/utils";
 
 interface SubscriptionStats {
   id: string;
@@ -105,7 +105,7 @@ export default function SubscriptionMonitoring() {
             <CardTitle className="text-sm font-medium text-muted-foreground">MRR (Mensuel)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{totalMRR} TND</div>
+            <div className="text-3xl font-bold">{formatPrice(totalMRR)}</div>
             <p className="text-xs text-emerald-500 flex items-center mt-1">
               <ArrowUpRight className="w-3 h-3 mr-1" />
               +14.5% vs mois dernier
