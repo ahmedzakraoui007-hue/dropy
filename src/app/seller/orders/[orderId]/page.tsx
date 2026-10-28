@@ -235,7 +235,7 @@ export default function OrderDetailPage() {
         has_own_products: data.has_own_products || ownItems.length > 0,
         has_dropshipping_products: data.has_dropshipping_products || dropItems.length > 0,
         own_products_status: data.own_products_status || "pending",
-        dropshipping_status: data.dropshipping_status || "pending",
+        dropshipping_status: data.dropshipping_status === "ready_for_pickup" ? "ready" : data.dropshipping_status || "pending",
       });
       setSellerNote(data.seller_notes || "");
     } catch (error) {

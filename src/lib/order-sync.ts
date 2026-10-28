@@ -9,6 +9,21 @@ const STORE_STATUS_FROM_SUPPLIER: Record<string, string> = {
 };
 
 const STATUS_RANK = ["new", "confirmed", "preparing", "shipped", "delivered"];
+const SUPPLIER_RANK = ["pending", "accepted", "preparing", "ready_for_pickup", "shipped", "delivered"];
+const IGNORED_SUPPLIER_STATUSES = new Set(["rejected", "cancelled"]);
+
+async function slowestSupplierStatus(storeOrderId: string, fallback: string) {
+  const supabase = createAdminClient();
+  const { data: items } = await supabase.from("store_order_items").select("supplier_order_id").eq("store_order_id", storeOrderId);
+  const ids = [...new Set((items || []).map((i) => i.supplier_order_id).filter(Boolean))];
+  if (ids.length <= 1) return fallback;
+  const { data: parcels } = await supabase.from("supplier_orders").select("status").in("id", ids);
+  const ranks = (parcels || [])
+    .map((p) => String(p.status))
+    .filter((s) => !IGNORED_SUPPLIER_STATUSES.has(s))
+    .map((s) => Math.max(0, SUPPLIER_RANK.indexOf(s)));
+  return ranks.length ? SUPPLIER_RANK[Math.min(...ranks)] : fallback;
+}
 
 const SELLER_MESSAGES: Record<string, string> = {
   confirmed: "a été acceptée par le fournisseur",
@@ -60,10 +75,11 @@ export async function syncStoreOrdersFromSupplier(
   await supabase.from("store_order_items").update({ item_status: itemStatus }).eq("supplier_order_id", supplierOrderId);
 
   const orders = await linkedStoreOrders(supplierOrderId);
-  const mapped = STORE_STATUS_FROM_SUPPLIER[supplierStatus];
 
   for (const order of orders) {
-    const update: Record<string, unknown> = { dropshipping_status: supplierStatus };
+    const overall = await slowestSupplierStatus(order.id, supplierStatus);
+    const mapped = STORE_STATUS_FROM_SUPPLIER[overall];
+    const update: Record<string, unknown> = { dropshipping_status: overall };
 
     if (!order.has_own_products) {
       if (mapped && STATUS_RANK.indexOf(mapped) > STATUS_RANK.indexOf(order.status) && order.status !== "cancelled") {

@@ -247,7 +247,7 @@ export default function TrackOrderPage() {
                   <div className="mt-3 pt-3 border-t border-indigo-100">
                     <p className="text-xs text-indigo-600">
                       <Truck className="w-3 h-3 inline mr-1" />
-                      Transporteur: <span className="font-medium">{order.shipping_company}</span>
+                      Transporteur: <span className="font-medium">{order.shipping_company === "dropy_internal" ? "Livraison Dropy" : order.shipping_company}</span>
                     </p>
                   </div>
                 )}
