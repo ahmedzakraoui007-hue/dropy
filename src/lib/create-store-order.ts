@@ -2,13 +2,14 @@ import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 import { checkExtras, extrasFromInput, normalizeCheckout, orderNotes } from "@/lib/checkout-settings";
+import { normalizeUpsell } from "@/lib/product-sales";
 import { isMobileUserAgent, normalizeProtection, phoneKey, verifyTurnstile, type RiskFlag } from "@/lib/order-protection";
 
 const MAX_LINES = 50;
 const MAX_QUANTITY = 100;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type CartLine = { productId: string; variantId: string | null; quantity: number };
+type CartLine = { productId: string; variantId: string | null; quantity: number; upsellOf: string | null };
 
 export type OrderInput = {
   storeId: string;
@@ -50,14 +51,16 @@ function parseCart(raw: unknown): CartLine[] | null {
     const productId = String(line.productId ?? line.id ?? "").trim();
     const variantId = line.variantId ? String(line.variantId) : null;
     const quantity = Number(line.quantity ?? 1);
+    const upsellOf = line.upsellOf ? String(line.upsellOf) : null;
     if (!productId || !Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY) return null;
-    const key = `${productId}:${variantId ?? ""}`;
+    if (upsellOf && (quantity !== 1 || upsellOf === productId)) return null;
+    const key = `${productId}:${variantId ?? ""}:${upsellOf ?? ""}`;
     const existing = merged.get(key);
     if (existing) {
       existing.quantity += quantity;
       if (existing.quantity > MAX_QUANTITY) return null;
     } else {
-      merged.set(key, { productId, variantId, quantity });
+      merged.set(key, { productId, variantId, quantity, upsellOf });
     }
   }
   return [...merged.values()];
@@ -197,7 +200,14 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
       });
     }
 
-    const finalUnitPrice = discountedUnitPrice(unitPrice, line.quantity, offers);
+    let finalUnitPrice = discountedUnitPrice(unitPrice, line.quantity, offers);
+    if (line.upsellOf) {
+      const main = productMap.get(line.upsellOf);
+      const upsell = main ? normalizeUpsell(main.sales_content?.upsell) : null;
+      const mainInCart = lines.some((l) => l.productId === line.upsellOf && !l.upsellOf);
+      if (!main || !mainInCart || !upsell || upsell.productId !== product.id) return fail("invalid_cart", "Panier invalide");
+      finalUnitPrice = upsell.price ?? unitPrice;
+    }
     priced.push({ line, product, variant, unitPrice: finalUnitPrice, total: round2(finalUnitPrice * line.quantity) });
   }
 

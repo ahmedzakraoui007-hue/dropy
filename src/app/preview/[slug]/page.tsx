@@ -688,6 +688,26 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
   const showForm = config.expressOrder !== false && checkout.mode !== "cart";
   const showCartButtons = checkout.mode !== "express" || !showForm;
   const shake = checkout.shakeButton && !inBuilder ? " dropy-shake" : "";
+  const upsellId = sales.upsell?.productId || null;
+  const upsellPrice = sales.upsell?.price ?? null;
+  const [upsell, setUpsell] = useState<{ productId: string; name: string; image?: string | null; price: number; regularPrice: number } | null>(null);
+
+  useEffect(() => {
+    setUpsell(null);
+    if (!storeId || !upsellId || upsellId === displayProduct.id) return;
+    createClient()
+      .from("store_products")
+      .select("id, name, images, selling_price, stock_quantity, has_variants")
+      .eq("store_id", storeId)
+      .eq("id", upsellId)
+      .eq("is_active", true)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data || data.has_variants || (data.stock_quantity != null && data.stock_quantity < 1)) return;
+        const regularPrice = Number(data.selling_price);
+        setUpsell({ productId: data.id, name: data.name, image: data.images?.[0] ?? null, price: upsellPrice ?? regularPrice, regularPrice });
+      });
+  }, [storeId, upsellId, upsellPrice, displayProduct.id]);
 
   useEffect(() => {
     const node = formRef.current;
@@ -859,6 +879,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                   offers={normalizeOffers(store?.quantity_offers)}
                   delivery={{ delivery_fee: store?.delivery_fee, free_delivery_threshold: store?.free_delivery_threshold }}
                   checkout={checkout}
+                  upsell={upsell}
                   beforeSubmit={() => {
                     if (variantOptions.length > 0 && !selectedVariant) {
                       setVariantError(true);

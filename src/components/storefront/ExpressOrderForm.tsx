@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
+import { Check, Loader2, Minus, Plus, ShieldCheck, Truck } from "lucide-react";
 import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type QuantityOffer } from "@/lib/store-pricing";
 import { governorateLabel, orderErrorText } from "@/lib/storefront-i18n";
 import { useStoreText } from "@/components/storefront/StoreLanguage";
@@ -29,6 +29,7 @@ type Props = {
   offers?: QuantityOffer[];
   delivery?: { delivery_fee?: number | string | null; free_delivery_threshold?: number | string | null };
   checkout?: CheckoutSettings;
+  upsell?: { productId: string; name: string; image?: string | null; price: number; regularPrice: number } | null;
 };
 
 export function ExpressOrderForm({
@@ -45,6 +46,7 @@ export function ExpressOrderForm({
   offers = [],
   delivery = {},
   checkout = normalizeCheckout({}),
+  upsell = null,
 }: Props) {
   const { t, money: formatTnd, lang } = useStoreText();
   const [form, setForm] = useState({ name: "", phone: "", governorate: "", city: "", address: "" });
@@ -58,6 +60,7 @@ export function ExpressOrderForm({
   const submittedRef = useRef(false);
   const [extras, setExtras] = useState(emptyExtras);
   const [extraErrors, setExtraErrors] = useState<ExtrasError[]>([]);
+  const [withUpsell, setWithUpsell] = useState(false);
 
   useEffect(() => {
     if (preview || !storeId || !productId || submittedRef.current) return;
@@ -120,7 +123,10 @@ export function ExpressOrderForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storeId,
-          cart: [{ productId, variantId: variantId || null, quantity }],
+          cart: [
+            { productId, variantId: variantId || null, quantity },
+            ...(upsell && withUpsell ? [{ productId: upsell.productId, variantId: null, quantity: 1, upsellOf: productId }] : []),
+          ],
           customer: {
             name: form.name.trim(),
             phone: form.phone.replace(/\D/g, "").replace(/^216/, ""),
@@ -150,7 +156,8 @@ export function ExpressOrderForm({
 
   const field = "w-full rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:ring-2 ring-primary";
   const lineUnit = discountedUnitPrice(unitPrice, quantity, offers);
-  const merchandise = roundMoney(lineUnit * quantity);
+  const upsellAmount = upsell && withUpsell ? upsell.price : 0;
+  const merchandise = roundMoney(lineUnit * quantity + upsellAmount);
   const shipping = deliveryFeeFor(merchandise, delivery);
   const total = roundMoney(merchandise + shipping);
   const savedPercent = offerPercentFor(quantity, offers);
@@ -261,6 +268,28 @@ export function ExpressOrderForm({
           <p className="text-xl font-black">{formatTnd(total)}</p>
         </div>
       </div>
+
+      {upsell && (
+        <button
+          type="button"
+          onClick={() => setWithUpsell((v) => !v)}
+          aria-pressed={withUpsell}
+          className={`flex w-full items-center gap-3 rounded-xl border-2 border-dashed p-3 text-start transition-colors ${withUpsell ? "border-primary bg-primary/5" : "border-primary/40 hover:border-primary"}`}
+        >
+          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 ${withUpsell ? "border-primary bg-primary text-primary-foreground" : "border-primary/50"}`}>
+            {withUpsell && <Check className="h-4 w-4" />}
+          </span>
+          {upsell.image && <img src={upsell.image} alt="" className="h-14 w-14 shrink-0 rounded-lg object-cover" />}
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11px] font-bold uppercase tracking-wide text-primary">{t("express.upsell_title")}</span>
+            <span className="block truncate text-sm font-bold">{upsell.name}</span>
+            <span className="block text-xs">
+              {t("express.upsell_add", { price: formatTnd(upsell.price) })}
+              {upsell.regularPrice > upsell.price && <span className="ms-1 line-through opacity-50">{formatTnd(upsell.regularPrice)}</span>}
+            </span>
+          </span>
+        </button>
+      )}
 
       <TurnstileWidget onToken={setTurnstileToken} lang={lang} />
 
