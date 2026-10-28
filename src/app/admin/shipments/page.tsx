@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatPrice } from "@/lib/utils";
 
 interface Shipment {
   id: string;
@@ -200,8 +200,8 @@ export default function AdminShipmentsPage() {
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                    <span>À encaisser : <strong>{Number(s.cod_amount || 0).toFixed(2)} TND</strong></span>
-                    <span className="text-gray-500">Frais : {Number(s.shipping_cost || 0).toFixed(2)} TND</span>
+                    <span>À encaisser : <strong>{formatPrice(Number(s.cod_amount || 0))}</strong></span>
+                    <span className="text-gray-500">Frais : {formatPrice(Number(s.shipping_cost || 0))}</span>
                     {s.external_tracking_id && <span className="text-gray-500">Suivi : {s.external_tracking_id}</span>}
                   </div>
 

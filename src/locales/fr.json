@@ -109,6 +109,7 @@
             "details_postuler": "Détails & Postuler"
         },
         "opportunity": {
+            "published_on": "Publié le",
             "opportunite_introuvable": "Opportunité introuvable",
             "retour_aux_opportunites": "Retour aux opportunités",
             "score_de_compatibilite": "Score de compatibilité",
@@ -119,6 +120,11 @@
             "livrables_attendus": "Livrables attendus",
             "produits_a_promouvoir": "Produits à promouvoir",
             "pourquoi_vous_correspondez": "Pourquoi vous correspondez",
+            "reason_specialty": "Spécialité : {value}",
+            "reason_city": "Même ville : {value}",
+            "reason_budget": "Budget compatible",
+            "reason_projects": "{value} missions terminées",
+            "reason_rating": "Note : {value} ⭐",
             "voir_mes_candidatures": "Voir mes candidatures",
             "postuler_maintenant": "Postuler maintenant",
             "protection_escrow": "Protection Escrow",

@@ -2,6 +2,7 @@
 
 import { formatPrice } from "@/lib/utils";
 import { useTranslation } from "@/context/LanguageContext";
+import type { MatchReason } from "@/lib/matching";
 import { FREE_LAUNCH } from "@/lib/launch";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -25,13 +26,22 @@ import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { calculateMatchScore } from "@/lib/matching";
 import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { arTN, fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export default function OpportunityDetailsPage() {
-  const { t: tt } = useTranslation();
+  const { t: tt, locale } = useTranslation();
+  const dateLocale = locale === "ar" ? arTN : fr;
   const tr = (key: string) => tt(`creator_app.opportunity.${key}`);
+  const reasonLabel = (reason: MatchReason) => {
+    let value = String(reason.value ?? "");
+    if (reason.key === "specialty") {
+      const label = tt(`creator_app.common.type_${value}`);
+      if (!label.startsWith("creator_app.")) value = label;
+    }
+    return tr(`reason_${reason.key}`).replace("{value}", value);
+  };
   const { id } = useParams();
   const router = useRouter();
   const supabase = createClient();
@@ -120,7 +130,7 @@ export default function OpportunityDetailsPage() {
                     </div>
                     <CardTitle className="text-3xl">{brief.title}</CardTitle>
                     <CardDescription className="mt-2">
-                        Publié le {format(new Date(brief.created_at), "PPP", { locale: fr })}
+                        {tr("published_on")} {format(new Date(brief.created_at), "PPP", { locale: dateLocale })}
                       </CardDescription>
                   </div>
                   {matchData && (
@@ -145,7 +155,7 @@ export default function OpportunityDetailsPage() {
                     </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground uppercase font-bold">{tr("date_limite")}</p>
-                    <p className="font-semibold">{format(new Date(brief.deadline), "PP", { locale: fr })}</p>
+                    <p className="font-semibold">{format(new Date(brief.deadline), "PP", { locale: dateLocale })}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground uppercase font-bold">{tr("lieu")}</p>
@@ -207,10 +217,10 @@ export default function OpportunityDetailsPage() {
                 </CardHeader>
                 <CardContent>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {matchData.reasons.map((reason: string, i: number) => (
+                    {matchData.reasons.map((reason: MatchReason, i: number) => (
                       <li key={i} className="flex items-center gap-2 text-sm">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        {reason}
+                        {reasonLabel(reason)}
                       </li>
                     ))}
                   </ul>

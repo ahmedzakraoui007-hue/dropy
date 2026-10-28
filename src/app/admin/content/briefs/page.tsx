@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 export default function AdminBriefsPage() {
   const supabase = createClient();
@@ -106,7 +106,7 @@ export default function AdminBriefsPage() {
                       <span className="text-sm">{brief.store?.name}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-medium">{brief.budget_min} - {brief.budget_max} TND</span>
+                      <span className="text-sm font-medium">{formatPrice(brief.budget_min)} - {formatPrice(brief.budget_max)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <Badge className={cn(
