@@ -44,6 +44,14 @@ export default function AdminBlogEditor() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState<"write" | "preview">("write");
+  const [savedSlug, setSavedSlug] = useState<string | null>(null);
+
+  const refreshSite = (slug: string, previousSlug?: string | null) =>
+    fetch("/api/admin/blog/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, previousSlug }),
+    }).catch(() => undefined);
 
   useEffect(() => {
     if (isNew) return;
@@ -71,6 +79,7 @@ export default function AdminBlogEditor() {
           status: data.status,
           published_at: data.published_at,
         });
+        setSavedSlug(data.slug);
         setLoading(false);
       });
   }, [id, isNew, router]);
@@ -128,6 +137,8 @@ export default function AdminBlogEditor() {
       return;
     }
     setForm((prev) => ({ ...prev, slug, status, published_at: payload.published_at }));
+    await refreshSite(slug, savedSlug !== slug ? savedSlug : null);
+    setSavedSlug(slug);
     toast.success(status === "published" ? "Article publié" : "Brouillon enregistré");
     if (isNew && data) router.replace(`/admin/blog/${data.id}`);
   };
@@ -136,6 +147,7 @@ export default function AdminBlogEditor() {
     if (!window.confirm("Supprimer définitivement cet article ?")) return;
     const { error } = await createClient().from("blog_posts").delete().eq("id", id);
     if (error) return toast.error("Suppression impossible");
+    await refreshSite(form.slug, savedSlug);
     toast.success("Article supprimé");
     router.push("/admin/blog");
   };
