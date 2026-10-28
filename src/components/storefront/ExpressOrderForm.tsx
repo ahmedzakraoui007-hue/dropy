@@ -6,6 +6,7 @@ import { deliveryFeeFor, discountedUnitPrice, offerPercentFor, roundMoney, type 
 import { governorateLabel, orderErrorText } from "@/lib/storefront-i18n";
 import { useStoreText } from "@/components/storefront/StoreLanguage";
 import { TurnstileWidget } from "@/components/storefront/TurnstileWidget";
+import { storedAttribution } from "@/lib/ad-attribution";
 import { CheckoutExtraFields } from "@/components/storefront/CheckoutExtraFields";
 import { checkExtras, emptyExtras, normalizeCheckout, type CheckoutSettings, type ExtrasError } from "@/lib/checkout-settings";
 
@@ -138,6 +139,7 @@ export function ExpressOrderForm({
           extras: { note: extras.note, answers: extras.answers },
           paymentMethod: "cod",
           turnstileToken,
+          attribution: storedAttribution(storeId),
         }),
       });
       const data = await response.json().catch(() => ({}));

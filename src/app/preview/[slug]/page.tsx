@@ -21,6 +21,7 @@ import { SectionIcon } from "@/components/storefront/SectionIcon";
 import { storeBasePath } from "@/lib/store-url";
 import { loadStoreTracking, trackStoreEvent } from "@/lib/storefront-tracking";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
+import { captureAttribution, storedAttribution } from "@/lib/ad-attribution";
 
 // --- HELPERS ---
 
@@ -1882,7 +1883,8 @@ const Checkout = ({ sectionId, config, store, cart, slug, onClearCart }: { secti
             appliedPromo,
             paymentMethod,
             slug,
-            turnstileToken
+            turnstileToken,
+            attribution: storedAttribution(store.id)
           })
         });
         
@@ -2552,6 +2554,7 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
             
             // Track visit (if not in builder)
             if (window.parent === window) {
+              captureAttribution(storeData.id);
               try {
                 fetch('/api/analytics/visit', {
                   method: 'POST',

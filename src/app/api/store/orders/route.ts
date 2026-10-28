@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       promoCode: body.promoCode,
       turnstileToken: body.turnstileToken,
       extras: body.extras && typeof body.extras === "object" ? body.extras : undefined,
+      attribution: body.attribution,
       ip: requestIp(request),
       userAgent: request.headers.get("user-agent"),
     });

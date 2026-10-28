@@ -96,6 +96,7 @@ interface Order {
   status: string;
   payment_method: string;
   payment_status?: string;
+  attribution?: { platform?: string; campaign?: string | null; ad?: string | null } | null;
   created_at: string;
   tracking_number?: string;
   shipping_company?: string;
@@ -588,6 +589,15 @@ export default function OrderDetailPage() {
                   {order.payment_method === "cod" ? tx("cod") : `✅ ${tx("paid")}`}
                 </span>
               </div>
+              {order.attribution?.platform && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">{tx("source")}</span>
+                  <span className="text-end">
+                    {t(`seller_app.ads.platforms.${order.attribution.platform}`)}
+                    {order.attribution.campaign && <span className="block text-xs text-muted-foreground">{[order.attribution.campaign, order.attribution.ad].filter(Boolean).join(" · ")}</span>}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="border-t pt-4 space-y-2 text-sm">
               <div className="flex justify-between">
