@@ -14,10 +14,12 @@ import {
   Copy,
   ExternalLink,
   ShoppingBag,
-  User,
-  Sparkles
+  User
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatPrice } from "@/lib/utils";
+import { storeUrl } from "@/lib/store-url";
+import { whatsappLink } from "@/lib/order-messages";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
@@ -53,6 +55,8 @@ interface OrderTracking {
   store?: {
     name: string;
     logo_url?: string;
+    slug?: string;
+    whatsapp_number?: string | null;
   };
 }
 
@@ -182,13 +186,13 @@ export default function TrackOrderPage() {
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-white">
       <div className="bg-white border-b border-gray-100 sticky top-0 z-10 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+          <a href={order.store?.slug ? storeUrl(order.store.slug) : "/"} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
             <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Retour</span>
-          </Link>
+            <span className="font-medium">Retour à la boutique</span>
+          </a>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
-            <span className="font-bold">DROPY</span>
+            {order.store?.logo_url ? <img src={order.store.logo_url} alt="" className="w-6 h-6 rounded" /> : <ShoppingBag className="w-5 h-5 text-primary" />}
+            <span className="font-bold">{order.store?.name || "Suivi de commande"}</span>
           </div>
           <div className="w-20" />
         </div>
@@ -336,13 +340,13 @@ export default function TrackOrderPage() {
                       <p className="font-medium">{item.product_name}</p>
                       <p className="text-sm text-muted-foreground">Quantité: {item.quantity}</p>
                     </div>
-                    <p className="font-bold">{item.unit_price * item.quantity} TND</p>
+                    <p className="font-bold">{formatPrice(item.unit_price * item.quantity)}</p>
                   </div>
                 ))}
               </div>
               <div className="mt-4 pt-4 border-t flex justify-between items-center">
                 <span className="font-medium">Total</span>
-                <span className="text-2xl font-bold text-primary">{order.total_amount} TND</span>
+                <span className="text-2xl font-bold text-primary">{formatPrice(order.total_amount)}</span>
               </div>
               {order.payment_method === 'cod' && (
                 <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
@@ -406,15 +410,19 @@ export default function TrackOrderPage() {
           </CardContent>
         </Card>
 
-        <div className="text-center py-6">
-          <p className="text-sm text-muted-foreground mb-2">
-            Besoin d&apos;aide avec votre commande ?
-          </p>
-          <Button variant="outline" className="rounded-full gap-2">
-            <Phone className="w-4 h-4" />
-            Contactez le support
-          </Button>
-        </div>
+        {order.store?.whatsapp_number && (
+          <div className="text-center py-6">
+            <p className="text-sm text-muted-foreground mb-2">
+              Besoin d&apos;aide avec votre commande ?
+            </p>
+            <a href={whatsappLink(order.store.whatsapp_number, `Bonjour, j'ai une question sur ma commande ${order.order_number}.`)} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="rounded-full gap-2">
+                <Phone className="w-4 h-4" />
+                Contacter la boutique
+              </Button>
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
