@@ -35,6 +35,20 @@ export async function linkedStoreOrders(supplierOrderId: string) {
   return orders || [];
 }
 
+export async function parcelCodAmount(storeOrderId: string, supplierOrderId: string) {
+  const supabase = createAdminClient();
+  const [{ data: order }, { data: items }] = await Promise.all([
+    supabase.from("store_orders").select("total_amount, shipping_cost, discount_amount, payment_method, has_own_products").eq("id", storeOrderId).maybeSingle(),
+    supabase.from("store_order_items").select("supplier_order_id, total_price").eq("store_order_id", storeOrderId),
+  ]);
+  if (!order || order.payment_method !== "cod" || order.has_own_products) return 0;
+  const parcels = [...new Set((items || []).map((i) => i.supplier_order_id).filter(Boolean))].sort();
+  if (parcels.length <= 1) return Number(order.total_amount);
+  const own = (items || []).filter((i) => i.supplier_order_id === supplierOrderId).reduce((sum, i) => sum + Number(i.total_price || 0), 0);
+  const extra = parcels[0] === supplierOrderId ? Number(order.shipping_cost || 0) - Number(order.discount_amount || 0) : 0;
+  return Math.max(0, Math.round((own + extra) * 1000) / 1000);
+}
+
 export async function syncStoreOrdersFromSupplier(
   supplierOrderId: string,
   supplierStatus: string,
