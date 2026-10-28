@@ -308,7 +308,7 @@ export default function SupplierAnalyticsPage() {
               <p className="text-muted-foreground">{tr("consultez_nos_conseils_et_bonnes")}</p>
             </div>
             <Button asChild className="gap-2 bg-primary">
-              <a href="https://dropyblog.vercel.app" target="_blank" rel="noreferrer">
+              <a href="/blog" target="_blank" rel="noreferrer">
                 {tr("voir_les_conseils")}
                 <ArrowUpRight className="w-4 h-4" />
               </a>

@@ -70,7 +70,7 @@ export default function WaitingPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-12">
               <a 
-                href="https://dropyblog.vercel.app" 
+                href="/blog" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-4 p-5 rounded-2xl bg-white border border-slate-200 hover:border-[#2E3192] hover:shadow-lg transition-all group text-left"

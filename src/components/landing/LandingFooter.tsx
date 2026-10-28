@@ -17,7 +17,7 @@ export default function LandingFooter() {
       { name: t("footer.links.pricing"), href: "/tarifs" },
     ],
     resources: [
-      { name: t("footer.links.blog"), href: "https://dropyblog.vercel.app" },
+      { name: t("footer.links.blog"), href: "/blog" },
       { name: t("footer.links.tools"), href: "/outils" },
       { name: t("footer.links.faq"), href: "/faq" },
       { name: t("footer.links.help"), href: "/aide" },

@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { SITE_URL, STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from "@/lib/store-url";
 import { storeSlugForHost } from "@/lib/custom-domain-lookup";
+import { publishedPosts } from "@/lib/blog";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -28,6 +29,7 @@ const LANDING_PAGES = [
   "/conditions-utilisation",
   "/politique-confidentialite",
   "/mentions-legales",
+  "/blog",
 ];
 
 const SYSTEM_PAGES = new Set(["checkout", "cart", "panier", "merci", "track", "product-detail"]);
@@ -90,5 +92,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route === "" ? 1 : 0.8,
   }));
 
-  return STORE_ROOT_DOMAIN ? landing : [...landing, ...(await storeEntries())];
+  const posts = (await publishedPosts(1000)).map((post) => ({
+    url: `${SITE_URL}/blog/${post.slug}`,
+    lastModified: new Date(post.updated_at),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+  }));
+
+  return STORE_ROOT_DOMAIN ? [...landing, ...posts] : [...landing, ...posts, ...(await storeEntries())];
 }

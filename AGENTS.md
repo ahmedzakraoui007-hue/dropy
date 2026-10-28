@@ -20,7 +20,7 @@ Dropy is an all-in-one e-commerce SaaS platform designed for the Tunisian market
 ## User Preferences
 - No comments in code unless explicitly requested.
 - Use French and Arabic for the platform.
-- Platform blog is hosted at https://dropyblog.vercel.app.
+- Platform blog lives at /blog (articles in the blog_posts table, written from /admin/blog).
 
 ## Project Guidelines
 - Follow the existing modern, high-contrast UI aesthetic (Purple/Teal gradients, sharp accents).

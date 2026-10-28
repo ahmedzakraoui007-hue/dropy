@@ -32,7 +32,8 @@ import {
   ChevronDown, 
   Settings, 
   LogOut,
-  CheckCircle2
+  CheckCircle2,
+  BookOpen,
 } from "lucide-react";
 
 const navigation = [
@@ -45,6 +46,7 @@ const navigation = [
   { name: "Séquestre UGC", href: "/admin/escrow", icon: Scale },
   ...(FREE_LAUNCH ? [] : [{ name: "Abonnements", href: "/admin/subscriptions", icon: CreditCard }]),
   { name: "Modération Contenu", href: "/admin/content", icon: FileText },
+  { name: "Blog", href: "/admin/blog", icon: BookOpen },
   { name: "Support & Litiges", href: "/admin/support", icon: MessageSquare },
 ];
 

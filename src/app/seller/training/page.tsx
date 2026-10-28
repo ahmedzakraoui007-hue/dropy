@@ -15,7 +15,7 @@ const STEPS = [
   { key: "ship", href: "/seller/shipping", icon: Truck },
 ];
 
-const BLOG_URL = "https://dropyblog.vercel.app";
+const BLOG_URL = "/blog";
 
 export default function TrainingPage() {
   const { t } = useTranslation();
