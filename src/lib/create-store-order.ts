@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 import { checkExtras, extrasFromInput, normalizeCheckout, orderNotes } from "@/lib/checkout-settings";
 import { normalizeUpsell } from "@/lib/product-sales";
+import { sanitizeAttribution } from "@/lib/ad-attribution";
 import { isMobileUserAgent, normalizeProtection, phoneKey, verifyTurnstile, type RiskFlag } from "@/lib/order-protection";
 
 const MAX_LINES = 50;
@@ -24,6 +25,7 @@ export type OrderInput = {
   manual?: boolean;
   notes?: string | null;
   extras?: { note?: unknown; answers?: unknown };
+  attribution?: unknown;
 };
 
 export type OrderResult =
@@ -316,6 +318,11 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
       risk_flags: input.manual ? [] : riskFlags,
       seller_notes: input.notes ? String(input.notes).slice(0, 1000) : null,
       notes: customerNotes,
+      attribution: input.manual
+        ? { platform: "manual", capturedAt: new Date().toISOString() }
+        : input.attribution
+          ? sanitizeAttribution(input.attribution)
+          : null,
     })
     .select()
     .single();

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { BarChart3, ListOrdered, PhoneMissed, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, ListOrdered, Megaphone, PhoneMissed, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/context/LanguageContext";
 
@@ -12,6 +12,7 @@ const TABS = [
   { href: "/seller/orders/abandoned", key: "seller_app.orders.section_tabs.abandoned", icon: PhoneMissed },
   { href: "/seller/orders/team", key: "seller_app.team.open", icon: Users },
   { href: "/seller/orders/stats", key: "seller_app.stats.open", icon: BarChart3 },
+  { href: "/seller/orders/ads", key: "seller_app.ads.open", icon: Megaphone },
   { href: "/seller/orders/protection", key: "seller_app.protection.open", icon: ShieldCheck },
 ];
 

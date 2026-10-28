@@ -535,6 +535,45 @@
         "action_error": "Action impossible. Réessayez."
     },
     "seller_app": {
+        "ads": {
+            "open": "Publicités",
+            "title": "Statistiques publicitaires",
+            "subtitle": "D'où viennent vos commandes, et lesquelles sont confirmées et livrées, par plateforme, campagne et publicité.",
+            "period": "Période",
+            "error": "Impossible de charger les statistiques.",
+            "empty": "Aucune commande sur cette période.",
+            "orders": "Commandes",
+            "confirmation": "Confirmation",
+            "delivery": "Livraison",
+            "cancelled": "Annulées",
+            "delivered_revenue": "CA livré",
+            "margin": "Marge produits",
+            "tracked": "Commandes suivies",
+            "by_source": "Par source",
+            "by_source_help": "Cliquez sur une plateforme pour voir ses campagnes, puis sur une campagne pour voir ses publicités. Taux de livraison = livrées / confirmées.",
+            "source": "Source",
+            "margin_help": "Marge produits = montant des produits livrés moins le prix fournisseur. * : contient vos propres produits, dont le coût n'est pas connu (comptés sans coût). Ne tient pas compte du budget publicitaire ni des frais de livraison.",
+            "unknown_cost": "Contient des produits sans coût fournisseur connu",
+            "no_campaign": "Sans campagne",
+            "no_ad": "Sans nom de publicité",
+            "setup_title": "Suivre vos publicités",
+            "setup_help": "Collez ces paramètres dans vos publicités : chaque commande sera rattachée à sa campagne et à sa publicité.",
+            "setup_facebook": "Gestionnaire de publicités → Publicité → Suivi → Paramètres d'URL. Les noms entre {{ }} sont remplis automatiquement par Facebook.",
+            "setup_tiktok": "TikTok Ads Manager → Publicité → URL de destination : ajoutez ces paramètres après « ? ». Les valeurs __…__ sont remplies automatiquement par TikTok.",
+            "copy": "Copier",
+            "copied": "Copié",
+            "copy_failed": "Copie impossible, sélectionnez le texte à la main.",
+            "platforms": {
+                "facebook": "Facebook / Instagram",
+                "tiktok": "TikTok",
+                "google": "Google",
+                "snapchat": "Snapchat",
+                "other": "Autres sites",
+                "direct": "Accès direct",
+                "manual": "Commandes manuelles",
+                "unknown": "Non suivies (avant activation)"
+            }
+        },
         "account_form": {
             "update_error": "Erreur lors de la mise à jour",
             "updated": "Profil mis à jour",
@@ -1151,6 +1190,7 @@
             "view": "Voir et importer"
         },
         "order_detail": {
+            "source": "Source",
             "supplier_rejected": "Le fournisseur a refusé cette commande",
             "supplier_rejected_text": "Il ne peut pas livrer ces produits. Prévenez le client, puis annulez la commande.",
             "dropy_delivery": "Livraison Dropy",
