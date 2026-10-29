@@ -33,6 +33,7 @@ import { useSellerDashboard } from "@/hooks/useSellerDashboard";
 import { useOnboardingChecklist } from "@/hooks/useOnboardingChecklist";
 import { formatPrice } from "@/lib/utils";
 import { RealtimeOrdersListener } from "@/components/seller/RealtimeOrdersListener";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
 
 export default function SellerDashboard() {
   const { t } = useTranslation();
@@ -50,7 +51,7 @@ export default function SellerDashboard() {
 
   const stepDefs = [
     { id: "store", done: checklist.store, icon: Store, href: "/seller/store-builder/start" },
-    { id: "products", done: checklist.products, icon: Package, href: "/seller/products/catalog" },
+    { id: "products", done: checklist.products, icon: Package, href: DROPSHIPPING_ENABLED ? "/seller/products/catalog" : "/seller/products/add?new=1" },
     { id: "online", done: checklist.online, icon: Globe, href: "/seller/store-builder" },
     { id: "payment", done: checklist.payment, icon: CreditCard, href: "/seller/settings" },
     { id: "profile", done: checklist.profile, icon: Users, href: "/seller/settings" },

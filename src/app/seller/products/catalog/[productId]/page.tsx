@@ -40,8 +40,10 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatPrice } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
+import { DropshippingComingSoon } from "@/components/seller/DropshippingComingSoon";
 
-export default function ProductDetailPage() {
+function ProductDetailPageContent() {
   const { t } = useTranslation();
   const tc = (key: string) => t(`seller_app.catalog.${key}`);
   const { productId } = useParams();
@@ -389,4 +391,8 @@ export default function ProductDetailPage() {
       </div>
     </div>
   );
+}
+
+export default function ProductDetailPage() {
+  return DROPSHIPPING_ENABLED ? <ProductDetailPageContent /> : <DropshippingComingSoon />;
 }

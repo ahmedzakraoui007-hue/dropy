@@ -40,13 +40,13 @@ export default function VendeursClient() {
                 {t("pages.vendeurs.hero.desc")}
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/inscription">
+                <Link href="/creation-site-ecommerce-tunisie#demande">
                   <Button className="bg-[#2E3192] hover:bg-indigo-800 text-white h-16 px-10 rounded-2xl font-black text-lg shadow-xl shadow-indigo-500/20 transition-all hover:-translate-y-1">
                     {t("pages.vendeurs.hero.cta_primary")}
                     <ArrowRight className={`ml-2 w-5 h-5 ${locale === 'ar' ? 'rotate-180' : ''}`} />
                   </Button>
                 </Link>
-                <Link href="/aide">
+                <Link href="/creation-site-ecommerce-tunisie">
                   <Button variant="outline" className="h-16 px-10 rounded-2xl font-bold text-lg border-2 border-slate-200">
                     <PlayCircle className="mr-2 w-5 h-5" />
                     {t("pages.vendeurs.hero.cta_secondary")}
@@ -133,7 +133,7 @@ export default function VendeursClient() {
                   </div>
                 ))}
               </div>
-              <Link href="/inscription" className="inline-block pt-4">
+              <Link href="/creation-site-ecommerce-tunisie#demande" className="inline-block pt-4">
                 <Button size="lg" className="h-16 px-10 rounded-2xl font-black text-lg bg-[#00A99D] hover:bg-teal-600 text-white">
                   {t("pages.vendeurs.features.cta")}
                 </Button>
@@ -152,7 +152,7 @@ export default function VendeursClient() {
           <div className="max-w-3xl mx-auto">
             <h2 className="text-4xl md:text-6xl font-black text-slate-900 mb-8">{t("pages.vendeurs.final.title")}</h2>
             <p className="text-xl text-slate-500 font-medium mb-12">{t("pages.vendeurs.final.subtitle")}</p>
-            <Link href="/inscription">
+            <Link href="/creation-site-ecommerce-tunisie#demande">
               <Button size="lg" className="h-20 px-12 text-xl font-black bg-gradient-to-r from-[#2E3192] to-[#00A99D] hover:opacity-90 text-white rounded-3xl shadow-2xl transition-all hover:scale-105">
                 {t("pages.vendeurs.final.cta")}
                 <ArrowRight className={`ml-3 w-6 h-6 ${locale === 'ar' ? 'rotate-180' : ''}`} />

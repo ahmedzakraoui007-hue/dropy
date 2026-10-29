@@ -46,10 +46,12 @@ import { importCatalogProduct } from "@/lib/catalog-import";
 import { useTranslation } from "@/context/LanguageContext";
 import { formatPrice } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
+import { DropshippingComingSoon } from "@/components/seller/DropshippingComingSoon";
 
 const PAGE_SIZE = 12;
 
-export default function CatalogPage() {
+function CatalogPageContent() {
   const { t } = useTranslation();
   const tc = (key: string) => t(`seller_app.catalog.${key}`);
   const router = useRouter();
@@ -328,4 +330,8 @@ export default function CatalogPage() {
       )}
     </div>
   );
+}
+
+export default function CatalogPage() {
+  return DROPSHIPPING_ENABLED ? <CatalogPageContent /> : <DropshippingComingSoon />;
 }

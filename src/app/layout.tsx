@@ -11,10 +11,10 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://dropy.store"),
   title: {
-    default: "Dropy | Boutique en ligne sans stock en Tunisie",
+    default: "Dropy | Votre boutique en ligne gratuite en Tunisie",
     template: "%s | Dropy"
   },
-  description: "Créez votre boutique en ligne gratuitement, vendez les produits de fournisseurs tunisiens avec paiement à la livraison et travaillez avec des créateurs UGC.",
+  description: "L'équipe Dropy crée gratuitement la boutique en ligne de votre entreprise : vos produits, paiement à la livraison, en français et en arabe.",
   keywords: ["e-commerce tunisie", "boutique en ligne tunisie", "dropshipping tunisie", "paiement à la livraison", "fournisseur textile tunisie", "créateurs UGC"],
   authors: [{ name: "Dropy Team" }],
   creator: "Dropy",
@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     locale: "fr_TN",
     url: "https://dropy.store",
     siteName: "Dropy",
-    title: "Dropy | Boutique en ligne sans stock en Tunisie",
-    description: "Créez votre boutique, vendez les produits de fournisseurs tunisiens et encaissez à la livraison. Gratuit pendant le lancement.",
+    title: "Dropy | Votre boutique en ligne gratuite en Tunisie",
+    description: "Votre boutique en ligne créée gratuitement : vos produits, paiement à la livraison, français et arabe.",
   },
   icons: {
     icon: [
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
   twitter: {
     card: "summary_large_image",
-    title: "Dropy | Boutique en ligne sans stock en Tunisie",
-    description: "Créez votre boutique, vendez les produits de fournisseurs tunisiens et encaissez à la livraison. Gratuit pendant le lancement.",
+    title: "Dropy | Votre boutique en ligne gratuite en Tunisie",
+    description: "Votre boutique en ligne créée gratuitement : vos produits, paiement à la livraison, français et arabe.",
   },
   robots: {
     index: true,

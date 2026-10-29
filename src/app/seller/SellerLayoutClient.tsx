@@ -43,7 +43,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
-import { FREE_LAUNCH } from "@/lib/launch";
+import { DROPSHIPPING_ENABLED, FREE_LAUNCH } from "@/lib/launch";
 
 interface Profile {
   avatar_url?: string | null;
@@ -161,6 +161,9 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                       {!sidebarCollapsed && (
                         <>
                           <span className="truncate">{item.name}</span>
+                          {item.key === "dropy_catalog" && !DROPSHIPPING_ENABLED && !isActive && (
+                            <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold bg-white/10 text-white/70 rounded-full">{t("seller_app.dropshipping_soon.short")}</span>
+                          )}
                           {item.key === "ugc_creators" && !isActive && (
                             <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold bg-primary/20 text-white rounded-full border border-primary/30">NEW</span>
                           )}

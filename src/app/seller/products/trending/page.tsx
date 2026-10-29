@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/client";
 import { fetchProfileCards } from "@/lib/profile-cards";
 import { formatPrice } from "@/lib/utils";
 import { useTranslation } from "@/context/LanguageContext";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
+import { DropshippingComingSoon } from "@/components/seller/DropshippingComingSoon";
 
 type TrendingProduct = {
   id: string;
@@ -25,7 +27,7 @@ type TrendingProduct = {
   rating: string | null;
 };
 
-export default function TrendingPage() {
+function TrendingPageContent() {
   const { t } = useTranslation();
   const tr = (key: string) => t(`seller_app.trending.${key}`);
   const [loading, setLoading] = useState(true);
@@ -172,4 +174,8 @@ export default function TrendingPage() {
       )}
     </div>
   );
+}
+
+export default function TrendingPage() {
+  return DROPSHIPPING_ENABLED ? <TrendingPageContent /> : <DropshippingComingSoon />;
 }

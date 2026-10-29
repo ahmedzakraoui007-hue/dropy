@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { storeDisplayUrl, storeUrl, storeViewHref } from "@/lib/store-url";
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
 
 const TOOLS = [
   { key: "editor", icon: LayoutTemplate, href: "/seller/store-builder/builder" },
@@ -88,7 +89,7 @@ export default function StoreBuilderDashboard() {
       title: tr("hub.steps.products"),
       description: tr("hub.steps.products_desc"),
       done: (productCount ?? 0) > 0,
-      href: "/seller/products/catalog",
+      href: DROPSHIPPING_ENABLED ? "/seller/products/catalog" : "/seller/products/add?new=1",
       icon: Package,
     },
     {

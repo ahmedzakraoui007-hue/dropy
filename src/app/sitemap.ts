@@ -14,6 +14,7 @@ const LANDING_PAGES = [
   "/fournisseurs",
   "/createurs",
   "/tarifs",
+  "/creation-site-ecommerce-tunisie",
   "/outils",
   "/outils/calcul-tva",
   "/outils/calcul-prix-de-vente",

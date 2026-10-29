@@ -18,6 +18,7 @@ import { StoreAddressInput } from "@/components/store-builder/StoreAddressInput"
 import { useSellerStore } from "@/hooks/useSellerStore";
 import { useTranslation } from "@/context/LanguageContext";
 import { importCatalogProduct } from "@/lib/catalog-import";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
 import { STORE_NICHES, generateStore, nicheScore, nicheTheme } from "@/lib/store-generator";
 
 type CatalogItem = { id: string; name: string; image: string | null; base: number; price: number; text: string };
@@ -358,7 +359,27 @@ export default function StoreSetupWizard() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 2 && !DROPSHIPPING_ENABLED && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-black text-gray-900">{tr("products.own_heading")}</h2>
+              <p className="text-sm text-gray-500">{tr("products.own_desc")}</p>
+            </div>
+            <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-6 text-center">
+              <Package className="mx-auto mb-3 h-8 w-8 text-purple-600" />
+              <Link href="/seller/products/add?new=1">
+                <Button className="rounded-xl bg-purple-600 hover:bg-purple-700 font-bold">{tr("products.own_cta")}</Button>
+              </Link>
+              <p className="mt-4 text-xs text-gray-500">{tr("products.dropshipping_soon")}</p>
+            </div>
+            <div className="flex flex-col-reverse sm:flex-row justify-between gap-3">
+              <Button variant="ghost" onClick={() => setStep(1)}>{tr("back")}</Button>
+              <Button variant="ghost" onClick={() => setStep(3)}>{tr("skip")}</Button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && DROPSHIPPING_ENABLED && (
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-black text-gray-900">{tr("products.heading")}</h2>
