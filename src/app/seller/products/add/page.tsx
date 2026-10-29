@@ -68,6 +68,7 @@ import { useQuota } from "@/hooks/use-quota";
 import { QuotaAlert } from "@/components/ui/quota-alert";
 import { ProductSalesFields } from "@/components/seller/ProductSalesFields";
 import { discountPercent, normalizeSalesContent, type SalesContent } from "@/lib/product-sales";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
 
 interface Variant {
   id: string;
@@ -521,14 +522,16 @@ export default function MyProductsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/seller/products/catalog")}
-            className="gap-2"
-          >
-            <Truck className="w-4 h-4" />
-            {t("seller_app.products.import_catalog")}
-          </Button>
+          {DROPSHIPPING_ENABLED && (
+            <Button
+              variant="outline"
+              onClick={() => router.push("/seller/products/catalog")}
+              className="gap-2"
+            >
+              <Truck className="w-4 h-4" />
+              {t("seller_app.products.import_catalog")}
+            </Button>
+          )}
           <Button
             onClick={openCreateDialog}
             className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white gap-2"
@@ -633,10 +636,12 @@ export default function MyProductsPage() {
           </p>
           {products.length === 0 && (
             <div className="flex justify-center gap-3">
-              <Button variant="outline" onClick={() => router.push("/seller/products/catalog")}>
-                <Truck className="w-4 h-4 mr-2" />
-                {t("seller_app.products.import_catalog")}
-              </Button>
+              {DROPSHIPPING_ENABLED && (
+                <Button variant="outline" onClick={() => router.push("/seller/products/catalog")}>
+                  <Truck className="w-4 h-4 mr-2" />
+                  {t("seller_app.products.import_catalog")}
+                </Button>
+              )}
               <Button onClick={openCreateDialog}>
                 <Plus className="w-4 h-4 mr-2" />
                 {t("seller_app.products.create_product")}

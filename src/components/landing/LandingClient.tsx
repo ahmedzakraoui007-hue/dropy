@@ -97,13 +97,13 @@ export default function LandingClient() {
               </motion.p>
               
                 <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-5">
-                  <Link href="/inscription">
+                  <Link href="/creation-site-ecommerce-tunisie#demande">
                     <Button size="lg" className="h-16 px-10 text-lg font-black bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-2xl transition-all hover:-translate-y-1">
                       {t("hero.cta_primary")}
                       <ArrowRight className={`ml-3 w-6 h-6 ${locale === 'ar' ? 'rotate-180' : ''}`} />
                     </Button>
                   </Link>
-                <Link href="/vendeurs">
+                <Link href="/creation-site-ecommerce-tunisie">
                   <Button size="lg" variant="outline" className="h-16 px-10 text-lg font-bold border-2 border-slate-200 hover:bg-slate-50 text-slate-700 rounded-2xl transition-all">
                     {t("hero.cta_secondary")}
                   </Button>
@@ -238,7 +238,7 @@ export default function LandingClient() {
               <p className="text-xl text-white/80 mb-12 max-w-2xl mx-auto font-medium">
                 {t("landing.final_cta.subtitle")}
               </p>
-                <Link href="/inscription">
+                <Link href="/creation-site-ecommerce-tunisie#demande">
                   <Button size="lg" className="h-20 px-12 text-xl font-black bg-white text-[#2E3192] hover:bg-slate-50 rounded-3xl shadow-2xl transition-all hover:scale-105">
                     {t("landing.final_cta.cta")}
                     <ArrowRight className={`ml-4 w-8 h-8 ${locale === 'ar' ? 'rotate-180' : ''}`} />

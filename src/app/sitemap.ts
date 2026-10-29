@@ -14,6 +14,7 @@ const LANDING_PAGES = [
   "/fournisseurs",
   "/createurs",
   "/tarifs",
+  "/creation-site-ecommerce-tunisie",
   "/outils",
   "/outils/calcul-tva",
   "/outils/calcul-prix-de-vente",
@@ -84,10 +85,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const storeSlug = await storeSlugForHost(host, storeSlugFromHost, isPlatformHost);
   if (storeSlug) return storeEntries([storeSlug]);
 
-  const now = new Date();
   const landing: MetadataRoute.Sitemap = LANDING_PAGES.map((route) => ({
     url: `${SITE_URL}${route}`,
-    lastModified: now,
     changeFrequency: route === "" ? "daily" : "weekly",
     priority: route === "" ? 1 : 0.8,
   }));

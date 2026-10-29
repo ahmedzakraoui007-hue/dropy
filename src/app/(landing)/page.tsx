@@ -4,10 +4,10 @@ import { SITE_URL } from "@/lib/store-url";
 import { CONTACT_EMAIL, WHATSAPP_NUMBER } from "@/lib/contact";
 
 export const metadata: Metadata = {
-  title: { absolute: "Dropy | Boutique en ligne sans stock en Tunisie" },
-  description: "Créez votre boutique en ligne gratuitement, vendez les produits de fournisseurs tunisiens avec paiement à la livraison et travaillez avec des créateurs UGC.",
+  title: { absolute: "Dropy | Votre boutique en ligne gratuite en Tunisie" },
+  description: "L'équipe Dropy crée gratuitement la boutique en ligne de votre entreprise : vos produits, paiement à la livraison, en français et en arabe.",
   alternates: { canonical: "/" },
-  openGraph: { title: "Dropy | Boutique en ligne sans stock en Tunisie", description: "Créez votre boutique en ligne gratuitement, vendez les produits de fournisseurs tunisiens avec paiement à la livraison et travaillez avec des créateurs UGC.", url: "/" },
+  openGraph: { title: "Dropy | Votre boutique en ligne gratuite en Tunisie", description: "L'équipe Dropy crée gratuitement la boutique en ligne de votre entreprise : vos produits, paiement à la livraison, en français et en arabe.", url: "/" },
 };
 
 const jsonLd = {

@@ -5,10 +5,11 @@ import { ArrowRight, BookOpen, ExternalLink, Megaphone, Package, PhoneCall, Rock
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "@/context/LanguageContext";
+import { DROPSHIPPING_ENABLED } from "@/lib/launch";
 
 const STEPS = [
   { key: "store", href: "/seller/store-builder/start", icon: Store },
-  { key: "products", href: "/seller/products/catalog", icon: Package },
+  { key: "products", href: DROPSHIPPING_ENABLED ? "/seller/products/catalog" : "/seller/products/add?new=1", icon: Package },
   { key: "publish", href: "/seller/store-builder", icon: Rocket },
   { key: "ads", href: "/seller/store-builder/settings", icon: Megaphone },
   { key: "confirm", href: "/seller/orders", icon: PhoneCall },
