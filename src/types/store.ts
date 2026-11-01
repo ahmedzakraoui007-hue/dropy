@@ -15,6 +15,7 @@ export type SectionType =
   | 'featured_products'
   | 'categories_grid'
   | 'promo_banner'
+  | 'marquee'
   | 'testimonials'
   | 'icon_grid'
   | 'newsletter'

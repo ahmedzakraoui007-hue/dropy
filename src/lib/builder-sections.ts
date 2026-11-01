@@ -35,6 +35,7 @@ export const SECTION_CATEGORIES: SectionCategory[] = ["essentials", "products", 
 export const SECTION_LIBRARY: SectionType[] = [
   { id: "hero", icon: ImageIcon, category: "essentials" },
   { id: "promo_banner", icon: Megaphone, category: "essentials" },
+  { id: "marquee", icon: Megaphone, category: "essentials" },
   { id: "cta_banner", icon: Sparkles, category: "essentials" },
   { id: "countdown", icon: Clock, category: "essentials" },
   { id: "footer", icon: PanelBottom, category: "essentials" },
@@ -119,6 +120,8 @@ const placeholderFr = (type: string): Record<string, any> => {
       };
     case "promo_banner":
       return { text: "🚚 Livraison partout en Tunisie · Paiement à la livraison" };
+    case "marquee":
+      return { items: [{ text: "Livraison partout en Tunisie" }, { text: "Paiement à la livraison" }, { text: "Échange facile" }] };
     case "cta_banner":
       return { title: "Offre du moment", description: "Profitez-en tant que le stock le permet.", ctaText: "J'en profite", ctaLink: "/shop" };
     case "countdown":

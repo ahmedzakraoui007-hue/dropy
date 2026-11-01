@@ -6,15 +6,18 @@ import { themeHomeSections, themes } from "@/lib/themes";
 import { importCatalogProductIntoStore, CATALOG_IMPORT_MESSAGES } from "@/lib/catalog-import";
 import { normalizeOffers } from "@/lib/store-pricing";
 import { storeUrl } from "@/lib/store-url";
+import { uniqueStoreSlug } from "@/lib/store-slug-server";
+import { STORE_NICHES, generateStore } from "@/lib/store-generator";
 
 type Admin = ReturnType<typeof createAdminClient>;
 type Ctx = { admin: Admin; userId: string; store: Record<string, any> };
+type AgencyCtx = { admin: Admin; userId: string; agency: true };
 type JsonRpc = { jsonrpc: "2.0"; id?: string | number | null; method: string; params?: any };
 
 const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 
 const SECTION_TYPES: Record<string, string> = {
-  hero: "Bannière principale. config: title, subtitle, badge, ctaText, ctaLink (ex. /shop), secondaryCtaText, backgroundImage (URL), variant ('bold' | 'classic' | 'split' | 'video'), videoUrl, height (px), overlay (bool), textPosition ('left' | 'center' | 'right').",
+  hero: "Bannière principale. config: title, subtitle, badge, ctaText, ctaLink (ex. /shop), secondaryCtaText, backgroundImage (URL), variant ('editorial' = photo plein écran avec texte en bas, recommandé pour la mode et les marques | 'classic' | 'bold' | 'split' | 'video'), videoUrl, height (px), overlay (bool), textPosition ('left' | 'center' | 'right').",
   products: "Grille de produits de la boutique. config: title, limit (nombre), columns (2-4), source: 'store'.",
   store_categories: "Catégories de la boutique. config: title, columns, limit.",
   features: "Avantages / points forts. config: title, features: [{ title, description, icon? }].",
@@ -24,6 +27,7 @@ const SECTION_TYPES: Record<string, string> = {
   image_with_text: "Image + texte. config: title, text, image (URL), imagePosition ('left' | 'right'), ctaText, ctaLink.",
   cta_banner: "Appel à l'action. config: title, subtitle, ctaText, ctaLink.",
   promo_banner: "Bandeau promo fin. config: text, link.",
+  marquee: "Bandeau défilant (arguments qui défilent en continu, effet premium). config: items: [{ text }] (3 à 6 textes courts), backgroundColor?, textColor?.",
   countdown: "Compte à rebours. config: title, subtitle, endDate (ISO 8601), ctaText, ctaLink, expiredText.",
   newsletter: "Inscription newsletter. config: title, subtitle, placeholder, buttonText.",
   video: "Vidéo. config: title, url (YouTube/Vimeo/MP4).",
@@ -76,6 +80,31 @@ function cleanSections(raw: unknown) {
       position: index,
       is_visible: section.is_visible !== false,
     };
+  });
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VARIANT_TYPES = new Set(["size", "color", "volume", "weight"]);
+
+function imageList(raw: unknown) {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw) || raw.length === 0 || raw.length > 10) throw new ToolError("« images » doit contenir entre 1 et 10 liens.");
+  return raw.map((url, index) => {
+    if (typeof url !== "string" || !/^https:\/\/\S{8,500}$/.test(url.trim())) throw new ToolError(`Image ${index + 1} : lien https invalide.`);
+    return url.trim();
+  });
+}
+
+function variantList(raw: unknown, basePrice: number) {
+  if (raw === undefined || raw === null) return [];
+  if (!Array.isArray(raw) || raw.length > 40) throw new ToolError("« variants » : 40 options maximum.");
+  return raw.map((v: any, index: number) => {
+    const type = String(v?.type || "").toLowerCase();
+    if (!VARIANT_TYPES.has(type)) throw new ToolError(`Option ${index + 1} : type parmi size, color, volume, weight.`);
+    const value = str(v?.value, `variants[${index}].value`, 40, true)!;
+    const price = num(v?.price, `variants[${index}].price`, 0.01, 100000) ?? basePrice;
+    const stock = num(v?.stock, `variants[${index}].stock`, 0, 100000);
+    return { id: randomUUID(), type, value, price: Math.round(price * 100) / 100, stock: stock === undefined ? null : Math.floor(stock) };
   });
 }
 
@@ -402,11 +431,88 @@ const TOOLS: Record<string, { description: string; inputSchema: Record<string, u
         if (compareAt <= current) throw new ToolError("compare_at_price doit être supérieur au prix de vente.");
         changes.compare_at_price = Math.round(compareAt * 100) / 100;
       }
-      if (args.sales_content !== undefined) changes.sales_content = normalizeSalesContent(args.sales_content);
+      if (args.sales_content !== undefined) {
+        const { data: current } = await ctx.admin.from("store_products").select("sales_content").eq("id", id).maybeSingle();
+        const upsell = (current?.sales_content as { upsell?: unknown } | null)?.upsell;
+        changes.sales_content = normalizeSalesContent({ ...args.sales_content, upsell: upsell ?? null });
+      }
       if (!Object.keys(changes).length) throw new ToolError("Aucun changement fourni.");
       const { error } = await ctx.admin.from("store_products").update(changes).eq("id", id);
       if (error) throw new ToolError(error.message);
       return { updated: id, fields: Object.keys(changes) };
+    },
+  },
+  create_product: {
+    description: "Crée un produit de la boutique (produit propre au vendeur, pas du dropshipping) : nom, description, prix en DT, ancien prix barré, photos (liens https, la première est la photo principale), stock, catégorie, options (tailles, couleurs…) et page de vente. Ne jamais inventer de faux avis, de fausses garanties ou de faux chiffres.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        description: { type: "string", description: "Texte de présentation (paragraphes séparés par des lignes vides)." },
+        selling_price: { type: "number" },
+        compare_at_price: { type: "number", description: "Ancien prix barré, supérieur au prix de vente." },
+        images: { type: "array", items: { type: "string" }, description: "1 à 10 liens https d'images." },
+        stock: { type: "number", description: "Stock total (sans options). Laisser vide = non suivi." },
+        category: { type: "string" },
+        variants: {
+          type: "array",
+          description: "Options : [{ type: 'size' | 'color' | 'volume' | 'weight', value: 'M', price?: 59, stock?: 10 }].",
+          items: { type: "object", properties: { type: { type: "string" }, value: { type: "string" }, price: { type: "number" }, stock: { type: "number" } } },
+        },
+        sales_content: {
+          type: "object",
+          properties: {
+            badge: { type: "string" },
+            highlights: { type: "array", items: { type: "string" } },
+            faq: { type: "array", items: { type: "object", properties: { question: { type: "string" }, answer: { type: "string" } } } },
+          },
+        },
+      },
+      required: ["name", "selling_price", "images"],
+    },
+    run: async (ctx, args) => {
+      const name = str(args.name, "name", 150, true)!;
+      const price = num(args.selling_price, "selling_price", 0.01, 100000);
+      if (price === undefined) throw new ToolError("« selling_price » est obligatoire.");
+      const images = imageList(args.images)!;
+      const compareAt = num(args.compare_at_price, "compare_at_price", 0.01, 100000);
+      if (compareAt !== undefined && compareAt <= price) throw new ToolError("compare_at_price doit être supérieur au prix de vente.");
+      const variants = variantList(args.variants, price);
+      const stock = num(args.stock, "stock", 0, 100000);
+      const { count } = await ctx.admin.from("store_products").select("id", { count: "exact", head: true }).eq("store_id", ctx.store.id);
+      if ((count ?? 0) >= 500) throw new ToolError("500 produits maximum par boutique.");
+      const { data, error } = await ctx.admin
+        .from("store_products")
+        .insert({
+          store_id: ctx.store.id,
+          name,
+          description: str(args.description, "description", 5000) || "",
+          images,
+          selling_price: Math.round(price * 100) / 100,
+          compare_at_price: compareAt === undefined ? null : Math.round(compareAt * 100) / 100,
+          stock_quantity: variants.length ? null : stock === undefined ? null : Math.floor(stock),
+          category: str(args.category, "category", 60) || null,
+          has_variants: variants.length > 0,
+          variants,
+          sales_content: normalizeSalesContent(args.sales_content || {}),
+          is_dropship: false,
+          source: "own",
+          is_active: true,
+        })
+        .select("id")
+        .single();
+      if (error) throw new ToolError(error.message);
+      return { created: data.id, url: storeUrl(ctx.store.slug, `/p/${data.id}`) };
+    },
+  },
+  set_logo: {
+    description: "Définit le logo de la boutique à partir d'un lien https d'image (PNG ou JPG, idéalement fond transparent). null pour retirer le logo.",
+    inputSchema: { type: "object", properties: { url: { type: ["string", "null"] } }, required: ["url"] },
+    run: async (ctx, args) => {
+      const url = args.url === null ? null : imageList([args.url])![0];
+      const { error } = await ctx.admin.from("stores").update({ logo_url: url }).eq("id", ctx.store.id);
+      if (error) throw new ToolError(error.message);
+      return { logo_url: url };
     },
   },
   set_online: {
@@ -441,12 +547,99 @@ const TOOLS: Record<string, { description: string; inputSchema: Record<string, u
   },
 };
 
-async function authenticate(token: string | null) {
+const AGENCY_TOOLS: Record<string, { description: string; inputSchema: Record<string, unknown>; run: (ctx: AgencyCtx, args: any) => Promise<unknown> }> = {
+  list_client_stores: {
+    description: "Boutiques clients créées par l'agence Dropy : nom, adresse (store), lien, propriétaire, en ligne ou non, nombre de produits, remise au client.",
+    inputSchema: { type: "object", properties: {} },
+    run: async (ctx) => {
+      const { data: stores } = await ctx.admin
+        .from("stores")
+        .select("id, name, slug, vendor_id, is_active, handed_over_at, created_at")
+        .not("agency_created_by", "is", null)
+        .order("created_at", { ascending: false });
+      const ids = (stores || []).map((s) => s.vendor_id);
+      const { data: owners } = ids.length ? await ctx.admin.from("profiles").select("id, email, full_name").in("id", ids) : { data: [] as any[] };
+      const ownerMap = new Map((owners || []).map((o: any) => [o.id, o]));
+      const result = [];
+      for (const store of stores || []) {
+        const { count } = await ctx.admin.from("store_products").select("id", { count: "exact", head: true }).eq("store_id", store.id);
+        const owner = ownerMap.get(store.vendor_id);
+        result.push({
+          store: store.slug,
+          name: store.name,
+          url: storeUrl(store.slug),
+          owner_email: owner?.email || null,
+          owner_name: owner?.full_name || null,
+          online: store.is_active,
+          products: count ?? 0,
+          handed_over: Boolean(store.handed_over_at),
+        });
+      }
+      return result;
+    },
+  },
+  create_client_store: {
+    description: "Crée le compte vendeur d'un client (avec son e-mail, sans mot de passe) et sa boutique, avec un thème et des pages de départ selon l'activité. Le client recevra l'accès plus tard depuis Admin → Boutiques clients. Renvoie l'adresse « store » à passer aux autres outils.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        email: { type: "string", description: "E-mail du client (deviendra son identifiant)." },
+        store_name: { type: "string", description: "Nom de la boutique / marque." },
+        owner_name: { type: "string", description: "Nom du propriétaire." },
+        niche: { type: "string", description: `Activité : ${STORE_NICHES.map((n) => n.id).join(", ")}.` },
+        language: { type: "string", description: "fr ou ar (langue des pages de départ)." },
+      },
+      required: ["email", "store_name"],
+    },
+    run: async (ctx, args) => {
+      const email = str(args.email, "email", 200, true)!.toLowerCase();
+      if (!EMAIL_RE.test(email)) throw new ToolError("E-mail invalide.");
+      const storeName = str(args.store_name, "store_name", 80, true)!;
+      const ownerName = str(args.owner_name, "owner_name", 100) || storeName;
+      const niche = STORE_NICHES.some((n) => n.id === args.niche) ? String(args.niche) : "general";
+      const lang = args.language === "ar" ? "ar" : "fr";
+
+      const { data: existing } = await ctx.admin.from("profiles").select("id").eq("email", email).maybeSingle();
+      if (existing) throw new ToolError("Un compte Dropy existe déjà avec cet e-mail : la boutique doit être créée par son propriétaire, ou utilisez un autre e-mail.");
+
+      const { data: created, error: userError } = await ctx.admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name: ownerName, role: "seller" },
+      });
+      if (userError || !created.user) throw new ToolError(userError?.message.includes("already") ? "Un compte existe déjà avec cet e-mail." : "Création du compte impossible.");
+      const userId = created.user.id;
+
+      await ctx.admin.from("profiles").update({ role: "seller", status: "active", full_name: ownerName }).eq("id", userId);
+      const slug = await uniqueStoreSlug(ctx.admin, storeName);
+      const { data: store, error: storeError } = await ctx.admin
+        .from("stores")
+        .insert({ vendor_id: userId, name: storeName, slug, is_active: false, agency_created_by: ctx.userId })
+        .select("id, slug, theme_config")
+        .single();
+      if (storeError || !store) {
+        await ctx.admin.auth.admin.deleteUser(userId);
+        throw new ToolError("Création de la boutique impossible.");
+      }
+      await generateStore(ctx.admin, store, { niche, lang, replaceHome: true, applyLook: true });
+      return { store: store.slug, url: storeUrl(store.slug), owner_email: email, next: "Utilisez store = « " + store.slug + " » dans les autres outils (get_store, list_pages, create_product…)." };
+    },
+  },
+};
+
+async function authenticate(token: string | null): Promise<Ctx | AgencyCtx | null> {
   if (!token || !token.startsWith("dropy_mcp_")) return null;
   const admin = createAdminClient();
-  const { data: row } = await admin.from("seller_mcp_tokens").select("id, user_id, last_used_at").eq("token_hash", hashMcpToken(token)).maybeSingle();
+  const { data: row } = await admin.from("seller_mcp_tokens").select("id, user_id, last_used_at, scope").eq("token_hash", hashMcpToken(token)).maybeSingle();
   if (!row) return null;
   const { data: profile } = await admin.from("profiles").select("role, status").eq("id", row.user_id).maybeSingle();
+  if (row.scope === "agency") {
+    if (!profile || profile.role !== "admin") return null;
+    if (!row.last_used_at || Date.now() - new Date(row.last_used_at).getTime() > 5 * 60_000) {
+      await admin.from("seller_mcp_tokens").update({ last_used_at: new Date().toISOString() }).eq("id", row.id);
+    }
+    return { admin, userId: row.user_id, agency: true };
+  }
   if (!profile || profile.role !== "seller" || !["approved", "active"].includes(profile.status)) return null;
   const { data: store } = await admin.from("stores").select("*").eq("vendor_id", row.user_id).order("created_at", { ascending: true }).limit(1).maybeSingle();
   if (!store) return null;
@@ -454,6 +647,66 @@ async function authenticate(token: string | null) {
     await admin.from("seller_mcp_tokens").update({ last_used_at: new Date().toISOString() }).eq("id", row.id);
   }
   return { admin, userId: row.user_id, store } satisfies Ctx;
+}
+
+const STORE_PARAM = { type: "string", description: "Adresse de la boutique client (champ « store » de list_client_stores)." };
+
+function agencyToolList() {
+  const agency = Object.entries(AGENCY_TOOLS).map(([name, tool]) => ({ name, description: tool.description, inputSchema: tool.inputSchema }));
+  const storeTools = Object.entries(TOOLS).map(([name, tool]) => {
+    const schema = tool.inputSchema as { properties?: Record<string, unknown>; required?: string[] };
+    return {
+      name,
+      description: tool.description,
+      inputSchema: { ...schema, properties: { store: STORE_PARAM, ...(schema.properties || {}) }, required: ["store", ...(schema.required || [])] },
+    };
+  });
+  return [...agency, ...storeTools];
+}
+
+async function agencyStoreCtx(ctx: AgencyCtx, slug: unknown): Promise<Ctx> {
+  const value = str(slug, "store", 80, true)!;
+  const { data: store } = await ctx.admin.from("stores").select("*").eq("slug", value).not("agency_created_by", "is", null).maybeSingle();
+  if (!store) throw new ToolError(`Boutique client « ${value} » introuvable. Utilisez list_client_stores.`);
+  return { admin: ctx.admin, userId: store.vendor_id, store };
+}
+
+async function handleAgency(message: JsonRpc, ctx: AgencyCtx) {
+  const reply = (result: unknown) => ({ jsonrpc: "2.0", id: message.id ?? null, result });
+  const fail = (code: number, msg: string) => ({ jsonrpc: "2.0", id: message.id ?? null, error: { code, message: msg } });
+  switch (message.method) {
+    case "initialize": {
+      const requested = message.params?.protocolVersion;
+      return reply({
+        protocolVersion: PROTOCOL_VERSIONS.includes(requested) ? requested : PROTOCOL_VERSIONS[0],
+        capabilities: { tools: { listChanged: false } },
+        serverInfo: { name: "dropy-agency", version: "1.0.0" },
+        instructions: "Mode agence Dropy : créez et construisez les boutiques des clients. create_client_store crée le compte et la boutique d'un client ; list_client_stores liste les boutiques de l'agence. Tous les autres outils demandent « store » (l'adresse de la boutique). Pour une boutique impressionnante : thème adapté, page d'accueil riche (bannière avec photo, collections, produits, garanties, FAQ), produits avec plusieurs photos, descriptions claires et page de vente (badge, points forts, FAQ). Textes en français ou en arabe selon le client, prix en DT. Jamais de faux avis ni de faux chiffres.",
+      });
+    }
+    case "ping":
+      return reply({});
+    case "tools/list":
+      return reply({ tools: agencyToolList() });
+    case "tools/call": {
+      const name = message.params?.name;
+      const args = message.params?.arguments || {};
+      try {
+        if (AGENCY_TOOLS[name]) return reply(ok(await AGENCY_TOOLS[name].run(ctx, args)));
+        const tool = TOOLS[name];
+        if (!tool) return fail(-32602, `Outil inconnu : ${name}`);
+        const storeCtx = await agencyStoreCtx(ctx, args.store);
+        const { store: _store, ...rest } = args;
+        return reply(ok(await tool.run(storeCtx, rest)));
+      } catch (error) {
+        const text = error instanceof ToolError ? error.message : "Erreur interne, réessayez.";
+        if (!(error instanceof ToolError)) console.error("MCP agency tool error:", name, error);
+        return reply({ content: [{ type: "text", text }], isError: true });
+      }
+    }
+    default:
+      return fail(-32601, `Méthode non supportée : ${message.method}`);
+  }
 }
 
 async function handle(message: JsonRpc, ctx: Ctx) {
@@ -513,7 +766,7 @@ export async function handleMcpRequest(request: Request, pathToken?: string) {
       continue;
     }
     if (message.id === undefined || message.id === null) continue;
-    responses.push(await handle(message, ctx));
+    responses.push("agency" in ctx ? await handleAgency(message, ctx) : await handle(message, ctx));
   }
   if (!responses.length) return new Response(null, { status: 202 });
   return Response.json(Array.isArray(body) ? responses : responses[0]);
