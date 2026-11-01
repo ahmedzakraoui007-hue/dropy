@@ -610,7 +610,11 @@ const AGENCY_TOOLS: Record<string, { description: string; inputSchema: Record<st
       if (userError || !created.user) throw new ToolError(userError?.message.includes("already") ? "Un compte existe déjà avec cet e-mail." : "Création du compte impossible.");
       const userId = created.user.id;
 
-      await ctx.admin.from("profiles").update({ role: "seller", status: "active", full_name: ownerName }).eq("id", userId);
+      const { error: profileError } = await ctx.admin.from("profiles").update({ role: "seller", status: "approved", full_name: ownerName }).eq("id", userId);
+      if (profileError) {
+        await ctx.admin.auth.admin.deleteUser(userId);
+        throw new ToolError("Activation du compte impossible.");
+      }
       const slug = await uniqueStoreSlug(ctx.admin, storeName);
       const { data: store, error: storeError } = await ctx.admin
         .from("stores")
@@ -621,7 +625,14 @@ const AGENCY_TOOLS: Record<string, { description: string; inputSchema: Record<st
         await ctx.admin.auth.admin.deleteUser(userId);
         throw new ToolError("Création de la boutique impossible.");
       }
-      await generateStore(ctx.admin, store, { niche, lang, replaceHome: true, applyLook: true });
+      try {
+        await generateStore(ctx.admin, store, { niche, lang, replaceHome: true, applyLook: true });
+      } catch (error) {
+        console.error("Agency store generation error:", error);
+        await ctx.admin.from("stores").delete().eq("id", store.id);
+        await ctx.admin.auth.admin.deleteUser(userId);
+        throw new ToolError("Création des pages de la boutique impossible, rien n'a été créé. Réessayez.");
+      }
       return { store: store.slug, url: storeUrl(store.slug), owner_email: email, next: "Utilisez store = « " + store.slug + " » dans les autres outils (get_store, list_pages, create_product…)." };
     },
   },

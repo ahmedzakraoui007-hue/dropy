@@ -539,7 +539,7 @@ export default function BuilderPage() {
       {
         slug: template.slug,
         title: template.title,
-        page_type: kind === "shop" ? "shop" : "content",
+        page_type: kind === "shop" ? "catalog" : "content",
         sections: template.sections,
         is_published: true,
         show_in_navigation: template.showInMenu,

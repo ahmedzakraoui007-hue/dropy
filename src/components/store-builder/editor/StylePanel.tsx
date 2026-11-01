@@ -7,6 +7,9 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { themeHeroImage, themes } from "@/lib/themes";
 import type { Theme } from "@/types/themes";
+import { firstFont, themeLook } from "@/lib/theme-look";
+
+export { firstFont, themeLook };
 import { useTranslation } from "@/context/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -28,31 +31,6 @@ export const EDITOR_FONTS = [
 const COLOR_PRESETS = ["#111827", "#7c3aed", "#2563eb", "#0d9488", "#16a34a", "#ca8a04", "#ea580c", "#e11d48", "#db2777", "#9f1239"];
 
 const HEX = /^#[0-9a-f]{6}$/i;
-
-export function firstFont(value?: string) {
-  return (value || "").replace(/['"]/g, "").split(",")[0].trim() || "Inter";
-}
-
-export function themeLook(theme: Theme, current: Record<string, any>) {
-  const radius = parseFloat(theme.layout?.borderRadius || "8");
-  const heading = firstFont(theme.typography?.headingFont);
-  const body = firstFont(theme.typography?.bodyFont);
-  return {
-    ...current,
-    theme_id: theme.id,
-    colors: {
-      ...(current.colors || {}),
-      primary: theme.colors.primary,
-      secondary: theme.colors.secondary,
-      accent: theme.colors.accent,
-      background: theme.colors.background,
-      text: theme.colors.text,
-    },
-    typography: { ...(current.typography || {}), fontHeading: heading, fontBody: body },
-    fonts: { heading, body },
-    spacing: { ...(current.spacing || {}), borderRadius: radius <= 0 ? "none" : radius >= 999 ? "full" : "md" },
-  };
-}
 
 type Props = {
   themeConfig: Record<string, any>;

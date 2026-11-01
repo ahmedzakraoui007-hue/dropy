@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { themeHomeSections, themes } from "@/lib/themes";
-import { themeLook } from "@/components/store-builder/editor/StylePanel";
+import { themeLook } from "@/lib/theme-look";
 import { buildPageTemplate, type PageTemplateKind } from "@/lib/store-page-templates";
 
 export type StoreNiche = {
@@ -101,7 +101,7 @@ export async function generateStore(
       store_id: store.id,
       slug: page.slug,
       title: page.title,
-      page_type: kind === "shop" ? "shop" : "content",
+      page_type: kind === "shop" ? "catalog" : "content",
       sections: page.sections,
       is_published: true,
       is_homepage: false,
