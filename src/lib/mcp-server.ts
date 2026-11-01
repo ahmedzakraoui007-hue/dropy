@@ -18,7 +18,7 @@ const PROTOCOL_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 
 const SECTION_TYPES: Record<string, string> = {
   hero: "Bannière principale. config: title, subtitle, badge, ctaText, ctaLink (ex. /shop), secondaryCtaText, backgroundImage (URL), variant ('editorial' = photo plein écran avec texte en bas, recommandé pour la mode et les marques | 'classic' | 'bold' | 'split' | 'video'), videoUrl, height (px), overlay (bool), textPosition ('left' | 'center' | 'right').",
-  products: "Grille de produits de la boutique. config: title, limit (nombre), columns (2-4), source: 'store'.",
+  products: "Grille de produits de la boutique. config: title, limit (nombre), columns (2-4), source: 'store', cardStyle ('classic' | 'tilt' = cartes qui s'inclinent en 3D au survol).",
   store_categories: "Catégories de la boutique. config: title, columns, limit.",
   features: "Avantages / points forts. config: title, features: [{ title, description, icon? }].",
   trust_badges: "Garanties (livraison, paiement...). config: layout: 'row', items: [{ icon ('Truck' | 'Shield' | 'RotateCcw' | 'Headphones' | 'CreditCard' | 'Award'), title, description }].",
@@ -27,6 +27,12 @@ const SECTION_TYPES: Record<string, string> = {
   image_with_text: "Image + texte. config: title, text, image (URL), imagePosition ('left' | 'right'), ctaText, ctaLink.",
   cta_banner: "Appel à l'action. config: title, subtitle, ctaText, ctaLink.",
   promo_banner: "Bandeau promo fin. config: text, link.",
+  showcase_3d: "Vitrine 3D : carrousel de produits qui tournent en 3D (effet wow, idéal TikTok). config: title, subtitle, badge, ctaText, source ('store' = produits de la boutique, par défaut) ou items: [{ image, title, price, link }], limit, backgroundColor?, textColor?.",
+  reels: "Reels produits : cartes verticales 9:16 façon TikTok avec vidéo (MP4) ou photo animée, prix et bouton Commander. config: title, subtitle, badge, ctaText, items: [{ video?, image, caption, price, link }] (sinon produits de la boutique), backgroundColor?, textColor?.",
+  before_after: "Avant / après : curseur qui compare deux images (beauté, nettoyage, rénovation). config: title, text, badge, before (URL), after (URL), beforeLabel, afterLabel.",
+  lookbook: "Lookbook « shop the look » : photo avec points cliquables sur chaque produit. config: title, subtitle, badge, image (URL), ctaText, hotspots: [{ x (0-100), y (0-100), label, price, link }].",
+  big_statement: "Grand message : texte géant révélé mot par mot. config: text, subtext, style ('gradient' | 'outline' | 'plain'), backgroundColor?, textColor?.",
+  model_3d: "Modèle 3D à faire tourner au doigt + réalité augmentée (seulement si la marque fournit un fichier .glb). config: title, text, badge, src (URL https .glb), poster (image), hint.",
   marquee: "Bandeau défilant (arguments qui défilent en continu, effet premium). config: items: [{ text }] (3 à 6 textes courts), backgroundColor?, textColor?.",
   countdown: "Compte à rebours. config: title, subtitle, endDate (ISO 8601), ctaText, ctaLink, expiredText.",
   newsletter: "Inscription newsletter. config: title, subtitle, placeholder, buttonText.",

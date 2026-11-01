@@ -17,12 +17,18 @@ import {
   Star,
   Tags,
   Video,
+  Box,
+  Clapperboard,
+  SplitSquareHorizontal,
+  ScanSearch,
+  Type,
+  Rotate3d,
   type LucideIcon,
 } from "lucide-react";
 
 import { PLACEHOLDERS_AR } from "@/lib/builder-sections-ar";
 
-export type SectionCategory = "essentials" | "products" | "content" | "trust" | "pages";
+export type SectionCategory = "essentials" | "effects" | "products" | "content" | "trust" | "pages";
 
 export type SectionType = {
   id: string;
@@ -30,7 +36,7 @@ export type SectionType = {
   category: SectionCategory;
 };
 
-export const SECTION_CATEGORIES: SectionCategory[] = ["essentials", "products", "content", "trust", "pages"];
+export const SECTION_CATEGORIES: SectionCategory[] = ["essentials", "effects", "products", "content", "trust", "pages"];
 
 export const SECTION_LIBRARY: SectionType[] = [
   { id: "hero", icon: ImageIcon, category: "essentials" },
@@ -39,6 +45,12 @@ export const SECTION_LIBRARY: SectionType[] = [
   { id: "cta_banner", icon: Sparkles, category: "essentials" },
   { id: "countdown", icon: Clock, category: "essentials" },
   { id: "footer", icon: PanelBottom, category: "essentials" },
+  { id: "showcase_3d", icon: Rotate3d, category: "effects" },
+  { id: "reels", icon: Clapperboard, category: "effects" },
+  { id: "before_after", icon: SplitSquareHorizontal, category: "effects" },
+  { id: "lookbook", icon: ScanSearch, category: "effects" },
+  { id: "big_statement", icon: Type, category: "effects" },
+  { id: "model_3d", icon: Box, category: "effects" },
   { id: "products", icon: ShoppingBag, category: "products" },
   { id: "store_categories", icon: Tags, category: "products" },
   { id: "collections", icon: LayoutGrid, category: "products" },
@@ -136,6 +148,18 @@ const placeholderFr = (type: string): Record<string, any> => {
       return { description: "Livraison partout en Tunisie · Paiement à la livraison." };
     case "products":
       return { title: "Nos produits", limit: 8, columns: 4, source: "store" };
+    case "showcase_3d":
+      return { badge: "Best-sellers", title: "Nos pièces phares", subtitle: "Faites glisser pour découvrir", ctaText: "Découvrir", source: "store", limit: 8 };
+    case "reels":
+      return { badge: "Vu sur TikTok", title: "En vidéo", ctaText: "Commander", source: "store" };
+    case "before_after":
+      return { badge: "Résultat", title: "La différence se voit", text: "Faites glisser le curseur pour comparer.", before: photo("1596462502278-27bfdc403348"), after: photo("1612817288484-6f916006741a"), beforeLabel: "Avant", afterLabel: "Après" };
+    case "lookbook":
+      return { badge: "Shop the look", title: "Le look du moment", image: photo("1539109136881-3be0616acf4b"), ctaText: "Voir le produit", hotspots: [{ x: 41, y: 47, label: "Sac", price: "", link: "/shop" }, { x: 60, y: 70, label: "Manteau", price: "", link: "/shop" }] };
+    case "big_statement":
+      return { text: "Pensé pour durer. Créé pour vous.", subtext: "Chaque pièce est choisie avec soin.", style: "gradient" };
+    case "model_3d":
+      return { badge: "3D", title: "Découvrez-le sous tous les angles", text: "Faites tourner le produit et affichez-le chez vous en réalité augmentée.", src: "", hint: "Faites tourner l'objet avec le doigt" };
     case "store_categories":
       return { title: "Nos catégories", limit: 8 };
     case "collections":

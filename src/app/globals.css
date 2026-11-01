@@ -496,3 +496,6 @@
 @media (prefers-reduced-motion: reduce) {
   .dropy-marquee, .dropy-kenburns { animation: none; }
 }
+@keyframes dropy-reel-zoom { 0% { transform: scale(1) translateY(0); } 50% { transform: scale(1.12) translateY(-2%); } 100% { transform: scale(1) translateY(0); } }
+.dropy-reel-zoom { animation: dropy-reel-zoom 12s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .dropy-reel-zoom { animation: none; } }
