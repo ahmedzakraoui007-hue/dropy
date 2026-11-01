@@ -15,7 +15,7 @@ const policy: Field[] = [text("title"), { key: "content", kind: "richtext" }];
 
 export const SECTION_SCHEMAS: Record<string, Field[]> = {
   hero: [
-    { key: "variant", kind: "select", options: ["classic", "split", "bold"] },
+    { key: "variant", kind: "select", options: ["classic", "editorial", "split", "bold"] },
     text("badge"),
     text("title"),
     area("subtitle"),
@@ -27,6 +27,11 @@ export const SECTION_SCHEMAS: Record<string, Field[]> = {
     { key: "overlay", kind: "number", min: 0, max: 0.8, step: 0.1 },
   ],
   promo_banner: [area("text"), link("link"), { key: "backgroundColor", kind: "color" }, { key: "textColor", kind: "color" }],
+  marquee: [
+    { key: "items", kind: "list", titleKey: "text", max: 8, item: { text: "" }, fields: [text("text")] },
+    { key: "backgroundColor", kind: "color" },
+    { key: "textColor", kind: "color" },
+  ],
   cta_banner: [text("title"), area("description"), text("ctaText"), link("ctaLink")],
   countdown: [text("title"), text("message"), { key: "endDate", kind: "datetime" }, text("ctaText"), link("ctaLink"), text("expiredText")],
   footer: [area("description"), text("phone"), text("address"), text("copyright")],

@@ -26,6 +26,7 @@ export const PLACEHOLDERS_AR: Record<string, Record<string, any>> = {
     ctaText: "اكتشف المتجر",
   },
   promo_banner: { text: "🚚 توصيل لكل ولايات تونس · الدفع عند الاستلام" },
+  marquee: { items: [{ text: "توصيل لكل ولايات تونس" }, { text: "الدفع عند الاستلام" }, { text: "تبديل ساهل" }] },
   cta_banner: { title: "عرض اللحظة", description: "استفد منه ما دام المخزون متوفرًا.", ctaText: "استفد الآن" },
   countdown: { title: "تخفيضات سريعة", message: "ينتهي العرض خلال:", ctaText: "استفد الآن" },
   footer: { description: "توصيل لكل ولايات تونس · الدفع عند الاستلام." },

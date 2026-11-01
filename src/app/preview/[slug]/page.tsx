@@ -275,8 +275,8 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
   const content = (
     <div className={`relative z-10 w-full max-w-5xl mx-auto px-4 ${config.textPosition === 'left' ? 'text-start' : config.textPosition === 'right' ? 'text-end' : 'text-center'}`}>
       {config.badge && (
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full ${onImage ? 'bg-white/15 text-white border border-white/30 backdrop-blur' : 'bg-primary/10 text-primary border border-primary/20'} text-sm font-bold mb-8 animate-bounce`}>
-          ✨ <EditableText sectionId={sectionId} field="badge" text={config.badge} />
+        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full ${onImage ? 'bg-white/15 text-white border border-white/30 backdrop-blur' : 'bg-primary/10 text-primary border border-primary/20'} text-[11px] font-bold uppercase tracking-[0.2em] mb-6`}>
+          <EditableText sectionId={sectionId} field="badge" text={config.badge} />
         </div>
       )}
       <EditableText 
@@ -312,6 +312,22 @@ const Hero = ({ sectionId, config }: { sectionId: string, config: any }) => {
       )}
     </div>
   );
+
+  if (variant === 'editorial') {
+    return (
+      <section className={`relative overflow-hidden flex items-end min-h-[86vh] md:min-h-[92vh] ${config.animation || 'fade-up'}`} style={{ ...sectionStyle, paddingTop: 0, paddingBottom: 0 }}>
+        {config.backgroundImage ? (
+          <img src={config.backgroundImage} alt="" className="absolute inset-0 h-full w-full object-cover dropy-kenburns" />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/80 to-black" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/10" />
+        <div className="relative z-10 w-full pb-14 pt-32 md:pb-24 [&_button]:!bg-white [&_button]:!text-slate-900 [&_p]:!mx-0 [&_h1]:text-5xl [&_h1]:sm:text-6xl [&_h1]:md:text-8xl [&_h1]:mb-5 [&_p]:text-lg [&_p]:md:text-2xl [&_p]:mb-8">
+          {content}
+        </div>
+      </section>
+    );
+  }
 
   if (variant === 'split') {
     return (
@@ -412,6 +428,28 @@ const PromoBanner = ({ sectionId, config }: { sectionId: string, config: any }) 
     <EditableText sectionId={sectionId} field="text" text={config.text || ""} />
     {config.link && <button onClick={() => navigateTo(config.link)} className="ms-2 underline hover:opacity-80 transition-opacity">{t("common.learn_more")}</button>}
   </div>
+  );
+};
+
+const Marquee = ({ config }: { sectionId: string, config: any }) => {
+  const items: string[] = (config.items || []).map((item: any) => (typeof item === "string" ? item : item?.text)).filter(Boolean);
+  if (!items.length) return null;
+  const track = [...items, ...items, ...items, ...items];
+  return (
+    <div className="overflow-hidden py-3 relative" style={{ backgroundColor: config.backgroundColor || "var(--primary)", color: config.textColor || "#ffffff" }} dir="ltr">
+      <div className="dropy-marquee flex w-max gap-10 whitespace-nowrap text-sm font-bold uppercase tracking-[0.18em]">
+        {[0, 1].map((copy) => (
+          <div key={copy} className="flex shrink-0 gap-10" aria-hidden={copy === 1}>
+            {track.map((text, i) => (
+              <span key={i} className="flex items-center gap-10">
+                <span dir="auto">{text}</span>
+                <span className="opacity-60">✦</span>
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -775,7 +813,7 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
                     src={img}
                     alt={idx === 0 ? displayProduct.title : ""}
                     loading={idx === 0 ? "eager" : "lazy"}
-                    className="aspect-square w-full shrink-0 snap-center object-cover"
+                    className="aspect-[4/5] w-full shrink-0 snap-center object-cover"
                   />
                 ))}
               </div>
@@ -1231,7 +1269,7 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && handleProductClick(item)}
               >
-                <div className="aspect-square bg-white rounded-2xl mb-4 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all border border-border">
+                <div className="aspect-[4/5] bg-white rounded-2xl mb-4 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all border border-border">
                   <img 
                     src={item.image || placeholders[i % 4]} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -1420,12 +1458,8 @@ const Header = ({ store, pages = [], onOpenCart, cartCount = 0 }: { store: any, 
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-border px-4 py-4">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <button onClick={() => navigateTo("/home")} className="text-2xl font-bold tracking-tighter text-primary flex items-center gap-2 min-w-0">
-          {store?.logo_url ? (
-            <img src={store.logo_url} alt={store?.name || ""} className="h-8 w-auto object-contain" />
-          ) : (
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white text-sm shrink-0">{store?.name?.charAt(0) || "D"}</div>
-          )}
-          <span className="truncate">{store?.name || t("common.store")}</span>
+          {store?.logo_url && <img src={store.logo_url} alt={store?.name || ""} className="h-8 w-auto object-contain" />}
+          <span className="truncate text-foreground" style={{ fontFamily: "var(--font-heading), system-ui, sans-serif" }}>{store?.name || t("common.store")}</span>
         </button>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
           {links.map((l: any) => (
@@ -2306,6 +2340,7 @@ const StoreCategories = ({ sectionId, config, storeId }: { sectionId: string, co
 };
 
 const LIST_FIELDS: Record<string, string> = {
+  marquee: "items",
   testimonials: "testimonials",
   faq: "faqs",
   features: "features",
@@ -2405,6 +2440,7 @@ const SectionRenderer = ({ section, store, pages = [], onAddToCart, cart, slug, 
 
       case "logo_carousel": return <LogoCarousel {...commonProps} />;
       case "promo_banner": return <PromoBanner {...commonProps} />;
+      case "marquee": return <Marquee {...commonProps} />;
       case "process_steps": return <ProcessSteps {...commonProps} />;
       case "pricing": return <Pricing {...commonProps} />;
       case "stats": return <Stats {...commonProps} />;

@@ -488,3 +488,11 @@
 .blog-content table { width: 100%; border-collapse: collapse; font-size: 0.95em; }
 .blog-content th { text-align: start; background: #f8fafc; font-weight: 700; color: #0f172a; }
 .blog-content th, .blog-content td { border: 1px solid #e2e8f0; padding: 0.6em 0.8em; }
+
+@keyframes dropy-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.dropy-marquee { animation: dropy-marquee 40s linear infinite; }
+@keyframes dropy-kenburns { from { transform: scale(1); } to { transform: scale(1.08); } }
+.dropy-kenburns { animation: dropy-kenburns 18s ease-out forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .dropy-marquee, .dropy-kenburns { animation: none; }
+}

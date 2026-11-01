@@ -2514,6 +2514,10 @@
             "mega_menu": {
                 "name": "Menu",
                 "desc": "Menu de navigation."
+            },
+            "marquee": {
+                "name": "Bandeau défilant",
+                "desc": "Textes courts qui défilent en continu : livraison, paiement, échange…"
             }
         },
         "themes": {
@@ -2618,7 +2622,8 @@
                 "grid": "En grille",
                 "compact": "Compact",
                 "normal": "Normal",
-                "large": "Aéré"
+                "large": "Aéré",
+                "editorial": "Photo plein écran"
             },
             "link_custom": "Autre lien (adresse web)…",
             "reset": "Par défaut",

@@ -48,6 +48,7 @@ const navigation = [
   ...(FREE_LAUNCH ? [] : [{ name: "Abonnements", href: "/admin/subscriptions", icon: CreditCard }]),
   { name: "Modération Contenu", href: "/admin/content", icon: FileText },
   { name: "Demandes de site", href: "/admin/site-requests", icon: Globe },
+  { name: "Boutiques clients", href: "/admin/client-stores", icon: Store },
   { name: "Blog", href: "/admin/blog", icon: BookOpen },
   { name: "Support & Litiges", href: "/admin/support", icon: MessageSquare },
 ];
