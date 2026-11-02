@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { premiumThemes } from "@/lib/themes/premium";
 import { ArrowRight, BarChart3, CheckCircle2, Languages, Loader2, MessageCircle, Palette, Package, ShieldCheck, Smartphone, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,12 @@ export default function FreeSiteOffer() {
   const tr = (key: string) => t(`pages.free_site.${key}`);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [style, setStyle] = useState("");
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("style");
+    if (id && premiumThemes.some((theme) => theme.id === id)) setStyle(t(`store_builder.themes.${id}.name`));
+  }, [t]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -167,7 +174,7 @@ export default function FreeSiteOffer() {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="fs-message">{tr("fields.message")}</Label>
-                  <Textarea id="fs-message" name="message" rows={3} maxLength={2000} placeholder={tr("fields.message_ph")} className="bg-white" />
+                  <Textarea key={style} defaultValue={style ? `${tr("style_prefix")} ${style}` : undefined} id="fs-message" name="message" rows={3} maxLength={2000} placeholder={tr("fields.message_ph")} className="bg-white" />
                 </div>
                 <Button type="submit" disabled={sending} className="h-12 w-full rounded-xl bg-slate-900 font-black hover:bg-slate-800">
                   {sending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}

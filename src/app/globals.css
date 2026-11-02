@@ -499,3 +499,13 @@
 @keyframes dropy-reel-zoom { 0% { transform: scale(1) translateY(0); } 50% { transform: scale(1.12) translateY(-2%); } 100% { transform: scale(1) translateY(0); } }
 .dropy-reel-zoom { animation: dropy-reel-zoom 12s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .dropy-reel-zoom { animation: none; } }
+@keyframes dropy-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+.dropy-float { animation: dropy-float 6s ease-in-out infinite; }
+.dropy-float-slow { animation: dropy-float 8s ease-in-out infinite; }
+@keyframes dropy-screen-scroll { 0%, 12% { transform: translateY(0); } 50%, 62% { transform: translateY(-38%); } 100% { transform: translateY(0); } }
+.dropy-screen-scroll { animation: dropy-screen-scroll 9s ease-in-out infinite; }
+@keyframes dropy-screen-in { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: none; } }
+.dropy-screen-in { animation: dropy-screen-in 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes dropy-gradient-text { to { background-position: 200% center; } }
+.dropy-gradient-text { animation: dropy-gradient-text 6s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .dropy-float, .dropy-float-slow, .dropy-screen-scroll, .dropy-screen-in, .dropy-gradient-text { animation: none; } }

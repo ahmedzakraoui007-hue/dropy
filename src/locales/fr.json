@@ -2791,7 +2791,8 @@
         "tools": "Outils",
         "blog": "Blog",
         "login": "Connexion",
-        "signup": "Démarrer"
+        "signup": "Démarrer",
+        "templates": "Templates"
     },
     "hero": {
         "badge": "Offre de lancement · Création offerte",
@@ -3588,7 +3589,105 @@
             "faq3_q": "Puis-je modifier ma boutique moi-même ?",
             "faq3_a": "Oui. La boutique est à votre nom : vous ajoutez des produits, changez les prix et gérez vos commandes depuis votre tableau de bord.",
             "faq4_q": "Puis-je utiliser mon propre nom de domaine ?",
-            "faq4_a": "Oui. Votre boutique a une adresse sur dropy.store, et vous pouvez connecter votre propre nom de domaine."
+            "faq4_a": "Oui. Votre boutique a une adresse sur dropy.store, et vous pouvez connecter votre propre nom de domaine.",
+            "style_prefix": "Style souhaité :"
+        }
+    },
+    "home": {
+        "hero": {
+            "badge": "Offre de lancement · création offerte",
+            "title1": "Votre boutique en ligne,",
+            "title2": "créée gratuitement.",
+            "description": "Entreprises et commerçants tunisiens : l'équipe Dropy crée votre site e-commerce avec vos produits, un design à votre image et le paiement à la livraison. Vous n'avez rien à payer pour la création.",
+            "cta_primary": "Demander ma boutique",
+            "cta_secondary": "Voir les templates",
+            "points": {
+                "free": "Création offerte",
+                "cod": "Paiement à la livraison",
+                "languages": "Français et arabe"
+            },
+            "float_order_label": "Nouvelle commande",
+            "float_order": "Paiement à la livraison",
+            "float_3d": "Effets 3D"
+        },
+        "strip": {
+            "cod": "Paiement à la livraison",
+            "governorates": "24 gouvernorats",
+            "languages": "Français & arabe",
+            "tracking": "Suivi des colis",
+            "ads": "Statistiques pub",
+            "whatsapp": "Commandes WhatsApp"
+        },
+        "templates": {
+            "eyebrow": "Templates premium",
+            "title": "Choisissez votre style.",
+            "subtitle": "Six univers de marque pensés pour le marché tunisien, avec des effets qu'on a envie de partager sur TikTok et Instagram. On l'adapte ensuite à vos couleurs et à vos produits.",
+            "cta": "Je veux ce style",
+            "concepts": {
+                "noor": "Sable et terracotta, lookbook cliquable et reels d'essayage.",
+                "aura": "Rose poudré, textures en vidéo et routine jour / nuit.",
+                "zinat": "Ivoire, noir et or : vos bijoux dans un écrin en 3D.",
+                "volt": "Bandes nuit, cyan électrique et vitrine qui tourne.",
+                "dar": "Lin et olive, « shop the room » sur un vrai salon.",
+                "zitouna": "Vert olive et or pour raconter l'origine de vos produits."
+            }
+        },
+        "steps": {
+            "eyebrow": "Comment ça marche",
+            "title": "Trois étapes, zéro prise de tête.",
+            "whatsapp": "Nous écrire sur WhatsApp",
+            "one": {
+                "title": "Vous nous écrivez",
+                "desc": "Par le formulaire ou sur WhatsApp : vos produits, vos photos, vos prix et le style qui vous plaît."
+            },
+            "two": {
+                "title": "On crée votre boutique",
+                "desc": "Design à votre image, fiches produits, pages livraison et contact, en français et en arabe."
+            },
+            "three": {
+                "title": "Vous vendez",
+                "desc": "Partagez votre lien, recevez les commandes, confirmez par téléphone et suivez chaque colis."
+            }
+        },
+        "bento": {
+            "eyebrow": "Tout est inclus",
+            "title": "Pensé pour vendre en Tunisie.",
+            "cod": {
+                "title": "Le paiement à la livraison, sans le chaos.",
+                "desc": "Chaque commande suit le même chemin, du coup de fil de confirmation à la livraison.",
+                "confirm": "Commande à confirmer par téléphone",
+                "ship": "Colis prêt et remis au livreur",
+                "deliver": "Livré et encaissé"
+            },
+            "effects": {
+                "title": "Effets 3D et reels",
+                "desc": "Vitrine qui tourne, lookbook cliquable, vidéos verticales."
+            },
+            "languages": {
+                "title": "Français et arabe"
+            },
+            "ads": {
+                "title": "Vos pubs, enfin lisibles",
+                "desc": "Voyez quelles campagnes Facebook, Instagram et TikTok apportent des commandes."
+            },
+            "share": {
+                "title": "Un lien partout",
+                "desc": "Votre boutique se partage dans vos stories, vos bios et vos messages."
+            }
+        },
+        "audiences": {
+            "creators": {
+                "title": "Vous êtes créateur de contenu ?",
+                "desc": "Créez votre portfolio UGC et travaillez avec des marques tunisiennes."
+            },
+            "suppliers": {
+                "title": "Vous êtes fournisseur ?",
+                "desc": "Inscrivez-vous dès maintenant pour vendre via les boutiques Dropy."
+            }
+        },
+        "final": {
+            "title": "Votre boutique peut être en ligne en quelques jours.",
+            "subtitle": "Dites-nous ce que vous vendez, on s'occupe du reste. La création est offerte."
         }
     }
 }
