@@ -22,13 +22,16 @@ export const BLOG_CATEGORIES = ["vendre", "publicite", "fournisseurs", "createur
 const LIST_COLUMNS = "id, slug, locale, title, excerpt, cover_url, category, published_at, updated_at, content";
 
 function anonClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return null;
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
     auth: { persistSession: false },
   });
 }
 
 export async function publishedPosts(limit = 100) {
-  const { data } = await anonClient()
+  const client = anonClient();
+  if (!client) return [];
+  const { data } = await client
     .from("blog_posts")
     .select(LIST_COLUMNS)
     .eq("status", "published")
@@ -39,7 +42,9 @@ export async function publishedPosts(limit = 100) {
 }
 
 export async function publishedPost(slug: string) {
-  const { data } = await anonClient()
+  const client = anonClient();
+  if (!client) return null;
+  const { data } = await client
     .from("blog_posts")
     .select("*")
     .eq("slug", slug)
