@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu, X, ArrowRight, Languages } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,13 +14,14 @@ export default function LandingHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const { t, locale, setLocale, dir } = useTranslation();
+  const pathname = usePathname();
+  const solid = scrolled || pathname === "/";
 
   const navLinks = [
+    { name: t("nav.templates"), href: "/#templates" },
     { name: t("nav.vendeurs"), href: "/vendeurs" },
     { name: t("nav.creators"), href: "/createurs" },
-    { name: t("nav.suppliers"), href: "/fournisseurs" },
     { name: t("nav.pricing"), href: "/tarifs" },
-    { name: t("nav.tools"), href: "/outils" },
     { name: t("nav.blog"), href: "/blog" },
   ];
 
@@ -32,14 +34,14 @@ export default function LandingHeader() {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "py-3" : "py-5"}`} dir={dir}>
       <div className="max-w-7xl mx-auto px-6">
-        <div className={`relative flex items-center justify-between px-6 lg:px-8 h-16 lg:h-20 transition-all duration-500 rounded-[2rem] border ${scrolled ? "bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl shadow-slate-200/20" : "bg-transparent border-transparent shadow-none"}`}>
+        <div className={`relative flex items-center justify-between px-6 lg:px-8 h-16 lg:h-20 transition-all duration-500 rounded-[2rem] border ${solid ? "bg-white/80 backdrop-blur-xl border-slate-200 shadow-xl shadow-slate-200/20" : "bg-transparent border-transparent shadow-none"}`}>
           <div className="flex items-center gap-10">
             <Link href="/" className="flex items-center gap-3 group">
               <Logo className="h-16 w-auto group-hover:scale-105 transition-transform duration-300" />
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-7">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
