@@ -22,6 +22,13 @@ import { storeBasePath } from "@/lib/store-url";
 import { loadStoreTracking, trackStoreEvent } from "@/lib/storefront-tracking";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 import { captureAttribution, storedAttribution } from "@/lib/ad-attribution";
+import { Showcase3D } from "@/components/storefront/sections/Showcase3D";
+import { Reels } from "@/components/storefront/sections/Reels";
+import { BeforeAfter } from "@/components/storefront/sections/BeforeAfter";
+import { Lookbook } from "@/components/storefront/sections/Lookbook";
+import { BigStatement } from "@/components/storefront/sections/BigStatement";
+import { Model3D } from "@/components/storefront/sections/Model3D";
+import { tiltProps } from "@/components/storefront/sections/tilt";
 
 // --- HELPERS ---
 
@@ -1269,7 +1276,7 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
                 tabIndex={0}
                 onKeyDown={(e) => e.key === 'Enter' && handleProductClick(item)}
               >
-                <div className="aspect-[4/5] bg-white rounded-2xl mb-4 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all border border-border">
+                <div {...tiltProps(config.cardStyle === "tilt")} className="aspect-[4/5] bg-white rounded-2xl mb-4 overflow-hidden relative shadow-sm group-hover:shadow-xl transition-all border border-border">
                   <img 
                     src={item.image || placeholders[i % 4]} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
@@ -2441,6 +2448,12 @@ const SectionRenderer = ({ section, store, pages = [], onAddToCart, cart, slug, 
       case "logo_carousel": return <LogoCarousel {...commonProps} />;
       case "promo_banner": return <PromoBanner {...commonProps} />;
       case "marquee": return <Marquee {...commonProps} />;
+      case "showcase_3d": return <Showcase3D config={section.config} storeId={store?.id} navigate={navigateTo} />;
+      case "reels": return <Reels config={section.config} storeId={store?.id} navigate={navigateTo} />;
+      case "before_after": return <BeforeAfter config={section.config} />;
+      case "lookbook": return <Lookbook config={section.config} navigate={navigateTo} />;
+      case "big_statement": return <BigStatement config={section.config} />;
+      case "model_3d": return <Model3D config={section.config} />;
       case "process_steps": return <ProcessSteps {...commonProps} />;
       case "pricing": return <Pricing {...commonProps} />;
       case "stats": return <Stats {...commonProps} />;

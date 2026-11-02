@@ -1,7 +1,9 @@
 import { Theme } from '@/types/themes';
 import { buildHomeSections, type HomeNiche } from './home-sections';
+import { premiumHomeSections, premiumThemes } from './premium';
 
 export const themes: Theme[] = [
+    ...premiumThemes,
     {
         id: 'minimal',
         name: 'Minimal',
@@ -293,5 +295,6 @@ const THEME_NICHE: Record<string, HomeNiche> = {
 
 export function themeHomeSections(theme: Theme, lang: 'fr' | 'ar' = 'fr') {
     const niche = THEME_NICHE[theme.id];
-    return niche ? buildHomeSections(niche, lang) : theme.defaultSections || [];
+    if (niche) return buildHomeSections(niche, lang);
+    return premiumHomeSections(theme.id, lang) || theme.defaultSections || [];
 }

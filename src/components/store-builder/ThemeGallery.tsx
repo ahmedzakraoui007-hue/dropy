@@ -75,6 +75,11 @@ export function ThemeGallery() {
                   </p>
                   <p className="text-sm opacity-90">{t(`store_builder.themes.${theme.id}.niche`)}</p>
                 </div>
+                {theme.category === 'premium' && (
+                  <span className="absolute start-3 top-3 rounded-full bg-gradient-to-r from-violet-600 to-teal-500 px-2.5 py-1 text-xs font-bold text-white shadow">
+                    {t('store_builder.theme_page.premium')}
+                  </span>
+                )}
                 {active && (
                   <span className="absolute end-3 top-3 flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-bold text-primary shadow">
                     <Check className="h-3.5 w-3.5" />

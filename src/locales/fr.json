@@ -2386,7 +2386,8 @@
                     "products": "Produits",
                     "content": "Contenu",
                     "trust": "Confiance",
-                    "pages": "Infos et légal"
+                    "pages": "Infos et légal",
+                    "effects": "Effets wow"
                 }
             }
         },
@@ -2518,6 +2519,30 @@
             "marquee": {
                 "name": "Bandeau défilant",
                 "desc": "Textes courts qui défilent en continu : livraison, paiement, échange…"
+            },
+            "showcase_3d": {
+                "name": "Vitrine 3D",
+                "desc": "Vos produits tournent en 3D : l'effet qui arrête le scroll."
+            },
+            "reels": {
+                "name": "Reels produits",
+                "desc": "Cartes verticales façon TikTok, avec vidéo ou photo animée."
+            },
+            "before_after": {
+                "name": "Avant / après",
+                "desc": "Un curseur pour comparer deux images."
+            },
+            "lookbook": {
+                "name": "Shop the look",
+                "desc": "Une photo avec des points cliquables sur chaque produit."
+            },
+            "big_statement": {
+                "name": "Grand message",
+                "desc": "Un texte géant qui apparaît mot par mot."
+            },
+            "model_3d": {
+                "name": "Modèle 3D",
+                "desc": "Un objet à faire tourner au doigt, avec réalité augmentée."
             }
         },
         "themes": {
@@ -2556,6 +2581,30 @@
             "pulse": {
                 "name": "Pulse",
                 "niche": "Sport et fitness"
+            },
+            "noor": {
+                "name": "Noor",
+                "niche": "Mode féminine"
+            },
+            "aura": {
+                "name": "Aura",
+                "niche": "Beauté et soins"
+            },
+            "zinat": {
+                "name": "Zinat",
+                "niche": "Bijoux et luxe"
+            },
+            "volt": {
+                "name": "Volt",
+                "niche": "Tech et gadgets"
+            },
+            "dar": {
+                "name": "Dar",
+                "niche": "Maison et déco"
+            },
+            "zitouna": {
+                "name": "Zitouna",
+                "niche": "Terroir tunisien"
             }
         },
         "fields": {
@@ -2623,7 +2672,11 @@
                 "compact": "Compact",
                 "normal": "Normal",
                 "large": "Aéré",
-                "editorial": "Photo plein écran"
+                "editorial": "Photo plein écran",
+                "tilt": "Inclinaison 3D",
+                "gradient": "Dégradé",
+                "outline": "Contour",
+                "plain": "Simple"
             },
             "link_custom": "Autre lien (adresse web)…",
             "reset": "Par défaut",
@@ -2670,7 +2723,23 @@
                 "terms_conditions": {
                     "content": "Séparez les paragraphes par une ligne vide."
                 }
-            }
+            },
+            "before": "Image avant",
+            "after": "Image après",
+            "beforeLabel": "Texte avant",
+            "afterLabel": "Texte après",
+            "hotspots": "Points produits",
+            "x": "Position horizontale (%)",
+            "y": "Position verticale (%)",
+            "price": "Prix",
+            "caption": "Légende",
+            "video": "Vidéo (lien MP4)",
+            "src": "Modèle 3D (lien .glb)",
+            "poster": "Image d'attente",
+            "style": "Style",
+            "subtext": "Sous-texte",
+            "cardStyle": "Style des cartes",
+            "hint": "Indication"
         },
         "media": {
             "title": "Choisir une image",
@@ -2695,7 +2764,8 @@
             "subtitle": "Chaque thème change les couleurs, les polices et peut remplir votre page d'accueil avec un modèle adapté à votre activité. Vous pourrez tout personnaliser ensuite dans l'éditeur.",
             "current": "Thème actuel",
             "use": "Utiliser ce thème",
-            "reapply": "Appliquer à nouveau"
+            "reapply": "Appliquer à nouveau",
+            "premium": "Effets 3D"
         },
         "theme_dialog": {
             "title": "Appliquer le thème « {name} » ?",

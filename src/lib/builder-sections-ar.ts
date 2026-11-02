@@ -31,6 +31,12 @@ export const PLACEHOLDERS_AR: Record<string, Record<string, any>> = {
   countdown: { title: "تخفيضات سريعة", message: "ينتهي العرض خلال:", ctaText: "استفد الآن" },
   footer: { description: "توصيل لكل ولايات تونس · الدفع عند الاستلام." },
   products: { title: "منتجاتنا" },
+  showcase_3d: { badge: "الأكثر مبيعا", title: "قطعنا المميزة", subtitle: "اسحب باش تكتشف", ctaText: "اكتشف" },
+  reels: { badge: "شفتوه في تيك توك", title: "بالفيديو", ctaText: "اطلب" },
+  before_after: { badge: "النتيجة", title: "الفرق يبان", text: "اسحب باش تقارن.", beforeLabel: "قبل", afterLabel: "بعد" },
+  lookbook: { badge: "شري اللوك", title: "لوك اللحظة", ctaText: "شوف المنتوج" },
+  big_statement: { text: "معمول باش يدوم. مصنوع ليك.", subtext: "كل قطعة مختارة بعناية." },
+  model_3d: { badge: "3D", title: "اكتشفو من كل الجهات", text: "دور المنتوج وشوفو عندك في الدار بالواقع المعزز.", hint: "دور الشيء بصبعك" },
   store_categories: { title: "فئاتنا" },
   collections: {
     title: "مجموعاتنا",
