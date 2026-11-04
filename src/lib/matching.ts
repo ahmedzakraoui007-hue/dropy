@@ -10,6 +10,14 @@ interface MatchScore {
   reasons: MatchReason[];
 }
 
+const SPECIALTY_ALIASES: Record<string, string> = { photo: "photography", lifestyle: "ugc", unboxing: "ugc" };
+
+export function normalizeSpecialty(value: string) {
+  return SPECIALTY_ALIASES[value] || value;
+}
+
+const sameCity = (a?: string | null, b?: string | null) => Boolean(a && b && a.trim().toLowerCase() === b.trim().toLowerCase());
+
 export async function calculateMatchScore(
   creator: any,
   brief: any
@@ -18,13 +26,13 @@ export async function calculateMatchScore(
   const reasons: MatchReason[] = [];
 
   // 1. Spécialité (40 points)
-  if (creator.specialties?.includes(brief.content_type)) {
+  if (creator.specialties?.map(normalizeSpecialty).includes(brief.content_type)) {
     score += 40;
     reasons.push({ key: "specialty", value: brief.content_type });
   }
 
   // 2. Localisation (20 points)
-  if (brief.preferred_city && creator.city === brief.preferred_city) {
+  if (sameCity(brief.preferred_city, creator.city)) {
     score += 20;
     reasons.push({ key: "city", value: creator.city });
   }

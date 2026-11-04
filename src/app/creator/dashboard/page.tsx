@@ -9,6 +9,7 @@ import { ArrowRight, BadgeCheck, Briefcase, Calendar, Camera, Check, CheckCircle
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { SITE_URL } from "@/lib/store-url";
+import { budgetLabel } from "@/components/creator/shared";
 
 interface Mission {
   id: string;
@@ -49,12 +50,6 @@ const TILES = [
 function since(date: string, tr: (key: string) => string) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(date).getTime()) / 86400000));
   return days === 0 ? tr("today") : tr(days > 1 ? "days_ago" : "day_ago").replace("{n}", String(days));
-}
-
-function budgetLabel(brief: Brief) {
-  if (brief.budget_min && brief.budget_max && brief.budget_min !== brief.budget_max) return `${formatPrice(brief.budget_min)} - ${formatPrice(brief.budget_max)}`;
-  const value = brief.budget_max || brief.budget_min || brief.budget;
-  return value ? formatPrice(value) : "";
 }
 
 export default function CreatorDashboard() {

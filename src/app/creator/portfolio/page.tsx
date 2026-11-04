@@ -2,9 +2,8 @@
 
 import { useTranslation } from "@/context/LanguageContext";
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Image as ImageIcon, Video, Trash2, ExternalLink, Loader2, LayoutGrid, Upload } from "lucide-react";
+import { Plus, Image as ImageIcon, Video, Trash2, ExternalLink, Loader2, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import {
@@ -18,8 +17,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PORTFOLIO_CATEGORIES, portfolioCategoryLabel, isVideoUrl } from "@/lib/portfolio";
+import { PORTFOLIO_CATEGORIES, portfolioCategoryKey, isVideoUrl } from "@/lib/portfolio";
 import { PortfolioShareCard } from "@/components/portfolio/PortfolioShareCard";
+import { EmptyState, PageHero, PageSkeleton } from "@/components/creator/shared";
 
 const MAX_SIZE_MB = 50;
 
@@ -37,6 +37,7 @@ export default function PortfolioPage() {
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [file, setFile] = useState<File | null>(null);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     loadPortfolio();
@@ -126,29 +127,30 @@ export default function PortfolioPage() {
   }
 
   if (loading) {
-    return (
-      <div className="flex h-[400px] items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageSkeleton />;
   }
+
+  const categoryLabel = (value: string | null) => {
+    const key = portfolioCategoryKey(value) || "general";
+    return tc(`cat_${key}`);
+  };
+  const categories = Array.from(new Set(portfolio.map((item) => portfolioCategoryKey(item.category) || "general")));
+  const shown = filter === "all" ? portfolio : portfolio.filter((item) => (portfolioCategoryKey(item.category) || "general") === filter);
 
   const canSave = form.title.trim() && (file || /^https?:\/\//i.test(form.link.trim()));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black mb-2">{tr("mon_portfolio")}</h1>
-          <p className="text-muted-foreground">
-            {tr("presentez_vos_meilleures_realisations_les")}
-          </p>
-        </div>
-        <Button onClick={() => setIsAdding(true)} className="bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/20 gap-2">
-          <Plus className="w-4 h-4" />
-          {tr("ajouter_un_projet")}
-        </Button>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHero
+        title={tr("mon_portfolio")}
+        subtitle={tr("presentez_vos_meilleures_realisations_les")}
+        action={
+          <button type="button" onClick={() => setIsAdding(true)} className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-black text-slate-900 transition-transform hover:-translate-y-0.5">
+            <Plus className="h-4 w-4" />
+            {tr("ajouter_un_projet")}
+          </button>
+        }
+      />
 
       <PortfolioShareCard itemCount={portfolio.length} />
 
@@ -171,19 +173,19 @@ export default function PortfolioPage() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
                 className="h-10 rounded-md border border-input bg-background px-3 text-sm"
               >
-                {Object.entries(PORTFOLIO_CATEGORIES).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                {Object.keys(PORTFOLIO_CATEGORIES).map((value) => (
+                  <option key={value} value={value}>{categoryLabel(value)}</option>
                 ))}
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="media">Fichier (image ou vidéo, {MAX_SIZE_MB} Mo max.)</Label>
+              <Label htmlFor="media">{tr("file_label").replace("{max}", String(MAX_SIZE_MB))}</Label>
               <label
                 htmlFor="media"
                 className="flex items-center gap-3 rounded-xl border-2 border-dashed border-border p-4 cursor-pointer hover:border-primary/50 transition-colors"
               >
                 <Upload className="w-5 h-5 text-muted-foreground shrink-0" />
-                <span className="text-sm text-muted-foreground truncate">{file ? file.name : "Choisir un fichier"}</span>
+                <span className="text-sm text-muted-foreground truncate">{file ? file.name : tr("choose_file")}</span>
               </label>
               <input id="media" type="file" accept="image/*,video/*" className="hidden" onChange={(e) => pickFile(e.target.files?.[0] || null)} />
             </div>
@@ -202,73 +204,69 @@ export default function PortfolioPage() {
             <Button variant="outline" onClick={() => setIsAdding(false)} disabled={saving}>{tr("annuler")}</Button>
             <Button onClick={handleAddProject} className="bg-primary text-primary-foreground" disabled={!canSave || saving}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              Ajouter au portfolio
+              {tr("add_cta")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {portfolio.length === 0 ? (
-          <div className="col-span-full text-center py-20 bg-muted/20 rounded-3xl border-2 border-dashed">
-            <LayoutGrid className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-            <h3 className="text-xl font-bold mb-2">{tr("votre_portfolio_est_vide")}</h3>
-            <p className="text-muted-foreground mb-6">{tr("ajoutez_au_moins_3_realisations")}</p>
-            <Button className="bg-primary text-primary-foreground hover:opacity-90" onClick={() => setIsAdding(true)}>
+      {portfolio.length === 0 ? (
+        <EmptyState
+          icon={Camera}
+          title={tr("votre_portfolio_est_vide")}
+          text={tr("ajoutez_au_moins_3_realisations")}
+          action={
+            <button type="button" onClick={() => setIsAdding(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-black text-white">
+              <Plus className="h-4 w-4" />
               {tr("ajouter_mon_premier_projet")}
-            </Button>
-          </div>
-        ) : (
-          portfolio.map((item) => {
-            const media = item.content_url || item.thumbnail_url;
-            const video = item.type === "video";
-            return (
-              <Card key={item.id} className="overflow-hidden border-border/50 hover:border-primary/50 transition-all bg-card">
-                <div className="aspect-video relative bg-muted">
+            </button>
+          }
+        />
+      ) : (
+        <>
+          {categories.length > 1 && (
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+              {["all", ...categories].map((value) => (
+                <button key={value} type="button" onClick={() => setFilter(value)} className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${filter === value ? "bg-primary text-white" : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"}`}>
+                  {value === "all" ? tr("all") : categoryLabel(value)}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+            {shown.map((item) => {
+              const media = item.content_url || item.thumbnail_url;
+              const video = item.type === "video";
+              return (
+                <article key={item.id} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-gray-100">
                   {video && isVideoUrl(media) ? (
-                    <video src={media} className="w-full h-full object-cover" controls preload="metadata" />
+                    <video src={media} className="h-full w-full object-cover" muted loop playsInline preload="metadata" onMouseEnter={(e) => e.currentTarget.play().catch(() => {})} onMouseLeave={(e) => e.currentTarget.pause()} />
                   ) : item.thumbnail_url ? (
-                    <img src={item.thumbnail_url} alt={item.title} className="w-full h-full object-cover" />
+                    <img src={item.thumbnail_url} alt={item.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      {video ? <Video className="w-12 h-12 opacity-20" /> : <ImageIcon className="w-12 h-12 opacity-20" />}
-                    </div>
+                    <span className="flex h-full w-full items-center justify-center text-gray-300">{video ? <Video className="h-10 w-10" /> : <ImageIcon className="h-10 w-10" />}</span>
                   )}
-                </div>
-                <CardContent className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-bold truncate">{item.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {tr(video ? "video" : "image")} • {tc(`cat_${item.category || "general"}`).startsWith("creator_app.") ? portfolioCategoryLabel(item.category) : tc(`cat_${item.category || "general"}`)}
-                    </p>
-                    {item.description && <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</p>}
-                  </div>
-                  <div className="flex gap-2">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                  <div className="absolute end-2 top-2 flex gap-1.5">
                     {media && (
-                      <Button size="sm" variant="outline" className="gap-2 flex-1" asChild>
-                        <a href={media} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4" />
-                          Voir
-                        </a>
-                      </Button>
+                      <a href={media} target="_blank" rel="noopener noreferrer" aria-label={tr("view")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-800 transition-colors hover:bg-white">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
                     )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDeleteProject(item)}
-                      disabled={isDeleting === item.id}
-                      aria-label={tr("supprimer")}
-                    >
-                      {isDeleting === item.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </Button>
+                    <button type="button" onClick={() => handleDeleteProject(item)} disabled={isDeleting === item.id} aria-label={tr("supprimer")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-rose-600 transition-colors hover:bg-white">
+                      {isDeleting === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    </button>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        )}
-      </div>
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-white">
+                    <h3 className="truncate text-sm font-black">{item.title}</h3>
+                    <p className="truncate text-xs text-white/75">{categoryLabel(item.category)}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

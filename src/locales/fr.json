@@ -200,7 +200,16 @@
             "aucune_mission_pour_le_moment": "Aucune mission pour le moment",
             "voir_les_opportunites": "Voir les opportunités",
             "ma_proposition": "Ma proposition :",
-            "details": "Détails"
+            "details": "Détails",
+            "todo_one": "1 mission à livrer",
+            "todo_many": "{count} missions à livrer",
+            "empty_text": "Vous n'avez encore postulé à aucune mission. Parcourez les briefs pour commencer.",
+            "applied_on": "Candidature du {date}",
+            "deadline": "Date limite : {date}",
+            "delivery": "{n} jours de livraison",
+            "deliver_cta": "Livrer",
+            "fix_cta": "Envoyer les retouches",
+            "no_tab": "Rien dans cet onglet pour le moment"
         },
         "mission": {
             "mission_introuvable": "Mission introuvable",
@@ -247,7 +256,19 @@
             "sending": "Envoi en cours...",
             "deliver": "Livrer le projet",
             "done_paid": "Cette mission est terminée et votre paiement a été versé.",
-            "done_pending": "Cette mission est terminée. Dropy va vous verser votre paiement sur le compte indiqué dans vos paramètres."
+            "done_pending": "Cette mission est terminée. Dropy va vous verser votre paiement sur le compte indiqué dans vos paramètres.",
+            "by_store": "Mission de {store}",
+            "net": "Vous recevez",
+            "rejected_title": "Candidature non retenue",
+            "rejected_text": "Le vendeur a choisi un autre profil pour cette mission. D'autres briefs vous attendent.",
+            "steps": {
+                "applied": "Candidature",
+                "selected": "Retenu",
+                "secured": "Paiement sécurisé",
+                "delivered": "Livré",
+                "validated": "Validé",
+                "paid": "Payé"
+            }
         },
         "opportunities": {
             "opportunites_de_projets": "Opportunités de projets",
@@ -255,7 +276,21 @@
             "rechercher_des_missions": "Rechercher des missions...",
             "aucune_opportunite_pour_le_moment": "Aucune opportunité pour le moment",
             "revenez_plus_tard_pour_de": "Revenez plus tard pour de nouvelles missions ou mettez à jour votre profil.",
-            "details_postuler": "Détails & Postuler"
+            "details_postuler": "Détails & Postuler",
+            "open_count": "{count} briefs ouverts en ce moment",
+            "open_count_one": "1 brief ouvert en ce moment",
+            "all": "Tous",
+            "sort_best": "Pour vous",
+            "sort_recent": "Récents",
+            "sort_budget": "Budget",
+            "negotiable": "À négocier",
+            "applied": "Déjà postulé",
+            "products": "Produits à promouvoir : {count}",
+            "match": "{score}% pour vous",
+            "no_result_title": "Aucun brief ne correspond",
+            "no_result_desc": "Essayez un autre mot ou retirez les filtres.",
+            "clear": "Effacer les filtres",
+            "empty_cta": "Compléter mon portfolio"
         },
         "opportunity": {
             "published_on": "Publié le",
@@ -289,7 +324,14 @@
             "share_free": "100% pour le créateur",
             "share_paid": "85% pour le créateur",
             "fee_free": "0% frais plateforme pendant le lancement",
-            "fee_paid": "15% frais plateforme"
+            "fee_paid": "15% frais plateforme",
+            "remote": "À distance",
+            "rights": "Droits d'usage",
+            "rights_standard": "Standard",
+            "negotiable": "À négocier",
+            "closed": "Brief fermé",
+            "closed_text": "Ce brief n'accepte plus de candidatures.",
+            "escrow_text": "Le vendeur paie Dropy avant le début de la mission. Vous êtes payé dès qu'il valide votre travail."
         },
         "apply": {
             "brief_introuvable": "Brief introuvable",
@@ -309,7 +351,16 @@
             "sample_error": "Échec de l'envoi d'un exemple",
             "send_error": "Erreur lors de l'envoi de la proposition",
             "sending": "Envoi…",
-            "send": "Envoyer la proposition"
+            "send": "Envoyer la proposition",
+            "message_short": "Votre message doit contenir au moins 10 caractères",
+            "from_portfolio": "Choisissez jusqu'à {max} réalisations de votre portfolio",
+            "or_upload": "Ou envoyez de nouveaux fichiers",
+            "recap": "Votre proposition",
+            "seller_budget": "Budget du vendeur",
+            "deadline": "Date limite",
+            "your_delivery": "Votre délai",
+            "your_price": "Votre prix",
+            "note_free": "Si vous êtes retenu, le vendeur paie Dropy qui conserve les fonds en séquestre. Pendant le lancement, vous recevez 100 % du prix proposé dès que le vendeur valide votre travail."
         },
         "portfolio": {
             "impossible_de_charger_le_portfolio": "Impossible de charger le portfolio",
@@ -365,7 +416,12 @@
                     "unauthorized": "Reconnectez-vous puis réessayez.",
                     "failed": "Une erreur est survenue. Réessayez."
                 }
-            }
+            },
+            "file_label": "Fichier (image ou vidéo, {max} Mo max.)",
+            "choose_file": "Choisir un fichier",
+            "add_cta": "Ajouter au portfolio",
+            "view": "Voir",
+            "all": "Tout"
         },
         "reviews": {
             "mes_avis_reputation": "Mes Avis & Réputation",
@@ -382,7 +438,15 @@
             "delais": "Délais",
             "votre_reponse": "Votre réponse",
             "votre_reponse_au_vendeur": "Votre réponse au vendeur...",
-            "repondre": "Répondre"
+            "repondre": "Répondre",
+            "empty_text": "Après chaque mission terminée, le vendeur peut noter votre travail. Vos avis renforcent votre portfolio.",
+            "empty_cta": "Voir les briefs",
+            "count_one": "1 avis",
+            "count_many": "{count} avis",
+            "reply_ok": "Réponse publiée",
+            "reply_error": "Impossible de publier la réponse",
+            "publish": "Publier",
+            "cancel": "Annuler"
         },
         "payments": {
             "revenus_et_paiements": "Revenus et paiements",
@@ -403,11 +467,43 @@
             "state_escrow": "Sous séquestre",
             "state_released": "Versement en cours",
             "state_paid_out": "Versé",
-            "state_refunded": "Remboursé au vendeur"
+            "state_refunded": "Remboursé au vendeur",
+            "stage_verifying": "En vérification",
+            "stage_escrow": "Sous séquestre",
+            "stage_released": "Versement en cours",
+            "stage_paid_out": "Déjà versé",
+            "empty_text": "Vos gains apparaîtront ici dès votre première mission payée.",
+            "empty_cta": "Voir les briefs",
+            "method_rib": "Virement (RIB)",
+            "method_d17": "D17",
+            "method_flouci": "Flouci",
+            "payout_missing_title": "Ajoutez vos coordonnées",
+            "payout_missing_text": "Sans RIB, D17 ou Flouci, Dropy ne peut pas vous verser vos gains.",
+            "how_1": "Le vendeur paie Dropy, qui garde les fonds en séquestre.",
+            "how_2": "Vous livrez votre travail et le vendeur le valide.",
+            "how_3": "Dropy vous verse votre part, moins la commission de la plateforme.",
+            "how_3_free": "Dropy vous verse le montant complet : aucune commission pendant le lancement."
         },
         "settings": {
             "parametres": "Paramètres",
-            "gerez_votre_compte_et_vos": "Gérez votre compte et vos préférences de créateur."
+            "gerez_votre_compte_et_vos": "Gérez votre compte et vos préférences de créateur.",
+            "profile": {
+                "title": "Profil créateur",
+                "desc": "Ces informations apparaissent sur votre portfolio public et améliorent les briefs qui vous sont recommandés.",
+                "bio": "Présentation",
+                "bio_ph": "Votre style, vos marques, ce que vous aimez créer...",
+                "specialties": "Spécialités",
+                "specialties_help": "Utilisées pour vous recommander les bons briefs.",
+                "city": "Ville",
+                "city_ph": "Ex. Tunis",
+                "min_budget": "Budget minimum par mission (DT)",
+                "instagram": "Instagram",
+                "tiktok": "TikTok",
+                "save": "Enregistrer",
+                "saved": "Profil enregistré",
+                "error": "Impossible d'enregistrer le profil",
+                "delay": "Votre page publique se met à jour sous 5 minutes."
+            }
         },
         "landing": {
             "acceder_au_dashboard": "Accéder au Dashboard"
@@ -432,7 +528,13 @@
             "cat_unboxing": "Unboxing",
             "cat_design": "Design",
             "cat_general": "Général",
-            "not_signed_in": "Non connecté"
+            "not_signed_in": "Non connecté",
+            "days_left": "{n} j restants",
+            "last_day": "Dernier jour",
+            "expired": "Date dépassée",
+            "back": "Retour",
+            "days": "{n} jours",
+            "references": "Images de référence"
         },
         "nav": {
             "dashboard": "Tableau de bord",
@@ -446,7 +548,8 @@
             "payments": "Paiements",
             "settings": "Paramètres",
             "help": "Centre d'aide",
-            "more": "Plus"
+            "more": "Plus",
+            "messages": "Messages"
         },
         "layout": {
             "pending_title": "Compte en attente d'approbation",
@@ -502,6 +605,10 @@
             "first_earnings_desc": "Postulez à un brief. Le paiement est sécurisé pendant la mission.",
             "reviews": "Avis clients : {count}",
             "profile_ready": "Votre profil est complet"
+        },
+        "messages": {
+            "title": "Messages",
+            "subtitle": "Échangez avec les vendeurs sur vos missions"
         }
     },
     "supplier_app": {
@@ -1003,7 +1110,8 @@
             "title": "Vos messages",
             "select": "Choisissez une conversation pour échanger.",
             "page_title": "Messages",
-            "page_subtitle": "Vos échanges avec les créateurs."
+            "page_subtitle": "Vos échanges avec les créateurs.",
+            "empty_thread": "Aucun message pour l'instant. Présentez-vous et précisez les détails de la mission."
         },
         "brief_detail": {
             "not_found": "Brief introuvable",
