@@ -102,7 +102,7 @@ export default function OpportunitiesPage() {
             </div>
             <div className="flex shrink-0 rounded-xl bg-gray-100 p-1">
               {SORTS.map((value) => (
-                <button key={value} type="button" onClick={() => setSort(value)} className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${sort === value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>
+                <button key={value} type="button" onClick={() => setSort(value)} className={`flex-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-bold transition-colors ${sort === value ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"}`}>
                   {tr(`sort_${value}`)}
                 </button>
               ))}

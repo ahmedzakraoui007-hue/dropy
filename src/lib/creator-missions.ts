@@ -28,7 +28,7 @@ const REACHED: Record<MissionState, number> = {
   cancelled: 1,
   payment: 2,
   assigned: 3,
-  revision: 4,
+  revision: 3,
   delivered: 4,
   completed: 5,
 };
