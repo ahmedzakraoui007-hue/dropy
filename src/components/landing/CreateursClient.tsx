@@ -52,6 +52,10 @@ export default function CreateursClient() {
                   </Button>
                 </Link>
               </div>
+              <Link href="/createurs/portfolios" className="mt-6 inline-flex items-center gap-2 font-bold text-violet-700 hover:underline">
+                {t("portfolio_public.directory.link")}
+                <ArrowRight className={`w-4 h-4 ${locale === 'ar' ? 'rotate-180' : ''}`} />
+              </Link>
             </div>
             <div className="relative">
                <div className="grid grid-cols-2 gap-6">

@@ -337,7 +337,35 @@
             "add_error": "Impossible d'ajouter le projet",
             "delete_confirm": "Supprimer « {title} » de votre portfolio ?",
             "video": "Vidéo",
-            "image": "Image"
+            "image": "Image",
+            "share": {
+                "title": "Portfolio public",
+                "status_live": "Visible par tout le monde, même sans compte Dropy",
+                "status_private": "Privé : seules les marques connectées à Dropy le voient",
+                "pending": "Vous pourrez publier votre portfolio dès que votre compte sera validé.",
+                "no_items": "Ajoutez au moins une réalisation pour apparaître dans l'annuaire des créateurs.",
+                "name": "Nom affiché",
+                "address": "Votre adresse",
+                "save": "Enregistrer",
+                "saved": "Enregistré",
+                "published": "Votre portfolio est en ligne",
+                "share_title": "Partagez votre portfolio",
+                "share_text": "Découvrez mon portfolio :",
+                "copy": "Copier le lien",
+                "copied": "Lien copié",
+                "qr": "QR code",
+                "view": "Voir ma page",
+                "bio_tip": "Astuce : collez ce lien dans votre bio Instagram et TikTok.",
+                "errors": {
+                    "slug_invalid": "Cette adresse n'est pas valide : 3 à 40 caractères, lettres, chiffres et tirets.",
+                    "slug_taken": "Cette adresse est déjà prise.",
+                    "name_required": "Indiquez le nom à afficher.",
+                    "not_approved": "Votre compte doit être validé avant de publier.",
+                    "invalid": "Une erreur est survenue. Réessayez.",
+                    "unauthorized": "Reconnectez-vous puis réessayez.",
+                    "failed": "Une erreur est survenue. Réessayez."
+                }
+            }
         },
         "reviews": {
             "mes_avis_reputation": "Mes Avis & Réputation",
@@ -2917,7 +2945,8 @@
             "careers": "Carrières",
             "terms": "Conditions",
             "privacy": "Confidentialité",
-            "legal": "Mentions légales"
+            "legal": "Mentions légales",
+            "portfolios": "Portfolios créateurs"
         },
         "blog_soon": "Bientôt disponible !",
         "copyright": "© 2026 Dropy. Fait avec ❤️ en",
@@ -3736,6 +3765,40 @@
         "final": {
             "title": "Votre boutique peut être en ligne en quelques jours.",
             "subtitle": "Dites-nous ce que vous vendez, on s'occupe du reste. La création est offerte."
+        }
+    },
+    "portfolio_public": {
+        "eyebrow": "Portfolio UGC",
+        "verified": "Profil vérifié",
+        "projects": "Missions Dropy : {count}",
+        "hire": "Travailler avec {name}",
+        "share": "Partager",
+        "copied": "Lien copié",
+        "all": "Tout",
+        "open_link": "Ouvrir le lien",
+        "empty": "Aucune réalisation pour le moment.",
+        "close": "Fermer",
+        "previous": "Précédent",
+        "next": "Suivant",
+        "cta_title": "Vous créez du contenu ?",
+        "cta_desc": "Créez votre portfolio gratuit et partagez-le partout.",
+        "cta_button": "Créer mon portfolio",
+        "categories": {
+            "product_photo": "Photo produit",
+            "ugc_video": "Vidéo UGC",
+            "video_ad": "Publicité vidéo",
+            "lifestyle": "Lifestyle",
+            "unboxing": "Unboxing",
+            "design": "Design"
+        },
+        "directory": {
+            "eyebrow": "Portfolios",
+            "title": "Les créateurs UGC de Tunisie.",
+            "subtitle": "Parcourez leurs photos et leurs vidéos, puis trouvez la bonne personne pour votre marque.",
+            "works": "Réalisations : {count}",
+            "empty_title": "Les premiers portfolios arrivent",
+            "empty_desc": "Soyez parmi les premiers à publier le vôtre.",
+            "link": "Voir les portfolios des créateurs"
         }
     }
 }

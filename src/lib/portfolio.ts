@@ -19,6 +19,12 @@ export function portfolioCategoryLabel(value: string | null | undefined) {
   return PORTFOLIO_CATEGORIES[value] || PORTFOLIO_CATEGORIES[LEGACY[value]] || value;
 }
 
+export function portfolioCategoryKey(value: string | null | undefined) {
+  if (!value) return null;
+  if (PORTFOLIO_CATEGORIES[value]) return value;
+  return LEGACY[value] || null;
+}
+
 export function isVideoUrl(url: string | null | undefined) {
   return Boolean(url && /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url));
 }

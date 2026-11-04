@@ -13,6 +13,7 @@ export default function LandingFooter() {
     platform: [
       { name: t("footer.links.vendeurs"), href: "/vendeurs" },
       { name: t("footer.links.creators"), href: "/createurs" },
+      { name: t("footer.links.portfolios"), href: "/createurs/portfolios" },
       { name: t("footer.links.suppliers"), href: "/fournisseurs" },
       { name: t("footer.links.pricing"), href: "/tarifs" },
     ],
