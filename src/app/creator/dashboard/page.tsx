@@ -268,8 +268,9 @@ export default function CreatorDashboard() {
                             </span>
                           )}
                         </span>
+                        {budgetLabel(brief) && <span className="mt-0.5 block text-sm font-black text-gray-900 sm:hidden">{budgetLabel(brief)}</span>}
                       </span>
-                      {budgetLabel(brief) && <span className="whitespace-nowrap text-sm font-black text-gray-900">{budgetLabel(brief)}</span>}
+                      {budgetLabel(brief) && <span className="hidden whitespace-nowrap text-sm font-black text-gray-900 sm:block">{budgetLabel(brief)}</span>}
                     </Link>
                   </li>
                 ))}
