@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { SITE_URL, STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from "@/lib/store-url";
 import { storeSlugForHost } from "@/lib/custom-domain-lookup";
 import { publishedPosts } from "@/lib/blog";
+import { publicCreators } from "@/lib/creator-portfolio";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 3600;
@@ -13,6 +14,7 @@ const LANDING_PAGES = [
   "/vendeurs",
   "/fournisseurs",
   "/createurs",
+  "/createurs/portfolios",
   "/tarifs",
   "/creation-site-ecommerce-tunisie",
   "/outils",
@@ -98,5 +100,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return STORE_ROOT_DOMAIN ? [...landing, ...posts] : [...landing, ...posts, ...(await storeEntries())];
+  const portfolios = (await publicCreators(1000)).map((creator) => ({
+    url: `${SITE_URL}/createurs/${creator.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.6,
+  }));
+
+  return STORE_ROOT_DOMAIN ? [...landing, ...posts, ...portfolios] : [...landing, ...posts, ...portfolios, ...(await storeEntries())];
 }

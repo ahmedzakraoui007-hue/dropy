@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PORTFOLIO_CATEGORIES, portfolioCategoryLabel, isVideoUrl } from "@/lib/portfolio";
+import { PortfolioShareCard } from "@/components/portfolio/PortfolioShareCard";
 
 const MAX_SIZE_MB = 50;
 
@@ -148,6 +149,8 @@ export default function PortfolioPage() {
           {tr("ajouter_un_projet")}
         </Button>
       </div>
+
+      <PortfolioShareCard itemCount={portfolio.length} />
 
       <Dialog open={isAdding} onOpenChange={(open) => !saving && setIsAdding(open)}>
         <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">

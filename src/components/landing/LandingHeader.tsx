@@ -15,7 +15,7 @@ export default function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
   const { t, locale, setLocale, dir } = useTranslation();
   const pathname = usePathname();
-  const solid = scrolled || pathname === "/";
+  const solid = scrolled || pathname === "/" || pathname.startsWith("/createurs/");
 
   const navLinks = [
     { name: t("nav.templates"), href: "/#templates" },
