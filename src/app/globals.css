@@ -193,24 +193,24 @@
 
 /* Role Specific Themes - Dropy Design System */
 [data-role="seller"] {
-  --background: #f8f9fa;
+  --background: #f7f7fb;
   --foreground: #111827;
-  --primary: #2563eb;
+  --primary: #2E3192;
   --primary-foreground: #FFFFFF;
   --card: #FFFFFF;
   --card-foreground: #111827;
   --border: #e5e7eb;
-  --ring: #2563eb;
+  --ring: #2E3192;
   --muted: #f3f4f6;
   --muted-foreground: #6b7280;
-  --accent: #eff6ff;
-  --accent-foreground: #2563eb;
+  --accent: #eef0ff;
+  --accent-foreground: #2E3192;
   --secondary: #f3f4f6;
   --secondary-foreground: #111827;
-  --mint: #10b981;
-  --sidebar: #1e3a5f;
+  --mint: #00A99D;
+  --sidebar: #0B0E2A;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #2563eb;
+  --sidebar-primary: #2E3192;
   --sidebar-accent: rgba(255, 255, 255, 0.1);
   --sidebar-accent-foreground: #ffffff;
 }

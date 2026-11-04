@@ -28,10 +28,8 @@ import {
     X,
     LogOut,
     ChevronDown,
-    Droplet,
     Sparkles,
     HelpCircle,
-    Search,
     Truck,
     PanelLeftClose,
     PanelLeft,
@@ -59,20 +57,43 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
 
-    const navigation = [
-      { name: t("dashboard.nav.dashboard"), href: "/seller/dashboard", icon: LayoutDashboard, key: "dashboard" },
-      { name: t("dashboard.nav.my_store"), href: "/seller/store-builder", icon: Store, key: "my_store" },
-    { name: t("dashboard.nav.my_products"), href: "/seller/products/add", icon: Package, key: "my_products" },
-    { name: t("dashboard.nav.dropy_catalog"), href: "/seller/products/catalog", icon: Truck, key: "dropy_catalog" },
-    { name: t("dashboard.nav.orders"), href: "/seller/orders", icon: ShoppingCart, key: "orders" },
-    { name: t("dashboard.nav.shipping"), href: "/seller/shipping", icon: Send, key: "shipping" },
-    { name: t("dashboard.nav.calculator"), href: "/seller/calculator", icon: Calculator, key: "calculator" },
-    { name: t("dashboard.nav.customers"), href: "/seller/customers", icon: Users, key: "customers" },
-      { name: t("dashboard.nav.analytics"), href: "/seller/analytics", icon: BarChart3, key: "analytics" },
-      { name: t("dashboard.nav.ugc_creators"), href: "/seller/content/briefs", icon: Video, key: "ugc_creators" },
-      { name: t("dashboard.nav.training"), href: "/seller/training", icon: GraduationCap, key: "training" },
-    ...(FREE_LAUNCH ? [] : [{ name: t("dashboard.nav.subscription"), href: "/seller/subscription", icon: CreditCard, key: "subscription" }]),
+  const navigationGroups = [
+    {
+      key: "sell",
+      items: [
+        { name: t("dashboard.nav.dashboard"), href: "/seller/dashboard", icon: LayoutDashboard, key: "dashboard" },
+        { name: t("dashboard.nav.orders"), href: "/seller/orders", icon: ShoppingCart, key: "orders" },
+        { name: t("dashboard.nav.shipping"), href: "/seller/shipping", icon: Send, key: "shipping" },
+        { name: t("dashboard.nav.customers"), href: "/seller/customers", icon: Users, key: "customers" },
+      ],
+    },
+    {
+      key: "store",
+      items: [
+        { name: t("dashboard.nav.my_store"), href: "/seller/store-builder", icon: Store, key: "my_store" },
+        { name: t("dashboard.nav.my_products"), href: "/seller/products/add", icon: Package, key: "my_products" },
+        { name: t("dashboard.nav.dropy_catalog"), href: "/seller/products/catalog", icon: Truck, key: "dropy_catalog" },
+      ],
+    },
+    {
+      key: "grow",
+      items: [
+        { name: t("dashboard.nav.analytics"), href: "/seller/analytics", icon: BarChart3, key: "analytics" },
+        { name: t("dashboard.nav.ugc_creators"), href: "/seller/content/briefs", icon: Video, key: "ugc_creators" },
+        { name: t("dashboard.nav.calculator"), href: "/seller/calculator", icon: Calculator, key: "calculator" },
+        { name: t("dashboard.nav.training"), href: "/seller/training", icon: GraduationCap, key: "training" },
+        ...(FREE_LAUNCH ? [] : [{ name: t("dashboard.nav.subscription"), href: "/seller/subscription", icon: CreditCard, key: "subscription" }]),
+      ],
+    },
   ];
+
+  const bottomTabs = [
+    { name: t("dashboard.nav.dashboard"), href: "/seller/dashboard", icon: LayoutDashboard },
+    { name: t("dashboard.nav.orders"), href: "/seller/orders", icon: ShoppingCart },
+    { name: t("dashboard.nav.my_products"), href: "/seller/products/add", icon: Package },
+    { name: t("dashboard.nav.my_store"), href: "/seller/store-builder", icon: Store },
+  ];
+  const showBottomTabs = !pathname.startsWith("/seller/store-builder/builder");
 
   useEffect(() => {
     const saved = localStorage.getItem("seller-sidebar-collapsed");
@@ -121,9 +142,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
           <div className="flex flex-col h-full">
             <div className="flex items-center justify-between h-16 px-6 border-b border-white/10">
               <Link href="/seller/dashboard" className="flex items-center gap-2.5 overflow-hidden">
-                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0">
-                  <Droplet className="w-5 h-5 text-white" />
-                </div>
+                <img src="/favicon.svg" alt="" className="w-8 h-8 rounded-lg shrink-0" />
                 <AnimatePresence>
                   {!sidebarCollapsed && (
                     <motion.span 
@@ -142,9 +161,14 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
               </button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto py-6 px-3">
+            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+              {navigationGroups.map((group) => (
+              <div key={group.key}>
+              {!sidebarCollapsed && (
+                <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">{t(`dashboard.nav.groups.${group.key}`)}</p>
+              )}
               <ul className="space-y-1">
-                {navigation.map((item) => {
+                {group.items.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   
                   const linkContent = (
@@ -153,7 +177,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                       onClick={() => setSidebarOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                         isActive
-                          ? "bg-primary text-white"
+                          ? "bg-gradient-to-r from-[#2E3192] to-[#00A99D] text-white shadow-lg shadow-black/20"
                           : "text-white/70 hover:bg-white/5 hover:text-white"
                       } ${sidebarCollapsed ? "justify-center" : ""}`}
                     >
@@ -190,6 +214,8 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                   );
                 })}
               </ul>
+              </div>
+              ))}
             </nav>
 
             <div className="p-3 border-t border-white/10 space-y-1">
@@ -290,14 +316,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                   <Menu className="w-5 h-5 text-gray-600" />
                 </button>
                 
-                <div className="hidden md:flex items-center gap-3 px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 w-80">
-                  <Search className="w-4 h-4 text-gray-400" />
-                  <input 
-                    type="text" 
-                    placeholder={t("dashboard.nav.search")}
-                    className="bg-transparent border-none outline-none text-sm text-gray-600 placeholder:text-gray-400 w-full"
-                  />
-                </div>
+                
               </div>
 
               <div className="flex items-center gap-4">
@@ -339,10 +358,28 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
             </div>
           </header>
 
-          <main className="p-6 lg:p-8 min-h-[calc(100vh-64px)]">
+          <main className={`p-4 sm:p-6 lg:p-8 min-h-[calc(100vh-64px)] ${showBottomTabs ? "pb-24 lg:pb-8" : ""}`}>
             {children}
           </main>
         </div>
+
+        {showBottomTabs && (
+          <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-gray-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+            {bottomTabs.map((tab) => {
+              const isActive = pathname === tab.href || pathname.startsWith(tab.href + "/");
+              return (
+                <Link key={tab.href} href={tab.href} className={`flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold ${isActive ? "text-primary" : "text-gray-500"}`}>
+                  <tab.icon className="w-5 h-5" />
+                  <span className="max-w-full truncate px-1">{tab.name}</span>
+                </Link>
+              );
+            })}
+            <button type="button" onClick={() => setSidebarOpen(true)} className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold text-gray-500">
+              <Menu className="w-5 h-5" />
+              <span>{t("dashboard.nav.more")}</span>
+            </button>
+          </nav>
+        )}
       </div>
     </TooltipProvider>
   );
