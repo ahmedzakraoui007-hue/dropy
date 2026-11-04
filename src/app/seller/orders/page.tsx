@@ -50,6 +50,11 @@ export default function SellerOrdersPage() {
     governorate: null
   });
 
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get('status') as OrderStatus | null;
+    if (status && ORDER_TABS.includes(status)) setFilters(prev => ({ ...prev, status }));
+  }, []);
+
   const { orders, loading, counts, refetch } = useOrders(sellerId, filters);
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
