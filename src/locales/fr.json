@@ -3531,7 +3531,8 @@
                     "store": "Boutique",
                     "grow": "Croissance"
                 },
-                "more": "Plus"
+                "more": "Plus",
+                "home": "Accueil"
             }
         },
         "auth": {

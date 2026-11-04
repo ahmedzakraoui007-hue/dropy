@@ -148,23 +148,23 @@ export default function SellerDashboard() {
                     <Copy className="h-3.5 w-3.5 shrink-0" />
                   </button>
                 </div>
-                <div className="mt-6 flex flex-wrap gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
                   {online ? (
-                    <a href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#25D366] px-5 text-sm font-black text-white transition-transform hover:-translate-y-0.5">
+                    <a href={`https://wa.me/?text=${shareText}`} target="_blank" rel="noopener noreferrer" className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 text-sm font-black text-white transition-transform hover:-translate-y-0.5">
                       <MessageCircle className="h-4 w-4" />
                       {c("share")}
                     </a>
                   ) : (
-                    <Link href="/seller/store-builder" className="inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-black text-slate-900 transition-transform hover:-translate-y-0.5">
+                    <Link href="/seller/store-builder" className="col-span-2 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-black text-slate-900 transition-transform hover:-translate-y-0.5">
                       <Rocket className="h-4 w-4" />
                       {c("go_online")}
                     </Link>
                   )}
-                  <a href={storeViewHref(store.slug, store.is_active, domain)} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 px-5 text-sm font-bold transition-colors hover:bg-white/10">
+                  <a href={storeViewHref(store.slug, store.is_active, domain)} target="_blank" rel="noopener noreferrer" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/20 px-3 text-sm font-bold transition-colors hover:bg-white/10 sm:px-5">
                     <ExternalLink className="h-4 w-4" />
                     {c("view")}
                   </a>
-                  <Link href="/seller/store-builder" className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/20 px-5 text-sm font-bold transition-colors hover:bg-white/10">
+                  <Link href="/seller/store-builder" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/20 px-3 text-sm font-bold transition-colors hover:bg-white/10 sm:px-5">
                     <Palette className="h-4 w-4" />
                     {c("edit")}
                   </Link>
@@ -337,7 +337,7 @@ function OrderRow({ order, label, when, callLabel }: { order: CockpitOrder; labe
     <li className="flex items-center gap-3 p-4">
       <Link href={`/seller/orders/${order.id}`} className="min-w-0 flex-1">
         <p className="truncate font-bold text-gray-900">{order.customer_name}</p>
-        <p className="truncate text-xs text-gray-500">#{order.order_number} · {when}</p>
+        <p className="truncate text-xs text-gray-500"><span className="hidden sm:inline">#{order.order_number} · </span>{when}</p>
       </Link>
       <div className="text-end">
         <p className="whitespace-nowrap text-sm font-black text-gray-900">{formatPrice(order.total_amount)}</p>

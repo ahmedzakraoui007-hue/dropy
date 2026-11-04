@@ -28,7 +28,6 @@ import {
     X,
     LogOut,
     ChevronDown,
-    Sparkles,
     HelpCircle,
     Truck,
     PanelLeftClose,
@@ -88,7 +87,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
   ];
 
   const bottomTabs = [
-    { name: t("dashboard.nav.dashboard"), href: "/seller/dashboard", icon: LayoutDashboard },
+    { name: t("dashboard.nav.home"), href: "/seller/dashboard", icon: LayoutDashboard },
     { name: t("dashboard.nav.orders"), href: "/seller/orders", icon: ShoppingCart },
     { name: t("dashboard.nav.my_products"), href: "/seller/products/add", icon: Package },
     { name: t("dashboard.nav.my_store"), href: "/seller/store-builder", icon: Store },
@@ -161,13 +160,13 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
               </button>
             </div>
 
-            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+            <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {navigationGroups.map((group) => (
               <div key={group.key}>
               {!sidebarCollapsed && (
                 <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">{t(`dashboard.nav.groups.${group.key}`)}</p>
               )}
-              <ul className="space-y-1">
+              <ul className="space-y-0.5">
                 {group.items.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   
@@ -175,7 +174,7 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                     <Link
                       href={item.href}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                         isActive
                           ? "bg-gradient-to-r from-[#2E3192] to-[#00A99D] text-white shadow-lg shadow-black/20"
                           : "text-white/70 hover:bg-white/5 hover:text-white"
@@ -219,23 +218,15 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
             </nav>
 
             <div className="p-3 border-t border-white/10 space-y-1">
-              {!sidebarCollapsed && (
-                <div className="p-4 rounded-xl bg-white/5 mb-4 border border-white/10">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-semibold text-white">{t("dashboard.nav.need_help")}</span>
-                  </div>
-                  <p className="text-xs text-white/50 mb-3">{t("dashboard.nav.help_desc")}</p>
+              <div className="flex flex-col gap-1">
+                {!sidebarCollapsed && (
                   <Link href="/aide">
-                    <Button size="sm" variant="secondary" className="w-full bg-white/10 hover:bg-white/20 text-white border-none font-medium text-xs">
-                      <HelpCircle className="w-3.5 h-3.5 mr-1.5" />
+                    <Button variant="ghost" className="w-full justify-start gap-3 text-white/70 hover:text-white hover:bg-white/10 font-medium">
+                      <HelpCircle className="w-5 h-5" />
                       {t("dashboard.nav.help_center")}
                     </Button>
                   </Link>
-                </div>
-              )}
-              
-              <div className="flex flex-col gap-1">
+                )}
                 {sidebarCollapsed ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
