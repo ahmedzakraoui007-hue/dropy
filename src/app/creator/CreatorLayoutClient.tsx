@@ -26,7 +26,8 @@ import {
   LogOut,
   ChevronDown,
   Clock,
-  HelpCircle
+  HelpCircle,
+  MessageSquare
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useTranslation } from "@/context/LanguageContext";
@@ -37,6 +38,7 @@ const navigation = [
   { key: "opportunities", href: "/creator/opportunities", icon: Briefcase },
   { key: "missions", href: "/creator/missions", icon: FileText },
   { key: "portfolio", href: "/creator/portfolio", icon: FolderOpen },
+  { key: "messages", href: "/creator/messages", icon: MessageSquare },
   { key: "reviews", href: "/creator/reviews", icon: Star },
   { key: "payments", href: "/creator/payments", icon: CreditCard },
 ];

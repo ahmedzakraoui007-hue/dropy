@@ -1,309 +1,189 @@
 "use client";
 
-import { formatPrice } from "@/lib/utils";
-import { useTranslation } from "@/context/LanguageContext";
-import type { MatchReason } from "@/lib/matching";
-import { FREE_LAUNCH } from "@/lib/launch";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
-  Shield,
-  Briefcase,
-  Target,
-  ArrowRight,
-  Package,
-  Info
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { createClient } from "@/lib/supabase/client";
-import { calculateMatchScore } from "@/lib/matching";
-import { format } from "date-fns";
-import { arTN, fr } from "date-fns/locale";
+import { ArrowRight, Calendar, CheckCircle2, MapPin, Package, Shield, Sparkles, Wallet } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { useTranslation } from "@/context/LanguageContext";
+import { createClient } from "@/lib/supabase/client";
+import { calculateMatchScore, type MatchReason } from "@/lib/matching";
+import { FREE_LAUNCH } from "@/lib/launch";
+import { BackLink, PageHero, PageSkeleton, Panel, budgetLabel, useCreatorText } from "@/components/creator/shared";
 
 export default function OpportunityDetailsPage() {
-  const { t: tt, locale } = useTranslation();
-  const dateLocale = locale === "ar" ? arTN : fr;
-  const tr = (key: string) => tt(`creator_app.opportunity.${key}`);
-  const reasonLabel = (reason: MatchReason) => {
-    let value = String(reason.value ?? "");
-    if (reason.key === "specialty") {
-      const label = tt(`creator_app.common.type_${value}`);
-      if (!label.startsWith("creator_app.")) value = label;
-    }
-    return tr(`reason_${reason.key}`).replace("{value}", value);
-  };
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`creator_app.opportunity.${key}`);
+  const { common, typeLabel, rightsLabel, date, deadline } = useCreatorText();
   const { id } = useParams();
   const router = useRouter();
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+  const [loading, setLoading] = useState(true);
   const [brief, setBrief] = useState<any>(null);
-  const [creatorProfile, setCreatorProfile] = useState<any>(null);
-  const [matchData, setMatchData] = useState<any>(null);
+  const [match, setMatch] = useState<{ score: number; reasons: MatchReason[] } | null>(null);
   const [hasApplied, setHasApplied] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: profile } = await supabase
-        .from("creator_profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .single();
+      const [{ data: profile }, { data: row }, { data: application }] = await Promise.all([
+        supabase.from("creator_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("content_briefs").select("*, store:stores(name, logo_url)").eq("id", id).maybeSingle(),
+        supabase.from("content_applications").select("id").eq("brief_id", id).eq("creator_id", user.id).maybeSingle(),
+      ]);
 
-      setCreatorProfile(profile);
-
-      const { data: briefData, error: briefError } = await supabase
-        .from("content_briefs")
-        .select(`
-          *,
-          store:stores(name, logo_url)
-        `)
-        .eq("id", id)
-        .single();
-
-      if (briefError) {
+      if (!row) {
         toast.error(tr("opportunite_introuvable"));
         router.push("/creator/opportunities");
         return;
       }
-
-      setBrief(briefData);
-
-      if (profile && briefData) {
-        const match = await calculateMatchScore(profile, briefData);
-        setMatchData(match);
-      }
-
-      // Check if already applied
-      const { data: application } = await supabase
-        .from("content_applications")
-        .select("id")
-        .eq("brief_id", id)
-        .eq("creator_id", user.id)
-        .single();
-
-      if (application) setHasApplied(true);
-      
-      setIsLoading(false);
+      setBrief(row);
+      setHasApplied(Boolean(application));
+      if (profile) setMatch(await calculateMatchScore(profile, row));
+      setLoading(false);
     }
-
-    fetchData();
+    load();
   }, [id, supabase, router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (loading) return <PageSkeleton />;
+
+  const reasonLabel = (reason: MatchReason) => {
+    const value = reason.key === "specialty" ? typeLabel(String(reason.value)) : String(reason.value ?? "");
+    return tr(`reason_${reason.key}`).replace("{value}", value);
+  };
+  const closed = brief.status !== "published" || Boolean(brief.selected_creator_id);
+  const left = deadline(brief.deadline);
+  const references: string[] = (Array.isArray(brief.reference_images) ? brief.reference_images : []).filter((src: unknown) => typeof src === "string");
+  const products = (brief.products || []) as any[];
+  const facts = [
+    { label: tr("budget"), value: budgetLabel(brief) || tr("negotiable") },
+    { label: tr("date_limite"), value: brief.deadline ? date(brief.deadline, true) : "-", hint: left },
+    { label: tr("lieu"), value: brief.preferred_city || tr("remote") },
+    { label: tr("rights"), value: rightsLabel(brief.rights_type) || tr("rights_standard") },
+  ];
+
+  const cta = hasApplied ? (
+    <Link href={`/creator/missions/${id}`} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white text-sm font-black text-gray-900">
+      {tr("voir_mes_candidatures")}
+    </Link>
+  ) : closed ? null : (
+    <Link href={`/creator/opportunities/${id}/apply`} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-white transition-transform hover:-translate-y-0.5">
+      {tr("postuler_maintenant")}
+      <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+    </Link>
+  );
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-6xl mx-auto px-4 pt-8">
-          <Button variant="ghost" className="mb-6" onClick={() => router.push("/creator/opportunities")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {tr("retour_aux_opportunites")}
-          </Button>
+    <div className="mx-auto max-w-6xl space-y-6 pb-20 lg:pb-0">
+      <BackLink href="/creator/opportunities" label={tr("retour_aux_opportunites")} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-start gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="capitalize">{brief.content_type}</Badge>
-                      <Badge variant="secondary">{brief.store?.name}</Badge>
-                    </div>
-                    <CardTitle className="text-3xl">{brief.title}</CardTitle>
-                    <CardDescription className="mt-2">
-                        {tr("published_on")} {format(new Date(brief.created_at), "PPP", { locale: dateLocale })}
-                      </CardDescription>
-                  </div>
-                  {matchData && (
-                    <div className="flex flex-col items-center gap-1 p-3 rounded-xl bg-primary/5 border border-primary/20">
-                      <span className="text-2xl font-bold text-primary">{matchData.score}%</span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{tr("score_de_compatibilite")}</span>
-                    </div>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-8">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-border/50">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("budget")}</p>
-                      <p className="font-semibold text-primary">
-                        {brief.budget_min && brief.budget_max 
-                          ? `${formatPrice(brief.budget_min)} – ${formatPrice(brief.budget_max)}`
-                          : brief.budget_min 
-                            ? formatPrice(brief.budget_min)
-                            : "À négocier"}
-                      </p>
-                    </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">{tr("date_limite")}</p>
-                    <p className="font-semibold">{format(new Date(brief.deadline), "PP", { locale: dateLocale })}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">{tr("lieu")}</p>
-                    <p className="font-semibold">{brief.preferred_city || "À distance"}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground uppercase font-bold">Droits d&apos;usage</p>
-                    <p className="font-semibold capitalize">{brief.rights_type?.replace("_", " ") || "Standard"}</p>
-                  </div>
-                </div>
+      <PageHero
+        title={brief.title}
+        subtitle={[brief.store?.name, typeLabel(brief.content_type), `${tr("published_on")} ${date(brief.created_at)}`].filter(Boolean).join(" · ")}
+        action={match && match.score >= 70 ? (
+          <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-2xl bg-white/10 px-4 py-3 ring-1 ring-white/15">
+            <Sparkles className="h-5 w-5 text-teal-300" />
+            <span>
+              <span className="block text-xl font-black leading-none">{match.score}%</span>
+              <span className="block text-[11px] font-semibold text-slate-300">{tr("score_de_compatibilite")}</span>
+            </span>
+          </span>
+        ) : undefined}
+      >
+        <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {facts.map(({ label, value, hint }) => (
+            <div key={label} className="min-w-0 rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
+              <dt className="text-xs font-semibold text-slate-300">{label}</dt>
+              <dd className="mt-1 break-words font-black">{value}</dd>
+              {hint && <dd className={`text-xs font-semibold ${hint.urgent ? "text-rose-300" : "text-slate-300"}`}>{hint.label}</dd>}
+            </div>
+          ))}
+        </dl>
+      </PageHero>
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold">{tr("description_du_projet")}</h3>
-                  <p className="text-muted-foreground whitespace-pre-wrap">{brief.description}</p>
-                </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          {match && match.reasons.length > 0 && (
+            <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <h2 className="font-black text-emerald-900">{tr("pourquoi_vous_correspondez")}</h2>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {match.reasons.map((reason) => (
+                  <li key={reason.key} className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    {reasonLabel(reason)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold">{tr("livrables_attendus")}</h3>
-                  <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                    <p className="text-muted-foreground whitespace-pre-wrap">{brief.deliverables}</p>
+          <Panel title={tr("description_du_projet")}>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{brief.description}</p>
+          </Panel>
+
+          {brief.deliverables && (
+            <Panel title={tr("livrables_attendus")}>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{brief.deliverables}</p>
+            </Panel>
+          )}
+
+          {products.length > 0 && (
+            <Panel title={tr("produits_a_promouvoir")}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {products.map((product, index) => (
+                  <div key={product.id || index} className="flex min-w-0 items-center gap-3 rounded-xl bg-gray-50 p-3">
+                    {product.image || product.image_url ? (
+                      <img src={product.image || product.image_url} alt={product.name} className="h-14 w-14 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-gray-200 text-gray-400"><Package className="h-5 w-5" /></span>
+                    )}
+                    <span className="min-w-0 truncate text-sm font-bold text-gray-900">{product.name}</span>
                   </div>
-                </div>
+                ))}
+              </div>
+            </Panel>
+          )}
 
-                  {brief.products && brief.products.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-bold flex items-center gap-2">
-                        <Package className="w-5 h-5" />
-                        {tr("produits_a_promouvoir")}
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {brief.products.map((product: any, idx: number) => (
-                          <Card key={product.id || idx} className="flex items-center gap-4 p-4 border-border/50">
-                            <img 
-                              src={product.image || product.image_url} 
-                              alt={product.name} 
-                              className="w-16 h-16 rounded-lg object-cover" 
-                            />
-                            <div>
-                              <p className="font-medium">{product.name}</p>
-                              {product.price && (
-                                <p className="text-sm text-primary font-bold">{product.price} TND</p>
-                              )}
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
+          {references.length > 0 && (
+            <Panel title={common("references")}>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {references.map((src) => (
+                  <a key={src} href={src} target="_blank" rel="noopener noreferrer">
+                    <img src={src} alt="" className="aspect-square w-full rounded-xl object-cover" />
+                  </a>
+                ))}
+              </div>
+            </Panel>
+          )}
+        </div>
 
-            {matchData && matchData.reasons.length > 0 && (
-              <Card className="border-emerald-500/20 bg-emerald-500/5">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2 text-emerald-600">
-                    <Target className="w-5 h-5" />
-                    <CardTitle className="text-lg">{tr("pourquoi_vous_correspondez")}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {matchData.reasons.map((reason: MatchReason, i: number) => (
-                      <li key={i} className="flex items-center gap-2 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                        {reasonLabel(reason)}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+        <div className="min-w-0 space-y-6">
+          <div className="space-y-6 lg:sticky lg:top-24">
+            <Panel>
+              <p className="text-lg font-black text-gray-900">{hasApplied ? tr("applied") : closed ? tr("closed") : tr("interested")}</p>
+              <p className="mt-1 text-sm text-gray-500">{hasApplied ? tr("applied_text") : closed ? tr("closed_text") : tr("apply_text")}</p>
+              {cta && <div className="mt-4 hidden lg:block">{cta}</div>}
+            </Panel>
+
+            <Panel>
+              <p className="flex items-center gap-2 font-black text-gray-900"><Shield className="h-5 w-5 text-emerald-600" />{tr("protection_escrow")}</p>
+              <p className="mt-2 text-sm text-gray-500">{tr("escrow_text")}</p>
+              <ul className="mt-3 space-y-2 text-sm font-semibold text-gray-700">
+                <li className="flex items-center gap-2"><Wallet className="h-4 w-4 text-primary" />{FREE_LAUNCH ? tr("share_free") : tr("share_paid")}</li>
+                <li className="flex items-center gap-2"><Calendar className="h-4 w-4 text-primary" />{FREE_LAUNCH ? tr("fee_free") : tr("fee_paid")}</li>
+              </ul>
+            </Panel>
+
+            {brief.preferred_city && (
+              <p className="flex items-center gap-2 text-sm font-semibold text-gray-500"><MapPin className="h-4 w-4" />{brief.preferred_city}</p>
             )}
-          </div>
-
-          <div className="space-y-6">
-            <Card className={cn(
-              "sticky top-24",
-              hasApplied ? "bg-muted" : "bg-primary text-primary-foreground"
-            )}>
-              <CardHeader>
-                <CardTitle>{hasApplied ? tr("applied") : tr("interested")}</CardTitle>
-                <CardDescription className={hasApplied ? "" : "text-primary-foreground/70"}>
-                  {hasApplied 
-                    ? tr("applied_text") 
-                    : tr("apply_text")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {hasApplied ? (
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => router.push("/creator/missions")}
-                  >
-                    {tr("voir_mes_candidatures")}
-                  </Button>
-                ) : (
-                  <Button 
-                    className="w-full bg-white text-primary hover:bg-white/90"
-                    onClick={() => router.push(`/creator/opportunities/${id}/apply`)}
-                  >
-                    {tr("postuler_maintenant")}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-emerald-500" />
-                  <CardTitle className="text-lg">{tr("protection_escrow")}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-muted-foreground">
-                <p>Le paiement est sécurisé par Dropy dès que vous êtes embauché. Travaillez l&apos;esprit tranquille.</p>
-                <div className="flex items-center gap-2 text-foreground font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {FREE_LAUNCH ? tr("share_free") : tr("share_paid")}
-                </div>
-                <div className="flex items-center gap-2 text-foreground font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {FREE_LAUNCH ? tr("fee_free") : tr("fee_paid")}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <Info className="w-5 h-5 text-blue-500" />
-                  <CardTitle className="text-lg">{tr("exigences")}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm">
-                <div className="space-y-2">
-                  <p className="font-bold">{tr("a_fournir")}</p>
-                  <ul className="space-y-1 list-disc list-inside text-muted-foreground">
-                    <li>{tr("fichiers_hd_4k_prefere_pour")}</li>
-                    <li>{tr("t_2_revisions_incluses")}</li>
-                    <li>{tr("communication_rapide")}</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
+
+      {cta && <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-30 border-t border-gray-200 bg-white/95 p-3 backdrop-blur lg:hidden">{cta}</div>}
     </div>
   );
 }

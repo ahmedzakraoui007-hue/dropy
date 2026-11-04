@@ -335,7 +335,7 @@ export function Messaging({ userRole }: { userRole: "seller" | "creator" }) {
             <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
               {messages.length === 0 ? (
                 <p className="text-center text-sm text-muted-foreground mt-10">
-                  Aucun message pour l&apos;instant. Présentez-vous et précisez les détails de la mission.
+                  {tr("empty_thread")}
                 </p>
               ) : (
                 <div className="space-y-4">

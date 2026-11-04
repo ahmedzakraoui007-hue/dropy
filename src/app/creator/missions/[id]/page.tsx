@@ -1,145 +1,104 @@
 "use client";
 
-import { useTranslation } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  DollarSign, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
-  Upload,
-  MessageSquare,
-  FileText,
-  Shield,
-  AlertCircle,
-  Play,
-  Send
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Clock, Loader2, MessageSquare, Send, Shield, ShieldAlert, XCircle, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
+import { useTranslation } from "@/context/LanguageContext";
+import { createClient } from "@/lib/supabase/client";
+import { formatPrice } from "@/lib/utils";
+import { missionState, needsDelivery, stepsReached, type MissionState } from "@/lib/creator-missions";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DisputeDialog } from "@/components/content/DisputeDialog";
 import { FileUpload } from "@/components/ui/file-upload";
-import { createClient } from "@/lib/supabase/client";
-import { format } from "date-fns";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { ShieldAlert } from "lucide-react";
+import { BackLink, MissionChip, MissionSteps, PageSkeleton, Panel, useCreatorText } from "@/components/creator/shared";
+
+function Notice({ icon: Icon, tone, title, text, children }: { icon: LucideIcon; tone: string; title: string; text: string; children?: React.ReactNode }) {
+  return (
+    <section className={`rounded-2xl border p-6 text-center ${tone}`}>
+      <Icon className="mx-auto h-10 w-10" />
+      <h2 className="mt-3 text-lg font-black text-gray-900">{title}</h2>
+      <p className="mx-auto mt-1 max-w-md text-sm text-gray-600">{text}</p>
+      {children}
+    </section>
+  );
+}
 
 export default function MissionDetailsPage() {
-  const { t: tt } = useTranslation();
-  const tr = (key: string) => tt(`creator_app.mission.${key}`);
-  const tc = (key: string) => tt(`creator_app.common.${key}`);
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`creator_app.mission.${key}`);
+  const { common, typeLabel, date, deadline } = useCreatorText();
   const { id } = useParams();
   const router = useRouter();
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(true);
+  const supabase = useMemo(() => createClient(), []);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState("");
   const [brief, setBrief] = useState<any>(null);
-  const [myApplication, setMyApplication] = useState<any>(null);
-  const [isDelivering, setIsDelivering] = useState(false);
-  const [deliveryMessage, setDeliveryMessage] = useState("");
-  const [deliveryFiles, setDeliveryFiles] = useState<File[]>([]);
-  const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [application, setApplication] = useState<any>(null);
   const [payment, setPayment] = useState<any>(null);
   const [lastDelivery, setLastDelivery] = useState<any>(null);
+  const [delivering, setDelivering] = useState(false);
+  const [note, setNote] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [disputeOpen, setDisputeOpen] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-        const { data: briefData, error: briefError } = await supabase
-          .from("content_briefs")
-          .select(`
-            *,
-            store:stores(name, logo_url, vendor_id)
-          `)
-          .eq("id", id)
-          .single();
+      const [{ data: row }, { data: myApplication }, { data: paymentRow }, { data: delivery }] = await Promise.all([
+        supabase.from("content_briefs").select("*, store:stores(name, logo_url)").eq("id", id).maybeSingle(),
+        supabase.from("content_applications").select("*").eq("brief_id", id).eq("creator_id", user.id).maybeSingle(),
+        supabase.from("content_payments").select("status, escrowed_at, released_at, stripe_transfer_id, creator_amount").eq("brief_id", id).maybeSingle(),
+        supabase.from("content_deliveries").select("status, revision_count, delivered_at").eq("brief_id", id).order("delivered_at", { ascending: false }).limit(1).maybeSingle(),
+      ]);
 
-
-      if (briefError) {
+      if (!row) {
         toast.error(tr("mission_introuvable"));
         router.push("/creator/missions");
         return;
       }
-
-      const { data: application } = await supabase
-        .from("content_applications")
-        .select("*")
-        .eq("brief_id", id)
-        .eq("creator_id", user.id)
-        .maybeSingle();
-
-      const { data: paymentData } = await supabase
-        .from("content_payments")
-        .select("status, escrowed_at, released_at, stripe_transfer_id, creator_amount")
-        .eq("brief_id", id)
-        .maybeSingle();
-
-      const { data: deliveryData } = await supabase
-        .from("content_deliveries")
-        .select("status, revision_count, delivered_at")
-        .eq("brief_id", id)
-        .order("delivered_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      setBrief(briefData);
-      setMyApplication(application);
-      setPayment(paymentData);
-      setLastDelivery(deliveryData);
-      setIsLoading(false);
+      if (!myApplication && row.selected_creator_id !== user.id) {
+        router.replace(`/creator/opportunities/${id}`);
+        return;
+      }
+      setUserId(user.id);
+      setBrief(row);
+      setApplication(myApplication);
+      setPayment(paymentRow);
+      setLastDelivery(delivery);
+      setLoading(false);
     }
-
-    fetchData();
+    load();
   }, [id, supabase, router]);
 
-  const handleDeliver = async () => {
-    if (deliveryFiles.length === 0) {
+  const deliver = async () => {
+    if (files.length === 0) {
       toast.error(tr("veuillez_envoyer_au_moins_un"));
       return;
     }
 
-    setIsDelivering(true);
+    setDelivering(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error(tc("not_signed_in"));
-      
-      // Upload files to Supabase Storage
-      const uploadedFiles = [];
-      for (const file of deliveryFiles) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${id}/${user.id}/${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from("content-deliverables")
-          .upload(fileName, file);
-          
-        if (uploadError) throw uploadError;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from("content-deliverables")
-          .getPublicUrl(fileName);
-          
-        uploadedFiles.push({
-          url: publicUrl,
-          filename: file.name,
-          type: file.type,
-          size: file.size,
-          path: fileName
-        });
+      if (!user) throw new Error(common("not_signed_in"));
+
+      const uploaded = [];
+      for (const file of files) {
+        const path = `${id}/${user.id}/${Math.random().toString(36).substring(2)}.${file.name.split(".").pop()}`;
+        const { error } = await supabase.storage.from("content-deliverables").upload(path, file);
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage.from("content-deliverables").getPublicUrl(path);
+        uploaded.push({ url: publicUrl, filename: file.name, type: file.type, size: file.size, path });
       }
 
       const response = await fetch(`/api/content/briefs/${id}/deliver`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ files: uploadedFiles, message: deliveryMessage }),
+        body: JSON.stringify({ files: uploaded, message: note }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.error || tr("deliver_error"));
@@ -147,281 +106,165 @@ export default function MissionDetailsPage() {
       toast.success(tr("projet_livre_en_attente_de"));
       setBrief({ ...brief, status: "delivered" });
       setLastDelivery({ status: "submitted", revision_count: lastDelivery?.revision_count || 0 });
-      setDeliveryFiles([]);
-      setDeliveryMessage("");
+      setFiles([]);
+      setNote("");
     } catch (error: any) {
       toast.error(error.message || tr("deliver_error"));
     } finally {
-      setIsDelivering(false);
+      setDelivering(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (loading) return <PageSkeleton />;
 
-  const isHired = Boolean(myApplication) && brief.selected_creator_id === myApplication?.creator_id;
-  const fundsSecured = Boolean(payment?.escrowed_at);
-  const statusLabel: Record<string, string> = {
-    published: isHired ? tr("waiting_payment") : tr("open"),
-    assigned: tc("brief_assigned"),
-    in_progress: tc("brief_in_progress"),
-    delivered: tc("brief_delivered"),
-    completed: tc("brief_completed"),
-    cancelled: tc("brief_cancelled"),
-  };
+  const state: MissionState = missionState(brief, userId, application);
+  const paid = Boolean(payment?.stripe_transfer_id);
+  const hired = brief.selected_creator_id === userId;
+  const left = deadline(brief.deadline);
+  const price = application?.proposed_price ?? (hired ? brief.budget : null);
+  const products = (brief.products || []) as any[];
+  const references: string[] = (Array.isArray(brief.reference_images) ? brief.reference_images : []).filter((src: unknown) => typeof src === "string");
+  const canDispute = !brief.is_disputed && (brief.status === "assigned" || brief.status === "delivered");
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-6xl mx-auto px-4 pt-8">
-        <Button variant="ghost" className="mb-6" onClick={() => router.push("/creator/missions")}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {tr("retour_aux_missions")}
-          </Button>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <BackLink href="/creator/missions" label={tr("retour_aux_missions")} />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <Card>
-              <CardHeader>
-                  <div className="flex justify-between items-start gap-4 w-full">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{tc(`type_${brief.content_type}`)}</Badge>
-                        <Badge className={cn(
-                          brief.status === "completed" ? "bg-emerald-500" : 
-                          brief.status === "delivered" ? "bg-blue-500" :
-                          "bg-primary"
-                        )}>
-                          {statusLabel[brief.status] || brief.status}
-                        </Badge>
-                        {brief.is_disputed && (
-                          <Badge variant="destructive" className="animate-pulse">{tr("en_litige")}</Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-3xl">{brief.title}</CardTitle>
-                      <CardDescription className="mt-2">
-                          Mission de {brief.store?.name}
-                        </CardDescription>
-                    </div>
-                    {!brief.is_disputed && (brief.status === "assigned" || brief.status === "delivered") && (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-destructive hover:bg-destructive/10"
-                        onClick={() => setIsDisputeOpen(true)}
-                      >
-                        <ShieldAlert className="w-4 h-4 mr-2" />
-                          {tr("ouvrir_un_litige")}
-                        </Button>
-                    )}
-                  </div>
-
-              </CardHeader>
-              <CardContent className="space-y-8">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4 border-y border-border/50">
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("mon_prix")}</p>
-                      <p className="font-semibold text-primary">{myApplication?.proposed_price} TND</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("date_limite")}</p>
-                      <p className="font-semibold">{format(new Date(brief.deadline), "dd/MM/yyyy")}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("statut")}</p>
-                      <p className="font-semibold">{statusLabel[brief.status] || brief.status}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground uppercase font-bold">{tr("livraison")}</p>
-                      <p className="font-semibold">{myApplication?.delivery_days} jours</p>
-                    </div>
-                  </div>
-
-                <div className="space-y-4">
-                    <h3 className="text-lg font-bold">{tr("details_du_brief")}</h3>
-                    <p className="text-muted-foreground whitespace-pre-wrap">{brief.description}</p>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold">{tr("livrables_specifiques")}</h3>
-                  <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                    <p className="text-muted-foreground whitespace-pre-wrap">{brief.deliverables}</p>
-                  </div>
-                </div>
-
-                {brief.products && brief.products.length > 0 && (
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-bold">{tr("produits")}</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {brief.products.map((product: any, idx: number) => (
-                          <Card key={product.id || idx} className="flex items-center gap-3 p-3 border-border/50">
-                            <img src={product.image || product.image_url} alt={product.name} className="w-12 h-12 rounded-md object-cover" />
-                            <div>
-                              <p className="text-sm font-medium">{product.name}</p>
-                              <p className="text-xs text-muted-foreground">{product.price} TND</p>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
-
-            {isHired && brief.status === "published" && (
-              <Card className="border-amber-500/20 bg-amber-500/5 p-8 text-center">
-                <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">{tr("vous_avez_ete_retenu")}</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  {payment
-                    ? tr("payment_sent")
-                    : tr("payment_wait")}
-                </p>
-              </Card>
-            )}
-
-            {isHired && (brief.status === "assigned" || brief.status === "in_progress") && !brief.is_disputed && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardHeader>
-                    <CardTitle>{brief.status === "in_progress" ? tr("deliver_revision") : tr("deliver_work")}</CardTitle>
-                    <CardDescription>
-                      {lastDelivery?.status === "revision_requested"
-                        ? tr("revision_help")
-                        : tr("deliver_help")}
-                    </CardDescription>
-                  </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="message">{tr("message_pour_le_vendeur")}</Label>
-                      <Textarea 
-                        id="message" 
-                        placeholder={tr("incluez_des_notes_sur_la")}
-                        value={deliveryMessage}
-                        onChange={(e) => setDeliveryMessage(e.target.value)}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>{tr("fichiers_finaux")}</Label>
-                      <FileUpload 
-                        onFilesSelected={setDeliveryFiles}
-                        maxFiles={10}
-                        maxSize={500}
-                      />
-                    </div>
-
-                    <Button 
-                      className="w-full h-12 bg-gradient-to-r from-violet-500 to-purple-600"
-                      onClick={handleDeliver}
-                      disabled={isDelivering || deliveryFiles.length === 0}
-                    >
-                      {isDelivering ? tr("sending") : tr("deliver")}
-                      <Send className="w-4 h-4 ml-2" />
-                    </Button>
-                  </CardContent>
-              </Card>
-            )}
-
-            {brief.status === "delivered" && (
-              <Card className="border-blue-500/20 bg-blue-500/5 p-8 text-center">
-                <CheckCircle2 className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">{tr("travail_soumis")}</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  {tr("votre_travail_a_ete_soumis")}
-                </p>
-              </Card>
-            )}
-
-            {brief.status === "completed" && (
-              <Card className="border-emerald-500/20 bg-emerald-500/5 p-8 text-center">
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-                <h3 className="text-xl font-bold mb-2">{tr("projet_termine")}</h3>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  {payment?.stripe_transfer_id
-                    ? tr("done_paid")
-                    : tr("done_pending")}
-                </p>
-                <Button 
-                  variant="outline" 
-                  className="mt-6"
-                  onClick={() => router.push("/creator/payments")}
-                >
-                  {tr("voir_mes_revenus")}
-                </Button>
-              </Card>
-            )}
+      <section className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-black tracking-tight text-gray-900 md:text-3xl">{brief.title}</h1>
+            <p className="mt-1 text-sm text-gray-500">{[tr("by_store").replace("{store}", brief.store?.name || ""), typeLabel(brief.content_type)].filter(Boolean).join(" · ")}</p>
           </div>
-
-          <div className="space-y-6">
-            {!isHired && myApplication?.status === "pending" && (
-              <Card className="bg-orange-500/10 border-orange-500/20">
-                <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 text-orange-600 mb-2">
-                      <Clock className="w-5 h-5" />
-                      <p className="font-bold">{tr("proposition_en_attente")}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {tr("le_vendeur_examine_encore_les")}
-                    </p>
-                  </CardContent>
-              </Card>
-            )}
-
-            {isHired && fundsSecured && (
-              <Card className="bg-emerald-500/10 border-emerald-500/20">
-                <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 text-emerald-600 mb-2">
-                      <Shield className="w-5 h-5" />
-                      <p className="font-bold">{tr("paiement_securise")}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {tr("les_fonds_sont_conserves_par")}
-                    </p>
-                  </CardContent>
-              </Card>
-            )}
-
-            <Card>
-              <CardHeader>
-                  <CardTitle>{tr("chat_de_mission")}</CardTitle>
-                </CardHeader>
-              <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground">{tr("discutez_des_details_du_projet")}</p>
-                  <Button className="w-full gap-2" variant="outline" onClick={() => router.push(`/creator/messages?briefId=${id}`)}>
-                    <MessageSquare className="w-4 h-4" />
-                    {tr("ouvrir_le_chat")}
-                  </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5 text-blue-500" />
-                    <CardTitle className="text-lg">{tr("conseils_utiles")}</CardTitle>
-                  </div>
-                </CardHeader>
-              <CardContent className="space-y-4 text-sm text-muted-foreground">
-                  <p>{tr("communiquez_souvent_pour_eviter_les")}</p>
-                  <p>{tr("livrez_toujours_avant_la_deadline")}</p>
-                  <p>{tr("un_travail_de_qualite_mene")}</p>
-                </CardContent>
-            </Card>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <MissionChip state={state} />
+            {brief.is_disputed && <span className="rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white">{tr("en_litige")}</span>}
           </div>
         </div>
+        {state !== "rejected" && state !== "cancelled" && (
+          <div className="mt-6"><MissionSteps reached={stepsReached(state, paid)} /></div>
+        )}
+      </section>
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          {hired && needsDelivery(state) && !brief.is_disputed && (
+            <section className="rounded-2xl border-2 border-primary/30 bg-white p-5">
+              <h2 className="text-lg font-black text-gray-900">{tr(state === "revision" ? "deliver_revision" : "deliver_work")}</h2>
+              <p className="mt-1 text-sm text-gray-500">{lastDelivery?.status === "revision_requested" ? tr("revision_help") : tr("deliver_help")}</p>
+              <div className="mt-5 space-y-5">
+                <div className="space-y-2">
+                  <Label>{tr("fichiers_finaux")}</Label>
+                  <FileUpload onFilesSelected={setFiles} maxFiles={10} maxSize={500} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="note">{tr("message_pour_le_vendeur")}</Label>
+                  <Textarea id="note" placeholder={tr("incluez_des_notes_sur_la")} value={note} onChange={(e) => setNote(e.target.value)} />
+                </div>
+                <button type="button" onClick={deliver} disabled={delivering || files.length === 0} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-black text-white transition-transform hover:-translate-y-0.5 disabled:opacity-50">
+                  {delivering ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rtl:rotate-180" />}
+                  {tr(delivering ? "sending" : "deliver")}
+                </button>
+              </div>
+            </section>
+          )}
+
+          {state === "payment" && <Notice icon={Clock} tone="border-amber-200 bg-amber-50 text-amber-500" title={tr("vous_avez_ete_retenu")} text={tr(payment ? "payment_sent" : "payment_wait")} />}
+          {state === "delivered" && <Notice icon={CheckCircle2} tone="border-sky-200 bg-sky-50 text-sky-500" title={tr("travail_soumis")} text={tr("votre_travail_a_ete_soumis")} />}
+          {state === "rejected" && <Notice icon={XCircle} tone="border-gray-200 bg-white text-gray-400" title={tr("rejected_title")} text={tr("rejected_text")} />}
+          {state === "completed" && (
+            <Notice icon={CheckCircle2} tone="border-emerald-200 bg-emerald-50 text-emerald-500" title={tr("projet_termine")} text={tr(paid ? "done_paid" : "done_pending")}>
+              <Link href="/creator/payments" className="mt-4 inline-flex h-10 items-center rounded-xl bg-white px-4 text-sm font-black text-gray-900 ring-1 ring-gray-200">{tr("voir_mes_revenus")}</Link>
+            </Notice>
+          )}
+
+          <Panel title={tr("details_du_brief")}>
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{brief.description}</p>
+            {brief.deliverables && (
+              <>
+                <h3 className="mb-2 mt-5 font-black text-gray-900">{tr("livrables_specifiques")}</h3>
+                <p className="whitespace-pre-wrap rounded-xl bg-gray-50 p-4 text-sm leading-relaxed text-gray-600">{brief.deliverables}</p>
+              </>
+            )}
+          </Panel>
+
+          {products.length > 0 && (
+            <Panel title={tr("produits")}>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {products.map((product, index) => (
+                  <div key={product.id || index} className="flex min-w-0 items-center gap-3 rounded-xl bg-gray-50 p-3">
+                    {(product.image || product.image_url) && <img src={product.image || product.image_url} alt={product.name} className="h-12 w-12 shrink-0 rounded-lg object-cover" />}
+                    <span className="min-w-0 truncate text-sm font-bold text-gray-900">{product.name}</span>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
+
+          {references.length > 0 && (
+            <Panel title={common("references")}>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {references.map((src) => (
+                  <a key={src} href={src} target="_blank" rel="noopener noreferrer">
+                    <img src={src} alt="" className="aspect-square w-full rounded-xl object-cover" />
+                  </a>
+                ))}
+              </div>
+            </Panel>
+          )}
+        </div>
+
+        <div className="min-w-0 space-y-6">
+          <Panel>
+            <dl className="space-y-3 text-sm">
+              {price != null && (
+                <div className="flex items-center justify-between gap-3"><dt className="text-gray-500">{tr("mon_prix")}</dt><dd className="text-lg font-black text-gray-900">{formatPrice(Number(price))}</dd></div>
+              )}
+              {payment?.creator_amount != null && Number(payment.creator_amount) !== Number(price) && (
+                <div className="flex items-center justify-between gap-3"><dt className="text-gray-500">{tr("net")}</dt><dd className="font-black text-primary">{formatPrice(Number(payment.creator_amount))}</dd></div>
+              )}
+              {brief.deadline && (
+                <div className="flex justify-between gap-3">
+                  <dt className="text-gray-500">{tr("date_limite")}</dt>
+                  <dd className="text-end font-bold text-gray-900">
+                    {date(brief.deadline, true)}
+                    {left && needsDelivery(state) && <span className={`block text-xs ${left.urgent ? "text-rose-600" : "text-gray-500"}`}>{left.label}</span>}
+                  </dd>
+                </div>
+              )}
+              {application?.delivery_days && (
+                <div className="flex justify-between gap-3"><dt className="text-gray-500">{tr("livraison")}</dt><dd className="font-bold text-gray-900">{common("days").replace("{n}", String(application.delivery_days))}</dd></div>
+              )}
+            </dl>
+            {hired && payment?.escrowed_at && (
+              <p className="mt-4 flex gap-2 rounded-xl bg-emerald-50 p-3 text-xs font-semibold text-emerald-800">
+                <Shield className="h-4 w-4 shrink-0" />
+                {tr("les_fonds_sont_conserves_par")}
+              </p>
+            )}
+            {state === "pending" && <p className="mt-4 rounded-xl bg-gray-50 p-3 text-xs font-semibold text-gray-600">{tr("le_vendeur_examine_encore_les")}</p>}
+          </Panel>
+
+          {state !== "rejected" && (
+            <Panel title={tr("chat_de_mission")}>
+              <p className="text-sm text-gray-500">{tr("discutez_des_details_du_projet")}</p>
+              <Link href={`/creator/messages?briefId=${id}`} className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl border border-gray-200 text-sm font-black text-gray-900 transition-colors hover:bg-gray-50">
+                <MessageSquare className="h-4 w-4" />
+                {tr("ouvrir_le_chat")}
+              </Link>
+            </Panel>
+          )}
+
+          {canDispute && hired && (
+            <button type="button" onClick={() => setDisputeOpen(true)} className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 transition-colors hover:text-rose-600">
+              <ShieldAlert className="h-4 w-4" />
+              {tr("ouvrir_un_litige")}
+            </button>
+          )}
+        </div>
       </div>
-      <DisputeDialog 
-        isOpen={isDisputeOpen} 
-        onClose={() => setIsDisputeOpen(false)} 
-        briefId={id as string}
-        onSuccess={() => {
-          setBrief({ ...brief, is_disputed: true });
-        }}
-      />
+
+      <DisputeDialog isOpen={disputeOpen} onClose={() => setDisputeOpen(false)} briefId={id as string} onSuccess={() => setBrief({ ...brief, is_disputed: true })} />
     </div>
   );
 }

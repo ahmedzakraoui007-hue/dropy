@@ -1,200 +1,141 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Briefcase, Clock, Search, Upload } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  Search, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle,
-  MessageSquare,
-  ArrowRight,
-  Briefcase,
-  Play
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
+import { missionState, needsDelivery, stepsReached, type MissionState } from "@/lib/creator-missions";
+import { EmptyState, MissionChip, MissionSteps, PageHero, PageSkeleton, PrimaryLink, useCreatorText } from "@/components/creator/shared";
+
+const TABS: { key: string; label: string; states: MissionState[] | null }[] = [
+  { key: "all", label: "tous", states: null },
+  { key: "active", label: "missions_en_cours", states: ["payment", "assigned", "revision", "delivered"] },
+  { key: "proposals", label: "propositions", states: ["pending"] },
+  { key: "done", label: "termine", states: ["completed", "rejected", "cancelled"] },
+];
+
+const PRIORITY: Record<MissionState, number> = { revision: 0, assigned: 1, payment: 2, delivered: 3, pending: 4, completed: 5, rejected: 6, cancelled: 7 };
 
 export default function CreatorMissionsPage() {
-  const { t: tt } = useTranslation();
-  const tr = (key: string) => tt(`creator_app.missions.${key}`);
-  const tc = (key: string) => tt(`creator_app.common.${key}`);
-  const router = useRouter();
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
+  const tr = (key: string) => t(`creator_app.missions.${key}`);
+  const { typeLabel, date } = useCreatorText();
+  const supabase = useMemo(() => createClient(), []);
+  const [loading, setLoading] = useState(true);
   const [missions, setMissions] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("all");
+  const [tab, setTab] = useState("all");
 
   useEffect(() => {
-    async function fetchMissions() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const [{ data: applications }, { data: payments }] = await Promise.all([
+        supabase.from("content_applications").select("brief_id, status, proposed_price, delivery_days, created_at").eq("creator_id", user.id),
+        supabase.from("content_payments").select("brief_id, stripe_transfer_id").eq("creator_id", user.id),
+      ]);
+      const ids = (applications || []).map((a) => a.brief_id);
+      const filter = ids.length ? `selected_creator_id.eq.${user.id},id.in.(${ids.join(",")})` : `selected_creator_id.eq.${user.id}`;
+      const { data: briefs } = await supabase
         .from("content_briefs")
-        .select(`
-          *,
-          store:stores(name),
-          applications:content_applications(*)
-        `)
-        .or(`selected_creator_id.eq.${user.id},id.in.(${
-          // Get brief IDs where I applied
-          (await supabase
-            .from("content_applications")
-            .select("brief_id")
-            .eq("creator_id", user.id)
-          ).data?.map(a => a.brief_id).join(",") || "00000000-0000-0000-0000-000000000000"
-        })`)
-        .order("created_at", { ascending: false });
+        .select("id, title, status, content_type, deadline, created_at, selected_creator_id, store:stores(name)")
+        .or(filter);
 
-      if (!error && data) {
-        setMissions(data);
-      }
-      setIsLoading(false);
+      const rows = (briefs || []).map((brief) => {
+        const application = (applications || []).find((a) => a.brief_id === brief.id) || null;
+        const state = missionState(brief, user.id, application);
+        const paid = Boolean((payments || []).find((p) => p.brief_id === brief.id)?.stripe_transfer_id);
+        return { ...brief, application, state, reached: stepsReached(state, paid) };
+      });
+      setMissions(rows.sort((a, b) => PRIORITY[a.state] - PRIORITY[b.state]));
+      setLoading(false);
     }
-
-    fetchMissions();
+    load();
   }, [supabase]);
 
-  const getStatusBadge = (brief: any, userId: string) => {
-    const myApp = brief.applications?.find((a: any) => a.creator_id === userId);
-    
-    if (brief.selected_creator_id === userId) {
-      switch (brief.status) {
-        case "published": return <Badge className="bg-amber-500">{tr("retenu_paiement_en_attente")}</Badge>;
-        case "assigned": return <Badge className="bg-purple-500">{tr("retenu_mission_en_cours")}</Badge>;
-        case "in_progress": return <Badge className="bg-orange-500">{tr("retouches_demandees")}</Badge>;
-        case "delivered": return <Badge className="bg-blue-500">{tr("livre_en_attente_de_validation")}</Badge>;
-        case "completed": return <Badge className="bg-emerald-500">{tr("termine")}</Badge>;
-        default: return <Badge>{tc(`brief_${brief.status}`)}</Badge>;
-      }
-    }
+  if (loading) return <PageSkeleton />;
 
-    if (myApp) {
-      switch (myApp.status) {
-        case "pending": return <Badge variant="outline">{tr("candidature_envoyee_en_attente")}</Badge>;
-        case "rejected": return <Badge variant="destructive">{tr("non_retenu")}</Badge>;
-        case "accepted": return <Badge className="bg-emerald-500">{tr("accepte")}</Badge>;
-        default: return <Badge variant="outline">{myApp.status}</Badge>;
-      }
-    }
-
-    return <Badge variant="outline">{tc(`brief_${brief.status}`)}</Badge>;
+  const inTab = (key: string) => {
+    const states = TABS.find((item) => item.key === key)?.states;
+    return states ? missions.filter((m) => states.includes(m.state)) : missions;
   };
+  const shown = inTab(tab);
+  const todo = missions.filter((m) => needsDelivery(m.state)).length;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-7xl mx-auto px-4 pt-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">{tr("mes_missions")}</h1>
-            <p className="text-muted-foreground">{tr("suivez_vos_propositions_et_vos")}</p>
-          </div>
-          <Button 
-            onClick={() => router.push("/creator/opportunities")}
-            className="bg-gradient-to-r from-violet-500 to-purple-600"
-          >
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHero
+        title={tr("mes_missions")}
+        subtitle={todo > 0 ? tr(todo > 1 ? "todo_many" : "todo_one").replace("{count}", String(todo)) : tr("suivez_vos_propositions_et_vos")}
+        action={missions.length > 0 ? (
+          <Link href="/creator/opportunities" className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 text-sm font-black text-slate-900 transition-transform hover:-translate-y-0.5">
+            <Search className="h-4 w-4" />
             {tr("trouver_de_nouvelles_opportunites")}
-          </Button>
-        </div>
+          </Link>
+        ) : undefined}
+      />
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="w-full md:w-auto bg-muted">
-            <TabsTrigger value="all" className="flex-1 md:flex-none">{tr("tous")}</TabsTrigger>
-            <TabsTrigger value="proposals" className="flex-1 md:flex-none">{tr("propositions")}</TabsTrigger>
-            <TabsTrigger value="active" className="flex-1 md:flex-none">{tr("missions_en_cours")}</TabsTrigger>
-            <TabsTrigger value="completed" className="flex-1 md:flex-none">{tr("termine")}</TabsTrigger>
-          </TabsList>
-        </Tabs>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
-        ) : missions.length === 0 ? (
-          <Card className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Briefcase className="w-10 h-10 text-muted-foreground opacity-20" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">{tr("aucune_mission_pour_le_moment")}</h3>
-            <p className="text-muted-foreground max-w-sm mb-6">
-              Vous n&apos;avez encore postulé à aucune mission. Parcourez les opportunités pour commencer.
-            </p>
-            <Button onClick={() => router.push("/creator/opportunities")}>
-              {tr("voir_les_opportunites")}
-            </Button>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {missions.map((mission) => (
-              <Card 
-                key={mission.id} 
-                className="hover:shadow-md transition-all cursor-pointer group"
-                onClick={() => router.push(`/creator/missions/${mission.id}`)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row justify-between gap-6">
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
-                            {mission.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <span className="font-semibold text-foreground">
-                              {mission.store?.name}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Badge variant="outline">{mission.content_type}</Badge>
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              Date limite : {format(new Date(mission.deadline), "dd/MM/yyyy")}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          {getStatusBadge(mission, mission.applications?.[0]?.creator_id)}
-                          <p className="text-xs text-muted-foreground">
-                            Candidature du {format(new Date(mission.created_at), "dd/MM/yyyy")}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-6 pt-2">
-                        <div className="flex items-center gap-1 text-sm">
-                          <span className="text-muted-foreground">{tr("ma_proposition")}</span>
-                          <span className="font-bold">
-                            {mission.applications?.find((a: any) => a.creator_id === mission.applications?.[0]?.creator_id)?.proposed_price} DT
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <AlertCircle className="w-4 h-4" />
-                          {mission.applications?.find((a: any) => a.creator_id === mission.applications?.[0]?.creator_id)?.delivery_days} jours de livraison
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center min-w-[120px]">
-                      <Button variant="ghost" className="w-full group-hover:translate-x-1 transition-transform">
-                        {tr("details")}
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+      {missions.length === 0 ? (
+        <EmptyState
+          icon={Briefcase}
+          title={tr("aucune_mission_pour_le_moment")}
+          text={tr("empty_text")}
+          action={<PrimaryLink href="/creator/opportunities"><Search className="h-4 w-4" />{tr("voir_les_opportunites")}</PrimaryLink>}
+        />
+      ) : (
+        <>
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {TABS.map(({ key, label }) => (
+              <button key={key} type="button" onClick={() => setTab(key)} className={`inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${tab === key ? "bg-primary text-white" : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50"}`}>
+                {tr(label)}
+                <span className={`rounded-full px-1.5 text-xs ${tab === key ? "bg-white/20" : "bg-gray-100"}`}>{inTab(key).length}</span>
+              </button>
             ))}
           </div>
-        )}
-      </div>
+
+          {shown.length === 0 ? (
+            <EmptyState icon={Clock} title={tr("no_tab")} />
+          ) : (
+            <div className="space-y-3">
+              {shown.map((mission) => (
+                <Link key={mission.id} href={`/creator/missions/${mission.id}`} className="group block rounded-2xl border border-gray-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <h2 className="truncate text-lg font-black text-gray-900 transition-colors group-hover:text-primary">{mission.title}</h2>
+                      <p className="truncate text-sm text-gray-500">{[mission.store?.name, typeLabel(mission.content_type)].filter(Boolean).join(" · ")}</p>
+                    </div>
+                    <div className="shrink-0"><MissionChip state={mission.state} /></div>
+                  </div>
+
+                  <div className="mt-4"><MissionSteps reached={mission.reached} compact /></div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+                      {mission.application?.proposed_price != null && <span className="font-black text-gray-900">{formatPrice(Number(mission.application.proposed_price))}</span>}
+                      {mission.application?.delivery_days && <span>{tr("delivery").replace("{n}", String(mission.application.delivery_days))}</span>}
+                      {mission.deadline && <span>{tr("deadline").replace("{date}", date(mission.deadline))}</span>}
+                      {mission.application?.created_at && <span>{tr("applied_on").replace("{date}", date(mission.application.created_at))}</span>}
+                    </div>
+                    {needsDelivery(mission.state) ? (
+                      <span className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-black text-white">
+                        <Upload className="h-4 w-4" />
+                        {tr(mission.state === "revision" ? "fix_cta" : "deliver_cta")}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+                        {tr("details")}
+                        <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

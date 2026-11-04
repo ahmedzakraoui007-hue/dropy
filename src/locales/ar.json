@@ -200,7 +200,16 @@
             "aucune_mission_pour_le_moment": "لا توجد مهام حاليًا",
             "voir_les_opportunites": "عرض الفرص",
             "ma_proposition": "عرضي:",
-            "details": "التفاصيل"
+            "details": "التفاصيل",
+            "todo_one": "مهمة واحدة للتسليم",
+            "todo_many": "{count} مهام للتسليم",
+            "empty_text": "لم تترشح لأي مهمة بعد. تصفح البريفات للبدء.",
+            "applied_on": "ترشح بتاريخ {date}",
+            "deadline": "آخر أجل: {date}",
+            "delivery": "التسليم في {n} أيام",
+            "deliver_cta": "تسليم",
+            "fix_cta": "إرسال التعديلات",
+            "no_tab": "لا يوجد شيء هنا حاليا"
         },
         "mission": {
             "mission_introuvable": "المهمة غير موجودة",
@@ -247,7 +256,19 @@
             "sending": "جارٍ الإرسال…",
             "deliver": "تسليم المشروع",
             "done_paid": "انتهت هذه المهمة وتم دفع مستحقاتك.",
-            "done_pending": "انتهت هذه المهمة. ستدفع لك Dropy مستحقاتك على الحساب المذكور في إعداداتك."
+            "done_pending": "انتهت هذه المهمة. ستدفع لك Dropy مستحقاتك على الحساب المذكور في إعداداتك.",
+            "by_store": "مهمة من {store}",
+            "net": "ستتحصل على",
+            "rejected_title": "لم يتم اختيار ترشحك",
+            "rejected_text": "اختار البائع ملفا آخر لهذه المهمة. بريفات أخرى في انتظارك.",
+            "steps": {
+                "applied": "الترشح",
+                "selected": "تم الاختيار",
+                "secured": "الخلاص مؤمن",
+                "delivered": "تم التسليم",
+                "validated": "تمت الموافقة",
+                "paid": "تم الخلاص"
+            }
         },
         "opportunities": {
             "opportunites_de_projets": "فرص المشاريع",
@@ -255,7 +276,21 @@
             "rechercher_des_missions": "ابحث عن مهام…",
             "aucune_opportunite_pour_le_moment": "لا توجد فرص حاليًا",
             "revenez_plus_tard_pour_de": "عد لاحقًا لمهام جديدة أو حدّث ملفك.",
-            "details_postuler": "التفاصيل والترشح"
+            "details_postuler": "التفاصيل والترشح",
+            "open_count": "{count} بريف مفتوح حاليا",
+            "open_count_one": "بريف واحد مفتوح حاليا",
+            "all": "الكل",
+            "sort_best": "لك",
+            "sort_recent": "الأحدث",
+            "sort_budget": "الميزانية",
+            "negotiable": "قابل للتفاوض",
+            "applied": "تم الترشح",
+            "products": "منتجات للترويج: {count}",
+            "match": "{score}% لك",
+            "no_result_title": "لا يوجد بريف مطابق",
+            "no_result_desc": "جرب كلمة أخرى أو احذف الفلاتر.",
+            "clear": "حذف الفلاتر",
+            "empty_cta": "إكمال البورتفوليو"
         },
         "opportunity": {
             "published_on": "تنشر في",
@@ -289,7 +324,14 @@
             "share_free": "100% لصانع المحتوى",
             "share_paid": "85% لصانع المحتوى",
             "fee_free": "0% عمولة منصة خلال الإطلاق",
-            "fee_paid": "15% عمولة منصة"
+            "fee_paid": "15% عمولة منصة",
+            "remote": "عن بعد",
+            "rights": "حقوق الاستعمال",
+            "rights_standard": "عادية",
+            "negotiable": "قابل للتفاوض",
+            "closed": "بريف مغلق",
+            "closed_text": "هذا البريف لم يعد يقبل الترشحات.",
+            "escrow_text": "البائع يدفع لـ Dropy قبل بداية المهمة، وتتحصل على خلاصك عند موافقته على عملك."
         },
         "apply": {
             "brief_introuvable": "الطلب غير موجود",
@@ -309,7 +351,16 @@
             "sample_error": "تعذّر إرسال أحد الأمثلة",
             "send_error": "حدث خطأ أثناء إرسال العرض",
             "sending": "جارٍ الإرسال…",
-            "send": "إرسال العرض"
+            "send": "إرسال العرض",
+            "message_short": "يجب أن تحتوي رسالتك على 10 أحرف على الأقل",
+            "from_portfolio": "اختر حتى {max} أعمال من البورتفوليو",
+            "or_upload": "أو أرسل ملفات جديدة",
+            "recap": "عرضك",
+            "seller_budget": "ميزانية البائع",
+            "deadline": "آخر أجل",
+            "your_delivery": "مدة التسليم",
+            "your_price": "سعرك",
+            "note_free": "إذا تم اختيارك، يدفع البائع لـ Dropy التي تحتفظ بالمبلغ في الضمان. خلال فترة الإطلاق، تتحصل على 100% من السعر المقترح عند موافقة البائع على عملك."
         },
         "portfolio": {
             "impossible_de_charger_le_portfolio": "تعذّر تحميل معرض الأعمال",
@@ -365,7 +416,12 @@
                     "unauthorized": "اعمل كونكسيون وعاود جرب.",
                     "failed": "صار مشكل. عاود جرب."
                 }
-            }
+            },
+            "file_label": "ملف (صورة أو فيديو، {max} ميغا كحد أقصى)",
+            "choose_file": "اختر ملفا",
+            "add_cta": "إضافة إلى البورتفوليو",
+            "view": "عرض",
+            "all": "الكل"
         },
         "reviews": {
             "mes_avis_reputation": "آرائي وسمعتي",
@@ -382,7 +438,15 @@
             "delais": "الآجال",
             "votre_reponse": "ردّك",
             "votre_reponse_au_vendeur": "ردّك على البائع…",
-            "repondre": "ردّ"
+            "repondre": "ردّ",
+            "empty_text": "بعد كل مهمة منتهية، يمكن للبائع تقييم عملك. التقييمات تقوي البورتفوليو.",
+            "empty_cta": "عرض البريفات",
+            "count_one": "تقييم واحد",
+            "count_many": "{count} تقييمات",
+            "reply_ok": "تم نشر الرد",
+            "reply_error": "تعذر نشر الرد",
+            "publish": "نشر",
+            "cancel": "إلغاء"
         },
         "payments": {
             "revenus_et_paiements": "المداخيل والدفوعات",
@@ -403,11 +467,43 @@
             "state_escrow": "محفوظة لدى Dropy",
             "state_released": "التحويل جارٍ",
             "state_paid_out": "مدفوعة",
-            "state_refunded": "مُرجعة للبائع"
+            "state_refunded": "مُرجعة للبائع",
+            "stage_verifying": "قيد التثبت",
+            "stage_escrow": "في الضمان",
+            "stage_released": "التحويل جار",
+            "stage_paid_out": "تم التحويل",
+            "empty_text": "ستظهر أرباحك هنا بعد أول مهمة مدفوعة.",
+            "empty_cta": "عرض البريفات",
+            "method_rib": "تحويل بنكي (RIB)",
+            "method_d17": "D17",
+            "method_flouci": "Flouci",
+            "payout_missing_title": "أضف بيانات الخلاص",
+            "payout_missing_text": "دون RIB أو D17 أو Flouci، لا يمكن لـ Dropy تحويل أرباحك.",
+            "how_1": "يدفع البائع لـ Dropy التي تحتفظ بالمبلغ في الضمان.",
+            "how_2": "تسلم عملك ويوافق عليه البائع.",
+            "how_3": "تحول لك Dropy حصتك بعد خصم عمولة المنصة.",
+            "how_3_free": "تحول لك Dropy المبلغ كاملا: دون عمولة خلال فترة الإطلاق."
         },
         "settings": {
             "parametres": "الإعدادات",
-            "gerez_votre_compte_et_vos": "أدر حسابك وتفضيلاتك كصانع محتوى."
+            "gerez_votre_compte_et_vos": "أدر حسابك وتفضيلاتك كصانع محتوى.",
+            "profile": {
+                "title": "ملف صانع المحتوى",
+                "desc": "تظهر هذه المعلومات في البورتفوليو العام وتحسن البريفات المقترحة عليك.",
+                "bio": "التعريف",
+                "bio_ph": "أسلوبك، العلامات التي عملت معها، وما تحب إنشاءه...",
+                "specialties": "التخصصات",
+                "specialties_help": "تستعمل لاقتراح البريفات المناسبة لك.",
+                "city": "المدينة",
+                "city_ph": "مثال: تونس",
+                "min_budget": "أدنى ميزانية للمهمة (د.ت)",
+                "instagram": "Instagram",
+                "tiktok": "TikTok",
+                "save": "حفظ",
+                "saved": "تم حفظ الملف",
+                "error": "تعذر حفظ الملف",
+                "delay": "تتحدث صفحتك العامة خلال 5 دقائق."
+            }
         },
         "landing": {
             "acceder_au_dashboard": "الدخول إلى لوحة التحكم"
@@ -432,7 +528,13 @@
             "cat_unboxing": "فتح العلبة",
             "cat_design": "تصميم",
             "cat_general": "عام",
-            "not_signed_in": "غير متصل"
+            "not_signed_in": "غير متصل",
+            "days_left": "باقي {n} يوم",
+            "last_day": "آخر يوم",
+            "expired": "انتهى الأجل",
+            "back": "رجوع",
+            "days": "{n} أيام",
+            "references": "صور مرجعية"
         },
         "nav": {
             "dashboard": "لوحة التحكم",
@@ -446,7 +548,8 @@
             "payments": "الخلاص",
             "settings": "الإعدادات",
             "help": "مركز المساعدة",
-            "more": "المزيد"
+            "more": "المزيد",
+            "messages": "الرسائل"
         },
         "layout": {
             "pending_title": "الكونت يستنى في الموافقة",
@@ -502,6 +605,10 @@
             "first_earnings_desc": "قدم على بريف. الخلاص مضمون طول المهمة.",
             "reviews": "تقييمات الحرفاء: {count}",
             "profile_ready": "البروفيل متاعك كامل"
+        },
+        "messages": {
+            "title": "الرسائل",
+            "subtitle": "تواصل مع البائعين حول مهامك"
         }
     },
     "supplier_app": {
@@ -1003,7 +1110,8 @@
             "title": "رسائلك",
             "select": "اختر محادثة للتواصل.",
             "page_title": "الرسائل",
-            "page_subtitle": "محادثاتك مع صنّاع المحتوى."
+            "page_subtitle": "محادثاتك مع صنّاع المحتوى.",
+            "empty_thread": "لا توجد رسائل بعد. قدم نفسك ووضح تفاصيل المهمة."
         },
         "brief_detail": {
             "not_found": "الطلب غير موجود",
