@@ -7,6 +7,8 @@ import { useTranslation } from "@/context/LanguageContext";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthField, PasswordField, PasswordStrength, AuthAlert, SubmitButton } from "@/components/auth/AuthFields";
 import { SignupSuccess } from "@/components/auth/SignupSuccess";
+import { useSignupGuard } from "@/components/auth/useSignupGuard";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,6 +25,8 @@ const ROLE_META: Record<RoleId, { icon: typeof Store; gradient: string }> = {
 
 function RegisterForm() {
   const { t, dir, language } = useTranslation();
+  const router = useRouter();
+  const guard = useSignupGuard(language);
   const [selectedRole, setSelectedRole] = useState<RoleId>("seller");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -66,6 +70,11 @@ function RegisterForm() {
       return;
     }
 
+    if (selectedRole !== "seller") {
+      router.push(`/${selectedRole}/signup`);
+      return;
+    }
+
     setLoading(true);
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -81,6 +90,7 @@ function RegisterForm() {
           fullName: fullName.trim(),
           role: selectedRole,
           lang: language,
+          ...guard.fields,
         }),
       });
       result = await response.json().catch(() => ({}));
@@ -105,6 +115,11 @@ function RegisterForm() {
       }
       if (result.code === "weak_password") {
         setErrors({ password: "register.toasts.password_short" });
+        return;
+      }
+      if (result.code === "bot_check" || result.code === "captcha_failed") {
+        guard.reset();
+        setFormError(`register.errors.${result.code}`);
         return;
       }
       setFormError(result.code === "email_send_failed" ? "register.toasts.email_send_failed" : "forgot_password.error_generic");
@@ -273,6 +288,8 @@ function RegisterForm() {
           </label>
           {errors.terms && <p className="ps-8 text-xs font-medium text-red-600">{t(errors.terms)}</p>}
         </div>
+
+        {guard.widgets}
 
         <SubmitButton loading={loading} loadingLabel={t("register.submitting")}>
           {t("register.submit")}

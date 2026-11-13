@@ -4,6 +4,7 @@ import { uniqueStoreSlug } from "@/lib/store-slug-server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendConfirmationEmail } from "@/lib/mail";
 import { confirmLink } from "@/lib/auth-links";
+import { captchaValid, formTokenValid, issueFormToken, missingRoleFields } from "@/lib/signup-guard";
 
 const ALLOWED_ROLES = ["seller", "supplier", "creator"] as const;
 type Role = (typeof ALLOWED_ROLES)[number];
@@ -12,6 +13,10 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function fail(code: string, error: string, status = 400) {
   return NextResponse.json({ code, error }, { status });
+}
+
+export async function GET() {
+  return NextResponse.json({ token: issueFormToken() }, { headers: { "Cache-Control": "no-store" } });
 }
 
 export async function POST(req: Request) {
@@ -32,6 +37,11 @@ export async function POST(req: Request) {
     if (password.length < 8) return fail("weak_password", "Password must be at least 8 characters");
     if (!fullName) return fail("missing_name", "Full name is required");
     if (!ALLOWED_ROLES.includes(role)) return fail("invalid_role", "Invalid role");
+    if (String(body.website || "").trim()) return NextResponse.json({ success: true });
+    if (!formTokenValid(body.formToken)) return fail("bot_check", "Form check failed");
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || null;
+    if (!(await captchaValid(body.captcha, ip))) return fail("captcha_failed", "Captcha check failed");
+    if (missingRoleFields(role, additionalData)) return fail("missing_fields", "Required profile fields are missing");
 
     const supabase = createAdminClient();
     const metadata = { full_name: fullName, phone, role };
