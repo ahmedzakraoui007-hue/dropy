@@ -2598,7 +2598,12 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
             setStore(storeData);
             if (storeData.is_active === false) {
               const { data: { user } } = await supabase.auth.getUser();
-              setCanSeeOffline(user?.id === storeData.vendor_id);
+              let allowed = Boolean(user) && user?.id === storeData.vendor_id;
+              if (user && !allowed) {
+                const { data: viewer } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+                allowed = viewer?.role === "admin";
+              }
+              setCanSeeOffline(allowed);
             }
             
             // Track visit (if not in builder)
