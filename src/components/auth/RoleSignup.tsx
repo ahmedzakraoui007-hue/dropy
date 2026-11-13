@@ -26,6 +26,7 @@ import { useTranslation } from "@/context/LanguageContext";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthField, PasswordField, PasswordStrength, AuthAlert, SubmitButton } from "@/components/auth/AuthFields";
 import { SignupSuccess } from "@/components/auth/SignupSuccess";
+import { useSignupGuard } from "@/components/auth/useSignupGuard";
 import { cn } from "@/lib/utils";
 
 type Role = "creator" | "seller" | "supplier";
@@ -112,6 +113,7 @@ function SelectField({
 export default function RoleSignup({ role }: RoleSignupProps) {
   const { t, dir, language } = useTranslation();
   const router = useRouter();
+  const guard = useSignupGuard(language);
   const meta = ROLE_META[role];
   const Icon = meta.icon;
 
@@ -276,6 +278,7 @@ export default function RoleSignup({ role }: RoleSignupProps) {
           phone: v.phone,
           role,
           lang: language,
+          ...guard.fields,
           additionalData: {
             portfolio: v.portfolio,
             instagram: v.instagram,
@@ -310,6 +313,11 @@ export default function RoleSignup({ role }: RoleSignupProps) {
       }
       if (result.code === "weak_password") {
         setErrors({ password: "register.toasts.password_short" });
+        return;
+      }
+      if (result.code === "bot_check" || result.code === "captcha_failed") {
+        guard.reset();
+        setFormError(`register.errors.${result.code}`);
         return;
       }
       setFormError(result.code === "email_send_failed" ? "register.toasts.email_send_failed" : "forgot_password.error_generic");
@@ -526,6 +534,8 @@ export default function RoleSignup({ role }: RoleSignupProps) {
               </>
             )}
           </section>
+
+          {!isExistingUser && guard.widgets}
 
           <SubmitButton loading={loading} loadingLabel={t("role_signup.submitting")}>
             {isExistingUser ? t("role_signup.submit_finish") : t("role_signup.submit_create")}

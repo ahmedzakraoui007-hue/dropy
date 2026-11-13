@@ -3452,7 +3452,9 @@
                 "invalid_email": "Veuillez saisir une adresse e-mail valide.",
                 "name_required": "Veuillez saisir votre nom complet.",
                 "email_required": "Veuillez saisir votre adresse email.",
-                "terms_required": "Vous devez accepter les conditions pour continuer."
+                "terms_required": "Vous devez accepter les conditions pour continuer.",
+                "bot_check": "La vérification du formulaire a échoué. Patientez quelques secondes puis réessayez, ou rechargez la page.",
+                "captcha_failed": "Merci de valider la vérification anti-robot avant de continuer."
             },
             "toasts": {
                 "accept_terms": "Veuillez accepter les CGU",
