@@ -3068,8 +3068,9 @@
             "search_button": "Rechercher",
             "search_unavailable": "La recherche n'est pas disponible : voici notre sélection de photos.",
             "credit": "Photos gratuites fournies par Unsplash.",
-            "credit_pexels": "Photos gratuites fournies par Pexels.",
-            "no_results": "Aucune photo trouvée : essayez un autre mot, en anglais par exemple."
+            "no_results": "Aucune photo trouvée : essayez un autre mot, en anglais par exemple.",
+            "credit_source": "Photos gratuites et libres de droits : {provider}.",
+            "import_error": "Impossible d'ajouter cette photo. Essayez-en une autre."
         },
         "theme_page": {
             "title": "Thèmes",

@@ -20,6 +20,8 @@ type Photo = { id: string; thumb: string; full: string; alt: string; credit?: st
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
+const PROVIDER_NAMES: Record<string, string> = { pixabay: "Pixabay", pexels: "Pexels", wikimedia: "Wikimedia Commons" };
+
 const CURATED: Photo[] = FREE_PHOTO_IDS.map((id) => ({ id, thumb: freePhotoUrl(id, 400), full: freePhotoUrl(id), alt: "" }));
 
 export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
@@ -34,6 +36,8 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
   const [search, setSearch] = useState("");
   const [photos, setPhotos] = useState<Photo[]>(CURATED);
   const [fromSearch, setFromSearch] = useState(false);
+  const [provider, setProvider] = useState("");
+  const [importing, setImporting] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -103,6 +107,29 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
     }
   };
 
+  const pick = async (photo: Photo) => {
+    if (!fromSearch) {
+      onSelect(photo.full);
+      return;
+    }
+    setImporting(photo.id);
+    try {
+      const res = await fetch("/api/media/photos/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: photo.full, name: photo.alt || photo.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error();
+      if (data.media) setMedia((prev) => [data.media, ...prev]);
+      onSelect(data.url);
+    } catch {
+      toast.error(tr("import_error"));
+    } finally {
+      setImporting(null);
+    }
+  };
+
   const runSearch = async () => {
     const query = search.trim();
     if (!query) {
@@ -122,6 +149,7 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
       }
       if (!data.results?.length) toast.info(tr("no_results"));
       setPhotos((data.results || []).map((p: Photo) => ({ id: p.id, thumb: p.thumb, full: p.full, alt: p.alt, credit: p.credit })));
+      setProvider(String(data.provider || ""));
       setFromSearch(true);
     } catch {
       setPhotos(CURATED);
@@ -233,9 +261,11 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
                 <button
                   key={p.id}
                   type="button"
-                  onClick={() => onSelect(p.full)}
-                  className="group relative aspect-square overflow-hidden rounded-lg border hover:border-primary"
+                  onClick={() => pick(p)}
+                  disabled={Boolean(importing)}
+                  className="group relative aspect-square overflow-hidden rounded-lg border hover:border-primary disabled:opacity-60"
                 >
+                  {importing === p.id && <span className="absolute inset-0 z-10 flex items-center justify-center bg-black/40"><Loader2 className="h-6 w-6 animate-spin text-white" /></span>}
                   <img src={p.thumb} alt={p.alt} className="h-full w-full object-cover" loading="lazy" />
                   {p.credit && <span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-start text-[10px] text-white">{p.credit}</span>}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
@@ -244,7 +274,7 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
                 </button>
               ))}
             </div>
-            <p className="pt-4 text-center text-[11px] text-muted-foreground">{tr(fromSearch ? "credit_pexels" : "credit")}</p>
+            <p className="pt-4 text-center text-[11px] text-muted-foreground">{fromSearch ? tr("credit_source").replace("{provider}", PROVIDER_NAMES[provider] || provider) : tr("credit")}</p>
           </div>
         </div>
       )}
