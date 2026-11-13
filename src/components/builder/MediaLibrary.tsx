@@ -15,7 +15,7 @@ interface MediaLibraryProps {
 }
 
 type Media = { id: string; file_url: string; filename: string | null };
-type Photo = { id: string; thumb: string; full: string; alt: string };
+type Photo = { id: string; thumb: string; full: string; alt: string; credit?: string };
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -33,6 +33,7 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [photos, setPhotos] = useState<Photo[]>(CURATED);
+  const [fromSearch, setFromSearch] = useState(false);
   const [searching, setSearching] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -106,22 +107,25 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
     const query = search.trim();
     if (!query) {
       setPhotos(CURATED);
+      setFromSearch(false);
       return;
     }
     setSearching(true);
     try {
-      const res = await fetch(`/api/media/unsplash/search?query=${encodeURIComponent(query)}&per_page=24`);
+      const res = await fetch(`/api/media/photos/search?query=${encodeURIComponent(query)}&per_page=24`);
       const data = await res.json();
       if (!res.ok || data.setup_required || data.error) {
         setPhotos(CURATED);
+        setFromSearch(false);
         toast.info(tr("search_unavailable"));
         return;
       }
-      setPhotos(
-        (data.results || []).map((p: any) => ({ id: p.id, thumb: p.urls?.small, full: p.urls?.regular, alt: p.alt_description || "" }))
-      );
+      if (!data.results?.length) toast.info(tr("no_results"));
+      setPhotos((data.results || []).map((p: Photo) => ({ id: p.id, thumb: p.thumb, full: p.full, alt: p.alt, credit: p.credit })));
+      setFromSearch(true);
     } catch {
       setPhotos(CURATED);
+      setFromSearch(false);
     } finally {
       setSearching(false);
     }
@@ -233,13 +237,14 @@ export default function MediaLibrary({ onSelect }: MediaLibraryProps) {
                   className="group relative aspect-square overflow-hidden rounded-lg border hover:border-primary"
                 >
                   <img src={p.thumb} alt={p.alt} className="h-full w-full object-cover" loading="lazy" />
+                  {p.credit && <span className="absolute inset-x-0 bottom-0 truncate bg-black/50 px-1.5 py-0.5 text-start text-[10px] text-white">{p.credit}</span>}
                   <span className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                     <Check className="h-7 w-7 text-white" />
                   </span>
                 </button>
               ))}
             </div>
-            <p className="pt-4 text-center text-[11px] text-muted-foreground">{tr("credit")}</p>
+            <p className="pt-4 text-center text-[11px] text-muted-foreground">{tr(fromSearch ? "credit_pexels" : "credit")}</p>
           </div>
         </div>
       )}
