@@ -3067,7 +3067,9 @@
             "search": "Rechercher (ex. : mode, bijoux, café)…",
             "search_button": "Rechercher",
             "search_unavailable": "La recherche n'est pas disponible : voici notre sélection de photos.",
-            "credit": "Photos gratuites fournies par Unsplash."
+            "credit": "Photos gratuites fournies par Unsplash.",
+            "credit_pexels": "Photos gratuites fournies par Pexels.",
+            "no_results": "Aucune photo trouvée : essayez un autre mot, en anglais par exemple."
         },
         "theme_page": {
             "title": "Thèmes",
