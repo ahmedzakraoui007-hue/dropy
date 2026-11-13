@@ -32,6 +32,9 @@ export type OrderResult =
   | { ok: true; orderId: string; orderNumber: string; totalAmount: number }
   | { ok: false; code: string; error: string; status: number; extra?: Record<string, unknown> };
 
+const VARIANT_LABELS: Record<string, string> = { size: "Taille", color: "Couleur", volume: "Volume", weight: "Poids" };
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function fail(code: string, error: string, status = 400, extra: Record<string, unknown> = {}): OrderResult {
   return { ok: false, code, error, status, extra };
 }
@@ -131,7 +134,7 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
   if (productsError) throw productsError;
   const productMap = new Map((products || []).map((p) => [p.id, p]));
 
-  const variantIds = lines.map((l) => l.variantId).filter((v): v is string => Boolean(v));
+  const variantIds = lines.map((l) => l.variantId).filter((v): v is string => typeof v === "string" && UUID_REGEX.test(v));
   const variantMap = new Map<string, any>();
   if (variantIds.length) {
     const { data: variants, error: variantsError } = await supabase
@@ -177,9 +180,10 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
         if (jsonVariant.price != null) unitPrice = Number(jsonVariant.price);
         stock = jsonVariant.stock ?? null;
         const typeName = String(jsonVariant.type || "Option");
+        const label = VARIANT_LABELS[typeName.toLowerCase()] || typeName.charAt(0).toUpperCase() + typeName.slice(1);
         variant = {
           id: jsonVariant.id,
-          info: { [typeName.charAt(0).toUpperCase() + typeName.slice(1)]: String(jsonVariant.value ?? "") },
+          info: { [label]: String(jsonVariant.value ?? "") },
         };
       } else {
         return fail("product_unavailable", "Une variante de votre panier n'est plus disponible", 409, {
@@ -338,7 +342,7 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
       total_price: l.total,
       product_image: l.product.images?.[0] ?? null,
       variant_info: l.variant?.info ?? null,
-      variant_id: l.variant?.id ?? null,
+      variant_id: l.variant && UUID_REGEX.test(l.variant.id) ? l.variant.id : null,
       fulfillment_type: l.supplierId ? "dropshipping" : "own",
       supplier_id: l.supplierId,
     }))
