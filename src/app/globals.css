@@ -4,12 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* 
+/*
   DROPY DESIGN SYSTEM
   ==================
   Brand Indigo: #6366F1 (primary actions, logo)
   Success Green: #10B981
-  Warning Amber: #F59E0B  
+  Warning Amber: #F59E0B
   Error Red: #EF4444
   Dark Gray: #1F2937 (text)
   Light Gray: #F9FAFB (backgrounds)
@@ -99,34 +99,34 @@
   --card-foreground: #1F2937;
   --popover: #FFFFFF;
   --popover-foreground: #1F2937;
-  
+
   /* Primary - Brand Indigo */
   --primary: #6366F1;
   --primary-foreground: #FFFFFF;
-  
+
   /* Secondary */
   --secondary: #F3F4F6;
   --secondary-foreground: #1F2937;
-  
+
   /* Muted */
   --muted: #F3F4F6;
   --muted-foreground: #6B7280;
-  
+
   /* Accent */
   --accent: #EEF2FF;
   --accent-foreground: #6366F1;
-  
+
   /* Semantic Colors */
   --destructive: #EF4444;
   --success: #10B981;
   --warning: #F59E0B;
   --info: #3B82F6;
-  
+
   /* Border & Input */
   --border: #E5E7EB;
   --input: #E5E7EB;
   --ring: #6366F1;
-  
+
   /* Extended Palette */
   --mint: #10B981;
   --mint-foreground: #FFFFFF;
@@ -138,14 +138,14 @@
   --sky-foreground: #FFFFFF;
   --violet: #8B5CF6;
   --violet-foreground: #FFFFFF;
-  
+
   /* Charts */
   --chart-1: #6366F1;
   --chart-2: #10B981;
   --chart-3: #F59E0B;
   --chart-4: #EC4899;
   --chart-5: #8B5CF6;
-  
+
   /* Sidebar */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #1F2937;
@@ -193,6 +193,8 @@
 
 /* Role Specific Themes - Dropy Design System */
 [data-role="seller"] {
+  --cockpit-hero: #070A1F;
+  --cockpit-glow: rgba(79, 70, 229, 0.4);
   --background: #f7f7fb;
   --foreground: #111827;
   --primary: #2E3192;
@@ -237,6 +239,8 @@
 }
 
 [data-role="creator"] {
+  --cockpit-hero: #0E0A24;
+  --cockpit-glow: rgba(139, 92, 246, 0.5);
   --background: #f8f7fc;
   --foreground: #1F2937;
   --primary: #6D28D9;

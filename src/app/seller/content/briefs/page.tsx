@@ -1,219 +1,155 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Calendar, Plus, Search, Sparkles, Users } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
-import { formatPrice } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Clock, 
-  CheckCircle2, 
-  AlertCircle,
-  Users,
-  MessageSquare,
-  ArrowRight,
-  MoreVertical
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { createClient } from "@/lib/supabase/client";
-import { format } from "date-fns";
+import { formatPrice } from "@/lib/utils";
+import { SELLER_BRIEF_TONES, sellerBriefState, sellerNeedsAction, type SellerBriefState } from "@/lib/seller-briefs";
+import { ChipRow, EmptyState, FilterChip, HeroLink, PageHero, PageSkeleton, PrimaryLink } from "@/components/cockpit/ui";
+
+const TABS: { key: string; states: SellerBriefState[] | null }[] = [
+  { key: "all", states: null },
+  { key: "todo", states: [] },
+  { key: "active", states: ["open", "pay", "checking", "working", "revision", "review"] },
+  { key: "done", states: ["done", "cancelled"] },
+];
+
+const PRIORITY: Record<SellerBriefState, number> = { review: 0, pay: 1, open: 2, checking: 3, revision: 4, working: 5, draft: 6, done: 7, cancelled: 8 };
+
+const budget = (b: any) => {
+  if (b.budget_min && b.budget_max && b.budget_min !== b.budget_max) return `${formatPrice(b.budget_min)} - ${formatPrice(b.budget_max)}`;
+  const value = b.budget_max || b.budget_min || b.budget;
+  return value ? formatPrice(value) : "";
+};
 
 export default function BriefsListPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const tr = (key: string) => t(`seller_app.briefs_page.${key}`);
-  const router = useRouter();
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(true);
+  const u = (key: string) => t(`seller_app.ugc.${key}`);
+  const supabase = useMemo(() => createClient(), []);
+  const [loading, setLoading] = useState(true);
   const [briefs, setBriefs] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [query, setQuery] = useState("");
+  const [tab, setTab] = useState("all");
 
   useEffect(() => {
-    async function fetchBriefs() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data: store } = await supabase
-        .from("stores")
-        .select("id")
-        .eq("vendor_id", user.id)
-        .order("created_at", { ascending: true }).limit(1).maybeSingle();
-
-      if (!store) return;
-
-      const { data, error } = await supabase
+      const { data: store } = await supabase.from("stores").select("id").eq("vendor_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+      if (!store) {
+        setLoading(false);
+        return;
+      }
+      const { data } = await supabase
         .from("content_briefs")
-        .select(`
-          *,
-          applications:content_applications(count)
-        `)
+        .select("*, applications:content_applications(status)")
         .eq("store_id", store.id)
         .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setBriefs(data);
-      }
-      setIsLoading(false);
+      const ids = (data || []).map((b) => b.id);
+      const { data: payments } = ids.length ? await supabase.from("content_payments").select("brief_id").in("brief_id", ids) : { data: [] as any[] };
+      const paid = new Set((payments || []).map((p) => p.brief_id));
+      const rows = (data || []).map((brief) => {
+        const state = sellerBriefState(brief, paid.has(brief.id));
+        const pending = (brief.applications || []).filter((a: any) => a.status === "pending").length;
+        return { ...brief, state, pending, total: (brief.applications || []).length, action: sellerNeedsAction(state, pending) };
+      });
+      setBriefs(rows.sort((a, b) => Number(b.action) - Number(a.action) || PRIORITY[a.state as SellerBriefState] - PRIORITY[b.state as SellerBriefState]));
+      setLoading(false);
     }
-
-    fetchBriefs();
+    load();
   }, [supabase]);
 
-  const filteredBriefs = briefs.filter(brief => {
-    const matchesSearch = brief.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === "all" || 
-      (activeTab === "active" && ["published", "assigned", "in_progress", "delivered"].includes(brief.status)) ||
-      (activeTab === "completed" && brief.status === "completed") ||
-      (activeTab === "draft" && brief.status === "draft");
-    return matchesSearch && matchesTab;
-  });
+  if (loading) return <PageSkeleton />;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "published": return <Badge className="bg-blue-500">{tr("status_published")}</Badge>;
-      case "cancelled": return <Badge variant="outline">{tr("status_cancelled")}</Badge>;
-      case "assigned": return <Badge className="bg-purple-500">{tr("status_assigned")}</Badge>;
-      case "in_progress": return <Badge className="bg-orange-500">{tr("status_in_progress")}</Badge>;
-      case "delivered": return <Badge className="bg-emerald-500">{tr("status_delivered")}</Badge>;
-      case "completed": return <Badge className="bg-gray-500">{tr("status_completed")}</Badge>;
-      case "draft": return <Badge variant="outline">{tr("status_draft")}</Badge>;
-      default: return <Badge variant="outline">{status}</Badge>;
-    }
+  const inTab = (key: string) => {
+    if (key === "todo") return briefs.filter((b) => b.action);
+    const states = TABS.find((item) => item.key === key)?.states;
+    return states ? briefs.filter((b) => states.includes(b.state)) : briefs;
+  };
+  const needle = query.trim().toLowerCase();
+  const shown = inTab(tab).filter((b) => !needle || String(b.title || "").toLowerCase().includes(needle));
+  const todo = inTab("todo").length;
+  const dateLocale = locale === "ar" ? "ar-TN" : "fr-FR";
+  const newBrief = <><Plus className="h-4 w-4" />{tr("new")}</>;
+
+  const actionLabel = (b: any) => {
+    if (b.state === "open" && b.pending > 0) return u(b.pending > 1 ? "action_choose_many" : "action_choose_one").replace("{count}", String(b.pending));
+    if (b.state === "pay") return u("action_pay");
+    if (b.state === "review") return u("action_review");
+    return "";
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">{tr("title")}</h1>
-            <p className="text-muted-foreground">{tr("subtitle")}</p>
-          </div>
-          <Button 
-            onClick={() => router.push("/seller/content/create-brief")}
-            className="bg-gradient-to-r from-violet-500 to-purple-600"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {tr("new")}
-          </Button>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder={tr("search")} 
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-            <TabsList>
-              <TabsTrigger value="all">{tr("tab_all")}</TabsTrigger>
-              <TabsTrigger value="active">{tr("tab_active")}</TabsTrigger>
-              <TabsTrigger value="completed">{tr("tab_done")}</TabsTrigger>
-              <TabsTrigger value="draft">{tr("tab_draft")}</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
-        ) : filteredBriefs.length === 0 ? (
-          <Card className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-              <MessageSquare className="w-10 h-10 text-muted-foreground opacity-20" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">{tr("empty_title")}</h3>
-            <p className="text-muted-foreground max-w-sm mb-6">
-              {tr("empty_text")}
-            </p>
-            <Button onClick={() => router.push("/seller/content/create-brief")}>
-              {tr("empty_cta")}
-            </Button>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {filteredBriefs.map((brief) => (
-              <Card 
-                key={brief.id} 
-                className="hover:shadow-md transition-all cursor-pointer group border-border/50"
-                onClick={() => router.push(`/seller/content/briefs/${brief.id}`)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row justify-between gap-6">
-                    <div className="flex-1 space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
-                            {brief.title}
-                          </h3>
-                          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <Badge variant="secondary">{brief.content_type}</Badge>
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {tr("deadline")} : {format(new Date(brief.deadline), "dd/MM/yyyy")}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
-                              {brief.applications?.[0]?.count || 0} {tr("applications")}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {getStatusBadge(brief.status)}
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <p className="text-muted-foreground line-clamp-2 text-sm">
-                        {brief.description}
-                      </p>
-
-                      <div className="flex items-center gap-4 pt-2">
-                        <div className="flex items-center gap-1 text-sm font-semibold">
-                          <span className="text-muted-foreground font-normal">{tr("budget")} :</span>
-                          {formatPrice(brief.budget_min || 0)} – {formatPrice(brief.budget_max || 0)}
-                        </div>
-                        {brief.preferred_city && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <AlertCircle className="w-4 h-4" />
-                            {brief.preferred_city}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex md:flex-col justify-between items-center md:items-end gap-4 min-w-[150px]">
-                      <div className="text-right hidden md:block">
-                        <p className="text-xs text-muted-foreground mb-1">{tr("created")}</p>
-                        <p className="text-sm font-medium">{format(new Date(brief.created_at), "dd/MM/yyyy")}</p>
-                      </div>
-                      <Button variant="ghost" className="group-hover:translate-x-1 transition-transform">
-                        {tr("details")}
-                        <ArrowRight className="ml-2 w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHero
+        title={tr("title")}
+        subtitle={todo > 0 ? u(todo > 1 ? "todo_many" : "todo_one").replace("{count}", String(todo)) : tr("subtitle")}
+        action={briefs.length > 0 ? <HeroLink href="/seller/content/create-brief">{newBrief}</HeroLink> : undefined}
+      >
+        {briefs.length > 0 && (
+          <div className="relative mt-6 max-w-xl">
+            <Search className="absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("search")} className="h-12 w-full rounded-xl border border-white/15 bg-white/10 pe-4 ps-11 text-sm font-semibold text-white outline-none placeholder:text-slate-300 focus:border-white/40" />
           </div>
         )}
-      </div>
+      </PageHero>
+
+      {briefs.length === 0 ? (
+        <EmptyState icon={Sparkles} title={tr("empty_title")} text={tr("empty_text")} action={<PrimaryLink href="/seller/content/create-brief">{newBrief}</PrimaryLink>} />
+      ) : (
+        <>
+          <ChipRow>
+            {TABS.map(({ key }) => (
+              <FilterChip key={key} active={tab === key} onClick={() => setTab(key)}>
+                {u(`tab_${key}`)}
+                <span className={`rounded-full px-1.5 text-xs ${tab === key ? "bg-white/20" : "bg-gray-100"}`}>{inTab(key).length}</span>
+              </FilterChip>
+            ))}
+          </ChipRow>
+
+          {shown.length === 0 ? (
+            <EmptyState icon={Search} title={u("no_result")} />
+          ) : (
+            <div className="space-y-3">
+              {shown.map((brief) => {
+                const action = actionLabel(brief);
+                return (
+                  <Link key={brief.id} href={`/seller/content/briefs/${brief.id}`} className={`group block rounded-2xl border bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${brief.action ? "border-primary/40" : "border-gray-200"}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0">
+                        <h2 className="truncate text-lg font-black text-gray-900 transition-colors group-hover:text-primary">{brief.title}</h2>
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                          {brief.content_type && <span>{t(`seller_app.create_brief.types.${brief.content_type}`)}</span>}
+                          {budget(brief) && <span className="font-bold text-gray-900">{budget(brief)}</span>}
+                          {brief.deadline && <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{new Date(brief.deadline).toLocaleDateString(dateLocale, { day: "numeric", month: "short" })}</span>}
+                          <span className="inline-flex items-center gap-1"><Users className="h-3.5 w-3.5" />{u(brief.total === 1 ? "applications_one" : "applications_many").replace("{count}", String(brief.total))}</span>
+                        </p>
+                      </div>
+                      <span className={`shrink-0 self-start rounded-full px-2.5 py-1 text-[11px] font-bold ${SELLER_BRIEF_TONES[brief.state as SellerBriefState]}`}>{u(`state_${brief.state}`)}</span>
+                    </div>
+                    <div className="mt-4 flex items-center justify-end">
+                      {action ? (
+                        <span className="inline-flex h-9 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-black text-white">
+                          {action}
+                          <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-sm font-bold text-primary">
+                          {tr("details")}
+                          <ArrowRight className="h-4 w-4 rtl:rotate-180" />
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

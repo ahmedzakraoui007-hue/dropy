@@ -3,30 +3,28 @@
 import { useTranslation } from "@/context/LanguageContext";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Camera, 
-  Video, 
-  Users, 
-  Palette, 
-  FileText, 
-  ArrowLeft,
+import {
+  Camera,
+  Video,
+  Users,
+  Palette,
+  FileText,
   Calendar as CalendarIcon,
   DollarSign,
   MapPin,
-  CheckCircle2,
-  AlertCircle
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FileUpload } from "@/components/ui/file-upload";
@@ -37,6 +35,7 @@ import { toast } from "sonner";
 import { useQuota } from "@/hooks/use-quota";
 import { QuotaAlert } from "@/components/ui/quota-alert";
 import { cn } from "@/lib/utils";
+import { BackLink } from "@/components/cockpit/ui";
 
 const CONTENT_TYPES = [
   { id: "photography", label: "Photo", icon: Camera, color: "text-blue-500" },
@@ -59,7 +58,7 @@ export default function CreateBriefPage() {
   const { plan, usage, limits, loading: quotaLoading, check } = useQuota();
   const supabase = createClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Form State
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -87,6 +86,11 @@ export default function CreateBriefPage() {
       return;
     }
 
+    if (deadline.getTime() < Date.now()) {
+      toast.error(tr("deadline_past"));
+      return;
+    }
+
     if (!check('maxBriefsPerMonth')) {
       toast.error(tr("limit_title"), {
         description: tr("limit_text").replace("{max}", String(limits.maxBriefsPerMonth))
@@ -97,7 +101,7 @@ export default function CreateBriefPage() {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Non connecté");
+      if (!user) throw new Error(tr("not_signed_in"));
 
       // Get store_id
       const { data: store } = await supabase
@@ -106,13 +110,13 @@ export default function CreateBriefPage() {
         .eq("vendor_id", user.id)
         .order("created_at", { ascending: true }).limit(1).maybeSingle();
 
-      if (!store) throw new Error("Boutique introuvable");
+      if (!store) throw new Error(tr("no_store"));
 
       const imageUrls: string[] = [];
       for (const file of referenceImages) {
         const path = `${user.id}/briefs/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
         const { error: uploadError } = await supabase.storage.from("store-assets").upload(path, file);
-        if (uploadError) throw new Error("Échec de l'envoi d'une image de référence");
+        if (uploadError) throw new Error(tr("upload_error"));
         imageUrls.push(supabase.storage.from("store-assets").getPublicUrl(path).data.publicUrl);
       }
 
@@ -151,37 +155,30 @@ export default function CreateBriefPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-5xl mx-auto px-4 pt-8 space-y-8">
+    <div className="pb-20">
+      <div className="mx-auto max-w-5xl space-y-6">
         {!quotaLoading && !check('maxBriefsPerMonth') && (
-          <QuotaAlert 
+          <QuotaAlert
             title={tr("limit_title")}
             description={tr("limit_text").replace("{max}", String(limits.maxBriefsPerMonth))}
             plan={plan}
           />
         )}
-        <Button 
-          variant="ghost" 
-          className="mb-6"
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
-          {tr("back")}
-        </Button>
+        <BackLink href="/seller/content/briefs" label={tr("back")} />
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{tr("title")}</h1>
-            <p className="text-muted-foreground">{tr("subtitle")}</p>
+            <h1 className="text-2xl font-black tracking-tight text-gray-900 md:text-3xl">{tr("title")}</h1>
+            <p className="mt-1 text-gray-500">{tr("subtitle")}</p>
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => router.push("/seller/content/briefs")}>
               {tr("cancel")}
             </Button>
-            <Button 
-              onClick={handleSubmit} 
+            <Button
+              onClick={handleSubmit}
               disabled={isSubmitting}
-              className="bg-gradient-to-r from-violet-500 to-purple-600"
+              className="bg-primary text-white"
             >
               {tr(isSubmitting ? "publishing" : "publish")}
             </Button>
@@ -198,18 +195,18 @@ export default function CreateBriefPage() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="title">{tr("project_title")} *</Label>
-                  <Input 
-                    id="title" 
+                  <Input
+                    id="title"
                     placeholder={tr("project_title_ph")}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="description">{tr("description")} *</Label>
-                  <Textarea 
-                    id="description" 
+                  <Textarea
+                    id="description"
                     placeholder={tr("description_ph")}
                     className="min-h-[150px]"
                     value={description}
@@ -226,8 +223,8 @@ export default function CreateBriefPage() {
                         onClick={() => setContentType(type.id)}
                         className={cn(
                           "flex flex-col items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
-                          contentType === type.id 
-                            ? "border-primary bg-primary/5" 
+                          contentType === type.id
+                            ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
                         )}
                       >
@@ -252,21 +249,21 @@ export default function CreateBriefPage() {
                     <div className="flex items-center gap-3">
                       <div className="relative flex-1">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input 
-                          id="budget-min" 
-                          type="number" 
+                        <Input
+                          id="budget-min"
+                          type="number"
                           placeholder={tr("min")}
                           className="pl-10"
                           value={budgetMin}
                           onChange={(e) => setBudgetMin(e.target.value)}
                         />
                       </div>
-                      <span className="text-muted-foreground">à</span>
+                      <span className="text-muted-foreground">-</span>
                       <div className="relative flex-1">
                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input 
-                          id="budget-max" 
-                          type="number" 
+                        <Input
+                          id="budget-max"
+                          type="number"
                           placeholder={tr("max")}
                           className="pl-10"
                           value={budgetMax}
@@ -277,8 +274,8 @@ export default function CreateBriefPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>{tr("deadline")} *</Label>
-                    <DatePicker 
-                      date={deadline} 
+                    <DatePicker
+                      date={deadline}
                       setDate={setDeadline}
                       placeholder={tr("deadline_ph")}
                     />
@@ -287,8 +284,8 @@ export default function CreateBriefPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="deliverables">{tr("deliverables")} *</Label>
-                  <Textarea 
-                    id="deliverables" 
+                  <Textarea
+                    id="deliverables"
                     placeholder={tr("deliverables_ph")}
                     value={deliverables}
                     onChange={(e) => setDeliverables(e.target.value)}
@@ -303,18 +300,18 @@ export default function CreateBriefPage() {
                 <CardDescription>{tr("rights_help")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <RadioGroup 
-                  defaultValue="posting" 
+                <RadioGroup
+                  defaultValue="posting"
                   value={rightsType}
                   onValueChange={setRightsType}
                   className="grid grid-cols-1 md:grid-cols-3 gap-4"
                 >
                   {RIGHTS_TYPES.map((type) => (
                     <div key={type.id}>
-                      <RadioGroupItem 
-                        value={type.id} 
-                        id={type.id} 
-                        className="peer sr-only" 
+                      <RadioGroupItem
+                        value={type.id}
+                        id={type.id}
+                        className="peer sr-only"
                       />
                       <Label
                         htmlFor={type.id}
@@ -333,8 +330,8 @@ export default function CreateBriefPage() {
                   <Label htmlFor="city">{tr("city")}</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input 
-                      id="city" 
+                    <Input
+                      id="city"
                       placeholder={tr("city_ph")}
                       className="pl-10"
                       value={preferredCity}
@@ -354,7 +351,7 @@ export default function CreateBriefPage() {
                 <CardDescription>{tr("products_help")}</CardDescription>
               </CardHeader>
               <CardContent>
-                <ProductSelector 
+                <ProductSelector
                   onSelected={setSelectedProducts}
                   maxSelection={5}
                 />
@@ -367,7 +364,7 @@ export default function CreateBriefPage() {
                 <CardDescription>{tr("references_help")}</CardDescription>
               </CardHeader>
               <CardContent>
-                <FileUpload 
+                <FileUpload
                   onFilesSelected={setReferenceImages}
                   maxFiles={5}
                 />
@@ -382,13 +379,6 @@ export default function CreateBriefPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {tr("escrow_help")}
-                </p>
-                <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-primary shrink-0" />
-                  <p className="text-sm font-medium">{tr("revisions")}</p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {tr("revisions_help")}
                 </p>
               </CardContent>
             </Card>

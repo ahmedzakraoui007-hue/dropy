@@ -1,256 +1,150 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { Download, ExternalLink, FileText, Film, Image as ImageIcon, Loader2, Search, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useTranslation } from "@/context/LanguageContext";
-import { useState, useEffect } from "react";
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  ExternalLink, 
-  Star,
-  FileText,
-  Image as ImageIcon,
-  Film,
-  MoreVertical,
-  Grid,
-  List as ListIcon
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
-import { format } from "date-fns";
+import { isVideoUrl } from "@/lib/portfolio";
+import { ChipRow, EmptyState, FilterChip, PageHero, PageSkeleton, PrimaryLink } from "@/components/cockpit/ui";
+
+const FILTERS = ["all", "image", "video", "favorite"] as const;
+
+function kind(item: any) {
+  const type = String(item.file_type || "");
+  if (type === "video" || type.startsWith("video/") || isVideoUrl(item.file_url)) return "video";
+  if (type === "image" || type.startsWith("image/")) return "image";
+  return "file";
+}
+
+function fileName(item: any) {
+  if (item.filename) return item.filename;
+  try {
+    return decodeURIComponent(new URL(item.file_url).pathname.split("/").pop() || "");
+  } catch {
+    return "";
+  }
+}
 
 export default function ContentLibraryPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const tr = (key: string) => t(`seller_app.library_page.${key}`);
-  const supabase = createClient();
-  const [isLoading, setIsLoading] = useState(true);
+  const u = (key: string) => t(`seller_app.ugc.${key}`);
+  const supabase = useMemo(() => createClient(), []);
+  const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchLibrary() {
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      const { data: store } = await supabase
-        .from("stores")
-        .select("id")
-        .eq("vendor_id", user.id)
-        .order("created_at", { ascending: true }).limit(1).maybeSingle();
-
-      if (!store) return;
-
-      const { data, error } = await supabase
-        .from("content_library")
-        .select("*")
-        .eq("store_id", store.id)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setItems(data);
+      const { data: store } = await supabase.from("stores").select("id").eq("vendor_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+      if (store) {
+        const { data } = await supabase.from("content_library").select("*, brief:content_briefs(title)").eq("store_id", store.id).order("created_at", { ascending: false });
+        setItems(data || []);
       }
-      setIsLoading(false);
+      setLoading(false);
     }
-
-    fetchLibrary();
+    load();
   }, [supabase]);
 
-  const filteredItems = items.filter(item => 
-    item.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.file_type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  if (loading) return <PageSkeleton />;
 
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <ImageIcon className="w-5 h-5 text-blue-500" />;
-    if (type.startsWith("video/")) return <Film className="w-5 h-5 text-purple-500" />;
-    return <FileText className="w-5 h-5 text-muted-foreground" />;
+  const toggleFavorite = async (item: any) => {
+    const next = !item.is_favorite;
+    setItems((list) => list.map((i) => (i.id === item.id ? { ...i, is_favorite: next } : i)));
+    const { error } = await supabase.from("content_library").update({ is_favorite: next }).eq("id", item.id);
+    if (error) {
+      setItems((list) => list.map((i) => (i.id === item.id ? { ...i, is_favorite: !next } : i)));
+      toast.error(u("error"));
+    }
   };
 
+  const remove = async (item: any) => {
+    if (!window.confirm(u("delete_confirm"))) return;
+    setBusy(item.id);
+    const { error } = await supabase.from("content_library").delete().eq("id", item.id);
+    setBusy(null);
+    if (error) toast.error(u("error"));
+    else setItems((list) => list.filter((i) => i.id !== item.id));
+  };
+
+  const needle = query.trim().toLowerCase();
+  const count = (key: string) => items.filter((item) => key === "all" || (key === "favorite" ? item.is_favorite : kind(item) === key)).length;
+  const shown = items.filter((item) => {
+    if (filter === "favorite" ? !item.is_favorite : filter !== "all" && kind(item) !== filter) return false;
+    return !needle || [fileName(item), item.brief?.title].some((v) => String(v || "").toLowerCase().includes(needle));
+  });
+  const dateLocale = locale === "ar" ? "ar-TN" : "fr-FR";
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">{tr("title")}</h1>
-            <p className="text-muted-foreground">{tr("subtitle")}</p>
-          </div>
-          <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-            <Button 
-              variant={viewMode === "grid" ? "secondary" : "ghost"} 
-              size="icon" 
-              onClick={() => setViewMode("grid")}
-              className="h-8 w-8"
-            >
-              <Grid className="w-4 h-4" />
-            </Button>
-            <Button 
-              variant={viewMode === "list" ? "secondary" : "ghost"} 
-              size="icon" 
-              onClick={() => setViewMode("list")}
-              className="h-8 w-8"
-            >
-              <ListIcon className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input 
-              placeholder={tr("search")}
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="w-4 h-4" />
-            Filtres
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <Card className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
-              <ImageIcon className="w-10 h-10 text-muted-foreground opacity-20" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">{tr("empty_title")}</h3>
-            <p className="text-muted-foreground max-w-sm">
-              {tr("empty_text")}
-            </p>
-          </Card>
-        ) : viewMode === "grid" ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-            {filteredItems.map((item) => (
-              <Card key={item.id} className="group overflow-hidden border-border/50 hover:border-primary/50 transition-all">
-                <div className="aspect-square relative bg-muted flex items-center justify-center">
-                  {item.thumbnail_url || item.file_url ? (
-                    <img 
-                      src={item.thumbnail_url || item.file_url} 
-                      alt={item.filename} 
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2">
-                      {getFileIcon(item.file_type)}
-                      <span className="text-[10px] text-muted-foreground font-medium uppercase">{item.file_type.split("/")[1]}</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button size="icon" variant="secondary" className="h-8 w-8">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" variant="secondary" className="h-8 w-8">
-                      <ExternalLink className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  {item.is_favorite && (
-                    <div className="absolute top-2 right-2">
-                      <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                    </div>
-                  )}
-                </div>
-                <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{item.filename}</p>
-                      <p className="text-[10px] text-muted-foreground uppercase">{item.file_type.split("/")[1]} • {(item.file_size / 1024 / 1024).toFixed(1)} MB</p>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="gap-2">
-                          <Download className="w-4 h-4" /> {tr("download")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2 text-destructive">
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="border rounded-xl overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-muted text-xs uppercase font-bold text-muted-foreground">
-                <tr>
-                  <th className="px-6 py-3">{tr("file")}</th>
-                  <th className="px-6 py-3">{tr("type")}</th>
-                  <th className="px-6 py-3">{tr("size")}</th>
-                  <th className="px-6 py-3">{tr("date")}</th>
-                  <th className="px-6 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredItems.map((item) => (
-                  <tr key={item.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
-                          {getFileIcon(item.file_type)}
-                        </div>
-                        <span className="text-sm font-medium">{item.filename}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge variant="outline" className="text-[10px] uppercase">
-                        {item.file_type.split("/")[1]}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {(item.file_size / 1024 / 1024).toFixed(1)} MB
-                    </td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">
-                      {format(new Date(item.created_at), "dd/MM/yyyy")}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2">
-                              <Download className="w-4 h-4" /> {tr("download")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <PageHero title={tr("title")} subtitle={items.length ? u(items.length > 1 ? "files_many" : "files_one").replace("{count}", String(items.length)) : tr("subtitle")}>
+        {items.length > 0 && (
+          <div className="relative mt-6 max-w-xl">
+            <Search className="absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-300" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={tr("search")} className="h-12 w-full rounded-xl border border-white/15 bg-white/10 pe-4 ps-11 text-sm font-semibold text-white outline-none placeholder:text-slate-300 focus:border-white/40" />
           </div>
         )}
-      </div>
+      </PageHero>
+
+      {items.length === 0 ? (
+        <EmptyState icon={ImageIcon} title={tr("empty_title")} text={tr("empty_text")} action={<PrimaryLink href="/seller/content/briefs">{u("see_briefs")}</PrimaryLink>} />
+      ) : (
+        <>
+          <ChipRow>
+            {FILTERS.map((key) => (
+              <FilterChip key={key} active={filter === key} onClick={() => setFilter(key)}>
+                {u(`filter_${key}`)}
+                <span className={`rounded-full px-1.5 text-xs ${filter === key ? "bg-white/20" : "bg-gray-100"}`}>{count(key)}</span>
+              </FilterChip>
+            ))}
+          </ChipRow>
+
+          {shown.length === 0 ? (
+            <EmptyState icon={Search} title={u("no_result")} />
+          ) : (
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+              {shown.map((item) => {
+                const type = kind(item);
+                const name = fileName(item);
+                return (
+                  <article key={item.id} className="group relative aspect-[4/5] overflow-hidden rounded-2xl bg-gray-100">
+                    {type === "video" ? (
+                      <video src={item.file_url} className="h-full w-full object-cover" muted loop playsInline preload="metadata" onMouseEnter={(e) => e.currentTarget.play().catch(() => {})} onMouseLeave={(e) => e.currentTarget.pause()} />
+                    ) : type === "image" ? (
+                      <img src={item.thumbnail_url || item.file_url} alt={name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-gray-300"><FileText className="h-10 w-10" /></span>
+                    )}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
+                    <button type="button" onClick={() => toggleFavorite(item)} aria-pressed={Boolean(item.is_favorite)} aria-label={u("favorite")} className="absolute start-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-700 transition-colors hover:bg-white">
+                      <Star className={`h-4 w-4 ${item.is_favorite ? "fill-amber-400 text-amber-400" : ""}`} />
+                    </button>
+                    <div className="absolute end-2 top-2 flex gap-1.5">
+                      <a href={item.file_url} target="_blank" rel="noopener noreferrer" aria-label={u("open")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-800 transition-colors hover:bg-white"><ExternalLink className="h-4 w-4" /></a>
+                      <a href={item.file_url} download={name || true} aria-label={tr("download")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-800 transition-colors hover:bg-white"><Download className="h-4 w-4" /></a>
+                      <button type="button" onClick={() => remove(item)} disabled={busy === item.id} aria-label={u("delete")} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-rose-600 transition-colors hover:bg-white">
+                        {busy === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 text-white">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-black">
+                        {type === "video" ? <Film className="h-3.5 w-3.5 shrink-0" /> : <ImageIcon className="h-3.5 w-3.5 shrink-0" />}
+                        <span className="truncate">{item.brief?.title || name}</span>
+                      </p>
+                      <p className="truncate text-xs text-white/75">{new Date(item.created_at).toLocaleDateString(dateLocale, { day: "numeric", month: "short", year: "numeric" })}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
