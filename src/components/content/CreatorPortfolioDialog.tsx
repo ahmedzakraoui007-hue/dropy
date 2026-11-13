@@ -5,9 +5,12 @@ import { ExternalLink, Image as ImageIcon, Instagram, Loader2, MapPin, Video } f
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { createClient } from "@/lib/supabase/client";
-import { portfolioCategoryLabel, isVideoUrl } from "@/lib/portfolio";
+import { portfolioCategoryKey, isVideoUrl } from "@/lib/portfolio";
+import { useTranslation } from "@/context/LanguageContext";
 
 export function CreatorPortfolioDialog({ creatorId, creatorName }: { creatorId: string; creatorName: string }) {
+  const { t } = useTranslation();
+  const d = (key: string) => t(`seller_app.portfolio_dialog.${key}`);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<any[]>([]);
@@ -36,12 +39,12 @@ export function CreatorPortfolioDialog({ creatorId, creatorName }: { creatorId: 
   return (
     <>
       <Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
-        Voir le portfolio
+        {d("open")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Portfolio de {creatorName}</DialogTitle>
+            <DialogTitle>{d("title").replace("{name}", creatorName)}</DialogTitle>
             <DialogDescription asChild>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
                 {profile?.city && (
@@ -67,7 +70,7 @@ export function CreatorPortfolioDialog({ creatorId, creatorName }: { creatorId: 
                     TikTok @{String(profile.tiktok_handle).replace(/^@/, "")}
                   </a>
                 )}
-                <span>{profile?.total_projects || 0} mission(s) Dropy terminée(s)</span>
+                <span>{d("projects").replace("{count}", String(profile?.total_projects || 0))}</span>
               </div>
             </DialogDescription>
           </DialogHeader>
@@ -77,7 +80,7 @@ export function CreatorPortfolioDialog({ creatorId, creatorName }: { creatorId: 
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
           ) : items.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground py-10">Ce créateur n&apos;a pas encore ajouté de réalisations.</p>
+            <p className="text-center text-sm text-muted-foreground py-10">{d("empty")}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {items.map((item) => {
@@ -105,7 +108,7 @@ export function CreatorPortfolioDialog({ creatorId, creatorName }: { creatorId: 
                           </a>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">{portfolioCategoryLabel(item.category)}</p>
+                      <p className="text-xs text-muted-foreground">{t(`creator_app.common.cat_${portfolioCategoryKey(item.category) || "general"}`)}</p>
                       {item.description && <p className="text-xs text-muted-foreground line-clamp-3">{item.description}</p>}
                     </div>
                   </div>

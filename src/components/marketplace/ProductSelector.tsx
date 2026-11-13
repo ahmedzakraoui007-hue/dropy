@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { createClient } from "@/lib/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -67,7 +67,7 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
           const formattedProducts = data.map(p => ({
             id: p.id,
             name: p.name,
-            image_url: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200",
+            image_url: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : "",
             price: p.selling_price
           }));
           setProducts(formattedProducts);
@@ -93,7 +93,7 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
     onSelected(products.filter(p => newSelectedIds.includes(p.id)));
   };
 
-  const filteredProducts = products.filter(p => 
+  const filteredProducts = products.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -141,11 +141,11 @@ export function ProductSelector({ onSelected, maxSelection = 5 }: ProductSelecto
                 )}
               >
                 <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
-                  <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                  {product.image_url ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" /> : null}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{product.name}</p>
-                  <p className="text-xs text-muted-foreground">{product.price} TND</p>
+                  <p className="text-xs text-muted-foreground">{formatPrice(Number(product.price || 0))}</p>
                 </div>
                 {selectedIds.includes(product.id) && (
                   <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
