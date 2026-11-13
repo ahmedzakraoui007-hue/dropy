@@ -87,7 +87,7 @@ export function FilterChip({ active, onClick, children }: { active: boolean; onC
 }
 
 export function ChipRow({ children }: { children: ReactNode }) {
-  return <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">{children}</div>;
+  return <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">{children}</div>;
 }
 
 export function Steps({ labels, reached }: { labels: string[]; reached: number }) {
