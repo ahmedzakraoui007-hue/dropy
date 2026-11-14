@@ -1652,13 +1652,13 @@ const Newsletter = ({ sectionId, config, storeId }: { sectionId: string, config:
 const Collections = ({ sectionId, config }: { sectionId: string, config: any }) => (
   <section className={`px-4 ${config.animation || 'fade-up'}`} style={getSectionStyle(config)}>
     <div className="max-w-7xl mx-auto">
-      {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-4xl font-black mb-12 text-center block" />}
-      <div className={`grid gap-6 grid-cols-1 sm:grid-cols-2 ${gridCols(config.columns, 3)}`}>
-        {(config.items || []).map((item: any, i: number) => (
-          <div key={i} className="group cursor-pointer relative overflow-hidden rounded-2xl aspect-[16/9]" onClick={() => navigateTo(item.link || '/shop')}>
+      {config.title && <EditableText tag="h2" sectionId={sectionId} field="title" text={config.title} className="text-3xl md:text-4xl font-black mb-8 md:mb-12 text-center block" />}
+      <div className={`grid gap-3 sm:gap-6 grid-cols-2 ${gridCols(config.columns, 3)}`}>
+        {(config.items || []).map((item: any, i: number, all: any[]) => (
+          <div key={i} className={`group cursor-pointer relative overflow-hidden rounded-2xl aspect-square sm:aspect-[16/9] ${all.length % 2 === 1 && i === all.length - 1 ? 'max-sm:col-span-2 max-sm:aspect-[2/1]' : ''}`} onClick={() => navigateTo(item.link || '/shop')}>
             <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.title} />
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-              <EditableText tag="h3" sectionId={sectionId} field={`items.${i}.title`} text={item.title} className="text-white text-2xl font-black block" />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center p-2">
+              <EditableText tag="h3" sectionId={sectionId} field={`items.${i}.title`} text={item.title} className="text-white text-lg sm:text-2xl font-black block text-center" />
             </div>
           </div>
         ))}
