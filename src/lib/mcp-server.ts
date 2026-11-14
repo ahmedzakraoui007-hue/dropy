@@ -621,6 +621,11 @@ const AGENCY_TOOLS: Record<string, { description: string; inputSchema: Record<st
         await ctx.admin.auth.admin.deleteUser(userId);
         throw new ToolError("Activation du compte impossible.");
       }
+      const { error: cleanupError } = await ctx.admin.from("stores").delete().eq("vendor_id", userId).is("agency_created_by", null);
+      if (cleanupError) {
+        await ctx.admin.auth.admin.deleteUser(userId);
+        throw new ToolError("Préparation de la boutique impossible.");
+      }
       const slug = await uniqueStoreSlug(ctx.admin, storeName);
       const { data: store, error: storeError } = await ctx.admin
         .from("stores")
