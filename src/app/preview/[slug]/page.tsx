@@ -2684,6 +2684,10 @@ export default function StorePreview({ params }: { params: Promise<{ slug: strin
   }, [currentPage, slug]);
 
   useEffect(() => {
+    if (store?.is_active === false && canSeeOffline) document.title = store.seo_title || store.name || document.title;
+  }, [store?.is_active, store?.seo_title, store?.name, canSeeOffline]);
+
+  useEffect(() => {
     if (!store) return;
     loadStoreTracking({ facebook: store.facebook_pixel_id, tiktok: store.tiktok_pixel_id, google: store.google_analytics_id });
   }, [store?.facebook_pixel_id, store?.tiktok_pixel_id, store?.google_analytics_id]);
