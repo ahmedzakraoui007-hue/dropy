@@ -159,5 +159,20 @@
     "minutes": "il y a {count} min",
     "hours": "il y a {count} h",
     "yesterday": "hier"
+  },
+  "reputation": {
+    "title": "Fiabilité du client",
+    "level_new": "Nouveau client",
+    "level_trusted": "Client fiable",
+    "level_watch": "À surveiller",
+    "level_risky": "Client à risque",
+    "delivered": "Livrées",
+    "refused": "Refusées",
+    "unreachable": "Injoignable",
+    "fake": "Fausses",
+    "hint_new": "Aucune commande précédente avec ce numéro sur Dropy.",
+    "hint_trusted": "Ce client a déjà reçu et payé ses colis.",
+    "hint_watch": "Appelez le client avant d'expédier.",
+    "hint_risky": "Demandez une confirmation ferme ou un acompte avant d'expédier."
   }
 }
