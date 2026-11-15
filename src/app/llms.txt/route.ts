@@ -116,6 +116,8 @@ async function platformLlms() {
     page("/createurs", "Créateurs UGC", "missions de contenu rémunérées"),
     page("/outils", "Outils gratuits", "TVA, prix de vente, marge, facture, lien WhatsApp, QR code"),
     page("/faq", "FAQ", "questions fréquentes"),
+    page("/comparatif/dropy-vs-converty", "Dropy ou Converty", "comparatif factuel : prix, commissions, fonctions (vérifié le 15/11/2026)"),
+    page("/comparatif/dropy-vs-shopify", "Dropy ou Shopify en Tunisie", "comparatif factuel : abonnement, frais, Shopify Payments, arabe (vérifié le 15/11/2026)"),
     page("/contact", "Contact", "parler à l'équipe"),
   ];
   if (posts.length) {
