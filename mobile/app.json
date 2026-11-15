@@ -33,7 +33,8 @@
       [
         "expo-notifications",
         {
-          "color": "#7C3AED"
+          "color": "#7C3AED",
+          "sounds": ["./assets/sounds/cash.wav"]
         }
       ],
       "expo-font"
