@@ -4,7 +4,7 @@ export type OrderProtection = {
   blockDesktop: boolean;
 };
 
-export const RISK_FLAGS = ["repeat_phone", "previous_fake", "ip_burst"] as const;
+export const RISK_FLAGS = ["repeat_phone", "previous_fake", "ip_burst", "network_risky", "network_watch"] as const;
 export type RiskFlag = (typeof RISK_FLAGS)[number];
 
 const positive = (value: unknown) => {
