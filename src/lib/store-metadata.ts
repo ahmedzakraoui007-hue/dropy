@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
-import { storeUrl } from "@/lib/store-url";
+import { productPath, isUuid, storeUrl } from "@/lib/store-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 function anonClient() {
@@ -25,8 +25,17 @@ function storeVerification(store: { google_site_verification?: string | null; fa
   return Object.keys(result).length ? result : undefined;
 }
 
-export async function loadStoreProduct(storeSlug: string, productId: string) {
-  if (!/^[0-9a-f-]{36}$/i.test(productId)) return null;
+export function decodeProductKey(raw: string) {
+  try {
+    return decodeURIComponent(raw).trim().toLowerCase();
+  } catch {
+    return raw.trim().toLowerCase();
+  }
+}
+
+export async function loadStoreProduct(storeSlug: string, productKey: string) {
+  const key = decodeProductKey(productKey);
+  if (!key || key.length > 120) return null;
   const supabase = anonClient();
   const { data: store } = await supabase
     .from("stores")
@@ -36,9 +45,9 @@ export async function loadStoreProduct(storeSlug: string, productId: string) {
   if (!store || store.is_active === false) return null;
   const { data: product } = await supabase
     .from("store_products")
-    .select("id, name, description, images, selling_price, stock_quantity, has_variants, variants, is_active")
+    .select("id, slug, name, description, images, selling_price, stock_quantity, has_variants, variants, is_active")
     .eq("store_id", store.id)
-    .eq("id", productId)
+    .eq(isUuid(key) ? "id" : "slug", key)
     .eq("is_active", true)
     .maybeSingle();
   return product ? { store, product } : null;
@@ -78,7 +87,7 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
           ? `${product.name} بسعر ${price} د.ت لدى ${store.name}. الدفع عند الاستلام في كل ولايات تونس.`
           : `${product.name} à ${price} DT chez ${store.name}. Paiement à la livraison partout en Tunisie.`);
       const image = product.images?.[0] || store.logo_url || undefined;
-      const url = storeUrl(storeSlug, `/p/${product.id}`, domain);
+      const url = storeUrl(storeSlug, productPath(product), domain);
       return {
         title: { absolute: title },
         description,

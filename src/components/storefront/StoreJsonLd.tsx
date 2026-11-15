@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { loadStoreProduct, plainText, productInStock } from "@/lib/store-metadata";
-import { storeUrl } from "@/lib/store-url";
+import { productPath, storeUrl } from "@/lib/store-url";
 
 function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
@@ -43,7 +43,7 @@ export async function ProductJsonLd({ storeSlug, productId }: { storeSlug: strin
   if (!result) return null;
   const { store, product } = result;
   const domain = domainOf(store);
-  const productUrl = storeUrl(storeSlug, `/p/${product.id}`, domain);
+  const productUrl = storeUrl(storeSlug, productPath(product), domain);
   const price = Number(product.selling_price || 0);
 
   const { data: reviews } = await anonClient()

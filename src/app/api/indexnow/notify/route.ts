@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { submitToIndexNow } from "@/lib/indexnow";
 import { rateLimit } from "@/lib/rate-limit";
-import { SITE_URL, storeUrl } from "@/lib/store-url";
+import { SITE_URL, productPath, storeUrl } from "@/lib/store-url";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SYSTEM_PAGES = new Set(["home", "checkout", "cart", "panier", "merci", "track", "product-detail"]);
@@ -21,10 +21,10 @@ async function publicStore(admin: Admin, storeId: string) {
 
 async function urlsFor(admin: Admin, type: string, id: string): Promise<string[]> {
   if (type === "product") {
-    const { data } = await admin.from("store_products").select("id, store_id, is_active").eq("id", id).maybeSingle();
+    const { data } = await admin.from("store_products").select("id, slug, store_id, is_active").eq("id", id).maybeSingle();
     if (!data?.is_active) return [];
     const ctx = await publicStore(admin, data.store_id);
-    return ctx ? [ctx.url(`/p/${data.id}`)] : [];
+    return ctx ? [ctx.url(productPath(data))] : [];
   }
   if (type === "page") {
     const { data } = await admin.from("store_pages").select("store_id, slug, is_published, is_homepage, no_index").eq("id", id).maybeSingle();

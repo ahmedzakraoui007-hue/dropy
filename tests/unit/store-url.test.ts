@@ -39,3 +39,15 @@ describe("store URLs", () => {
     expect(isPlatformHost("boutique-lina.tn")).toBe(false);
   });
 });
+
+describe("product paths", () => {
+  it("prefers the slug and encodes it", async () => {
+    const { productPath, isUuid } = await load("dropy.store");
+    const id = "f403d037-94ca-4180-8ddf-830d79ff0299";
+    expect(isUuid(id)).toBe(true);
+    expect(isUuid("manteau-long-bleu-ciel")).toBe(false);
+    expect(productPath({ id, slug: "manteau-long-bleu-ciel" })).toBe("/p/manteau-long-bleu-ciel");
+    expect(productPath({ id, slug: null })).toBe(`/p/${id}`);
+    expect(productPath({ id, slug: "فستان-صيفي" })).toBe(`/p/${encodeURIComponent("فستان-صيفي")}`);
+  });
+});

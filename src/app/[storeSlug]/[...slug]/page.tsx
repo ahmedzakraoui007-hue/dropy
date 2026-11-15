@@ -1,5 +1,7 @@
 import StorePreview from "@/components/storefront/StoreView";
-import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { notFound, permanentRedirect } from "next/navigation";
+import { isPlatformHost, isUuid, productPath } from "@/lib/store-url";
 import { storeMetadata, storeSlugExists } from "@/lib/store-metadata";
 import { loadStorefront } from "@/lib/storefront-data";
 import { ProductJsonLd } from "@/components/storefront/StoreJsonLd";
@@ -14,6 +16,11 @@ export default async function StoreSubPage({ params }: { params: Promise<{ store
   const productId = slug?.[0] === "p" ? slug[1] : null;
   const initial = await loadStorefront(storeSlug, productId);
   if (!initial && !(await storeSlugExists(storeSlug))) notFound();
+  const product = initial?.product;
+  if (productId && product?.slug && isUuid(product.requestedKey) && product.slug !== product.requestedKey) {
+    const host = (await headers()).get("host");
+    permanentRedirect(`${isPlatformHost(host) ? `/${storeSlug}` : ""}${productPath({ id: product.id, slug: product.slug })}`);
+  }
   return (
     <>
       {productId && <ProductJsonLd storeSlug={storeSlug} productId={productId} />}

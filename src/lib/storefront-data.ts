@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { isUuid } from "@/lib/store-url";
+import { decodeProductKey } from "@/lib/store-metadata";
 
 export type StorefrontInitial = { store: Record<string, any>; pages: any[]; product?: Record<string, any> | null };
 
@@ -8,18 +10,21 @@ export async function loadStorefront(slug: string, productId?: string | null): P
   });
   const { data: store } = await supabase.from("stores").select("*").eq("slug", slug).maybeSingle();
   if (!store) return null;
-  const wantsProduct = Boolean(productId && /^[0-9a-f-]{36}$/i.test(productId));
+  const productKey = productId ? decodeProductKey(productId) : "";
+  const wantsProduct = Boolean(productKey && productKey.length <= 120);
   const [{ data: pages }, { data: nav }, { data: productRow }] = await Promise.all([
     supabase.from("store_pages").select("*").eq("store_id", store.id).eq("is_published", true).order("sort_order", { ascending: true }),
     supabase.from("store_navigation").select("type, items").eq("store_id", store.id),
     wantsProduct
-      ? supabase.from("store_products").select("*").eq("store_id", store.id).eq("id", productId!).eq("is_active", true).maybeSingle()
+      ? supabase.from("store_products").select("*").eq("store_id", store.id).eq(isUuid(productKey) ? "id" : "slug", productKey).eq("is_active", true).maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   const navItems = (type: string) => (nav || []).find((n: any) => n.type === type)?.items || [];
   const product = productRow
     ? {
         id: productRow.id,
+        slug: productRow.slug ?? null,
+        requestedKey: productKey,
         title: productRow.name,
         price: productRow.selling_price,
         description: productRow.description,
