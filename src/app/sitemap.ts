@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { SITE_URL, STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from "@/lib/store-url";
+import { SITE_URL, STORE_ROOT_DOMAIN, isPlatformHost, productPath, storeSlugFromHost, storeUrl } from "@/lib/store-url";
 import { storeSlugForHost } from "@/lib/custom-domain-lookup";
 import { publishedPosts } from "@/lib/blog";
 import { publicCreators } from "@/lib/creator-portfolio";
@@ -55,7 +55,7 @@ async function storeEntries(slugs?: string[]): Promise<MetadataRoute.Sitemap> {
   const ids = stores.map((s) => s.id);
   const [{ data: pages }, { data: products }] = await Promise.all([
     supabase.from("store_pages").select("store_id, slug, is_homepage, updated_at").in("store_id", ids).eq("is_published", true),
-    supabase.from("store_products").select("id, store_id, created_at").in("store_id", ids).eq("is_active", true),
+    supabase.from("store_products").select("id, slug, store_id, created_at").in("store_id", ids).eq("is_active", true),
   ]);
 
   const entries: MetadataRoute.Sitemap = [];
@@ -74,7 +74,7 @@ async function storeEntries(slugs?: string[]): Promise<MetadataRoute.Sitemap> {
     }
     for (const product of (products || []).filter((p) => p.store_id === store.id)) {
       entries.push({
-        url: storeUrl(store.slug, `/p/${product.id}`, domain),
+        url: storeUrl(store.slug, productPath(product), domain),
         lastModified: product.created_at ? new Date(product.created_at) : undefined,
         changeFrequency: "weekly",
         priority: 0.6,

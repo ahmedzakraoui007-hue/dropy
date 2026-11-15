@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { plainText } from "@/lib/store-metadata";
-import { storeUrl } from "@/lib/store-url";
+import { productPath, storeUrl } from "@/lib/store-url";
 
 export const revalidate = 3600;
 
@@ -29,7 +29,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
   const { data: products } = await supabase
     .from("store_products")
-    .select("id, name, description, images, selling_price, stock_quantity, category")
+    .select("id, slug, name, description, images, selling_price, stock_quantity, category")
     .eq("store_id", store.id)
     .eq("is_active", true)
     .order("created_at", { ascending: false })
@@ -45,7 +45,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
         `<g:id>${xml(p.id)}</g:id>`,
         `<g:title>${xml(p.name).slice(0, 150)}</g:title>`,
         `<g:description>${xml(plainText(p.description, 4900) || p.name)}</g:description>`,
-        `<g:link>${xml(storeUrl(store.slug, `/p/${p.id}`, store.custom_domain_status === "active" ? store.custom_domain : null))}</g:link>`,
+        `<g:link>${xml(storeUrl(store.slug, productPath(p), store.custom_domain_status === "active" ? store.custom_domain : null))}</g:link>`,
         `<g:image_link>${xml(images[0])}</g:image_link>`,
         ...images.slice(1, 10).map((img) => `<g:additional_image_link>${xml(img)}</g:additional_image_link>`),
         `<g:availability>${inStock ? "in stock" : "out of stock"}</g:availability>`,

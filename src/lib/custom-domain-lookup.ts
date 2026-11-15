@@ -4,6 +4,7 @@ const TTL_MS = 5 * 60 * 1000;
 const NEGATIVE_TTL_MS = 60 * 1000;
 const byDomain = new Map<string, Entry>();
 const bySlug = new Map<string, Entry>();
+const languageBySlug = new Map<string, Entry>();
 
 async function query(params: string): Promise<{ slug: string; custom_domain: string } | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -37,6 +38,31 @@ export function storeSlugForDomain(domain: string) {
 
 export function customDomainForSlug(slug: string) {
   return cached(bySlug, slug, async () => (await query(`slug=eq.${encodeURIComponent(slug)}`))?.custom_domain ?? null);
+}
+
+export function storeLanguageForSlug(slug: string) {
+  return cached(languageBySlug, slug, async () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) return null;
+    try {
+      const res = await fetch(`${url}/rest/v1/stores?select=storefront_language&slug=eq.${encodeURIComponent(slug)}&limit=1`, {
+        headers: { apikey: key, Authorization: `Bearer ${key}` },
+        cache: "no-store",
+      });
+      if (!res.ok) return null;
+      const rows = (await res.json()) as { storefront_language: string | null }[];
+      return rows[0] ? rows[0].storefront_language || "fr" : null;
+    } catch {
+      return null;
+    }
+  });
+}
+
+export function contentLanguage(setting: string | null) {
+  if (setting === "ar") return "ar-TN";
+  if (setting === "both") return "fr-TN, ar-TN";
+  return setting ? "fr-TN" : null;
 }
 
 export async function storeSlugForHost(host: string | null | undefined, slugFromSubdomain: (h: string | null | undefined) => string | null, isPlatform: (h: string | null | undefined) => boolean) {

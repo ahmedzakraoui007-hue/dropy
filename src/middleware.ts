@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { RESERVED_SLUGS } from '@/lib/store-slug';
 import { STORE_ROOT_DOMAIN, isPlatformHost, storeSlugFromHost, storeUrl } from '@/lib/store-url';
-import { customDomainForSlug, storeSlugForDomain } from '@/lib/custom-domain-lookup';
+import { contentLanguage, customDomainForSlug, storeLanguageForSlug, storeSlugForDomain } from '@/lib/custom-domain-lookup';
 
 const AREA_ROLE: Record<string, string> = { admin: 'admin', seller: 'seller', supplier: 'supplier', creator: 'creator', team: 'agent' };
 const ROLE_HOME: Record<string, string> = {
@@ -56,7 +56,10 @@ export async function middleware(request: NextRequest) {
       if (isAsset) return NextResponse.next();
       const url = request.nextUrl.clone();
       url.pathname = pathname === '/' ? `/${storeSlug}` : `/${storeSlug}${pathname}`;
-      return NextResponse.rewrite(url);
+      const response = NextResponse.rewrite(url);
+      const language = contentLanguage(await storeLanguageForSlug(storeSlug));
+      if (language) response.headers.set('Content-Language', language);
+      return response;
     }
 
     const host = hostname.split(':')[0].toLowerCase();

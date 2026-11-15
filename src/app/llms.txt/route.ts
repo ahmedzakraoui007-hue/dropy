@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { SITE_URL, isPlatformHost, storeSlugFromHost, storeUrl } from "@/lib/store-url";
+import { SITE_URL, isPlatformHost, productPath, storeSlugFromHost, storeUrl } from "@/lib/store-url";
 import { storeSlugForHost } from "@/lib/custom-domain-lookup";
 import { publishedPosts } from "@/lib/blog";
 import { plainText, productInStock } from "@/lib/store-metadata";
@@ -37,7 +37,7 @@ async function storeLlms(slug: string) {
   const [{ data: products }, { data: pages }] = await Promise.all([
     supabase
       .from("store_products")
-      .select("id, name, description, selling_price, compare_at_price, stock_quantity, has_variants, variants")
+      .select("id, slug, name, description, selling_price, compare_at_price, stock_quantity, has_variants, variants")
       .eq("store_id", store.id)
       .eq("is_active", true)
       .order("position", { ascending: true, nullsFirst: false })
@@ -72,7 +72,7 @@ async function storeLlms(slug: string) {
       const compare = Number(p.compare_at_price) > Number(p.selling_price) ? ` (au lieu de ${money(p.compare_at_price)})` : "";
       const stock = productInStock(p) ? "" : " — épuisé";
       const desc = line(plainText(p.description, 160));
-      out.push(`- [${line(p.name)}](${url(`/p/${p.id}`)}) : ${money(p.selling_price)}${compare}${stock}${desc ? `. ${desc}` : ""}`);
+      out.push(`- [${line(p.name)}](${url(productPath(p))}) : ${money(p.selling_price)}${compare}${stock}${desc ? `. ${desc}` : ""}`);
     }
   }
 

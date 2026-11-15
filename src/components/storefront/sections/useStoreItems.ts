@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { productPath } from "@/lib/store-url";
 
 export type ShowcaseItem = { image: string; title?: string; price?: number | string; compareAt?: number | null; link?: string; video?: string };
 
@@ -17,7 +18,7 @@ export function useStoreItems(config: any, storeId?: string, limit = 8) {
     }
     createClient()
       .from("store_products")
-      .select("id, name, images, selling_price, compare_at_price")
+      .select("id, slug, name, images, selling_price, compare_at_price")
       .eq("store_id", storeId)
       .eq("is_active", true)
       .order("created_at", { ascending: false })
@@ -25,7 +26,7 @@ export function useStoreItems(config: any, storeId?: string, limit = 8) {
       .then(({ data }) => {
         const fromStore = (data || [])
           .filter((p: any) => Array.isArray(p.images) && p.images[0])
-          .map((p: any) => ({ image: p.images[0], title: p.name, price: p.selling_price, compareAt: p.compare_at_price, link: `/p/${p.id}` }));
+          .map((p: any) => ({ image: p.images[0], title: p.name, price: p.selling_price, compareAt: p.compare_at_price, link: productPath(p) }));
         setItems(fromStore.length ? fromStore : manual);
       });
   }, [storeId, useStore, config.limit, JSON.stringify(config.items || [])]);

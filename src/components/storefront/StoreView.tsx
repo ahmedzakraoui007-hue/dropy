@@ -18,7 +18,7 @@ import { customerConfirmationMessage, whatsappLink } from "@/lib/order-messages"
 import { TurnstileWidget } from "@/components/storefront/TurnstileWidget";
 import { ExpressOrderForm } from "@/components/storefront/ExpressOrderForm";
 import { SectionIcon } from "@/components/storefront/SectionIcon";
-import { storeBasePath } from "@/lib/store-url";
+import { isUuid, storeBasePath } from "@/lib/store-url";
 import type { StorefrontInitial } from "@/lib/storefront-data";
 import { responsiveImage } from "@/lib/image-src";
 import { loadStoreTracking, trackStoreEvent } from "@/lib/storefront-tracking";
@@ -677,13 +677,14 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
       setLoading(true);
       const supabase = createClient();
       let query = supabase.from("store_products").select("*").eq("store_id", storeId).eq("is_active", true);
-      query = wantedId ? query.eq("id", wantedId) : query.order("created_at", { ascending: false }).limit(1);
+      query = wantedId ? query.eq(isUuid(wantedId) ? "id" : "slug", String(wantedId).toLowerCase()) : query.order("created_at", { ascending: false }).limit(1);
       query
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
             setProduct({
               id: data.id,
+              slug: data.slug,
               title: data.name,
               price: data.selling_price,
               description: data.description,
@@ -1038,6 +1039,7 @@ const Products = ({ sectionId, config, onAddToCart, storeId, onSelectProduct, ex
           if (data) {
             setStoreProducts(data.map(p => ({
               id: p.id,
+              slug: p.slug,
               title: p.name,
               price: p.selling_price,
               image: p.images?.[0] || placeholders[0],
@@ -1211,6 +1213,7 @@ const RecommendedProducts = ({ sectionId, config, onAddToCart, storeId, onSelect
           if (data) {
             setStoreProducts(data.map(p => ({
               id: p.id,
+              slug: p.slug,
               title: p.name,
               price: p.selling_price,
               image: p.images?.[0] || placeholders[0],
@@ -2574,7 +2577,7 @@ export default function StorePreview({ params, initial, initialPath }: { params:
     const [cart, setCart] = useState<any[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const hasReceivedInitialUpdate = useRef(false);
-    const [selectedProduct, setSelectedProduct] = useState<any>(initial && start.productId ? (initial.product?.id === start.productId ? initial.product : { id: start.productId }) : null);
+    const [selectedProduct, setSelectedProduct] = useState<any>(initial && start.productId ? ([initial.product?.id, initial.product?.slug, initial.product?.requestedKey].includes(start.productId.toLowerCase()) ? initial.product : { id: start.productId }) : null);
 
     useEffect(() => {
       const applyLocation = () => {
@@ -2582,7 +2585,7 @@ export default function StorePreview({ params, initial, initialPath }: { params:
         const rest = window.location.pathname.slice(base.length).split("/").filter(Boolean).map(decodeURIComponent).join("/");
         const productMatch = rest.match(/^p\/([^/]+)$/);
         if (productMatch) {
-          setSelectedProduct((prev: any) => (prev?.id === productMatch[1] ? prev : { id: productMatch[1] }));
+          setSelectedProduct((prev: any) => (prev && [prev.id, prev.slug].includes(productMatch[1]) ? prev : { id: productMatch[1] }));
           setCurrentPage("product-detail");
         } else {
           setCurrentPage(rest || "home");
@@ -2599,12 +2602,12 @@ export default function StorePreview({ params, initial, initialPath }: { params:
       let target = base || "/";
       if (currentPage === "product-detail") {
         if (!selectedProduct?.id) return;
-        target = `${base}/p/${selectedProduct.id}`;
+        target = `${base}/p/${encodeURIComponent(selectedProduct.slug || selectedProduct.id)}`;
       } else if (currentPage && currentPage !== "home") {
         target = `${base}/${currentPage}`;
       }
       if (window.location.pathname !== target) window.history.pushState(null, "", target);
-    }, [currentPage, slug, selectedProduct?.id]);
+    }, [currentPage, slug, selectedProduct?.id, selectedProduct?.slug]);
 
       useEffect(() => {
         const savedCart = localStorage.getItem(`cart_${slug}`);

@@ -5,7 +5,7 @@ import { hashMcpToken } from "@/lib/mcp-tokens";
 import { themeHomeSections, themes } from "@/lib/themes";
 import { importCatalogProductIntoStore, CATALOG_IMPORT_MESSAGES } from "@/lib/catalog-import";
 import { normalizeOffers } from "@/lib/store-pricing";
-import { storeUrl } from "@/lib/store-url";
+import { productPath, storeUrl } from "@/lib/store-url";
 import { uniqueStoreSlug } from "@/lib/store-slug-server";
 import { STORE_NICHES, generateStore } from "@/lib/store-generator";
 
@@ -381,10 +381,10 @@ const TOOLS: Record<string, { description: string; inputSchema: Record<string, u
     run: async (ctx) => {
       const { data } = await ctx.admin
         .from("store_products")
-        .select("id, name, selling_price, stock_quantity, is_active, is_dropship, category")
+        .select("id, slug, name, selling_price, stock_quantity, is_active, is_dropship, category")
         .eq("store_id", ctx.store.id)
         .order("created_at", { ascending: false });
-      return (data || []).map((p) => ({ ...p, url: storeUrl(ctx.store.slug, `/p/${p.id}`) }));
+      return (data || []).map((p) => ({ ...p, url: storeUrl(ctx.store.slug, productPath(p)) }));
     },
   },
   update_product: {

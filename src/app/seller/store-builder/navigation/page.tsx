@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { productPath } from "@/lib/store-url";
 import { useEffect, useMemo, useState } from "react";
 import { Reorder } from "framer-motion";
 import { toast } from "sonner";
@@ -28,7 +29,7 @@ export default function NavigationPage() {
   const [saving, setSaving] = useState(false);
   const [store, setStore] = useState<any>(null);
   const [pages, setPages] = useState<any[]>([]);
-  const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+  const [products, setProducts] = useState<{ id: string; slug?: string | null; name: string }[]>([]);
   const [menus, setMenus] = useState<Record<Kind, MenuState>>({ header: { items: [], custom: false }, footer: { items: [], custom: false } });
   const [dirty, setDirty] = useState(false);
 
@@ -49,7 +50,7 @@ export default function NavigationPage() {
       const [{ data: pagesData }, { data: navData }, { data: productData }] = await Promise.all([
         supabase.from("store_pages").select("id, slug, title, is_homepage, is_published, show_in_navigation, sort_order").eq("store_id", storeData.id).order("sort_order", { ascending: true }),
         supabase.from("store_navigation").select("type, items").eq("store_id", storeData.id),
-        supabase.from("store_products").select("id, name").eq("store_id", storeData.id).eq("is_active", true).order("created_at", { ascending: false }).limit(200),
+        supabase.from("store_products").select("id, slug, name").eq("store_id", storeData.id).eq("is_active", true).order("created_at", { ascending: false }).limit(200),
       ]);
       const pageList = pagesData || [];
       const st = storeText(storeData.storefront_language === "ar" ? "ar" : "fr");
@@ -75,7 +76,7 @@ export default function NavigationPage() {
         .filter((p) => p.slug && !p.is_homepage && p.slug !== "shop" && p.slug !== "home")
         .map((p) => ({ value: `/${p.slug}`, label: p.title || p.name || p.slug })),
     ];
-    const productOptions: Option[] = products.map((p) => ({ value: `/p/${p.id}`, label: p.name }));
+    const productOptions: Option[] = products.map((p) => ({ value: productPath(p), label: p.name }));
     return { pageOptions, productOptions };
   }, [pages, products, t]);
 

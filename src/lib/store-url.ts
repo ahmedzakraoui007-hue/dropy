@@ -42,8 +42,19 @@ export function storeBasePath(slug: string, pathname: string, hostname: string) 
   return `/${slug}`;
 }
 
-export function productPath(productId: string) {
-  return `/p/${productId}`;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown) {
+  return typeof value === "string" && UUID_REGEX.test(value);
+}
+
+export function productKey(product: { id: string; slug?: string | null }) {
+  return product.slug || product.id;
+}
+
+export function productPath(product: { id: string; slug?: string | null } | string) {
+  const key = typeof product === "string" ? product : productKey(product);
+  return `/p/${encodeURIComponent(key)}`;
 }
 
 export function storeViewHref(slug: string, isActive: boolean | null | undefined, customDomain?: string | null) {
