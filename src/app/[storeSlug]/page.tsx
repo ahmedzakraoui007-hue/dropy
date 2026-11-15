@@ -2,6 +2,7 @@ import StorePreview from "@/components/storefront/StoreView";
 import { notFound } from "next/navigation";
 import { storeMetadata, storeSlugExists } from "@/lib/store-metadata";
 import { loadStorefront } from "@/lib/storefront-data";
+import { StoreJsonLd } from "@/components/storefront/StoreJsonLd";
 
 export async function generateMetadata({ params }: { params: Promise<{ storeSlug: string }> }) {
   const { storeSlug } = await params;
@@ -12,5 +13,10 @@ export default async function StorePage({ params }: { params: Promise<{ storeSlu
   const { storeSlug } = await params;
   const initial = await loadStorefront(storeSlug);
   if (!initial && !(await storeSlugExists(storeSlug))) notFound();
-  return <StorePreview params={Promise.resolve({ slug: storeSlug })} initial={initial} initialPath={[]} />;
+  return (
+    <>
+      {initial && <StoreJsonLd store={initial.store} />}
+      <StorePreview params={Promise.resolve({ slug: storeSlug })} initial={initial} initialPath={[]} />
+    </>
+  );
 }

@@ -11,9 +11,9 @@ export async function generateMetadata({ params }: { params: Promise<{ storeSlug
 
 export default async function StoreSubPage({ params }: { params: Promise<{ storeSlug: string; slug: string[] }> }) {
   const { storeSlug, slug } = await params;
-  const initial = await loadStorefront(storeSlug);
-  if (!initial && !(await storeSlugExists(storeSlug))) notFound();
   const productId = slug?.[0] === "p" ? slug[1] : null;
+  const initial = await loadStorefront(storeSlug, productId);
+  if (!initial && !(await storeSlugExists(storeSlug))) notFound();
   return (
     <>
       {productId && <ProductJsonLd storeSlug={storeSlug} productId={productId} />}

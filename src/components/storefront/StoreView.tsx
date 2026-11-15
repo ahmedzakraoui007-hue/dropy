@@ -671,7 +671,9 @@ const ProductDetail = ({ sectionId, config, onAddToCart, selectedProduct, storeI
 
   useEffect(() => {
     const wantedId = selectedProduct?.id || config.productId;
-    if (storeId && (wantedId || !selectedProduct)) {
+    if (selectedProduct?.prefetched) {
+      setProduct(selectedProduct);
+    } else if (storeId && (wantedId || !selectedProduct)) {
       setLoading(true);
       const supabase = createClient();
       let query = supabase.from("store_products").select("*").eq("store_id", storeId).eq("is_active", true);
@@ -2572,7 +2574,7 @@ export default function StorePreview({ params, initial, initialPath }: { params:
     const [cart, setCart] = useState<any[]>([]);
     const [isCartOpen, setIsCartOpen] = useState(false);
     const hasReceivedInitialUpdate = useRef(false);
-    const [selectedProduct, setSelectedProduct] = useState<any>(initial && start.productId ? { id: start.productId } : null);
+    const [selectedProduct, setSelectedProduct] = useState<any>(initial && start.productId ? (initial.product?.id === start.productId ? initial.product : { id: start.productId }) : null);
 
     useEffect(() => {
       const applyLocation = () => {

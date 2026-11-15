@@ -30,13 +30,13 @@ export async function loadStoreProduct(storeSlug: string, productId: string) {
   const supabase = anonClient();
   const { data: store } = await supabase
     .from("stores")
-    .select("id, name, slug, logo_url, is_active, custom_domain, custom_domain_status")
+    .select("id, name, slug, logo_url, is_active, custom_domain, custom_domain_status, delivery_fee, free_delivery_threshold")
     .eq("slug", storeSlug)
     .maybeSingle();
   if (!store || store.is_active === false) return null;
   const { data: product } = await supabase
     .from("store_products")
-    .select("id, name, description, images, selling_price, stock_quantity, is_active")
+    .select("id, name, description, images, selling_price, stock_quantity, has_variants, variants, is_active")
     .eq("store_id", store.id)
     .eq("id", productId)
     .eq("is_active", true)
@@ -119,4 +119,13 @@ export async function storeMetadata(storeSlug: string, path: string[] = []): Pro
     icons: store.logo_url ? { icon: store.logo_url } : undefined,
     verification,
   };
+}
+
+export function productInStock(product: { stock_quantity?: number | string | null; has_variants?: boolean | null; variants?: unknown }) {
+  if (product.has_variants && Array.isArray(product.variants) && product.variants.length) {
+    const stocks = product.variants.map((v: any) => v?.stock);
+    if (stocks.some((s) => s === null || s === undefined)) return true;
+    return stocks.some((s) => Number(s) > 0);
+  }
+  return product.stock_quantity === null || product.stock_quantity === undefined || Number(product.stock_quantity) > 0;
 }
