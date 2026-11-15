@@ -6,6 +6,7 @@ const compat = new FlatCompat({
 })
  
 const eslintConfig = [
+  { ignores: ['mobile/**'] },
   ...compat.config({
     extends: ['next'],
     plugins: ['import'],

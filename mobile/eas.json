@@ -1,0 +1,42 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ybpfkbwwiuaqppiytvkb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicGZrYnd3aXVhcXBwaXl0dmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM2NTYsImV4cCI6MjA4MzMxOTY1Nn0.CGuvKKhW7RU_48TfqrTsFAnndeS9Fm8pFzWcgObf3DU",
+        "EXPO_PUBLIC_API_URL": "https://dropy.store",
+        "EXPO_PUBLIC_STORE_DOMAIN": "dropy.store"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ybpfkbwwiuaqppiytvkb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicGZrYnd3aXVhcXBwaXl0dmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM2NTYsImV4cCI6MjA4MzMxOTY1Nn0.CGuvKKhW7RU_48TfqrTsFAnndeS9Fm8pFzWcgObf3DU",
+        "EXPO_PUBLIC_API_URL": "https://dropy.store",
+        "EXPO_PUBLIC_STORE_DOMAIN": "dropy.store"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://ybpfkbwwiuaqppiytvkb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlicGZrYnd3aXVhcXBwaXl0dmtiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDM2NTYsImV4cCI6MjA4MzMxOTY1Nn0.CGuvKKhW7RU_48TfqrTsFAnndeS9Fm8pFzWcgObf3DU",
+        "EXPO_PUBLIC_API_URL": "https://dropy.store",
+        "EXPO_PUBLIC_STORE_DOMAIN": "dropy.store"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
