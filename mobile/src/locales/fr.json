@@ -174,5 +174,24 @@
     "hint_trusted": "Ce client a déjà reçu et payé ses colis.",
     "hint_watch": "Appelez le client avant d'expédier.",
     "hint_risky": "Demandez une confirmation ferme ou un acompte avant d'expédier."
+  },
+  "leads": {
+    "title": "Paniers abandonnés",
+    "help": "Ces visiteurs ont laissé leur numéro sans valider leur commande. Un appel ou un WhatsApp rapide récupère souvent la vente.",
+    "filter_open": "À rappeler",
+    "filter_contacted": "Contactés",
+    "filter_converted": "Ont commandé",
+    "empty_open": "Personne à rappeler pour le moment.",
+    "empty_contacted": "Aucun client contacté.",
+    "empty_converted": "Aucune vente récupérée pour le moment.",
+    "empty_hint": "Dès qu'un visiteur saisit son numéro sans valider, il apparaît ici.",
+    "call": "Appeler",
+    "converted": "A commandé",
+    "dismiss": "Ignorer",
+    "load_error": "Impossible de charger les paniers abandonnés.",
+    "update_error": "Mise à jour impossible, réessayez.",
+    "whatsapp_message": "Bonjour {name}, ici la boutique {store}. Vous avez commencé une commande pour « {product} ». Souhaitez-vous la confirmer ? Nous livrons partout en Tunisie, paiement à la livraison.",
+    "banner": "{count} paniers abandonnés à relancer",
+    "banner_one": "1 panier abandonné à relancer"
   }
 }
