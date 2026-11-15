@@ -7,6 +7,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ReputationCard } from "@/components/Reputation";
 import { Button, Card, EmptyState, Loading, StatusPill, useToast } from "@/components/ui";
 import { dateTime, money, phoneDigits } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
@@ -104,6 +105,8 @@ export default function OrderDetail() {
             <Text style={s.riskText}>{t("order.risk")}</Text>
           </Card>
         ) : null}
+
+        <ReputationCard orderId={order.id} />
 
         <Card>
           <Text style={s.cardLabel}>{t("order.customer")}</Text>

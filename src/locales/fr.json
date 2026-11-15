@@ -1849,7 +1849,27 @@
             "flags": {
                 "repeat_phone": "Le même numéro a déjà une commande à confirmer aujourd'hui.",
                 "previous_fake": "Ce numéro a déjà eu une commande annulée comme fausse commande.",
-                "ip_burst": "3 commandes ou plus depuis la même adresse IP en moins d'une heure."
+                "ip_burst": "3 commandes ou plus depuis la même adresse IP en moins d'une heure.",
+                "network_risky": "Client à risque sur le réseau Dropy : fausses commandes ou colis refusés dans d'autres boutiques.",
+                "network_watch": "Ce client a déjà refusé un colis ou était injoignable dans une autre boutique Dropy."
+            },
+            "reputation": {
+                "title": "Fiabilité du client",
+                "subtitle": "Historique de ce numéro sur toutes les boutiques Dropy",
+                "level_new": "Nouveau client",
+                "level_trusted": "Client fiable",
+                "level_watch": "À surveiller",
+                "level_risky": "Client à risque",
+                "orders": "Commandes",
+                "delivered": "Livrées",
+                "refused": "Refusées",
+                "unreachable": "Injoignable",
+                "fake": "Fausses",
+                "stores": "Boutiques",
+                "hint_new": "Aucune commande précédente avec ce numéro.",
+                "hint_trusted": "Ce client a déjà reçu et payé ses colis.",
+                "hint_watch": "Appelez le client avant d'expédier.",
+                "hint_risky": "Demandez une confirmation ferme ou un acompte avant d'expédier."
             },
             "suspicious": "Suspecte",
             "block_customer": "Bloquer ce client",

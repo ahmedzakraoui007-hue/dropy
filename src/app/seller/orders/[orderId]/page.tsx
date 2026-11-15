@@ -3,6 +3,7 @@
 import { sellerConfirmationMessage, whatsappLink } from "@/lib/order-messages";
 import { useTranslation } from "@/context/LanguageContext";
 import { phoneKey } from "@/lib/order-protection";
+import { CustomerReputationCard } from "@/components/seller/orders/CustomerReputationCard";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -488,6 +489,8 @@ export default function OrderDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <CustomerReputationCard orderId={order.id} />
 
       {order.status === "new" && (
         <Card className="border-amber-300 bg-amber-50">

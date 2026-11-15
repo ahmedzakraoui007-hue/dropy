@@ -30,6 +30,7 @@ export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [notif, setNotif] = useState<"granted" | "denied" | "undetermined">("granted");
+  const [openLeads, setOpenLeads] = useState(0);
 
   const load = useCallback(async () => {
     if (!storeIds.length) return;
@@ -41,6 +42,8 @@ export default function Home() {
       supabase.from("store_orders").select("id", { count: "exact", head: true }).in("store_id", storeIds).in("status", ACTIVE),
     ]);
     const { count: pending } = await supabase.from("store_orders").select("id", { count: "exact", head: true }).in("store_id", storeIds).eq("status", "new");
+    const { count: leadCount } = await supabase.from("store_order_leads").select("id", { count: "exact", head: true }).in("store_id", storeIds).eq("status", "open");
+    setOpenLeads(leadCount || 0);
     const rows = (week || []).filter((o) => o.status !== "cancelled");
     const fmt = new Intl.DateTimeFormat(locale === "ar" ? "ar-TN" : "fr-FR", { weekday: "narrow" });
     const days = Array.from({ length: 7 }, (_, i) => {
@@ -120,6 +123,16 @@ export default function Home() {
             <Ionicons name="eye-off" size={20} color={colors.warning} />
             <Text style={[s.bannerText, { color: "#92400E" }]}>{t("home.store_offline")}</Text>
           </Card>
+        ) : null}
+
+        {openLeads > 0 ? (
+          <Pressable onPress={() => router.push("/leads")}>
+            <Card style={[s.banner, { backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }]}>
+              <Ionicons name="cart" size={20} color="#C2410C" />
+              <Text style={[s.bannerText, { color: "#9A3412" }]}>{openLeads === 1 ? t("leads.banner_one") : t("leads.banner", { count: openLeads })}</Text>
+              <Ionicons name="chevron-forward" size={18} color="#C2410C" />
+            </Card>
+          </Pressable>
         ) : null}
 
         {notif !== "granted" ? (

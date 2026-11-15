@@ -40,6 +40,7 @@ function Shell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="orders/[id]" options={{ title: t("tabs.orders") }} />
         <Stack.Screen name="products/[id]" options={{ title: t("product.title") }} />
+        <Stack.Screen name="leads" options={{ title: t("leads.title") }} />
       </Stack>
     </View>
   );

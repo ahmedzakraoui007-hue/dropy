@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendPushToUser } from "@/lib/push";
+import { customerReputation } from "@/lib/customer-reputation";
 import { deliveryFeeFor, discountedUnitPrice, normalizeOffers } from "@/lib/store-pricing";
 import { checkExtras, extrasFromInput, normalizeCheckout, orderNotes } from "@/lib/checkout-settings";
 import { normalizeUpsell } from "@/lib/product-sales";
@@ -277,6 +278,9 @@ export async function createStoreOrder(input: OrderInput): Promise<OrderResult> 
       .gte("created_at", hourAgo);
     if ((ipCount ?? 0) >= 3) riskFlags.push("ip_burst");
   }
+  const reputation = await customerReputation(supabase, customerPhone);
+  if (reputation.level === "risky") riskFlags.push("network_risky");
+  else if (reputation.level === "watch") riskFlags.push("network_watch");
 
   const dropshipSourceIds = [
     ...new Set(priced.filter((p) => p.product.is_dropship && p.product.product_id).map((p) => p.product.product_id)),
