@@ -43,7 +43,16 @@
       "typedRoutes": true
     },
     "extra": {
-      "supportsRTL": true
-    }
+      "supportsRTL": true,
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "2cc83589-7f68-4f61-8f13-6f9e170bdacf"
+      }
+    },
+    "owner": "zakraoui"
   }
 }
