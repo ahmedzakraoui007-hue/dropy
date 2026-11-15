@@ -21,6 +21,8 @@ export default function LandingFooter() {
       { name: t("footer.links.blog"), href: "/blog" },
       { name: t("footer.links.tools"), href: "/outils" },
       { name: t("footer.links.faq"), href: "/faq" },
+      { name: t("footer.links.compare_converty"), href: "/comparatif/dropy-vs-converty" },
+      { name: t("footer.links.compare_shopify"), href: "/comparatif/dropy-vs-shopify" },
       { name: t("footer.links.help"), href: "/aide" },
     ],
     company: [
