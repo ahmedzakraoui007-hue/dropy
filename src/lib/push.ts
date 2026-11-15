@@ -10,7 +10,7 @@ export async function sendPushToUser(admin: SupabaseClient, userId: string, mess
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(tokens.map((to) => ({ to, sound: "default", priority: "high", channelId: "orders", ...message }))),
+      body: JSON.stringify(tokens.map((to) => ({ to, sound: "cash.wav", priority: "high", channelId: "orders_cash", ...message }))),
       signal: AbortSignal.timeout(8000),
     });
     const result = await response.json().catch(() => null);

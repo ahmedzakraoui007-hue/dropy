@@ -21,7 +21,8 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "store.dropy.seller"
+      "package": "store.dropy.seller",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -34,7 +35,8 @@
         "expo-notifications",
         {
           "color": "#1B6A98",
-          "icon": "./assets/notification-icon.png"
+          "icon": "./assets/notification-icon.png",
+          "sounds": ["./assets/sounds/cash.wav"]
         }
       ],
       "expo-font"
@@ -44,7 +46,16 @@
       "typedRoutes": true
     },
     "extra": {
-      "supportsRTL": true
-    }
+      "supportsRTL": true,
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "2cc83589-7f68-4f61-8f13-6f9e170bdacf"
+      }
+    },
+    "owner": "zakraoui"
   }
 }

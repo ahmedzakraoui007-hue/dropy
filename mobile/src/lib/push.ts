@@ -28,12 +28,13 @@ export async function registerForPush(ask: boolean): Promise<PushResult> {
   if (!Device.isDevice || Platform.OS === "web") return "unsupported";
   try {
     if (Platform.OS === "android") {
-      await Notifications.setNotificationChannelAsync("orders", {
+      await Notifications.deleteNotificationChannelAsync("orders").catch(() => {});
+      await Notifications.setNotificationChannelAsync("orders_cash", {
         name: "Commandes",
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: "#7C3AED",
-        sound: "default",
+        sound: "cash.wav",
       });
     }
     let { status } = await Notifications.getPermissionsAsync();
