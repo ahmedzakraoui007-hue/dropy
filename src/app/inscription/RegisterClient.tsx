@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, User, Check, Store, Package, Camera } from "lucide-react";
+import { Mail, Lock, ArrowRight, User, Phone, Check, Store, Package, Camera } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { AuthField, PasswordField, PasswordStrength, AuthAlert, SubmitButton } from "@/components/auth/AuthFields";
@@ -15,7 +15,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ROLE_IDS = ["seller", "supplier", "creator"] as const;
 type RoleId = (typeof ROLE_IDS)[number];
 
-type FieldErrors = { fullName?: string; email?: string; password?: string; terms?: string };
+type FieldErrors = { fullName?: string; phone?: string; email?: string; password?: string; terms?: string };
 
 const ROLE_META: Record<RoleId, { icon: typeof Store; gradient: string }> = {
   seller: { icon: Store, gradient: "from-[#2E3192] to-[#4f56d6]" },
@@ -29,6 +29,7 @@ function RegisterForm() {
   const guard = useSignupGuard(language);
   const [selectedRole, setSelectedRole] = useState<RoleId>("seller");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -50,6 +51,8 @@ function RegisterForm() {
   function validate(): FieldErrors {
     const next: FieldErrors = {};
     if (!fullName.trim()) next.fullName = "register.errors.name_required";
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 8 || phoneDigits.length > 15) next.phone = "role_signup.errors.phone_invalid";
     if (!email.trim()) next.email = "register.errors.email_required";
     else if (!EMAIL_REGEX.test(email.trim())) next.email = "register.errors.invalid_email";
     if (password.length < 8) next.password = "register.toasts.password_short";
@@ -64,7 +67,7 @@ function RegisterForm() {
     setFormError(null);
     setEmailExists(false);
 
-    const firstInvalid = (["fullName", "email", "password", "terms"] as const).find((f) => fieldErrors[f]);
+    const firstInvalid = (["fullName", "phone", "email", "password", "terms"] as const).find((f) => fieldErrors[f]);
     if (firstInvalid) {
       document.getElementById(firstInvalid)?.focus();
       return;
@@ -88,6 +91,7 @@ function RegisterForm() {
           email: normalizedEmail,
           password,
           fullName: fullName.trim(),
+          phone: phone.trim(),
           role: selectedRole,
           lang: language,
           ...guard.fields,
@@ -111,6 +115,11 @@ function RegisterForm() {
       }
       if (result.code === "invalid_email") {
         setErrors({ email: "register.errors.invalid_email" });
+        return;
+      }
+      if (result.code === "invalid_phone") {
+        setErrors({ phone: "role_signup.errors.phone_invalid" });
+        document.getElementById("phone")?.focus();
         return;
       }
       if (result.code === "weak_password") {
@@ -207,6 +216,23 @@ function RegisterForm() {
             clearError("fullName");
           }}
           error={errors.fullName && t(errors.fullName)}
+        />
+
+        <AuthField
+          id="phone"
+          type="tel"
+          label={t("role_signup.phone")}
+          icon={Phone}
+          placeholder={t("role_signup.placeholders.phone")}
+          autoComplete="tel"
+          inputMode="tel"
+          dir="ltr"
+          value={phone}
+          onChange={(e) => {
+            setPhone(e.target.value);
+            clearError("phone");
+          }}
+          error={errors.phone && t(errors.phone)}
         />
 
         <div className="space-y-2">

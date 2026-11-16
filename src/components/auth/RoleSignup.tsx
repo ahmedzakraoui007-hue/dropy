@@ -311,6 +311,11 @@ export default function RoleSignup({ role }: RoleSignupProps) {
         setErrors({ email: "register.errors.invalid_email" });
         return;
       }
+      if (result.code === "invalid_phone") {
+        setErrors({ phone: "role_signup.errors.phone_invalid" });
+        document.getElementById("phone")?.focus();
+        return;
+      }
       if (result.code === "weak_password") {
         setErrors({ password: "register.toasts.password_short" });
         return;
