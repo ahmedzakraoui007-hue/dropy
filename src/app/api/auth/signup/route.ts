@@ -29,13 +29,15 @@ export async function POST(req: Request) {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
     const fullName = String(body.fullName || "").trim();
-    const phone = body.phone ? String(body.phone).trim() : null;
+    const phone = String(body.phone || "").trim().slice(0, 30);
+    const phoneDigits = phone.replace(/\D/g, "");
     const role = body.role as Role;
     const additionalData = body.additionalData || {};
 
     if (!EMAIL_REGEX.test(email)) return fail("invalid_email", "Invalid email address");
     if (password.length < 8) return fail("weak_password", "Password must be at least 8 characters");
     if (!fullName) return fail("missing_name", "Full name is required");
+    if (phoneDigits.length < 8 || phoneDigits.length > 15) return fail("invalid_phone", "A valid phone number is required");
     if (!ALLOWED_ROLES.includes(role)) return fail("invalid_role", "Invalid role");
     if (String(body.website || "").trim()) return NextResponse.json({ success: true });
     if (!formTokenValid(body.formToken)) return fail("bot_check", "Form check failed");
