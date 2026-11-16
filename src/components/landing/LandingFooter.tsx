@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, MessageCircle } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Mail, MessageCircle } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { useTranslation } from "@/context/LanguageContext";
-import { CONTACT_EMAIL, WHATSAPP_URL } from "@/lib/contact";
+import { CONTACT_EMAIL, FACEBOOK_URL, INSTAGRAM_URL, LINKEDIN_URL, WHATSAPP_URL } from "@/lib/contact";
 
 export default function LandingFooter() {
   const { t, dir } = useTranslation();
@@ -38,6 +38,9 @@ export default function LandingFooter() {
   };
 
   const socialLinks = [
+    { icon: Facebook, href: FACEBOOK_URL, label: "Facebook" },
+    { icon: Instagram, href: INSTAGRAM_URL, label: "Instagram" },
+    { icon: Linkedin, href: LINKEDIN_URL, label: "LinkedIn" },
     { icon: MessageCircle, href: WHATSAPP_URL, label: "WhatsApp" },
     { icon: Mail, href: `mailto:${CONTACT_EMAIL}`, label: "E-mail" },
   ];
@@ -131,7 +134,7 @@ export default function LandingFooter() {
                 href={social.href}
                 aria-label={social.label}
                 target={social.href.startsWith("http") ? "_blank" : undefined}
-                rel="noopener noreferrer"
+                rel="noopener noreferrer me"
                 className="w-11 h-11 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-[#2E3192] hover:border-[#2E3192]/20 shadow-sm transition-all duration-300"
               >
                 <social.icon className="w-5 h-5" />

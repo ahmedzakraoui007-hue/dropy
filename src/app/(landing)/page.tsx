@@ -1,7 +1,7 @@
 import LandingClient from "@/components/landing/LandingClient";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/store-url";
-import { CONTACT_EMAIL, WHATSAPP_NUMBER } from "@/lib/contact";
+import { CONTACT_EMAIL, SOCIAL_PROFILES, WHATSAPP_NUMBER } from "@/lib/contact";
 
 export const metadata: Metadata = {
   title: { absolute: "Dropy | Votre boutique en ligne gratuite en Tunisie" },
@@ -20,6 +20,7 @@ const jsonLd = {
       url: SITE_URL,
       logo: `${SITE_URL}/android-chrome-512x512.png`,
       email: CONTACT_EMAIL,
+      sameAs: SOCIAL_PROFILES,
       areaServed: "TN",
       contactPoint: {
         "@type": "ContactPoint",
