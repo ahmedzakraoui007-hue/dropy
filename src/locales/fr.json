@@ -3288,14 +3288,20 @@
             }
         },
         "faq": {
-            "title": "Questions Fréquentes",
-            "subtitle": "Tout ce qu'il faut savoir pour commencer.",
-            "q1": "Comment fonctionne Dropy ?",
-            "a1": "Choisissez des produits, vendez-les, et nous gérons la livraison partout en Tunisie.",
-            "q2": "Est-ce gratuit ?",
-            "a2": "L'inscription est gratuite. Vous ne payez que lorsque vous vendez.",
-            "q3": "Comment je reçois mon argent ?",
-            "a3": "Vos profits sont reversés par virement ou D17 une fois le colis livré.",
+            "title": "Questions fréquentes",
+            "subtitle": "Tout ce qu'il faut savoir avant de lancer votre boutique.",
+            "q1": "Qu'est-ce que Dropy ?",
+            "a1": "Dropy est une plateforme tunisienne pour créer et gérer une boutique en ligne, en français et en arabe, avec paiement à la livraison. Pendant le lancement, notre équipe crée votre boutique gratuitement.",
+            "q2": "Dropy est-il réservé aux débutants ?",
+            "a2": "Non. Nous créons la boutique pour vous faire gagner du temps, puis elle est entièrement à vous : éditeur de pages, thèmes et couleurs, nom de domaine personnel, pixels Facebook, TikTok et Google, statistiques et gestion des commandes. Les marques qui investissent en publicité gardent le contrôle complet.",
+            "q3": "Combien ça coûte ?",
+            "a3": "Pendant le lancement, la création est offerte, sans abonnement et sans commission sur vos ventes. Nous prévenons tous les utilisateurs avant tout changement.",
+            "q4": "Est-ce que je peux modifier ma boutique moi-même ?",
+            "a4": "Oui, à tout moment depuis votre espace vendeur : produits, prix, variantes, pages, design, frais de livraison et moyens de contact.",
+            "q5": "Comment je reçois l'argent de mes ventes ?",
+            "a5": "Vos clients paient en espèces à la livraison et l'argent vous revient par votre livreur. Dropy ne prélève rien sur vos encaissements.",
+            "q6": "Comment éviter les fausses commandes ?",
+            "a6": "Chaque client reçoit un score de fiabilité calculé sur l'ensemble des boutiques Dropy. Vous pouvez aussi bloquer un numéro, repérer les commandes en double et refuser les commandes passées depuis un ordinateur.",
             "more_questions": "Encore des questions ?",
             "contact_us": "Nous contacter"
         },
@@ -3621,7 +3627,7 @@
                 "badge": "Pour les entreprises tunisiennes",
                 "title_main": "Votre site e-commerce",
                 "title_accent": "créé gratuitement",
-                "desc": "L'équipe Dropy crée votre boutique en ligne avec vos produits, votre logo et vos couleurs. Vous recevez les commandes, vos clients paient à la livraison.",
+                "desc": "L'équipe Dropy crée votre boutique en ligne avec vos produits, votre logo et vos couleurs. Ensuite, vous gardez le contrôle total : design, produits, pubs et commandes.",
                 "cta_primary": "Demander mon site gratuit",
                 "cta_secondary": "Voir l'offre",
                 "income_label": "Création du site",
@@ -3648,12 +3654,14 @@
                 }
             },
             "features": {
-                "title": "Des outils simples et puissants",
+                "title": "Créée par nous, pilotée par vous",
                 "list": [
-                    "Boutique en ligne en 1 clic",
-                    "Catalogue de produits illimité",
-                    "Suivi des commandes en temps réel",
-                    "Suivi de vos gains"
+                    "Éditeur de pages, thèmes et couleurs",
+                    "Votre propre nom de domaine",
+                    "Pixels Facebook, TikTok et Google Analytics",
+                    "Score anti-fausses commandes et liste noire",
+                    "Relance des paniers abandonnés",
+                    "Suivi de chaque commande jusqu'à la livraison"
                 ],
                 "cta": "Demander mon site gratuit"
             },
@@ -4051,7 +4059,7 @@
             "badge": "Offre de lancement · création offerte",
             "title1": "Votre boutique en ligne,",
             "title2": "créée gratuitement.",
-            "description": "Entreprises et commerçants tunisiens : l'équipe Dropy crée votre site e-commerce avec vos produits, un design à votre image et le paiement à la livraison. Vous n'avez rien à payer pour la création.",
+            "description": "Entreprises et commerçants tunisiens : l'équipe Dropy crée votre site e-commerce avec vos produits, un design à votre image et le paiement à la livraison. Ensuite, la boutique est à vous : vous la modifiez et la pilotez comme vous voulez.",
             "cta_primary": "Demander ma boutique",
             "cta_secondary": "Voir les templates",
             "points": {
@@ -4141,6 +4149,35 @@
         "final": {
             "title": "Votre boutique peut être en ligne en quelques jours.",
             "subtitle": "Dites-nous ce que vous vendez, on s'occupe du reste. La création est offerte."
+        },
+        "control": {
+            "eyebrow": "Créée par nous, pilotée par vous",
+            "title": "Vous gardez le contrôle total.",
+            "subtitle": "On crée la boutique pour vous faire gagner du temps, pas pour vous enfermer. Débutant ou marque qui investit en publicité, vous avez les mêmes outils.",
+            "editor": {
+                "title": "Éditeur de pages",
+                "desc": "Modifiez textes, sections, produits et prix quand vous voulez, sans nous demander."
+            },
+            "design": {
+                "title": "Thèmes et couleurs",
+                "desc": "Changez de thème, de polices et de couleurs pour coller à votre marque."
+            },
+            "domain": {
+                "title": "Votre nom de domaine",
+                "desc": "Gardez l'adresse offerte en .dropy.store ou branchez votre propre domaine."
+            },
+            "pixels": {
+                "title": "Pixels publicitaires",
+                "desc": "Facebook, TikTok et Google Analytics branchés sur vos commandes réelles."
+            },
+            "fraud": {
+                "title": "Anti-fausses commandes",
+                "desc": "Score de fiabilité calculé sur tout le réseau Dropy, liste noire et doublons détectés."
+            },
+            "abandoned": {
+                "title": "Paniers abandonnés",
+                "desc": "Retrouvez les clients qui n'ont pas terminé leur commande et relancez-les."
+            }
         }
     },
     "portfolio_public": {
