@@ -11,20 +11,7 @@ import {
 export default function FAQPage() {
   const { t, dir } = useTranslation();
 
-  const faqs = [
-    {
-      question: t("pages.faq.q1"),
-      answer: t("pages.faq.a1"),
-    },
-    {
-      question: t("pages.faq.q2"),
-      answer: t("pages.faq.a2"),
-    },
-    {
-      question: t("pages.faq.q3"),
-      answer: t("pages.faq.a3"),
-    },
-  ];
+  const faqs = [1, 2, 3, 4, 5, 6].map((n) => ({ question: t(`pages.faq.q${n}`), answer: t(`pages.faq.a${n}`) }));
 
   return (
     <div className="bg-white py-16 lg:py-32" dir={dir}>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BarChart3, Banknote, Camera, Check, Languages, MessageCircle, Package, PackageCheck, Palette, Phone, Rocket, Send, Sparkles, Truck } from "lucide-react";
+import { ArrowRight, BarChart3, Banknote, Camera, Check, Globe, Languages, LayoutTemplate, MessageCircle, Package, PackageCheck, Palette, Phone, Rocket, Send, ShieldCheck, ShoppingCart, Sparkles, Target, Truck } from "lucide-react";
 import { useTranslation } from "@/context/LanguageContext";
 import { WHATSAPP_URL } from "@/lib/contact";
 import { PhoneStage } from "@/components/landing/home/PhoneStage";
@@ -18,6 +18,14 @@ export default function LandingClient() {
   const h = (key: string) => t(`home.${key}`);
 
   const strip = ["cod", "governorates", "languages", "tracking", "ads", "whatsapp"].map((k) => h(`strip.${k}`));
+  const control = [
+    { icon: LayoutTemplate, key: "editor" },
+    { icon: Palette, key: "design" },
+    { icon: Globe, key: "domain" },
+    { icon: Target, key: "pixels" },
+    { icon: ShieldCheck, key: "fraud" },
+    { icon: ShoppingCart, key: "abandoned" },
+  ];
   const steps = [
     { icon: Send, key: "one" },
     { icon: Palette, key: "two" },
@@ -181,6 +189,27 @@ export default function LandingClient() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#070A1F] px-6 py-24 text-white lg:py-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto mb-16 max-w-3xl text-center">
+            <p className="mb-4 text-xs font-black uppercase tracking-[0.25em] text-teal-300">{h("control.eyebrow")}</p>
+            <h2 className="text-4xl font-black tracking-tight md:text-6xl">{h("control.title")}</h2>
+            <p className="mt-5 text-lg leading-relaxed text-slate-300">{h("control.subtitle")}</p>
+          </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {control.map(({ icon: Icon, key }) => (
+              <div key={key} className="rounded-3xl border border-white/10 bg-white/[0.04] p-7 transition-colors hover:border-teal-300/40">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#2E3192] to-[#00A99D]">
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="mt-5 text-xl font-black">{h(`control.${key}.title`)}</h3>
+                <p className="mt-2 leading-relaxed text-slate-400">{h(`control.${key}.desc`)}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
