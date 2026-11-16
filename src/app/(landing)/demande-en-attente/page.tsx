@@ -7,6 +7,7 @@ import { Logo } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/context/LanguageContext";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { FACEBOOK_URL, INSTAGRAM_URL, LINKEDIN_URL } from "@/lib/contact";
 
 export default function WaitingPage() {
   const { t, dir } = useTranslation();
@@ -86,7 +87,7 @@ export default function WaitingPage() {
 
               <div className="flex items-center justify-center gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-100">
                 <a 
-                  href="https://www.facebook.com/profile.php?id=61586447773653" 
+                  href={FACEBOOK_URL} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="w-11 h-11 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all shadow-sm"
@@ -95,7 +96,7 @@ export default function WaitingPage() {
                   <Facebook className="w-5 h-5" />
                 </a>
                 <a 
-                  href="https://www.instagram.com/dropy__store/" 
+                  href={INSTAGRAM_URL} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="w-11 h-11 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-gradient-to-tr hover:from-yellow-400 hover:via-red-500 hover:to-purple-600 hover:text-white hover:border-transparent transition-all shadow-sm"
@@ -104,7 +105,7 @@ export default function WaitingPage() {
                   <Instagram className="w-5 h-5" />
                 </a>
                 <a 
-                  href="https://www.linkedin.com/company/dropystore" 
+                  href={LINKEDIN_URL} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="w-11 h-11 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-[#0077b5] hover:text-white hover:border-[#0077b5] transition-all shadow-sm"
