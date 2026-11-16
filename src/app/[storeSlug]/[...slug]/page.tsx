@@ -17,6 +17,7 @@ export default async function StoreSubPage({ params }: { params: Promise<{ store
   const initial = await loadStorefront(storeSlug, productId);
   if (!initial && !(await storeSlugExists(storeSlug))) notFound();
   const product = initial?.product;
+  if (productId && initial && !product) notFound();
   if (productId && product?.slug && isUuid(product.requestedKey) && product.slug !== product.requestedKey) {
     const host = (await headers()).get("host");
     const hostname = String(host || "").split(":")[0].toLowerCase();

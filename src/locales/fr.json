@@ -3241,7 +3241,10 @@
             "title": "Page introuvable",
             "desc": "Cette page n'existe pas ou a été déplacée. Vérifiez l'adresse ou revenez à l'accueil.",
             "home": "Retour à l'accueil",
-            "contact": "Nous contacter"
+            "contact": "Nous contacter",
+            "store_title": "Cette page n'existe plus",
+            "store_desc": "Le produit a peut-être été retiré ou le lien est incomplet.",
+            "store_back": "Retour à la boutique"
         },
         "about": {
             "title": "À Propos de Dropy",
