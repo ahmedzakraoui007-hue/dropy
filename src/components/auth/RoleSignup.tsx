@@ -260,8 +260,8 @@ export default function RoleSignup({ role }: RoleSignupProps) {
         return;
       }
 
-      await createClient().auth.signOut();
-      router.replace("/demande-en-attente");
+      router.replace(`/${role}/dashboard`);
+      router.refresh();
       return;
     }
 

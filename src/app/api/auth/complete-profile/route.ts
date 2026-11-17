@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     full_name: fullName,
     phone: phone || null,
     role,
-    status: profile?.status && profile.status !== "pending" ? profile.status : "pending",
+    status: profile?.status && profile.status !== "pending" ? profile.status : "approved",
     updated_at: new Date().toISOString(),
   });
   if (profileError) {
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     const { data: existing } = await supabase.from(table).select("id").eq("user_id", user.id).limit(1).maybeSingle();
     const { error } = existing
       ? await supabase.from(table).update(row).eq("id", existing.id)
-      : await supabase.from(table).insert({ ...row, status: "pending" });
+      : await supabase.from(table).insert({ ...row, status: "approved" });
     if (error) {
       console.error(`complete-profile ${table} error:`, error);
       return NextResponse.json({ code: "failed", error: "Could not save profile" }, { status: 500 });

@@ -3,6 +3,12 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { sendWaitingEmail } from "@/lib/auth-emails";
 
+const ROLE_HOME: Record<string, string> = {
+  seller: "/seller/dashboard",
+  supplier: "/supplier/dashboard",
+  creator: "/creator/dashboard",
+};
+
 const ALLOWED_TYPES: EmailOtpType[] = ["signup", "magiclink", "email", "invite", "recovery"];
 
 export async function GET(request: Request) {
@@ -30,9 +36,13 @@ export async function GET(request: Request) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("status, full_name")
+    .select("status, full_name, role")
     .eq("id", data.user.id)
     .maybeSingle();
+
+  if (profile && ["approved", "active"].includes(profile.status ?? "") && ROLE_HOME[profile.role]) {
+    return NextResponse.redirect(`${origin}${ROLE_HOME[profile.role]}`);
+  }
 
   await supabase.auth.signOut();
 

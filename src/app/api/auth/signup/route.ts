@@ -127,7 +127,7 @@ export async function POST(req: Request) {
       full_name: fullName,
       phone,
       role,
-      status: "pending",
+      status: "approved",
     });
     if (profileError) console.error("Profile error:", profileError);
 
@@ -142,14 +142,14 @@ export async function POST(req: Request) {
               instagram_handle: (additionalData.instagram || "").replace("@", ""),
               specialty: additionalData.specialty || "",
               specialties: additionalData.specialty ? [additionalData.specialty] : [],
-              status: "pending",
+              status: "approved",
             }
           : {
               user_id: userId,
               company_name: additionalData.companyName || "",
               tax_id: additionalData.taxId || "",
               product_type: additionalData.productType || "",
-              status: "pending",
+              status: "approved",
             };
 
       const { data: existingRow } = await supabase
