@@ -3,7 +3,7 @@ export const RESERVED_SLUGS = new Set([
   "supplier", "track", "dashboard", "settings", "register", "reset-password", "a-propos", "aide", "carrieres",
   "conditions-utilisation", "contact", "createurs", "demande-en-attente", "faq", "fournisseurs",
   "mentions-legales", "politique-confidentialite", "tarifs", "vendeurs", "themes", "shop", "sitemap",
-  "robots", "favicon", "dropy", "www", "blog", "outils", "creation-site-ecommerce-tunisie", "static", "app", "mail", "cdn", "p", "comparatif", "llms",
+  "robots", "favicon", "dropy", "www", "blog", "outils", "creation-site-ecommerce-tunisie", "static", "app", "mail", "cdn", "p", "comparatif", "llms", "application",
 ]);
 
 export function slugify(value: string) {

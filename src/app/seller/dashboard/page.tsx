@@ -33,6 +33,7 @@ import { useSellerCockpit, type CockpitOrder } from "@/hooks/useSellerCockpit";
 import { formatPrice } from "@/lib/utils";
 import { storeDisplayUrl, storeUrl, storeViewHref } from "@/lib/store-url";
 import { RealtimeOrdersListener } from "@/components/seller/RealtimeOrdersListener";
+import { AppDownloadCard } from "@/components/seller/AppDownloadCard";
 import { PhoneFrame } from "@/components/landing/home/MiniStore";
 import { DROPSHIPPING_ENABLED } from "@/lib/launch";
 
@@ -250,6 +251,7 @@ export default function SellerDashboard() {
         </div>
 
         <div className="min-w-0 space-y-6">
+          <AppDownloadCard />
           {completedSteps < steps.length && (
             <section className="rounded-2xl border border-gray-200 bg-white p-5">
               <div className="flex items-center justify-between">

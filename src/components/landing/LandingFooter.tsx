@@ -20,6 +20,7 @@ export default function LandingFooter() {
     resources: [
       { name: t("footer.links.blog"), href: "/blog" },
       { name: t("footer.links.tools"), href: "/outils" },
+      { name: t("footer.links.app"), href: "/application" },
       { name: t("footer.links.faq"), href: "/faq" },
       { name: t("footer.links.compare_converty"), href: "/comparatif/dropy-vs-converty" },
       { name: t("footer.links.compare_shopify"), href: "/comparatif/dropy-vs-shopify" },
