@@ -2173,7 +2173,12 @@
             "month_title": "Ce mois-ci",
             "delivered_sales": "Ventes livrées",
             "ready_title": "Votre boutique est prête",
-            "ready_desc": "Les chiffres apparaîtront ici dès vos premières visites."
+            "ready_desc": "Les chiffres apparaîtront ici dès vos premières visites.",
+            "app_title": "L'appli Dropy Vendeur",
+            "app_desc": "Soyez prévenu à chaque commande et confirmez-la depuis votre téléphone.",
+            "app_download": "Télécharger (Android)",
+            "app_more": "En savoir plus",
+            "app_dismiss": "Masquer"
         },
         "ugc": {
             "todo_one": "1 brief attend votre action",
@@ -3212,7 +3217,8 @@
             "legal": "Mentions légales",
             "portfolios": "Portfolios créateurs",
             "compare_converty": "Dropy vs Converty",
-            "compare_shopify": "Dropy vs Shopify"
+            "compare_shopify": "Dropy vs Shopify",
+            "app": "Application mobile"
         },
         "blog_soon": "Bientôt disponible !",
         "copyright": "© 2026 Dropy. Fait avec ❤️ en",
@@ -4054,6 +4060,80 @@
                 "faq2_a": "D'après la page tarifs officielle : Basic 39 $ par mois (29 $ en annuel), Grow 105 $, Advanced 399 $, Plus à partir de 2 300 $.",
                 "faq3_q": "Pourquoi choisir Dropy plutôt que Shopify en Tunisie ?",
                 "faq3_a": "Dropy est conçu pour le marché tunisien : paiement à la livraison avec protection anti-fraude, boutique en arabe, prix en dinars, et création gratuite de la boutique par notre équipe pendant le lancement."
+            }
+        },
+        "application": {
+            "badge": "Android · Version {version}",
+            "title_main": "Vos commandes Dropy,",
+            "title_accent": "dans votre poche.",
+            "desc": "Avec l'application Dropy Vendeur, vous êtes prévenu à chaque nouvelle commande et vous la confirmez en un geste, où que vous soyez. Appelez le client, écrivez-lui sur WhatsApp et gérez vos produits depuis votre téléphone.",
+            "download_android": "Télécharger pour Android",
+            "ios_soon": "iPhone : bientôt disponible",
+            "file_info": "Fichier APK · {size} Mo · Version {version} · Gratuit",
+            "qr_alt": "QR code pour télécharger l'application Dropy Vendeur",
+            "qr_title": "Scannez avec votre téléphone",
+            "qr_desc": "Le téléchargement démarre directement.",
+            "features_title": "Tout ce qu'il faut pour vendre depuis votre téléphone",
+            "features_subtitle": "La même boutique, le même compte : l'application se connecte à votre espace vendeur Dropy.",
+            "features": {
+                "push": {
+                    "title": "Notification à chaque commande",
+                    "desc": "Votre téléphone sonne dès qu'un client passe commande, même quand l'application est fermée."
+                },
+                "confirm": {
+                    "title": "Confirmez en un geste",
+                    "desc": "Confirmez ou annulez une commande en un clic. La liste se met à jour en temps réel."
+                },
+                "contact": {
+                    "title": "Appel et WhatsApp du client",
+                    "desc": "Appelez le client ou écrivez-lui sur WhatsApp directement depuis la commande."
+                },
+                "products": {
+                    "title": "Prix et stock de vos produits",
+                    "desc": "Modifiez le prix, le prix barré et le stock, ou masquez un produit en quelques secondes."
+                },
+                "home": {
+                    "title": "Vos ventes du jour",
+                    "desc": "Ventes du jour, commandes à confirmer et ventes des 7 derniers jours dès l'ouverture."
+                },
+                "languages": {
+                    "title": "Français et arabe",
+                    "desc": "Choisissez la langue de l'application et partagez le lien de votre boutique en un geste."
+                }
+            },
+            "install_title": "Installer l'application en 1 minute",
+            "install_desc": "L'application n'est pas encore sur Google Play : vous l'installez avec le fichier APK, directement depuis notre site.",
+            "install_warning": "Android peut vous demander d'autoriser l'installation depuis votre navigateur, ou afficher un avertissement parce que l'application ne vient pas de Google Play. C'est normal : autorisez l'installation pour continuer.",
+            "install": {
+                "step1": {
+                    "title": "Téléchargez le fichier",
+                    "desc": "Appuyez sur « Télécharger pour Android » depuis votre téléphone, ou scannez le QR code."
+                },
+                "step2": {
+                    "title": "Ouvrez-le et installez",
+                    "desc": "Ouvrez le fichier téléchargé, puis appuyez sur « Installer »."
+                },
+                "step3": {
+                    "title": "Connectez-vous",
+                    "desc": "Utilisez l'email et le mot de passe de votre compte vendeur Dropy."
+                }
+            },
+            "cta_title": "Pas encore de compte vendeur ?",
+            "cta_desc": "Créez votre boutique gratuitement, puis gérez-la depuis l'application.",
+            "cta_button": "Créer ma boutique",
+            "mock": {
+                "notif_title": "Nouvelle commande",
+                "orders": "Commandes",
+                "filter_all": "Toutes",
+                "filter_new": "Nouvelles",
+                "filter_confirmed": "Confirmées",
+                "status_new": "Nouvelle",
+                "status_confirmed": "Confirmée",
+                "status_shipped": "Expédiée",
+                "city1": "Tunis",
+                "city2": "Sfax",
+                "city3": "Sousse",
+                "confirm": "Confirmer"
             }
         }
     },

@@ -19,6 +19,7 @@ const LANDING_PAGES = [
   "/creation-site-ecommerce-tunisie",
   "/comparatif/dropy-vs-converty",
   "/comparatif/dropy-vs-shopify",
+  "/application",
   "/outils",
   "/outils/calcul-tva",
   "/outils/calcul-prix-de-vente",
