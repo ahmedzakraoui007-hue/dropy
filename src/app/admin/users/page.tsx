@@ -9,6 +9,7 @@ import {
   UserX, 
   UserCheck, 
   Mail,
+  MessageCircle,
   ArrowUpDown,
   Download
 } from "lucide-react";
@@ -37,11 +38,13 @@ import {
 import { toast } from "sonner";
 import { AccountStatusBadge, AccountStatusMenuItems, updateAccountStatus, STATUS_MESSAGES, type AccountStatusAction } from "@/components/admin/AccountStatus";
 import { formatDate } from "@/lib/utils";
+import { phoneForWhatsApp, whatsappLink } from "@/lib/order-messages";
 
 interface UserProfile {
   id: string;
   email: string;
   full_name: string;
+  phone: string | null;
   role: string;
   status: string;
   subscription_plan: string;
@@ -71,7 +74,7 @@ export default function UserManagement() {
       }
       
       if (searchTerm) {
-        query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+        query = query.or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`);
       }
 
 
@@ -119,8 +122,8 @@ export default function UserManagement() {
 
 
   const exportCsv = () => {
-    const header = ["Nom", "E-mail", "Rôle", "Statut", "Inscription"];
-    const rows = users.map((u) => [u.full_name || "", u.email || "", u.role || "", u.status || "", (u.created_at || "").slice(0, 10)]);
+    const header = ["Nom", "E-mail", "Téléphone", "Rôle", "Statut", "Inscription"];
+    const rows = users.map((u) => [u.full_name || "", u.email || "", u.phone ? phoneForWhatsApp(u.phone) : "", u.role || "", u.status || "", (u.created_at || "").slice(0, 10)]);
     const csv = [header, ...rows].map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
     const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a");
@@ -149,7 +152,7 @@ export default function UserManagement() {
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
-                placeholder="Rechercher par nom ou email..." 
+                placeholder="Rechercher par nom, email ou téléphone..." 
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -177,6 +180,7 @@ export default function UserManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[300px]">Utilisateur</TableHead>
+                  <TableHead>Téléphone</TableHead>
                   <TableHead>Rôle</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Plan</TableHead>
@@ -188,12 +192,12 @@ export default function UserManagement() {
                 {loading ? (
                   [1, 2, 3, 4, 5].map((i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={6} className="h-16 animate-pulse bg-muted/50"></TableCell>
+                      <TableCell colSpan={7} className="h-16 animate-pulse bg-muted/50"></TableCell>
                     </TableRow>
                   ))
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                       Aucun utilisateur trouvé.
                     </TableCell>
                   </TableRow>
@@ -211,6 +215,26 @@ export default function UserManagement() {
                             <span className="text-xs text-muted-foreground">{user.email}</span>
                           </div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.phone ? (
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <a href={`tel:${user.phone.replace(/[^\d+]/g, "")}`} dir="ltr" className="text-sm font-medium hover:underline">
+                              {user.phone}
+                            </a>
+                            <a
+                              href={whatsappLink(user.phone, `Bonjour ${user.full_name || ""}, ici l'équipe Dropy.`)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              aria-label={`WhatsApp ${user.full_name || user.phone}`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition-colors hover:bg-emerald-100"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </a>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="capitalize font-normal">
